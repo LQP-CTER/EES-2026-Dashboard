@@ -158,7 +158,18 @@ def make_html_kpi(title, value, delta=None, color="blue", icon="📊", progress_
     }
     main_color, bg_color = color_map.get(color, color_map["blue"])
     
-    delta_color = "#05CD99" if (delta and ("+" in str(delta) or float(str(delta).replace('%','')) > 0)) else "#EE5D50"
+    delta_color = "#EE5D50"
+    if delta:
+        d_str = str(delta).replace('%', '').strip()
+        if "+" in d_str:
+            delta_color = "#05CD99"
+        else:
+            try:
+                if float(d_str) > 0:
+                    delta_color = "#05CD99"
+            except ValueError:
+                delta_color = "#A3AED0"
+
     delta_sign = "+" if (isinstance(delta, (int, float)) and delta > 0) else ""
     delta_str = f"{delta_sign}{delta}" if delta is not None else ""
 
