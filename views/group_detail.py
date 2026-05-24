@@ -13,10 +13,7 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 1: HERO METRICS & OVERALL DISTRIBUTION
     # ══════════════════════════════════════════════════════════════
-    st.markdown(f'<h3 style="color: #2B3674; font-weight: 800; margin-bottom: 0;">🏢 Phân tích Chi tiết — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
-    st.markdown(f'<p style="color: #A3AED0; margin-bottom: 24px;">Báo cáo Gắn kết Nhóm {cfg.get("short", "")} • Q1/2026</p>', unsafe_allow_html=True)
-    
-    from shared.plotly_theme import make_html_kpi
+    from shared.plotly_theme import make_html_kpi, section_header
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(make_html_kpi('Engagement (EI)', f"{kpis['ei_mean']:.1f}%", color="blue", icon="", progress_val=kpis['ei_mean'], delta="+2.1%"), unsafe_allow_html=True)
@@ -157,8 +154,7 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: BẢNG BÁO CÁO CHI TIẾT (COMPREHENSIVE SUMMARY TABLE)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">📋 Bảng Báo Cáo Chi Tiết</h3>', unsafe_allow_html=True)
-    st.markdown("Dữ liệu được bóc tách đến cấp độ Bộ phận / Vùng (Section), kết hợp với bảng màu Gradient để làm nổi bật các điểm nóng (Đỏ = Kém, Xanh = Tốt).")
+    st.markdown(section_header("Bảng Báo Cáo Chi Tiết", "Phân tách đến cấp Bộ phận / Vùng — bảng màu Gradient (Đỏ = Kém, Xanh = Tốt)"), unsafe_allow_html=True)
     
     # Determine the grouping level
     if 'section' in df.columns and df['section'].nunique() > 1:
@@ -219,8 +215,7 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 3: NHÂN KHẨU HỌC & CHỨC DANH (DEMOGRAPHICS)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">👥 Phân Tích Đặc Thù (Nhân khẩu học & Cấp bậc)</h3>', unsafe_allow_html=True)
-    st.markdown("Nhận diện sự chênh lệch mức độ gắn kết giữa các nhóm nhân viên cũ/mới và giữa các vai trò công việc khác nhau (Direct vs Indirect).")
+    st.markdown(section_header("Phân Tích Nhân Khẩu Học & Cấp Bậc", "Chênh lệch gắn kết giữa nhóm cũ/mới và các vai trò Direct vs Indirect"), unsafe_allow_html=True)
     
     demo_cols = []
     if 'Q5' in df.columns:

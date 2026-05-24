@@ -10,8 +10,6 @@ def render(df, cfg):
     codebook = cfg.get('codebook', {})
     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
 
-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">💬 Phân tích Phản hồi Tự luận (NLP) — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
-
     q_options = {q: codebook[q]['tên'] for q in open_cols if q in df.columns}
     if not q_options:
         st.info("Nhóm này không có câu hỏi mở.")

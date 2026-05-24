@@ -126,97 +126,87 @@ def annotate_insight(fig, text, x=0.5, y=-0.15, xref='paper', yref='paper'):
     )
     return fig
 
-import random
-
-def generate_trend_data(current_val, delta, points=6):
-    try:
-        c_val = float(current_val)
-        d_val = float(str(delta).replace('%','').replace('+','')) if delta is not None else 0
-    except:
-        return None
-    
-    start_val = c_val - d_val
-    trend = [start_val]
-    for i in range(1, points - 1):
-        progress = i / (points - 1)
-        expected = start_val + (c_val - start_val) * progress
-        noise = (random.random() - 0.5) * (abs(d_val) * 0.5 if d_val != 0 else c_val * 0.05)
-        trend.append(expected + noise)
-    trend.append(c_val)
-    return trend
-
-def make_html_kpi(title, value, delta=None, color="blue", icon="📊", progress_val=None, sparkline_data=None):
+def make_html_kpi(title, value, delta=None, color="blue", icon="", progress_val=None, sparkline_data=None):
     """
-    Render a premium HTML KPI Card with Circular Donut Progress (matches reference image).
-    color: 'blue', 'orange', 'green', 'red'
+    Clean, professional KPI card — no emoji icons, minimal design.
+    color: 'blue' (GHN orange accent) | 'orange' | 'green' | 'red'
     """
     color_map = {
-        "blue": ("#4318FF", "rgba(67, 24, 255, 0.05)"),
-        "orange": ("#FFB547", "rgba(255, 181, 71, 0.05)"),
-        "green": ("#05CD99", "rgba(5, 205, 153, 0.05)"),
-        "red": ("#EE5D50", "rgba(238, 93, 80, 0.05)"),
+        "blue":   ("#FF5200", "#FFF3EE"),
+        "orange": ("#F59E0B", "#FFFBEB"),
+        "green":  ("#10B981", "#F0FDF4"),
+        "red":    ("#EF4444", "#FEF2F2"),
     }
-    main_color, bg_color = color_map.get(color, color_map["blue"])
-    
-    delta_color = "#EE5D50"
-    if delta:
-        d_str = str(delta).replace('%', '').strip()
-        if "+" in d_str:
-            delta_color = "#05CD99"
-        else:
-            try:
-                if float(d_str) > 0:
-                    delta_color = "#05CD99"
-            except ValueError:
-                delta_color = "#A3AED0"
+    main_color, _bg = color_map.get(color, color_map["blue"])
 
-    delta_sign = "+" if (isinstance(delta, (int, float)) and delta > 0) else ""
-    delta_str = f"{delta_sign}{delta}" if delta is not None else ""
+    # Delta styling
+    delta_color = "#94A3B8"
+    delta_bg    = "#F8FAFC"
+    if delta and str(delta) not in ("N/A", "0", "0%", "0.0%"):
+        d_str = str(delta).replace('%', '').replace('+', '').strip()
+        try:
+            d_val = float(d_str)
+            if d_val > 0:
+                delta_color, delta_bg = "#16A34A", "#F0FDF4"
+            elif d_val < 0:
+                delta_color, delta_bg = "#DC2626", "#FEF2F2"
+        except ValueError:
+            pass
 
-    p_val = max(0, min(100, float(progress_val))) if progress_val is not None else 0
-    dash_val = (p_val / 100) * 100
+    delta_html = ""
+    if delta and str(delta) != "N/A":
+        delta_html = (
+            f'<span style="font-size:0.71rem;font-weight:600;color:{delta_color};'
+            f'background:{delta_bg};padding:2px 8px;border-radius:20px;'
+            f'display:inline-block;margin-top:5px;">{delta} vs 2025</span>'
+        )
 
+    # Circular donut
+    p_val = max(0.0, min(100.0, float(progress_val))) if progress_val is not None else 0.0
     donut_html = ""
     if progress_val is not None:
-        donut_html = f"""
-        <div style="position: relative; width: 64px; height: 64px;">
-            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#F4F7FE" stroke-width="4" />
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="{main_color}" stroke-width="4" stroke-dasharray="{dash_val}, 100" stroke-linecap="round" />
-            </svg>
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #2B3674;">
-                {int(p_val)}%
-            </div>
-        </div>
-        """
+        donut_html = (
+            f'<div style="position:relative;width:54px;height:54px;flex-shrink:0">'
+            f'<svg viewBox="0 0 36 36" style="width:100%;height:100%;transform:rotate(-90deg)">'
+            f'<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"'
+            f' fill="none" stroke="#F1F5F9" stroke-width="3.5"/>'
+            f'<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"'
+            f' fill="none" stroke="{main_color}" stroke-width="3.5"'
+            f' stroke-dasharray="{p_val:.1f},100" stroke-linecap="round"/>'
+            f'</svg>'
+            f'<div style="position:absolute;top:0;left:0;width:100%;height:100%;'
+            f'display:flex;align-items:center;justify-content:center;'
+            f'font-size:0.66rem;font-weight:700;color:#64748B">{int(p_val)}%</div>'
+            f'</div>'
+        )
 
-    html = f"""
-    <div style="background: #FFFFFF; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; height: 100%; min-height: 150px;">
-        <!-- Top row: Title and pills -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <span style="color: #2B3674; font-weight: 700; font-size: 1.05rem;">{title}</span>
-            <div style="display: flex; gap: 4px;">
-                <span style="background: {bg_color}; color: {main_color}; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;">Metric</span>
-                <span style="background: {main_color}; color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;">{icon}</span>
-            </div>
-        </div>
-        
-        <!-- Middle row: Circular Progress and Value -->
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            {donut_html}
-            
-            <!-- Right side: Value and Button -->
-            <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                <span style="font-size: 1.8rem; font-weight: 800; color: #2B3674; line-height: 1;">{value}</span>
-                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-                    <span style="color: {delta_color}; font-size: 0.85rem; font-weight: 600;">{delta_str}</span>
-                    <div style="width: 24px; height: 24px; background: {main_color}; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    """
-    html = "".join(line.strip() for line in html.split("\n"))
+    html = (
+        f'<div style="background:#FFF;border:1px solid #E2E8F0;border-radius:12px;'
+        f'padding:20px 22px;height:100%;box-sizing:border-box">'
+        f'<div style="font-size:0.67rem;font-weight:700;letter-spacing:0.09em;'
+        f'text-transform:uppercase;color:#94A3B8;margin-bottom:16px">{title}</div>'
+        f'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+        f'<div><div style="font-size:2.1rem;font-weight:900;color:#0A1F44;'
+        f'letter-spacing:-0.03em;line-height:1">{value}</div>{delta_html}</div>'
+        f'{donut_html}</div></div>'
+    )
     return html
+
+
+def section_header(title, subtitle=None):
+    """Render a clean professional section header (no emoji)."""
+    accent = (
+        '<span style="width:3px;height:15px;background:#FF5200;border-radius:2px;'
+        'display:inline-block;flex-shrink:0"></span>'
+    )
+    h = (
+        f'<h3 style="font-size:0.92rem;font-weight:700;color:#0A1F44;'
+        f'margin:30px 0 14px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;'
+        f'display:flex;align-items:center;gap:8px">{accent}{title}</h3>'
+    )
+    if subtitle:
+        h += (
+            f'<p style="font-size:0.82rem;color:#64748B;'
+            f'margin:-8px 0 18px;font-weight:500">{subtitle}</p>'
+        )
+    return h

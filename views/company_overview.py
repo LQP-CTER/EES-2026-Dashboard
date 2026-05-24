@@ -94,7 +94,8 @@ def render(all_data, available_groups):
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: ORG DRILLDOWN (KHỐI / DIVISION)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">🏢 1. Phân Tích Cấp Tổ Chức (Division)</h3>', unsafe_allow_html=True)
+    from shared.plotly_theme import section_header
+    st.markdown(section_header("Phân Tích Cấp Tổ Chức", "Mức độ gắn kết và sức khỏe tổ chức theo Khối / Division"), unsafe_allow_html=True)
     
     if not df_div_stats.empty:
         df_div_stats = df_div_stats.sort_values('ei_mean', ascending=True)
@@ -156,7 +157,7 @@ def render(all_data, available_groups):
     # ══════════════════════════════════════════════════════════════
     # SECTION 3: DEMOGRAPHICS (THÂM NIÊN & CẤP BẬC)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">👥 2. Phân Tích Nhân Khẩu Học (Demographics)</h3>', unsafe_allow_html=True)
+    st.markdown(section_header("Phân Tích Nhân Khẩu Học", "Phân mảnh mức độ gắn kết theo Thâm niên và Cấp bậc"), unsafe_allow_html=True)
     
     # Define demographic groups from Q5 if 'Q5' exists
     demographics_cols = []
@@ -226,7 +227,7 @@ def render(all_data, available_groups):
     # ══════════════════════════════════════════════════════════════
     # SECTION 4: EVP & NLP INSIGHTS
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">💡 3. EVP & Lắng Nghe Nhân Viên (NLP)</h3>', unsafe_allow_html=True)
+    st.markdown(section_header("EVP & Lắng Nghe Nhân Viên (NLP)", "Phân tích từ khóa từ câu hỏi mở — định vị Thương hiệu Tuyển dụng"), unsafe_allow_html=True)
     
     # Collect all NLP clean responses
     open_responses = []

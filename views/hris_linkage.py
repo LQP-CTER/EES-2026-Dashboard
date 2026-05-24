@@ -7,7 +7,7 @@ from utils.data_loader import load_hris, merge_survey_hris
 from shared.plotly_theme import COLORS, PAL_CATEGORY, color_by_score
 from utils.ai_generator import render_ai_insight_card
 def render(df_clean, cfg, sel_group):
-    st.markdown(f"## Phân tích Thu nhập — {cfg.get('label', '')}")
+    from shared.plotly_theme import section_header
 
     df_hris, month_label = load_hris(sel_group)
     if df_hris is None:

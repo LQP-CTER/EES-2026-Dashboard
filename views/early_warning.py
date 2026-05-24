@@ -8,15 +8,8 @@ def render(df, cfg):
     codebook = cfg.get('codebook', {})
     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
 
-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">🚨 Cảnh báo Sớm & Dự báo Nghỉ việc — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
-
-    # 🤖 ══════════════════════════════════════════════════════════════
-    # INTERACTIVE RETENTION RISK SIMULATOR (XGBoost & SHAP)
-    # 🤖 ══════════════════════════════════════════════════════════════
-    st.markdown("<h4 style='color: #0A1F44; font-weight: 700; margin-top: 10px;'>🤖 Trình Giả Lập Rủi Ro Nghỉ Việc (What-If Simulation)</h4>", unsafe_allow_html=True)
-    st.markdown("""
-    Công cụ giả lập dựa trên luật của mô hình học máy **XGBoost** và trọng số **SHAP** phân tích trên dữ liệu thực tế của GHN.
-    """)
+    from shared.plotly_theme import section_header
+    st.markdown(section_header("Trình Giả Lập Rủi Ro Nghỉ Việc", "Mô phỏng What-If dựa trên mô hình XGBoost & trọng số SHAP — dữ liệu thực GHN"), unsafe_allow_html=True)
     
     sim_tab1, sim_tab2 = st.tabs(["Cấp độ Cá nhân (Micro)", "Cấp độ Tổ chức (Macro)"])
     
@@ -183,11 +176,11 @@ def render(df, cfg):
             </div>
             """, unsafe_allow_html=True)
         
-    st.write("") 
+    st.write("")
     st.divider()
-    st.write("") 
-    
-    st.markdown("### 🗣️ Phân Phối Tín Hiệu &amp; Ý Kiến Phản Hồi Mở (NLP)")
+    st.write("")
+
+    st.markdown(section_header("Phân Phối Tín Hiệu & Phản Hồi Mở (NLP)", "Phát hiện tín hiệu tiêu cực từ câu hỏi mở qua phân tích ngôn ngữ tự nhiên"), unsafe_allow_html=True)
 
     SIGNAL_LABELS = {
         'ý_định_nghỉ': 'Ý định nghỉ',

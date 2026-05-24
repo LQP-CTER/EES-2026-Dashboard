@@ -92,20 +92,18 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
     container = st.empty()
     
     def _build_html(content, is_typing=False):
-        cursor = "<span style='animation: blink 1s step-end infinite; border-right: 2px solid #FF5200; margin-left: 2px;'></span>" if is_typing else ""
-        html = f"""
-        <div class="ai-insight-container" style="{custom_style}">
-            <div class="ai-header" style="margin-bottom: 12px;">
-                <div class="ai-icon">✨</div>
-                <h4 class="ai-title">{title}</h4>
-                <div class="ai-badge">Model: {badge}</div>
-            </div>
-            <div class="ai-content" style="font-size: 0.9rem; transition: all 0.2s;">
-                {format_ai_html(content)}{cursor}
-            </div>
-        </div>
-        """
-        return "".join(line.strip() for line in html.split('\n'))
+        cursor = "<span style='border-right:2px solid #FF5200;margin-left:2px;opacity:0.7'></span>" if is_typing else ""
+        html = (
+            f'<div class="ai-insight-container" style="{custom_style}">'
+            f'<div class="ai-header">'
+            f'<div class="ai-icon">AI</div>'
+            f'<h4 class="ai-title">{title}</h4>'
+            f'<div class="ai-badge">{badge}</div>'
+            f'</div>'
+            f'<div class="ai-content">{format_ai_html(content)}{cursor}</div>'
+            f'</div>'
+        )
+        return html
 
     if cache_key in st.session_state:
         # Load from cache
