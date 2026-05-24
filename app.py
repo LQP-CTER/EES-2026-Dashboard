@@ -655,19 +655,19 @@ div[data-testid="stBaseButton-pill"][aria-selected="true"] {
 """, unsafe_allow_html=True)
 
 # ── Render Header ──
-st.markdown("""<div style="background: linear-gradient(135deg, #ffffff 0%, #fcfdfd 100%); border-radius: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 10px 30px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; padding: 24px 32px; margin-bottom: 32px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.04)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.02)';">
-<div style="display: flex; align-items: center; gap: 20px;">
+st.markdown("""<div style="background: linear-gradient(135deg, #ffffff 0%, #fcfdfd 100%); border-radius: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 10px 30px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; padding: 20px 28px; margin-bottom: 32px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.04)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.02)';">
+<div style="display: flex; align-items: center; gap: 24px;">
     <!-- Minimalist Premium Logo -->
-    <div style="display: flex; align-items: center; justify-content: center;">
-        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778161/LOGO%20GHN/LOGO_CHUAN_hviaug.png" style="height: 52px; object-fit: contain; drop-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+    <div style="display: flex; align-items: center; justify-content: center; padding-right: 24px; border-right: 2px solid #F1F5F9;">
+        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778161/LOGO%20GHN/LOGO_CHUAN_hviaug.png" style="height: 48px; width: auto; object-fit: contain; drop-shadow: 0 4px 10px rgba(0,0,0,0.05);">
     </div>
     <!-- Elegant Typography -->
-    <div>
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-            <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; color: #0A1F44; letter-spacing: -0.02em; line-height: 1;">EES 2026 DASHBOARD</h1>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <h1 style="margin: 0; font-size: 1.3rem; font-weight: 900; color: #0A1F44; letter-spacing: -0.01em; line-height: 1;">EES 2026 DATA ANALYSIS</h1>
             <span style="background: rgba(67, 24, 255, 0.06); color: #4318FF; font-size: 0.7rem; padding: 3px 10px; border-radius: 8px; font-weight: 800; letter-spacing: 0.5px;">NỘI BỘ</span>
         </div>
-        <p style="margin: 0; font-size: 0.9rem; color: #64748B; font-weight: 500;">GiaoHangNhanh • 23,000+ nhân viên • Chu kỳ khảo sát Q1/2026</p>
+        <p style="margin: 0; font-size: 0.85rem; color: #64748B; font-weight: 500;">Khảo sát Mức độ Gắn kết Nhân viên (EES) • Q1/2026 • Quy mô: 23,000+ nhân sự</p>
     </div>
 </div>
 <!-- Right Side Badges -->
