@@ -33,9 +33,7 @@ def load_group(group_id: str):
     from config.groups import GROUP_REGISTRY
     cfg = GROUP_REGISTRY[group_id]
     codebook = cfg['codebook']
-    fpath = os.path.join(DATA_DIR, cfg['file'])
-
-    df_raw = pd.read_excel(fpath, sheet_name=cfg['sheet'], engine='openpyxl')
+    df_raw = pd.read_csv(cfg['url'])
     n_before = len(df_raw)
 
     # Rename columns
