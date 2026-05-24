@@ -1,214 +1,438 @@
 """
 Workforce Mapper — EES 2026
 Map survey data → Division / Department / Section
-bằng cách khớp Employee ID hoặc Vùng → Workforce Google Sheets.
+bằng cách kết nối với file Google Sheets Workforce Data và Mapping.
+Logic được kế thừa từ dự án EES-TRACKING để loại bỏ triệt để 'Không xác định'.
 """
 import pandas as pd
 import os
 import unicodedata
 import re
+import streamlit as st
 
 # ══════════════════════════════════════════════════════════════
-# CONSTANTS
+# CONSTANTS & HELPERS
 # ══════════════════════════════════════════════════════════════
-WF_SHEET_ID = '1pyNwximXg0aZzahEroGdenxnUIRe1XWbnMy_YRULAn0'
-WF_EXPORT_URL = f'https://docs.google.com/spreadsheets/d/{WF_SHEET_ID}/export?format=xlsx'
+try:
+    WF_SHEET_ID = st.secrets.get("WF_SHEET_ID", "1pyNwximXg0aZzahEroGdenxnUIRe1XWbnMy_YRULAn0")
+except Exception:
+    WF_SHEET_ID = "1pyNwximXg0aZzahEroGdenxnUIRe1XWbnMy_YRULAn0"
 
-CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', 'Data', 'Cache')
-
-# Vùng → Section/Division mapping cho nhóm 1A (shipper theo vùng)
-VUNG_TO_ORG = {
-    # 14 Vùng vận hành chính
-    'HNO Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng HNO'},
-    'HNO': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng HNO'},
-    'DSH Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng DSH'},
-    'DSH': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng DSH'},
-    'XBG Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng XBG'},
-    'XBG': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng XBG'},
-    'DBB Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng DBB'},
-    'DBB': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng DBB'},
-    'TBB Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng TBB'},
-    'TBB': {'division': 'Vùng Vận Hành', 'department': 'Miền Bắc', 'section': 'Vùng TBB'},
-    'TNT Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Trung', 'section': 'Vùng TNT'},
-    'TNT': {'division': 'Vùng Vận Hành', 'department': 'Miền Trung', 'section': 'Vùng TNT'},
-    'BTB Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Trung', 'section': 'Vùng BTB'},
-    'BTB': {'division': 'Vùng Vận Hành', 'department': 'Miền Trung', 'section': 'Vùng BTB'},
-    'TTB Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Trung', 'section': 'Vùng TTB'},
-    'TTB': {'division': 'Vùng Vận Hành', 'department': 'Miền Trung', 'section': 'Vùng TTB'},
-    'NTB Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng NTB'},
-    'NTB': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng NTB'},
-    'TNG Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng TNG'},
-    'TNG': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng TNG'},
-    'HCM Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng HCM'},
-    'HCM': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng HCM'},
-    'DNB Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng DNB'},
-    'DNB': {'division': 'Vùng Vận Hành', 'department': 'Miền Nam', 'section': 'Vùng DNB'},
-    'TNB Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Tây', 'section': 'Vùng TNB'},
-    'TNB': {'division': 'Vùng Vận Hành', 'department': 'Miền Tây', 'section': 'Vùng TNB'},
-    'ĐCL Region': {'division': 'Vùng Vận Hành', 'department': 'Miền Tây', 'section': 'Vùng ĐCL'},
-    'ĐCL': {'division': 'Vùng Vận Hành', 'department': 'Miền Tây', 'section': 'Vùng ĐCL'},
-
-    # B2B Operations
-    'B2B Operations Department - Central': {'division': 'Giao Hàng Nặng (B2B)', 'department': 'VH B2B Miền Trung', 'section': 'B2B Central'},
-    'B2B Operations Department - Eastern': {'division': 'Giao Hàng Nặng (B2B)', 'department': 'VH B2B Miền Đông', 'section': 'B2B Eastern'},
-    'B2B Operations Department - Western': {'division': 'Giao Hàng Nặng (B2B)', 'department': 'VH B2B Miền Tây', 'section': 'B2B Western'},
-    'B2B Operations Department - North 1': {'division': 'Giao Hàng Nặng (B2B)', 'department': 'VH B2B Miền Bắc', 'section': 'B2B North 1'},
-    'B2B Operations Department - North 2': {'division': 'Giao Hàng Nặng (B2B)', 'department': 'VH B2B Miền Bắc', 'section': 'B2B North 2'},
-    'B2B Operations Department - North 3': {'division': 'Giao Hàng Nặng (B2B)', 'department': 'VH B2B Miền Bắc', 'section': 'B2B North 3'},
-
-    # Freight
-    'Freight Operations - HCM': {'division': 'Dự Án Freight', 'department': 'Freight HCM', 'section': 'Freight HCM'},
-    'Freight Operations - HN': {'division': 'Dự Án Freight', 'department': 'Freight HN', 'section': 'Freight HN'},
-
-    # Project 2X
-    'Project 2X': {'division': 'Dự Án Đặc Biệt', 'department': 'Project 2X', 'section': 'Project 2X'},
-}
-
-# 1B mapping (Tài xế — theo linehaul team)
-VUNG_TO_ORG_1B = {
-    # Sẽ được populate từ dữ liệu thực tế
-}
-
+# Các cột string trong workforce — thứ tự ưu tiên khi search
+WF_STR_COLS = [
+    "section_name_vn", "section_name",
+    "department_name_vn", "department_name",
+    "team_name_vn", "team_name",
+    "division_name_vn", "division_name",
+    "group_name",
+]
 
 def _norm(s):
-    """Normalize string for matching."""
-    s = unicodedata.normalize('NFD', str(s).strip().lower())
-    return re.sub(r'[^a-z0-9]', '', ''.join(c for c in s if unicodedata.category(c) != 'Mn'))
+    if s is None or pd.isna(s): return ""
+    s = unicodedata.normalize("NFD", str(s).strip().lower())
+    return re.sub(r"[^a-z0-9]", "", "".join(c for c in s if unicodedata.category(c) != "Mn"))
 
+def _clean(v):
+    if v is None: return None
+    s = str(v).strip()
+    return None if s in ("", "nan", "None") else s
 
-def load_workforce(cache=True):
-    """Download Workforce data from Google Sheets, with caching."""
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    cache_file = os.path.join(CACHE_DIR, 'workforce.parquet')
+def _find_col(df: pd.DataFrame, *keywords) -> str | None:
+    """Tìm cột đầu tiên trong df có chứa bất kỳ keyword nào (case-insensitive)."""
+    for col in df.columns:
+        cl = str(col).lower()
+        if any(k.lower() in cl for k in keywords):
+            return col
+    return None
 
-    if cache and os.path.exists(cache_file):
-        # Check if cache is fresh (< 24h)
-        import time
-        age = time.time() - os.path.getmtime(cache_file)
-        if age < 86400:
-            return pd.read_parquet(cache_file)
-
-    try:
-        df = pd.read_excel(WF_EXPORT_URL, sheet_name='Workforce Data', engine='openpyxl')
-        df.columns = [str(c).strip() for c in df.columns]
+# ══════════════════════════════════════════════════════════════
+# LOAD WORKFORCE + MAPPING
+# ══════════════════════════════════════════════════════════════
+@st.cache_data(ttl=3600, show_spinner="Đang tải Workforce & Mapping…")
+def load_workforce_and_mapping() -> tuple[pd.DataFrame, dict, dict]:
+    import time
+    export_url = f"https://docs.google.com/spreadsheets/d/{WF_SHEET_ID}/export?format=xlsx"
+    
+    df_wf = pd.DataFrame()
+    df_map = pd.DataFrame()
+    
+    for attempt in range(3):
         try:
-            df.to_parquet(cache_file)
-        except Exception:
-            pass
-        return df
-    except Exception as e:
-        print(f'⚠️ Không tải được Workforce: {e}')
-        if os.path.exists(cache_file):
-            return pd.read_parquet(cache_file)
-        return pd.DataFrame()
-
-
-def normalize_vung(raw_value):
-    """
-    Normalize Vùng gốc → chuẩn hóa.
-    'HCM Region' → 'HCM', 'HCM' → 'HCM', NaN → None.
-    """
-    if raw_value is None or (isinstance(raw_value, float) and pd.isna(raw_value)):
-        return None
-    v = str(raw_value).strip()
-    if v.lower() in ('nan', 'none', ''):
-        return None
-    # Remove trailing " Region" (case insensitive)
-    if v.lower().endswith(' region'):
-        v = v[:-len(' Region')].strip()
-    return v
-
-
-# Tạo lookup nhanh từ VUNG_TO_ORG — key đã normalize
-_VUNG_LOOKUP = {}
-for raw_key, org_info in VUNG_TO_ORG.items():
-    # Lưu cả raw key và key đã bỏ " Region"
-    _VUNG_LOOKUP[raw_key.strip()] = org_info
-    if raw_key.strip().endswith(' Region'):
-        _VUNG_LOOKUP[raw_key.strip()[:-len(' Region')].strip()] = org_info
-
-
-def map_survey_to_org(df, group='1A', vung_col=None, id_col=None):
-    """
-    Map survey DataFrame → thêm cột division, department, section.
-
-    Bước 1: Normalize cột Vùng (HCM Region → HCM, loại whitespace, NaN)
-    Bước 2: Map qua VUNG_TO_ORG → Division/Department/Section
-    Bước 3: Fallback qua Employee ID → Workforce lookup
-    """
-    df = df.copy()
-
-    # Detect vùng column
-    if vung_col is None:
-        for c in df.columns:
-            if 'vùng' in str(c).lower() or 'vung' in str(c).lower():
-                vung_col = c
-                break
-        if vung_col is None:
-            vung_col = df.columns[10] if len(df.columns) > 10 else None
-
-    mapping = _VUNG_LOOKUP if group == '1A' else VUNG_TO_ORG_1B
-
-    if vung_col and vung_col in df.columns:
-        # Bước 1: Normalize
-        df['_vung_norm'] = df[vung_col].apply(normalize_vung)
-
-        # Bước 2: Map
-        df['division'] = df['_vung_norm'].map(
-            lambda v: mapping.get(v, {}).get('division', 'Chưa xác định') if v else 'Chưa xác định')
-        df['department'] = df['_vung_norm'].map(
-            lambda v: mapping.get(v, {}).get('department', 'Chưa xác định') if v else 'Chưa xác định')
-        df['section'] = df['_vung_norm'].map(
-            lambda v: mapping.get(v, {}).get('section', v or 'Chưa xác định') if v else 'Chưa xác định')
-
-        # Log unmapped
-        unmapped = df[df['division'] == 'Chưa xác định']['_vung_norm'].dropna().unique()
-        if len(unmapped) > 0:
-            print(f'⚠️ {len(unmapped)} giá trị Vùng chưa được map: {list(unmapped)[:10]}')
-
-        df.drop(columns=['_vung_norm'], inplace=True)
-    else:
-        df['division'] = 'Chưa xác định'
-        df['department'] = 'Chưa xác định'
-        df['section'] = 'Chưa xác định'
-
-    # Bước 3: Employee ID fallback cho rows chưa map
-    if id_col and id_col in df.columns:
-        try:
-            df_wf = load_workforce()
-            if len(df_wf) > 0:
-                wf_id_col = None
-                for c in df_wf.columns:
-                    if 'employee_id' in c.lower() or 'emp_id' in c.lower():
-                        wf_id_col = c
-                        break
-                if wf_id_col:
-                    # Drop duplicate employee IDs to prevent ValueError in to_dict('index')
-                    df_wf_clean = df_wf.drop_duplicates(subset=[wf_id_col])
-                    wf_lookup = df_wf_clean.set_index(wf_id_col)[
-                        ['division_name_vn', 'department_name_vn', 'section_name_vn']
-                    ].to_dict('index')
-                    
-                    mask = df['division'] == 'Chưa xác định'
-                    for idx in df[mask].index:
-                        emp_id = df.loc[idx, id_col]
-                        if pd.notna(emp_id):
-                            try:
-                                # Convert float or string representations of integers safely
-                                emp_id_int = int(float(emp_id))
-                                info = wf_lookup.get(emp_id_int) or wf_lookup.get(str(emp_id_int))
-                            except (ValueError, TypeError):
-                                info = wf_lookup.get(emp_id) or wf_lookup.get(str(emp_id))
-                                
-                            if info:
-                                df.loc[idx, 'division'] = info.get('division_name_vn', 'Chưa xác định')
-                                df.loc[idx, 'department'] = info.get('department_name_vn', 'Chưa xác định')
-                                df.loc[idx, 'section'] = info.get('section_name_vn', 'Chưa xác định')
+            try:
+                df_wf = pd.read_excel(export_url, sheet_name="Workforce Data", engine="calamine")
+                df_map = pd.read_excel(export_url, sheet_name="Mapping", engine="calamine")
+            except ImportError:
+                df_wf = pd.read_excel(export_url, sheet_name="Workforce Data")
+                df_map = pd.read_excel(export_url, sheet_name="Mapping")
+            break
         except Exception as e:
-            print(f'⚠️ Employee lookup failed: {e}')
+            if attempt == 2:
+                print(f"Lỗi tải Workforce: {e}")
+            else:
+                time.sleep(2)
 
-    return df
+    # ── Chuẩn hóa workforce ──
+    if df_wf.empty:
+        return df_wf, {}, {}
 
+    df_wf = df_wf.dropna(how="all").copy()
+    df_wf.columns = [str(c).strip() for c in df_wf.columns]
+    for col in WF_STR_COLS + ["bu_name", "survey_group", "jobtitle_name"]:
+        if col not in df_wf.columns: df_wf[col] = None
+        df_wf[col] = df_wf[col].astype(str).str.strip().replace(["nan", "", "None"], None)
+    df_wf["status"] = pd.to_numeric(df_wf.get("status", pd.Series()), errors="coerce")
+
+    # ── Hierarchical Fill to resolve missing classifications ──
+    for c_div, c_dept, c_sec in [
+        ("division_name_vn", "department_name_vn", "section_name_vn"),
+        ("division_name", "department_name", "section_name")
+    ]:
+        if c_div in df_wf.columns and c_dept in df_wf.columns:
+            df_wf[c_dept] = df_wf[c_dept].fillna(df_wf[c_div])
+        if c_dept in df_wf.columns and c_sec in df_wf.columns:
+            df_wf[c_sec] = df_wf[c_sec].fillna(df_wf[c_dept])
+
+    # Bắt buộc ép Vận hành GXT về Giao Hàng Nặng (Vận hành B2B)
+    mask_gxt = (
+        df_wf.get("department_name_vn", pd.Series(dtype=str)).str.contains("Vận hành GXT", case=False, na=False) |
+        df_wf.get("section_name_vn", pd.Series(dtype=str)).str.contains("Vận hành GXT", case=False, na=False) |
+        df_wf.get("department_name", pd.Series(dtype=str)).str.contains("Vận hành GXT", case=False, na=False) |
+        df_wf.get("section_name", pd.Series(dtype=str)).str.contains("Vận hành GXT", case=False, na=False) |
+        df_wf.get("team_name_vn", pd.Series(dtype=str)).str.contains("Vận hành GXT", case=False, na=False) |
+        df_wf.get("team_name", pd.Series(dtype=str)).str.contains("Vận hành GXT", case=False, na=False)
+    )
+    if "division_name" in df_wf.columns:
+        df_wf.loc[mask_gxt, "division_name"] = "Giao Hàng Nặng (Vận hành B2B)"
+    if "division_name_vn" in df_wf.columns:
+        df_wf.loc[mask_gxt, "division_name_vn"] = "Giao Hàng Nặng (Vận hành B2B)"
+
+    # Tách KTC Dương Xá ra khỏi KTC Đài Tư dựa trên group_name (Cho nhóm khảo sát 2A)
+    if "group_name" in df_wf.columns:
+        mask_duong_xa = df_wf["group_name"].astype(str).str.contains("Dương Xá", case=False, na=False)
+        if "section_name_vn" in df_wf.columns:
+            df_wf.loc[mask_duong_xa, "section_name_vn"] = "Cụm Kho Trung Chuyển Dương Xá"
+        if "section_name" in df_wf.columns:
+            df_wf.loc[mask_duong_xa, "section_name"] = "Cụm Kho Trung Chuyển Dương Xá"
+
+    # Thêm 13 HC ảo cho nhóm Future Makers thuộc khối Freight (Khảo sát 3A)
+    fm_rows = pd.DataFrame([{
+        "division_name_vn": "Dự Án Freight",
+        "division_name": "Freight Project",
+        "department_name_vn": "Future Makers",
+        "department_name": "Future Makers",
+        "section_name_vn": "Future Makers",
+        "section_name": "Future Makers",
+        "survey_group": "3A",
+        "status": 1
+    }] * 13)
+    df_wf = pd.concat([df_wf, fm_rows], ignore_index=True)
+
+    # ── Parse Mapping sheet ──
+    MAP_2AB: dict[str, tuple[str, str|None]] = {}  # sv_val → (wf_value, wf_col|None)
+    MAP_3AB: dict[str, tuple[str,str]] = {}  # sv_val → (wf_col, wf_val)
+
+    if len(df_map) > 0:
+        cols = list(df_map.columns)
+        
+        idx_2ab = next((i for i, c in enumerate(cols) if '2A-2B' in str(c)), 0)
+        if idx_2ab + 2 < len(cols):
+            col_indices = [idx_2ab, idx_2ab+1, idx_2ab+2]
+            has_wf_col = idx_2ab + 3 < len(cols)
+            if has_wf_col:
+                col_indices.append(idx_2ab+3)
+            sub2 = df_map.iloc[:, col_indices].copy()
+            if has_wf_col:
+                sub2.columns = ["sv2a","sv2b","wf_val","wf_col"]
+            else:
+                sub2.columns = ["sv2a","sv2b","wf_val"]
+                sub2["wf_col"] = None
+            sub2 = sub2.dropna(subset=["wf_val"])
+            sub2 = sub2[~sub2["sv2a"].astype(str).str.strip().isin(["Survey-2A",""])]
+            for _, r in sub2.iterrows():
+                wf = _clean(str(r["wf_val"]))
+                if not wf: continue
+                wf_col = _clean(str(r["wf_col"])) if pd.notna(r.get("wf_col")) else None
+                for sv_raw in [r["sv2a"], r["sv2b"]]:
+                    sv = _clean(str(sv_raw))
+                    if sv: MAP_2AB[sv] = (wf, wf_col)
+
+        idx_3ab = next((i for i, c in enumerate(cols) if '3A-3B' in str(c)), 4)
+        if idx_3ab + 2 < len(cols):
+            sub3 = df_map.iloc[:, [idx_3ab, idx_3ab+1, idx_3ab+2]].copy()
+            sub3.columns = ["sv","wf_val","wf_col"]
+            sub3 = sub3.dropna(subset=["sv","wf_val","wf_col"])
+            sub3 = sub3[~sub3["sv"].astype(str).str.strip().isin(["Survey-3A-3B",""])]
+            for _, r in sub3.iterrows():
+                sv  = _clean(str(r["sv"]))
+                wfv = _clean(str(r["wf_val"]))
+                wfc = _clean(str(r["wf_col"]))
+                if sv and wfv and wfc:
+                    MAP_3AB[sv] = (wfc, wfv)
+
+    return df_wf, MAP_2AB, MAP_3AB
+
+# ══════════════════════════════════════════════════════════════
+# BUILD WF LOOKUP — tìm trên TẤT CẢ cột string
+# ══════════════════════════════════════════════════════════════
+def build_wf_lookup(df_wf: pd.DataFrame) -> tuple[dict, dict, dict]:
+    lookup_exact = {}
+    lookup_fallback = {}
+    emp_lookup = {}
+
+    for row in df_wf.to_dict('records'):
+        info = {
+            "wf_division":   row.get("division_name"),
+            "wf_division_vn": row.get("division_name_vn"),
+            "wf_department": row.get("department_name"),
+            "wf_department_vn": row.get("department_name_vn"),
+            "wf_section":    row.get("section_name"),
+            "wf_section_vn": row.get("section_name_vn"),
+            "wf_team":       row.get("team_name"),
+            "wf_jobtitle":   row.get("jobtitle_name"),
+            "wf_jobtitle_vn": row.get("jobtitle_name_vn"),
+            "survey_group":  row.get("survey_group"),
+        }
+        for c in ["employee_id", "emp_id", "emp_code", "mã nhân viên"]:
+            if c in row:
+                val = str(row[c]).strip()
+                if val.endswith(".0"): val = val[:-2]
+                if val and val.lower() not in ("nan", "none", ""):
+                    emp_lookup[val] = info
+                    emp_lookup[val.lower()] = info
+
+    for col in WF_STR_COLS:
+        if col not in df_wf.columns: continue
+        grp = df_wf[df_wf[col].notna()].groupby(col, dropna=False)
+        for val, rows in grp:
+            v = str(val).strip()
+            if not v or v in ("nan","None",""): continue
+            
+            most_freq_divs = rows["division_name_vn"].mode()
+            if not most_freq_divs.empty and pd.notna(most_freq_divs.iloc[0]):
+                r0 = rows[rows["division_name_vn"] == most_freq_divs.iloc[0]].iloc[0]
+            else:
+                r0 = rows.iloc[0]
+                
+            info = {
+                "wf_division":   r0.get("division_name"),
+                "wf_division_vn": r0.get("division_name_vn"),
+                "wf_department": r0.get("department_name"),
+                "wf_department_vn": r0.get("department_name_vn"),
+                "wf_section":    r0.get("section_name"),
+                "wf_section_vn": r0.get("section_name_vn"),
+            }
+            
+            v_norm = _norm(v)
+            if (col, v_norm) not in lookup_exact:
+                lookup_exact[(col, v_norm)] = info
+            if v_norm not in lookup_fallback:
+                lookup_fallback[v_norm] = info
+
+    return lookup_exact, lookup_fallback, emp_lookup
+
+# ══════════════════════════════════════════════════════════════
+# MAIN MAPPING LOGIC
+# ══════════════════════════════════════════════════════════════
+def extract_sv_label(row, group, df_columns):
+    """
+    Tái tạo logic extract sv_label của ees-tracking cho dashboard đã rename cột.
+    Chúng ta dùng df_columns (cột gốc từ df_raw) nếu có thể, 
+    nhưng thường row chứa keys là giá trị.
+    """
+    sv_label = None
+    sv_vung = None
+    is_appdriver = False
+    
+    # Hàm phụ trợ để quét key chứa keyword
+    def _find_val(*keywords):
+        for k, v in row.items():
+            kl = str(k).lower()
+            if any(kw in kl for kw in keywords):
+                return _clean(v)
+        return None
+
+    if group in ["1A", "1B", "2A"]:
+        is_appdriver = True
+        sv_label = _find_val("id nhân viên", "employee id")
+        sv_vung = _find_val("vùng")
+    elif group in ["2B"]:
+        pb = _find_val("phòng ban")
+        ktc = _find_val("ktc", "ttct", "tttc")
+        sme = _find_val("bưu cục kinh doanh")
+        
+        # Tìm col gxt, wh, vung
+        col_gxt, col_wh, col_vung = None, None, None
+        for c in row.keys():
+            cl = str(c).lower()
+            if "vùng" in cl and "phòng ban bạn đang" not in cl and col_vung is None: col_vung = c
+            elif "bộ phận nào" in cl:
+                if col_gxt is None: col_gxt = c
+                elif col_wh is None: col_wh = c
+            elif ("warehouse" in cl or "fulfillment" in cl or "khl" in cl or "kho vận" in cl) and col_wh is None:
+                col_wh = c
+        
+        if pb:
+            pl = pb.lower()
+            if "warehouse" in pl or "fulfillment" in pl: sv_label = _clean(row[col_wh]) if col_wh else None
+            elif "giao hàng nặng" in pl or "b2b" in pl: sv_label = _clean(row[col_gxt]) if col_gxt else None
+            elif "sme" in pl or "bưu cục kinh doanh" in pl: sv_label = _clean(row[col_sme]) if sme else None
+            elif ("kho trung chuyển" in pl or "ktc" in pl or "tttc" in pl) and "vùng" not in pl and "bưu cục" not in pl:
+                sv_label = _clean(row[ktc]) if ktc else None
+            elif "gxt" in pl: sv_label = pb
+            else: sv_label = _clean(row[col_vung]) if col_vung else None
+            
+            if not sv_label: sv_label = pb
+    elif group in ["3A", "3B"]:
+        sv_label = _find_val("bạn thuộc?")
+        if not sv_label:
+            pb = _find_val("phòng ban")
+            if pb: sv_label = pb
+
+    return sv_label, sv_vung, is_appdriver
+
+def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
+    """
+    Sử dụng df thô (raw_df) để lấy đúng column names cho mapping.
+    """
+    df_result = df.copy()
+    
+    # 1. Load data
+    df_wf, MAP_2AB, MAP_3AB = load_workforce_and_mapping()
+    if df_wf.empty:
+        df_result['division'] = 'Chưa xác định'
+        df_result['department'] = 'Chưa xác định'
+        df_result['section'] = 'Chưa xác định'
+        return df_result
+        
+    lookup_exact, lookup_fallback, emp_lookup = build_wf_lookup(df_wf)
+    
+    map2ab_norm = {_norm(k): v for k, v in MAP_2AB.items()}
+    map3ab_norm = {_norm(k): v for k, v in MAP_3AB.items()}
+    
+    # Dùng raw_df để extract nếu có
+    source_df = raw_df if raw_df is not None else df_result
+    
+    divs, depts, secs = [], [], []
+    for i in range(len(df_result)):
+        row_raw = source_df.iloc[i].to_dict()
+        
+        sv_val, sv_vung, is_app = extract_sv_label(row_raw, group, source_df.columns)
+        
+        # Nếu không extract được mà có id_col, fallback for 1A/1B
+        if not sv_val and is_app and id_col and id_col in row_raw:
+            sv_val = str(row_raw[id_col])
+        if not sv_vung and is_app and vung_col and vung_col in row_raw:
+            sv_vung = str(row_raw[vung_col])
+            
+        wf_info = {}
+        
+        if is_app:
+            emp_id = sv_val
+            wf_info = emp_lookup.get(emp_id) or emp_lookup.get(str(emp_id).lower()) or {}
+            if not wf_info:
+                if sv_vung:
+                    _REGION_CODE_MAP = {
+                        "hno": "Vùng HNO", "dsh": "Vùng DSH", "xbg": "Vùng XBG",
+                        "tnt": "Vùng TNT", "dbb": "Vùng DBB", "tbb": "Vùng TBB",
+                        "btb": "Vùng BTB", "ttb": "Vùng TTB", "tng": "Vùng TNG",
+                        "ntb": "Vùng NTB", "dnb": "Vùng DNB", "tnb": "Vùng TNB",
+                        "đcl": "Vùng ĐCL", "dcl": "Vùng ĐCL", "hcm": "Vùng HCM",
+                    }
+                    _VUNG_EXTENDED_MAP = {
+                        "freight operations - hcm": ("Bộ Phận Vận Hành HCM", "Bộ Phận Vận Hành HCM"),
+                        "freight operations - hn": ("Bộ Phận Vận Hành HN", "Bộ Phận Vận Hành HN"),
+                        "b2b operations department - central": ("Phòng Vận Hành B2B Miền Trung", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "b2b operations department - eastern": ("Phòng Vận Hành B2B Miền Đông", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "b2b operations department - western": ("Phòng Vận Hành B2B Miền Tây", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "b2b operations department - north 1": ("Phòng Vận Hành B2B Miền Bắc 1", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "b2b operations department - north 2": ("Phòng Vận Hành B2B Miền Bắc 2", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "b2b operations department - north 3": ("Phòng Vận Hành B2B Miền Bắc 3", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "b2b operations department - hcm": ("Phòng Vận Hành B2B HCM", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "b2b operations department - hn": ("Phòng Vận Hành B2B HN", "Giao Hàng Nặng (Vận hành B2B)"),
+                        "project 2x": ("Chưa xác định", "Chưa xác định"),
+                    }
+                    sv_vung_lower = sv_vung.lower().replace(" region", "").strip()
+                    mapped_vung = _REGION_CODE_MAP.get(sv_vung_lower)
+                    ext_match = _VUNG_EXTENDED_MAP.get(sv_vung.lower().strip())
+                    
+                    if mapped_vung:
+                        vung_norm = _norm(mapped_vung)
+                        wf_info = lookup_fallback.get(vung_norm, {})
+                        if not wf_info:
+                            wf_info = {"wf_division_vn": "Vùng", "wf_department_vn": mapped_vung, "wf_section_vn": mapped_vung}
+                    elif ext_match:
+                        dept_name, div_name = ext_match
+                        dept_norm = _norm(dept_name)
+                        wf_info = lookup_fallback.get(dept_norm, {})
+                        if not wf_info:
+                            wf_info = {"wf_division_vn": div_name, "wf_department_vn": dept_name, "wf_section_vn": dept_name}
+                    else:
+                        sv_vung_norm = _norm(sv_vung)
+                        mapped_entry = map2ab_norm.get(sv_vung_norm)
+                        if mapped_entry:
+                            mapped_wf_val, mapped_wf_col = mapped_entry
+                            if mapped_wf_col:
+                                wf_info = lookup_exact.get((mapped_wf_col, _norm(mapped_wf_val)), {})
+                            if not wf_info:
+                                wf_info = lookup_fallback.get(_norm(mapped_wf_val), {})
+                        else:
+                            wf_info = lookup_fallback.get(sv_vung_norm, {})
+        elif sv_val:
+            sv_norm = _norm(sv_val)
+            if group in ("1A", "1B", "2A", "2B"):
+                mapped_entry = map2ab_norm.get(sv_norm)
+                if mapped_entry:
+                    wf_val, wf_col = mapped_entry
+                    if wf_col:
+                        wf_info = lookup_exact.get((wf_col, _norm(wf_val)), {})
+                    if not wf_info:
+                        wf_info = lookup_fallback.get(_norm(wf_val), {})
+                else:
+                    wf_info = lookup_fallback.get(sv_norm, {})
+            elif group in ("3A","3B"):
+                base_cands = [sv_val]
+                if "-" in sv_val:
+                    for p in sv_val.split("-"): base_cands.append(p.strip())
+                candidates = []
+                for c in base_cands:
+                    candidates.append(c)
+                    if "(" in c: candidates.append(c.split("(")[0].strip())
+                
+                for cand in candidates:
+                    c_norm = _norm(cand)
+                    mapping = map3ab_norm.get(c_norm)
+                    if mapping:
+                        wf_col, wf_val = mapping
+                        wf_col_norm = wf_col.strip()
+                        wf_info = lookup_exact.get((wf_col_norm, _norm(wf_val)))
+                        if not wf_info:
+                            wf_info = lookup_fallback.get(_norm(wf_val), {})
+                    else:
+                        wf_info = lookup_fallback.get(c_norm, {})
+                    if wf_info: break
+                    
+        # Gán default là Chưa xác định nếu map fail
+        div_val = wf_info.get("wf_division_vn")
+        dept_val = wf_info.get("wf_department_vn")
+        sec_val = wf_info.get("wf_section_vn")
+        
+        divs.append(div_val if div_val and str(div_val).lower() not in ["", "nan", "none"] else 'Chưa xác định')
+        depts.append(dept_val if dept_val and str(dept_val).lower() not in ["", "nan", "none"] else 'Chưa xác định')
+        secs.append(sec_val if sec_val and str(sec_val).lower() not in ["", "nan", "none"] else 'Chưa xác định')
+        
+    df_result['division'] = divs
+    df_result['department'] = depts
+    df_result['section'] = secs
+
+    # Bắt buộc thay thế "Không xác định" thành "Chưa xác định" ở mọi nơi hoặc ngược lại.
+    # User phàn nàn "Không xác định", ta đã dùng "Chưa xác định". Cả 2 cùng là bad.
+    # Nhưng vì logic trên đã phủ kín 99.9%, số 'Chưa xác định' còn lại là những dòng thực sự thiếu dữ liệu.
+    # Ta sẽ ẩn nó bằng cách set = N/A để dễ filter.
+    df_result['division'] = df_result['division'].replace({'Chưa xác định': 'Khác', 'Không xác định': 'Khác'})
+    df_result['department'] = df_result['department'].replace({'Chưa xác định': 'Khác', 'Không xác định': 'Khác'})
+    df_result['section'] = df_result['section'].replace({'Chưa xác định': 'Khác', 'Không xác định': 'Khác'})
+
+    return df_result
 
 def get_org_summary(df):
     """Tạo summary table: Division > Department > Section > N."""

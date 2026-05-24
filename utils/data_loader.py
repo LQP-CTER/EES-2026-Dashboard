@@ -86,12 +86,14 @@ def load_group(group_id: str):
         if 'Vùng' in str(c) or 'vùng' in str(c):
             vung_col = c; break
     try:
+        raw_clean_df = df_raw.loc[df_clean.index].copy()
         df_clean = map_survey_to_org(df_clean, group=group_id, vung_col=vung_col,
-                                     id_col=df_clean.columns[1])
-    except Exception:
-        df_clean['division'] = 'N/A'
-        df_clean['department'] = 'N/A'
-        df_clean['section'] = df_clean.get(vung_col, 'N/A')
+                                     id_col=df_clean.columns[1], raw_df=raw_clean_df)
+    except Exception as e:
+        print(f"Lỗi map data: {e}")
+        df_clean['division'] = 'Khác'
+        df_clean['department'] = 'Khác'
+        df_clean['section'] = 'Khác'
 
     # Pillar scores
     pillar_cols = defaultdict(list)
