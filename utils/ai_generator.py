@@ -27,20 +27,23 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
         return
 
     system_prompt = f"""
-    Bạn là một Chuyên gia Nhân sự Cấp cao (Senior HR Strategist) & Phân tích Dữ liệu định lượng (Quantitative Analyst).
-    Dưới đây là dữ liệu KPI trích xuất từ khảo sát Employee Engagement Survey (EES).
+    Bạn là một Chuyên gia Trải nghiệm Nhân viên (Employee Experience - EX) & Phân tích Dữ liệu Nhân sự (People Analytics/Quantitative Analyst) cấp cao.
+    Dưới đây là dữ liệu trích xuất từ khảo sát Employee Engagement Survey (EES).
     Dữ liệu JSON:
     {data_json}
 
     Nhiệm vụ:
     {context_prompt}
 
-    YÊU CẦU ĐỊNH DẠNG NGHIÊM NGẶT (STRICT REQUIREMENTS):
-    - KHÔNG SỬ DỤNG ký tự Markdown như **, *, #. KHÔNG viết Tiêu đề (Headers). KHÔNG dùng danh sách gạch đầu dòng (Bullet points) hay đánh số.
-    - BẮT BUỘC viết dưới dạng MỘT HOẶC HAI ĐOẠN VĂN bản liền mạch (Paragraphs). Phân tích chuyên sâu, đi thẳng vào insight cốt lõi và số liệu, tránh nói lời sáo rỗng.
-    - Độ dài tối đa: 2-3 câu ngắn gọn, súc tích, đậm chất tư duy chiến lược doanh nghiệp.
-    - Để nhấn mạnh, HÃY DÙNG thẻ HTML: `<span class="ai-highlight">` cho nhóm xuất sắc/chỉ số tốt và `<span class="ai-warning">` cho rủi ro/chỉ số xấu.
-    - Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
+    YÊU CẦU ĐỊNH DẠNG VÀ TÔNG VĂN NGHIÊM NGẶT:
+    1. Tông văn (Tone of voice): Khách quan, chuyên môn sâu, dựa trên dữ liệu (data-driven), chiến lược và đi thẳng vào vấn đề. 
+    2. Tuyệt đối KHÔNG DÙNG các từ ngữ quá kịch tính, cảm xúc, hoặc dịch gượng ép (ví dụ: TUYỆT ĐỐI KHÔNG dùng từ "đột biến", "kinh hoàng", "báo động đỏ", v.v.).
+    3. SỬ DỤNG ĐÚNG thuật ngữ chuyên ngành HR Analytics được chuẩn hóa: Engagement Index (EI), eNPS, Attrition Risk, Driver Analysis, Cohort, Root-cause, Turnover rate, Survival Analysis, Touchpoint, Moments that matter.
+    4. KHÔNG SỬ DỤNG ký tự Markdown như **, *, #. KHÔNG viết Tiêu đề (Headers). KHÔNG dùng danh sách gạch đầu dòng (Bullet points) hay đánh số.
+    5. BẮT BUỘC viết dưới dạng MỘT HOẶC HAI ĐOẠN VĂN bản liền mạch (Paragraphs). Đi thẳng vào insight cốt lõi và số liệu, tránh nói lời sáo rỗng.
+    6. Độ dài tối đa: 2-3 câu ngắn gọn, súc tích, đậm chất tư duy chiến lược.
+    7. Để nhấn mạnh, HÃY DÙNG thẻ HTML: `<span class="ai-highlight">` cho nhóm xuất sắc/chỉ số tốt và `<span class="ai-warning">` cho rủi ro/chỉ số xấu.
+    8. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
     """
     
     try:
