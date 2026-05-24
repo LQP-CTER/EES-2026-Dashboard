@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Project Specific
+Data/
+*.xlsx
+*.csv
+.DS_Store
+
+# Secrets
+.streamlit/secrets.toml
+.env
