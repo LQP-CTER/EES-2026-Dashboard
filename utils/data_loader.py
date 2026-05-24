@@ -78,7 +78,7 @@ def load_group(group_id: str):
     df['n_valid_likert'] = df[likert_cols].notna().sum(axis=1)
     df['flag_straightline'] = (df['_likert_sd'] == 0) & (df['n_valid_likert'] >= 10)
     df['flag_too_missing'] = (df[likert_cols].isna().sum(axis=1) / len(likert_cols) * 100) > 80
-    df_clean = df[~df['flag_too_missing']].copy()
+    df_clean = df[~(df['flag_too_missing'] | df['flag_straightline'])].copy()
 
     # Org mapping
     vung_col = df_clean.columns[10]
@@ -131,6 +131,19 @@ def load_group(group_id: str):
                     lambda x: preprocess_text(str(x)) if pd.notna(x) and len(str(x).strip()) > 3 else None)
     except Exception:
         pass
+
+    import hashlib
+    def hash_id(val):
+        if pd.isna(val): return None
+        try:
+            return hashlib.sha256(str(int(val)).encode()).hexdigest()
+        except:
+            return hashlib.sha256(str(val).encode()).hexdigest()
+
+    # Anonymize ID
+    id_col = df_clean.columns[1]
+    df_clean['_nv_hash'] = df_clean[id_col].apply(hash_id)
+    df_clean = df_clean.drop(columns=[id_col])
 
     # Store metadata
     df_clean.attrs['group_id'] = group_id
@@ -210,17 +223,23 @@ def load_hris(group_id: str):
     latest = df_hris['_month_num'].max()
     latest_label = df_hris.loc[df_hris['_month_num'] == latest, month_col].iloc[0]
     df_latest = df_hris[df_hris['_month_num'] == latest].copy()
-    df_latest['_nv_id'] = pd.to_numeric(df_latest['ID'], errors='coerce').astype('Int64')
+    import hashlib
+    def hash_id(val):
+        if pd.isna(val): return None
+        try:
+            return hashlib.sha256(str(int(val)).encode()).hexdigest()
+        except:
+            return hashlib.sha256(str(val).encode()).hexdigest()
+
+    df_latest['_nv_hash'] = df_latest['ID'].apply(hash_id)
     return df_latest, latest_label
 
 
 def merge_survey_hris(df_clean, df_hris):
     """Merge survey with HRIS."""
-    id_col = df_clean.columns[1]
     df_clean = df_clean.copy()
-    df_clean['_nv_id'] = pd.to_numeric(df_clean[id_col], errors='coerce').astype('Int64')
 
-    merge_cols = ['_nv_id', 'Lương thực nhận', 'Tổng', 'Phạt', 'Tổng Đơn giao',
+    merge_cols = ['_nv_hash', 'Lương thực nhận', 'Tổng', 'Phạt', 'Tổng Đơn giao',
                   'Năng suất Giao', 'Phân loại Nhóm Năng Suất Giao',
                   'Phân loại Chiến Binh ', 'Thâm niên (Đơn vị tính là tháng)',
                   'Nhóm Thâm Niên', 'Range lương thực nhận', 'Ngày nghỉ việc',
@@ -228,7 +247,7 @@ def merge_survey_hris(df_clean, df_hris):
                   'Thưởng Doanh Thu', 'Truy thu mất hàng COD']
     merge_cols = [c for c in merge_cols if c in df_hris.columns]
 
-    df_m = df_clean.merge(df_hris[merge_cols], on='_nv_id', how='left', suffixes=('', '_hris'))
+    df_m = df_clean.merge(df_hris[merge_cols], on='_nv_hash', how='left', suffixes=('', '_hris'))
 
     if 'Lương thực nhận' in df_m.columns:
         df_m['income_m'] = df_m['Lương thực nhận'] / 1_000_000
