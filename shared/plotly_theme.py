@@ -206,5 +206,6 @@ def make_html_kpi(title, value, delta=None, color="blue", icon="📊", progress_
             </div>
         </div>
     </div>
+    """
     html = "".join(line.strip() for line in html.split("\n"))
     return html
