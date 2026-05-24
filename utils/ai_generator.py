@@ -93,7 +93,7 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
     
     def _build_html(content, is_typing=False):
         cursor = "<span style='animation: blink 1s step-end infinite; border-right: 2px solid #FF5200; margin-left: 2px;'></span>" if is_typing else ""
-        return f"""
+        html = f"""
         <div class="ai-insight-container" style="{custom_style}">
             <div class="ai-header" style="margin-bottom: 12px;">
                 <div class="ai-icon">✨</div>
@@ -105,6 +105,7 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
             </div>
         </div>
         """
+        return "".join(line.strip() for line in html.split('\n'))
 
     if cache_key in st.session_state:
         # Load from cache
