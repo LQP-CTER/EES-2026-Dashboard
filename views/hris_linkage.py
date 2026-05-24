@@ -5,7 +5,7 @@ from plotly.subplots import make_subplots
 import pandas as pd
 from utils.data_loader import load_hris, merge_survey_hris
 from shared.plotly_theme import COLORS, PAL_CATEGORY, color_by_score
-
+from utils.ai_generator import render_ai_insight_card
 def render(df_clean, cfg, sel_group):
     st.markdown(f"## Phân tích Thu nhập — {cfg.get('label', '')}")
 
@@ -85,3 +85,22 @@ def render(df_clean, cfg, sel_group):
             fig.update_layout(height=400, title=f'CẤU TRÚC THU NHẬP TB ({total:.1f} triệu/tháng)',
                 annotations=[dict(text=f'{total:.1f}tr', x=0.5, y=0.5, font_size=18, showarrow=False)])
             st.plotly_chart(fig, width='stretch')
+
+    # --- AI Insight for HRIS ---
+    hris_ai_data = {
+        "N_matched": int(n_matched),
+        "Total_Sample": len(df_m)
+    }
+    if 'income_group' in df_m.columns:
+        try:
+            hris_ai_data['Income_vs_EI'] = df_m.groupby('income_group', observed=True)['EI'].mean().to_dict()
+        except:
+            pass
+    if 'phat_group' in df_m.columns:
+        try:
+            hris_ai_data['Penalty_vs_EI'] = df_m.groupby('phat_group', observed=True)['EI'].mean().to_dict()
+        except:
+            pass
+
+    prompt = "Phân tích mối tương quan giữa thu nhập thực nhận (HRIS) và mức độ gắn kết (EI), cũng như ảnh hưởng của các khoản phạt đến tâm lý nhân viên. Đề xuất góc nhìn về chính sách đãi ngộ Total Rewards."
+    render_ai_insight_card("AI HRIS & Thu nhập Insight", hris_ai_data, prompt, custom_style="margin-top: 32px; margin-bottom: 24px;")
