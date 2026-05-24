@@ -658,8 +658,8 @@ div[data-testid="stBaseButton-pill"][aria-selected="true"] {
 st.markdown("""<div style="background: linear-gradient(135deg, #ffffff 0%, #fcfdfd 100%); border-radius: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 10px 30px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; padding: 24px 32px; margin-bottom: 32px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.04)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.02)';">
 <div style="display: flex; align-items: center; gap: 20px;">
     <!-- Minimalist Premium Logo -->
-    <div style="background: linear-gradient(135deg, #FF5200 0%, #D43F00 100%); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 1.1rem; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(255, 82, 0, 0.2);">
-        GHN
+    <div style="display: flex; align-items: center; justify-content: center;">
+        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778161/LOGO%20GHN/LOGO_CHUAN_hviaug.png" style="height: 52px; object-fit: contain; drop-shadow: 0 4px 10px rgba(0,0,0,0.05);">
     </div>
     <!-- Elegant Typography -->
     <div>
