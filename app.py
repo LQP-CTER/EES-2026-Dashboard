@@ -655,18 +655,30 @@ div[data-testid="stBaseButton-pill"][aria-selected="true"] {
 """, unsafe_allow_html=True)
 
 # ── Render Header ──
-st.markdown("""<div class="ghn-header-container" style="background: #FFFFFF; border-radius: 20px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-<div style="display: flex; align-items: center;">
-<div class="ghn-logo-box" style="background: #4318FF; color: white;">GHN</div>
-<div>
-<p class="ghn-title" style="color: #2B3674;">GHN EES 2026 <span style="font-weight: 400; color: #A3AED0; font-size: 0.95rem; margin-left: 8px;">Employee Engagement Survey Dashboard</span></p>
-<p class="ghn-subtitle" style="color: #A3AED0;">GiaoHangNhanh • 23,000+ nhân viên • Chu kỳ khảo sát Q1/2026</p>
+st.markdown("""<div style="background: linear-gradient(135deg, #ffffff 0%, #fcfdfd 100%); border-radius: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 10px 30px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; padding: 24px 32px; margin-bottom: 32px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.04)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.02)';">
+<div style="display: flex; align-items: center; gap: 20px;">
+    <!-- Minimalist Premium Logo -->
+    <div style="background: linear-gradient(135deg, #FF5200 0%, #D43F00 100%); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 1.1rem; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(255, 82, 0, 0.2);">
+        GHN
+    </div>
+    <!-- Elegant Typography -->
+    <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <h1 style="margin: 0; font-size: 1.4rem; font-weight: 900; color: #0A1F44; letter-spacing: -0.02em; line-height: 1;">EES 2026 DASHBOARD</h1>
+            <span style="background: rgba(67, 24, 255, 0.06); color: #4318FF; font-size: 0.7rem; padding: 3px 10px; border-radius: 8px; font-weight: 800; letter-spacing: 0.5px;">NỘI BỘ</span>
+        </div>
+        <p style="margin: 0; font-size: 0.9rem; color: #64748B; font-weight: 500;">GiaoHangNhanh • 23,000+ nhân viên • Chu kỳ khảo sát Q1/2026</p>
+    </div>
 </div>
-</div>
-<div class="ghn-badges">
-<span class="badge-live" style="background: rgba(5, 205, 153, 0.1); color: #05CD99; border: none;"><span class="dot-pulse" style="background: #05CD99;"></span> Live</span>
-<span style="font-size: 0.8rem; color: #A3AED0; margin: 0 8px;">Cập nhật: Hôm nay</span>
-<span class="badge-internal" style="background: #F4F7FE; color: #4318FF; border: none;">NỘI BỘ</span>
+<!-- Right Side Badges -->
+<div style="display: flex; align-items: center; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 6px; background: #F8FAFC; padding: 6px 14px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.03);">
+        <span style="width: 8px; height: 8px; background: #05CD99; border-radius: 50%; box-shadow: 0 0 0 3px rgba(5,205,153,0.2);"></span>
+        <span style="font-size: 0.8rem; font-weight: 800; color: #334155; letter-spacing: 0.5px;">LIVE</span>
+    </div>
+    <div style="font-size: 0.8rem; font-weight: 600; color: #94A3B8; background: #F1F5F9; padding: 6px 14px; border-radius: 12px;">
+        Cập nhật: Hôm nay
+    </div>
 </div>
 </div>""", unsafe_allow_html=True)
 
