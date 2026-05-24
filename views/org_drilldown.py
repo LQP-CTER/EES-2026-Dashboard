@@ -7,7 +7,7 @@ from utils.ai_generator import render_ai_insight_card
 
 def render(df, cfg):
     apply_theme()
-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">Phân tích Cấu trúc Tổ chức — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">👥 Phân tích Cấu trúc Tổ chức — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
 
     level = st.radio("Cấp độ", ['Division', 'Department', 'Section'], horizontal=True)
     col_map = {'Division': 'division', 'Department': 'department', 'Section': 'section'}

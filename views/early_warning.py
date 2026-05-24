@@ -8,7 +8,7 @@ def render(df, cfg):
     codebook = cfg.get('codebook', {})
     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
 
-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">Cảnh báo Sớm & Dự báo Nghỉ việc — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">🚨 Cảnh báo Sớm & Dự báo Nghỉ việc — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
 
     # 🤖 ══════════════════════════════════════════════════════════════
     # INTERACTIVE RETENTION RISK SIMULATOR (XGBoost & SHAP)

@@ -37,75 +37,20 @@ def render(all_data, available_groups):
     enps_delta = total_enps - bm['enps_score']
     rr_delta = total_rr - bm['response_rate']
 
-    def fmt_delta(val, is_pct=False):
-        sign = "+" if val >= 0 else ""
-        unit = "%" if is_pct else ""
-        cls = "delta-positive" if val >= 0 else "delta-negative"
-        return f'<span class="metric-delta {cls}">{sign}{val:.1f}{unit} YoY</span>'
-
-    def fmt_sparkline(val, delta, color="#006FAD"):
-        from shared.plotly_theme import generate_trend_data
-        data = generate_trend_data(val, delta)
-        if not data: return ""
-        min_val, max_val = min(data), max(data)
-        range_val = max_val - min_val if max_val != min_val else 1
-        width, height = 120, 24
-        points = []
-        for i, v in enumerate(data):
-            x = (i / (len(data) - 1)) * width
-            y = height - ((v - min_val) / range_val) * height
-            points.append(f"{x},{y}")
-        pts_str = " ".join(points)
-        return f"""<div style="margin-top: 12px; margin-bottom: -5px; width: 100%; height: {height+10}px;">
-<svg width="100%" height="100%" viewBox="0 -5 {width} {height+10}" preserveAspectRatio="none">
-<defs>
-<linearGradient id="grad_{color.replace('#','')}" x1="0%" y1="0%" x2="0%" y2="100%">
-<stop offset="0%" stop-color="{color}" stop-opacity="0.2" />
-<stop offset="100%" stop-color="{color}" stop-opacity="0" />
-</linearGradient>
-</defs>
-<polygon fill="url(#grad_{color.replace('#','')})" points="0,{height} {pts_str} {width},{height}" />
-<polyline fill="none" stroke="{color}" stroke-width="2.5" points="{pts_str}" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="{points[-1].split(',')[0]}" cy="{points[-1].split(',')[1]}" r="3.5" fill="{color}" />
-</svg>
-</div>"""
-
     # ══════════════════════════════════════════════════════════════
-    # SECTION 1: EXECUTIVE SUMMARY & DYNAMIC INSIGHTS
+    # SECTION 1: EXECUTIVE SUMMARY (Modern UI KPI Cards)
     # ══════════════════════════════════════════════════════════════
-    st.markdown(f"""<div class="hero-card">
-<p class="hero-title">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-Executive Summary - GHN EES 2026
-</p>
-<p class="hero-subtitle">Báo cáo Mức độ Gắn kết Nhân viên Toàn Hệ thống • {total_n:,} respondents • Q1/2026</p>
-<div class="hero-metrics">
-<div class="hero-metric-box">
-<span class="hero-metric-label">Engagement Index</span>
-<span class="hero-metric-value">{total_ei:.1f}</span>
-{fmt_sparkline(total_ei, ei_delta, color="#006FAD")}
-{fmt_delta(ei_delta, is_pct=False)}
-</div>
-<div class="hero-metric-box">
-<span class="hero-metric-label">eNPS</span>
-<span class="hero-metric-value">{total_enps:+.0f}</span>
-{fmt_sparkline(total_enps, enps_delta, color="#FF5200")}
-{fmt_delta(enps_delta, is_pct=False)}
-</div>
-<div class="hero-metric-box">
-<span class="hero-metric-label">Attrition Risk</span>
-<span class="hero-metric-value">{total_intent:.1f}%</span>
-{fmt_sparkline(total_intent, 0, color="#C0392B")}
-<span class="metric-delta delta-neutral">N/A YoY</span>
-</div>
-<div class="hero-metric-box">
-<span class="hero-metric-label">Response Rate</span>
-<span class="hero-metric-value">{total_rr:.1f}%</span>
-{fmt_sparkline(total_rr, rr_delta, color="#0D6E3A")}
-{fmt_delta(rr_delta, is_pct=True)}
-</div>
-</div>
-</div>""", unsafe_allow_html=True)
+    from shared.plotly_theme import make_html_kpi
+    
+    kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
+    with kpi_c1:
+        st.markdown(make_html_kpi("Engagement Index", f"{total_ei:.1f}", delta=f"{ei_delta:+.1f}", color="blue", icon="🚀", progress_val=total_ei), unsafe_allow_html=True)
+    with kpi_c2:
+        st.markdown(make_html_kpi("eNPS Score", f"{total_enps:+.0f}", delta=f"{enps_delta:+.0f}", color="orange", icon="❤️", progress_val=(total_enps+100)/2), unsafe_allow_html=True)
+    with kpi_c3:
+        st.markdown(make_html_kpi("Attrition Risk", f"{total_intent:.1f}%", delta="N/A", color="red", icon="⚠️", progress_val=total_intent), unsafe_allow_html=True)
+    with kpi_c4:
+        st.markdown(make_html_kpi("Response Rate", f"{total_rr:.1f}%", delta=f"{rr_delta:+.1f}%", color="green", icon="📈", progress_val=total_rr), unsafe_allow_html=True)
 
     # Calculate dynamic insights across divisions
     div_stats = []
@@ -149,7 +94,7 @@ Executive Summary - GHN EES 2026
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: ORG DRILLDOWN (KHỐI / DIVISION)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">1. Phân Tích Cấp Tổ Chức (Division)</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">🏢 1. Phân Tích Cấp Tổ Chức (Division)</h3>', unsafe_allow_html=True)
     
     if not df_div_stats.empty:
         df_div_stats = df_div_stats.sort_values('ei_mean', ascending=True)
@@ -211,7 +156,7 @@ Executive Summary - GHN EES 2026
     # ══════════════════════════════════════════════════════════════
     # SECTION 3: DEMOGRAPHICS (THÂM NIÊN & CẤP BẬC)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">2. Phân Tích Nhân Khẩu Học (Demographics)</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">👥 2. Phân Tích Nhân Khẩu Học (Demographics)</h3>', unsafe_allow_html=True)
     
     # Define demographic groups from Q5 if 'Q5' exists
     demographics_cols = []
@@ -248,11 +193,11 @@ Executive Summary - GHN EES 2026
                 fig_demo = go.Figure()
                 fig_demo.add_trace(go.Bar(
                     y=df_demo['group'], x=df_demo['ei_mean'], name='EI', orientation='h',
-                    marker_color=COLORS['navy'], text=[f'{v:.1f}%' for v in df_demo['ei_mean']], textposition='outside'
+                    marker_color=COLORS['blue'], text=[f'{v:.1f}%' for v in df_demo['ei_mean']], textposition='outside'
                 ))
                 fig_demo.add_trace(go.Bar(
                     y=df_demo['group'], x=df_demo['enps_score'], name='eNPS', orientation='h',
-                    marker_color=COLORS['orange'], text=[f'{v:+.0f}' for v in df_demo['enps_score']], textposition='outside'
+                    marker_color=COLORS['green'], text=[f'{v:+.0f}' for v in df_demo['enps_score']], textposition='outside'
                 ))
                 fig_demo.update_layout(
                     barmode='group',
@@ -281,7 +226,7 @@ Executive Summary - GHN EES 2026
     # ══════════════════════════════════════════════════════════════
     # SECTION 4: EVP & NLP INSIGHTS
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">3. EVP & Lắng Nghe Nhân Viên (NLP)</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">💡 3. EVP & Lắng Nghe Nhân Viên (NLP)</h3>', unsafe_allow_html=True)
     
     # Collect all NLP clean responses
     open_responses = []
@@ -316,7 +261,7 @@ Executive Summary - GHN EES 2026
         with c_evp1:
             fig_evp = go.Figure(go.Bar(
                 y=df_evp['EVP_Factor'], x=df_evp['Mentions'],
-                orientation='h', marker_color=COLORS['green'],
+                orientation='h', marker_color=COLORS['blue'],
                 text=df_evp['Mentions'], textposition='inside'
             ))
             fig_evp = fig_card(fig_evp, 'Từ khóa EVP nổi bật', 'Tần suất được nhắc đến trong câu hỏi mở')

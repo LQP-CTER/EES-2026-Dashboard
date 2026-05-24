@@ -7,7 +7,7 @@ from shared.plotly_theme import COLORS
 from utils.ai_generator import render_ai_insight_card
 
 def render(df_clean, cfg, sel_group):
-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">Phân tích Chuyên sâu HRIS — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">🔍 Phân tích Chuyên sâu HRIS — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
 
     df_hris, _ = load_hris(sel_group)
     if df_hris is None:

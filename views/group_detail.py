@@ -13,8 +13,8 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 1: HERO METRICS & OVERALL DISTRIBUTION
     # ══════════════════════════════════════════════════════════════
-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 0;">Phân tích Chi tiết — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
-    st.markdown(f'<p style="color: #64748B; margin-bottom: 24px;">Báo cáo Gắn kết Nhóm {cfg.get("short", "")} • Q1/2026</p>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="color: #2B3674; font-weight: 800; margin-bottom: 0;">🏢 Phân tích Chi tiết — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<p style="color: #A3AED0; margin-bottom: 24px;">Báo cáo Gắn kết Nhóm {cfg.get("short", "")} • Q1/2026</p>', unsafe_allow_html=True)
     
     from shared.plotly_theme import make_html_kpi
     col1, col2, col3, col4 = st.columns(4)
@@ -90,27 +90,27 @@ def render(df, cfg):
     
     if is_shipper:
         st.markdown("""
-        <div style="background: rgba(255, 82, 0, 0.03); border: 1px solid rgba(255, 82, 0, 0.15); border-left: 5px solid #FF5200; border-radius: 20px; padding: 24px; margin-top: 24px; margin-bottom: 24px;">
-            <h4 style="color: #FF5200; font-weight: 800; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <div style="background: rgba(67, 24, 255, 0.03); border: 1px solid rgba(67, 24, 255, 0.1); border-left: 5px solid #4318FF; border-radius: 20px; padding: 24px; margin-top: 24px; margin-bottom: 24px;">
+            <h4 style="color: #4318FF; font-weight: 800; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 Điểm Nóng Phân Tích Thực Địa — Lực Lượng Shipper / NVPTTT (Nhóm 1A)
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 14px;">
-                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid rgba(255, 82, 0, 0.08); box-shadow: 0 4px 12px rgba(10,31,68,0.015);">
-                    <strong style="color: #0A1F44; font-size: 0.95rem;">🔄 Vòng Lặp Hụt Hẫng Onboarding (Cú Sốc Năng Suất)</strong>
-                    <p style="font-size: 0.88rem; color: #475569; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
+                <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <strong style="color: #2B3674; font-size: 0.95rem;">🔄 Vòng Lặp Hụt Hẫng Onboarding (Cú Sốc Năng Suất)</strong>
+                    <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Phân tích Cohort vạch trần thực tế: Nhân viên mới <strong>(&lt;2 tháng)</strong> có eNPS chạm đáy. Nguyên nhân gốc rễ là sự <strong>hụt hẫng năng suất</strong>: Shipper mới chưa thuộc tuyến đường, tốc độ giao trung bình chỉ đạt <strong>41.4 đơn/ngày</strong> (so với <strong>64.2 đơn/ngày</strong> của nhóm thâm niên &gt;2 năm), khiến thu nhập lương đơn hàng không đủ bù đắp chi phí xăng xe sinh hoạt, kết hợp với các lỗi đền bù COD tạo nên "vòng lặp hụt hẫng" khiến họ nộp đơn nghỉ việc sớm.
                     </p>
                 </div>
-                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid rgba(255, 82, 0, 0.08); box-shadow: 0 4px 12px rgba(10,31,68,0.015);">
-                    <strong style="color: #0A1F44; font-size: 0.95rem;">🎯 Tử Huyệt Cảm Xúc Q4 — Tuyến Đường Công Bằng</strong>
-                    <p style="font-size: 0.88rem; color: #475569; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
+                <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <strong style="color: #2B3674; font-size: 0.95rem;">🎯 Tử Huyệt Cảm Xúc Q4 — Tuyến Đường Công Bằng</strong>
+                    <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Lấy lăng kính <strong>Gallup Q12</strong> và <strong>Gartner Human Deal 2.0 (Autonomy & Respect)</strong>, câu hỏi <strong>Q4 (Phân chia tuyến công bằng)</strong> là tử huyệt cảm xúc lớn nhất. Sự thiên vị ngầm hoặc thiếu minh bạch từ Station Leader/TBC trong việc phân bổ đơn hàng, khu vực giao tốt (tuyến có mật độ đơn dày, đường bằng phẳng) là ngòi nổ số 1 kích hoạt tỷ lệ từ bỏ tổ chức.
                     </p>
                 </div>
-                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid rgba(255, 82, 0, 0.08); box-shadow: 0 4px 12px rgba(10,31,68,0.015);">
-                    <strong style="color: #0A1F44; font-size: 0.95rem;">🛡️ Tấm Khiên Quản Lý (Buffer MEI &gt; 4.2)</strong>
-                    <p style="font-size: 0.88rem; color: #475569; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
+                <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <strong style="color: #2B3674; font-size: 0.95rem;">🛡️ Tấm Khiên Quản Lý (Buffer MEI &gt; 4.2)</strong>
+                    <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Mô hình học máy <strong>XGBoost / SHAP</strong> chỉ ra mối tương quan phi tuyến: Khi điểm <strong>MEI (Manager Effectiveness Index)</strong> của bưu cục vượt mức <strong>4.2 / 5.0</strong>, xác suất rời đi của nhân viên mới giảm mạnh từ <strong>88% xuống dưới 25%</strong> mặc dù mức lương thực nhận giữ nguyên. Cấp quản lý trực tiếp đóng vai trò là "tấm khiên bảo vệ" giúp giữ chân nhân sự qua những tháng đầu đầy biến động.
                     </p>
                 </div>
@@ -119,21 +119,21 @@ def render(df, cfg):
         """, unsafe_allow_html=True)
     elif is_driver:
         st.markdown("""
-        <div style="background: rgba(0, 111, 173, 0.03); border: 1px solid rgba(0, 111, 173, 0.15); border-left: 5px solid #006FAD; border-radius: 20px; padding: 24px; margin-top: 24px; margin-bottom: 24px;">
-            <h4 style="color: #006FAD; font-weight: 800; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <div style="background: rgba(5, 205, 153, 0.03); border: 1px solid rgba(5, 205, 153, 0.1); border-left: 5px solid #05CD99; border-radius: 20px; padding: 24px; margin-top: 24px; margin-bottom: 24px;">
+            <h4 style="color: #05CD99; font-weight: 800; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 Điểm Nóng Phân Tích Thực Địa — Lực Lượng Tài Xế GXT / TXXT (Nhóm 1B)
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 14px;">
-                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid rgba(0, 111, 173, 0.08); box-shadow: 0 4px 12px rgba(10,31,68,0.015);">
-                    <strong style="color: #0A1F44; font-size: 0.95rem;">🛣️ Nút Thắt Phân Tuyến Xe Đường Dài (TC2 - Q4)</strong>
-                    <p style="font-size: 0.88rem; color: #475569; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
+                <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <strong style="color: #2B3674; font-size: 0.95rem;">🛣️ Nút Thắt Phân Tuyến Xe Đường Dài (TC2 - Q4)</strong>
+                    <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Tài xế đặc biệt nhạy cảm với sự công bằng trong việc điều động tuyến chạy đường dài (mang lại phụ cấp và chế độ cao) so với các tuyến chạy nội tỉnh/ngắn ngày. Sự minh bạch của Điều phối viên đội xe trong cơ chế sắp tài là yếu tố sống còn quyết định sự ở lại (STAY) của tài xế.
                     </p>
                 </div>
-                <div style="background: white; padding: 18px; border-radius: 12px; border: 1px solid rgba(0, 111, 173, 0.08); box-shadow: 0 4px 12px rgba(10,31,68,0.015);">
-                    <strong style="color: #0A1F44; font-size: 0.95rem;">🛠️ Hỗ Trợ Dọc Tuyến & An Toàn Lao Động (TC3 - Q15)</strong>
-                    <p style="font-size: 0.88rem; color: #475569; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
+                <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <strong style="color: #2B3674; font-size: 0.95rem;">🛠️ Hỗ Trợ Dọc Tuyến & An Toàn Lao Động (TC3 - Q15)</strong>
+                    <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Đo lường từ lăng kính <strong>Job Demands-Resources (JD-R)</strong>, áp lực thời gian giao hàng và sự cố hỏng hóc dọc tuyến là "Yêu cầu công việc" (Demands) rất lớn. Sự sẵn sàng hỗ trợ kỹ thuật, cứu hộ 24/7 và cơ chế đền bù tai nạn rõ ràng từ phía Đội xe là nguồn lực hỗ trợ thiết yếu (Resources) giúp hạ nhiệt rủi ro Burnout.
                     </p>
                 </div>
@@ -144,8 +144,8 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: BẢNG BÁO CÁO CHI TIẾT (COMPREHENSIVE SUMMARY TABLE)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">Bảng Báo Cáo Chi Tiết</h3>', unsafe_allow_html=True)
-    st.markdown("Dữ liệu được bóc tách đến cấp độ Bộ phận / Vùng (Section), kết hợp với bảng màu Gradient để làm nổi bật các điểm nóng (Đỏ = Kém, Xanh = Tốt) giống định dạng báo cáo EES 2025.")
+    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">📋 Bảng Báo Cáo Chi Tiết</h3>', unsafe_allow_html=True)
+    st.markdown("Dữ liệu được bóc tách đến cấp độ Bộ phận / Vùng (Section), kết hợp với bảng màu Gradient để làm nổi bật các điểm nóng (Đỏ = Kém, Xanh = Tốt).")
     
     # Determine the grouping level
     if 'section' in df.columns and df['section'].nunique() > 1:
@@ -206,7 +206,7 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 3: NHÂN KHẨU HỌC & CHỨC DANH (DEMOGRAPHICS)
     # ══════════════════════════════════════════════════════════════
-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">Phân Tích Đặc Thù (Nhân khẩu học & Cấp bậc)</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">👥 Phân Tích Đặc Thù (Nhân khẩu học & Cấp bậc)</h3>', unsafe_allow_html=True)
     st.markdown("Nhận diện sự chênh lệch mức độ gắn kết giữa các nhóm nhân viên cũ/mới và giữa các vai trò công việc khác nhau (Direct vs Indirect).")
     
     demo_cols = []
@@ -234,11 +234,11 @@ def render(df, cfg):
                     fig = go.Figure()
                     fig.add_trace(go.Bar(
                         x=df_demo['Nhóm'], y=df_demo['EI (%)'], name='EI (%)', 
-                        text=[f'{v:.1f}%' for v in df_demo['EI (%)']], textposition='outside', marker_color=COLORS['navy']
+                        text=[f'{v:.1f}%' for v in df_demo['EI (%)']], textposition='outside', marker_color=COLORS['blue']
                     ))
                     fig.add_trace(go.Bar(
                         x=df_demo['Nhóm'], y=df_demo['eNPS'], name='eNPS', 
-                        text=[f'{v:+.0f}' for v in df_demo['eNPS']], textposition='outside', marker_color=COLORS['orange']
+                        text=[f'{v:+.0f}' for v in df_demo['eNPS']], textposition='outside', marker_color=COLORS['green']
                     ))
                     fig = fig_card(fig, f'Gắn kết theo {col_name}', f'Phân tích nhóm {col_name.lower()} đông nhất')
                     fig.update_layout(barmode='group', xaxis_tickangle=-30, yaxis=dict(range=[0, 105]))

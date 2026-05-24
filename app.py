@@ -48,14 +48,9 @@ st.markdown("""
     max-width: 100%;
 }
 
-/* Premium Glassmorphic Background - Light Theme */
+/* Premium Modern White Background */
 .stApp {
-    background-color: #F8FAFC;
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(255, 82, 0, 0.05) 0px, transparent 40%),
-        radial-gradient(at 100% 0%, rgba(10, 31, 68, 0.04) 0px, transparent 45%),
-        radial-gradient(at 50% 50%, rgba(0, 111, 173, 0.03) 0px, transparent 50%),
-        radial-gradient(at 80% 100%, rgba(255, 82, 0, 0.03) 0px, transparent 35%);
+    background-color: #F4F7FE;
 }
 
 /* Global Font */
@@ -63,10 +58,10 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .stAp
     font-family: 'Inter', 'Outfit', 'Segoe UI', system-ui, sans-serif !important;
 }
 
-/* Premium Sidebar Base */
+/* Premium Sidebar Base - Clean White */
 [data-testid="stSidebar"] {
-    background: #090D16 !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+    background: #FFFFFF !important;
+    border-right: 1px solid #E2E8F0 !important;
 }
 
 /* Targeted Sidebar Text Elements */
@@ -76,7 +71,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .stAp
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h3,
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h4,
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
-    color: #F8FAFC !important;
+    color: #4A5568 !important;
 }
 
 /* Premium Sidebar Navigation Menu */
@@ -88,40 +83,38 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .stAp
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label {
     padding: 12px 16px !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
     background-color: transparent !important;
     border: none !important;
     transition: all 0.2s ease-in-out !important;
     cursor: pointer !important;
-    margin-bottom: 0px !important;
+    margin-bottom: 4px !important;
     display: flex !important;
     align-items: center !important;
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: #718096 !important;
     position: relative !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label p {
-    font-size: 0.92rem !important;
+    font-size: 0.95rem !important;
     line-height: 1.4 !important;
     font-weight: 500 !important;
     margin: 0 !important;
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: #718096 !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    transform: translateX(4px) !important;
+    background-color: #F7FAFC !important;
+    color: #2D3748 !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:hover p {
-    color: #FFFFFF !important;
+    color: #2D3748 !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) {
-    background-color: rgba(255, 82, 0, 0.12) !important;
-    border-left: 3px solid #FF5200 !important;
-    border-top-left-radius: 2px !important;
-    border-bottom-left-radius: 2px !important;
+    background-color: rgba(67, 24, 255, 0.08) !important;
+    color: #4318FF !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) p {
     font-weight: 700 !important;
-    color: #FF5200 !important;
+    color: #4318FF !important;
 }
 /* Hide the actual radio circle */
 [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child {
@@ -132,16 +125,22 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .stAp
    PROFESSIONAL AI INSIGHT CONTAINER (Clean & Minimalist)
    ══════════════════════════════════════════════════════════════ */
 .ai-insight-container {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(0, 31, 68, 0.06) !important;
-    border-left: 3px solid #FF5200 !important;
-    border-radius: 0 8px 8px 0 !important;
-    padding: 20px 24px !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.03) !important;
+    border-radius: 20px !important;
+    padding: 24px 24px !important;
     margin-bottom: 24px !important;
-    box-shadow: 0 4px 15px rgba(10, 31, 68, 0.03) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
     font-family: 'Inter', sans-serif !important;
+    position: relative;
+    overflow: hidden;
+}
+.ai-insight-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: linear-gradient(180deg, #4318FF 0%, #05CD99 100%);
+    border-radius: 20px 0 0 20px;
 }
 .ai-header {
     display: flex !important;
@@ -163,38 +162,37 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .stAp
     margin: 0 !important;
 }
 .ai-badge {
-    background: rgba(10, 31, 68, 0.04) !important;
-    color: #0A1F44 !important;
-    padding: 3px 10px !important;
-    border-radius: 4px !important;
-    font-size: 0.65rem !important;
+    background: rgba(67, 24, 255, 0.05) !important;
+    color: #4318FF !important;
+    padding: 4px 12px !important;
+    border-radius: 8px !important;
+    font-size: 0.7rem !important;
     font-weight: 700 !important;
-    font-family: 'JetBrains Mono', monospace !important;
     margin-left: auto !important;
     letter-spacing: 0.5px !important;
     text-transform: uppercase !important;
-    border: 1px solid rgba(10, 31, 68, 0.08) !important;
+    border: none !important;
 }
 .ai-content {
     font-size: 0.95rem !important;
     line-height: 1.6 !important;
-    color: #1E293B !important;
+    color: #A3AED0 !important;
 }
 .ai-content strong {
-    color: #0A1F44 !important;
+    color: #2B3674 !important;
     font-weight: 700 !important;
 }
 .ai-highlight {
-    color: #006FAD !important;
+    color: #05CD99 !important;
     font-weight: 700 !important;
-    background: rgba(0, 111, 173, 0.06) !important;
+    background: rgba(5, 205, 153, 0.06) !important;
     padding: 1px 6px !important;
     border-radius: 4px !important;
 }
 .ai-warning {
-    color: #DC2626 !important;
+    color: #EE5D50 !important;
     font-weight: 700 !important;
-    background: rgba(220, 38, 38, 0.06) !important;
+    background: rgba(238, 93, 80, 0.06) !important;
     padding: 1px 6px !important;
     border-radius: 4px !important;
 }
@@ -481,33 +479,32 @@ div[data-baseweb="select"] > div:hover {
     border-color: #CBD5E1 !important;
 }
 
-/* Elegant Left-Accented Insight Squares */
+/* Elegant Left-Accented Insight Squares - Modern White UI */
 .insight-square {
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 24px;
+    background: #FFFFFF;
+    border-radius: 20px;
     padding: 26px;
     height: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 4px 20px rgba(10,31,68,0.015);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
-    backdrop-filter: blur(10px);
+    overflow: hidden;
 }
 .insight-square::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; width: 6px; height: 100%;
-    border-radius: 24px 0 0 24px;
+    top: 0; left: 0; width: 4px; height: 100%;
+    border-radius: 20px 0 0 20px;
 }
-.insight-square-total::after { background: #0D6E3A; }
-.insight-square-top::after { background: #006FAD; }
-.insight-square-warning::after { background: #FFA726; }
-.insight-square-recommend::after { background: #C0392B; }
+.insight-square-total::after { background: #4318FF; }
+.insight-square-top::after { background: #05CD99; }
+.insight-square-warning::after { background: #FFB547; }
+.insight-square-recommend::after { background: #EE5D50; }
 
 .insight-square:hover {
     transform: translateY(-4px);
-    box-shadow: 0 16px 36px rgba(10,31,68,0.04);
-    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.05);
 }
 .insight-header {
     display: flex;
@@ -515,7 +512,7 @@ div[data-baseweb="select"] > div:hover {
     gap: 12px;
     margin-bottom: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
 }
 .insight-icon {
     width: 38px;
@@ -525,31 +522,33 @@ div[data-baseweb="select"] > div:hover {
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    background: rgba(67, 24, 255, 0.05);
+    color: #4318FF;
 }
 .insight-title {
     font-weight: 700;
-    color: #0A1F44;
+    color: #2B3674;
     font-size: 1rem;
     margin: 0;
 }
 .insight-body {
     font-size: 0.92rem;
-    color: #475569;
+    color: #A3AED0;
     line-height: 1.65;
 }
 .insight-highlight {
     font-weight: 700;
-    color: #FF5200;
+    color: #4318FF;
 }
 
-/* Custom Segmented Tabs (Streamlit Tabs override) */
+/* Custom Segmented Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 10px;
-    background-color: #E2E8F0;
-    padding: 6px;
+    background-color: #FFFFFF;
+    padding: 8px;
     border-radius: 16px;
-    border: none !important;
+    border: 1px solid rgba(0,0,0,0.03) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 }
 .stTabs [data-baseweb="tab"] {
     height: auto !important;
@@ -557,18 +556,18 @@ div[data-baseweb="select"] > div:hover {
     background-color: transparent !important;
     border-radius: 12px !important;
     border: none !important;
-    color: #475569 !important;
+    color: #A3AED0 !important;
     font-weight: 600 !important;
     transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .stTabs [data-baseweb="tab"]:hover {
-    color: #0A1F44 !important;
-    background-color: rgba(255, 255, 255, 0.5) !important;
+    color: #2B3674 !important;
+    background-color: rgba(67, 24, 255, 0.03) !important;
 }
 .stTabs [aria-selected="true"] {
-    background-color: #FFFFFF !important;
-    color: #FF5200 !important;
-    box-shadow: 0 6px 16px rgba(10,31,68,0.08) !important;
+    background-color: #4318FF !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 16px rgba(67, 24, 255, 0.2) !important;
     font-weight: 700 !important;
 }
 .stTabs [data-baseweb="tab-highlight-bar"] {
@@ -577,26 +576,27 @@ div[data-baseweb="select"] > div:hover {
 
 /* Premium Segmented Controls for st.pills */
 div[data-testid="stBaseButton-pill"] {
-    background-color: rgba(255, 255, 255, 0.65) !important;
-    color: #475569 !important;
-    border: 1px solid rgba(10, 31, 68, 0.06) !important;
+    background-color: #FFFFFF !important;
+    color: #A3AED0 !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
     padding: 8px 20px !important;
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     font-weight: 600 !important;
     font-size: 0.9rem !important;
     transition: all 0.22s ease-in-out !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.01) !important;
 }
 div[data-testid="stBaseButton-pill"]:hover {
-    color: #FF5200 !important;
-    background-color: rgba(255, 82, 0, 0.06) !important;
-    border-color: rgba(255, 82, 0, 0.2) !important;
+    color: #4318FF !important;
+    background-color: rgba(67, 24, 255, 0.03) !important;
+    border-color: rgba(67, 24, 255, 0.2) !important;
     transform: translateY(-1px) !important;
 }
 div[data-testid="stBaseButton-pill"][aria-selected="true"] {
-    background: linear-gradient(135deg, #0A1F44 0%, #132A5C 100%) !important;
+    background-color: #4318FF !important;
     color: #FFFFFF !important;
-    border-color: #0A1F44 !important;
-    box-shadow: 0 8px 20px rgba(10,31,68,0.12) !important;
+    border-color: #4318FF !important;
+    box-shadow: 0 8px 20px rgba(67, 24, 255, 0.2) !important;
     font-weight: 700 !important;
 }
 
@@ -655,18 +655,18 @@ div[data-testid="stBaseButton-pill"][aria-selected="true"] {
 """, unsafe_allow_html=True)
 
 # ── Render Header ──
-st.markdown("""<div class="ghn-header-container">
+st.markdown("""<div class="ghn-header-container" style="background: #FFFFFF; border-radius: 20px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
 <div style="display: flex; align-items: center;">
-<div class="ghn-logo-box">GHN</div>
+<div class="ghn-logo-box" style="background: #4318FF; color: white;">GHN</div>
 <div>
-<p class="ghn-title">GHN EES 2026 <span style="font-weight: 400; color: #6B7280; font-size: 0.95rem; margin-left: 8px;">Employee Engagement Survey Dashboard</span></p>
-<p class="ghn-subtitle">GiaoHangNhanh • 23,000+ nhân viên • Chu kỳ khảo sát Q1/2026</p>
+<p class="ghn-title" style="color: #2B3674;">GHN EES 2026 <span style="font-weight: 400; color: #A3AED0; font-size: 0.95rem; margin-left: 8px;">Employee Engagement Survey Dashboard</span></p>
+<p class="ghn-subtitle" style="color: #A3AED0;">GiaoHangNhanh • 23,000+ nhân viên • Chu kỳ khảo sát Q1/2026</p>
 </div>
 </div>
 <div class="ghn-badges">
-<span class="badge-live"><span class="dot-pulse"></span> Live</span>
-<span style="font-size: 0.8rem; color: #6B7280; margin: 0 8px;">Cập nhật: 21/05/2026</span>
-<span class="badge-internal">NỘI BỘ</span>
+<span class="badge-live" style="background: rgba(5, 205, 153, 0.1); color: #05CD99; border: none;"><span class="dot-pulse" style="background: #05CD99;"></span> Live</span>
+<span style="font-size: 0.8rem; color: #A3AED0; margin: 0 8px;">Cập nhật: Hôm nay</span>
+<span class="badge-internal" style="background: #F4F7FE; color: #4318FF; border: none;">NỘI BỘ</span>
 </div>
 </div>""", unsafe_allow_html=True)
 
@@ -698,11 +698,11 @@ def get_sidebar_label(item_label):
         return "Nhóm 1B — Tài xế GXT/TXXT"
     return item_label
 
-COMPANY_LABEL = "Tổng quan Toàn Hệ thống"
+COMPANY_LABEL = "🌐 Tổng quan Toàn Hệ thống"
 dashboard_options = [COMPANY_LABEL] + [get_sidebar_label(available[g]['label']) for g in group_opts]
 
-st.markdown("""<div style="background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(24px); border-radius: 16px; border: 1px solid rgba(255,255,255,0.6); padding: 20px 24px 20px 24px; box-shadow: 0 4px 20px rgba(10,31,68,0.02); margin-bottom: 24px;">
-<h3 style="margin-top: 0; color: #0A1F44; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 16px;">🎯 Tùy chỉnh Phân tích</h3>
+st.markdown("""<div style="background: #FFFFFF; border-radius: 20px; border: none; padding: 20px 24px 20px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 24px;">
+<h3 style="margin-top: 0; color: #2B3674; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 16px;">🎯 Tùy chỉnh Phân tích</h3>
 </div>""", unsafe_allow_html=True)
 sel_col1, sel_col2, sel_col3, sel_col4, sel_col5 = st.columns(5)
 with sel_col1:
@@ -778,32 +778,32 @@ else:
 
     # Group Sub-Navigation
     NAV_OPTIONS = [
-        "Chi tiết Nhóm",
-        "Phân tích Tổ chức",
-        "HRIS (Thu nhập)",
-        "Deep Dive",
-        "Câu hỏi Mở (NLP)",
-        "Cảnh báo Sớm",
-        "Ma trận Ưu tiên"
+        "🏢 Chi tiết Nhóm",
+        "👥 Phân tích Tổ chức",
+        "💰 HRIS (Thu nhập)",
+        "🔍 Deep Dive",
+        "💬 Câu hỏi Mở (NLP)",
+        "🚨 Cảnh báo Sớm",
+        "⚡ Ma trận Ưu tiên"
     ]
-    sel_nav = st.pills("Góc nhìn Phân tích", NAV_OPTIONS, default="Chi tiết Nhóm", label_visibility="collapsed")
+    sel_nav = st.pills("Góc nhìn Phân tích", NAV_OPTIONS, default="🏢 Chi tiết Nhóm", label_visibility="collapsed")
     st.divider()
     
     # Route to Views
     try:
-        if sel_nav == "Chi tiết Nhóm":
+        if sel_nav == "🏢 Chi tiết Nhóm":
             group_detail.render(df_filtered, cfg)
-        elif sel_nav == "Phân tích Tổ chức":
+        elif sel_nav == "👥 Phân tích Tổ chức":
             org_drilldown.render(df_filtered, cfg)
-        elif sel_nav == "HRIS (Thu nhập)":
+        elif sel_nav == "💰 HRIS (Thu nhập)":
             hris_linkage.render(df_filtered, cfg, sel_group)
-        elif sel_nav == "Deep Dive":
+        elif sel_nav == "🔍 Deep Dive":
             deep_dive.render(df_filtered, cfg, sel_group)
-        elif sel_nav == "Câu hỏi Mở (NLP)":
+        elif sel_nav == "💬 Câu hỏi Mở (NLP)":
             nlp_analysis.render(df_filtered, cfg)
-        elif sel_nav == "Cảnh báo Sớm":
+        elif sel_nav == "🚨 Cảnh báo Sớm":
             early_warning.render(df_filtered, cfg)
-        elif sel_nav == "Ma trận Ưu tiên":
+        elif sel_nav == "⚡ Ma trận Ưu tiên":
             action_priorities.render(df_filtered, cfg)
         else:
             st.info("Vui lòng chọn một chức năng từ thanh menu bên trên.")

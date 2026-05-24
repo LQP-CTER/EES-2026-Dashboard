@@ -9,7 +9,7 @@ def render(df, cfg):
     codebook = cfg.get('codebook', {})
     likert_cols = [q for q, info in codebook.items() if info['loại'] == 'likert']
 
-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">Ma trận Ưu tiên Hành động — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">⚡ Ma trận Ưu tiên Hành động — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
 
     from scipy import stats as scipy_stats
 
