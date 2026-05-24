@@ -10,33 +10,32 @@ from plotly.subplots import make_subplots
 # COLOR PALETTE (GHN Brand)
 # ══════════════════════════════════════════════════════════════
 COLORS = {
-    'navy': '#0A1F44',
-    'navy2': '#132A5C',
-    'orange': '#FF5200',
-    'orange_light': '#FF8A50',
-    'blue': '#006FAD',
-    'blue_light': '#42A5F5',
-    'green': '#0D6E3A',
-    'green_light': '#43A047',
-    'red': '#C0392B',
-    'red_light': '#E53935',
-    'gold': '#FFA726',
-    'grey': '#78909C',
-    'muted': '#9BA3B2',
-    'text': '#2E3440',
+    'navy': '#2B3674',
+    'navy2': '#1B2559',
+    'orange': '#FFB547',
+    'orange_light': '#FFD18B',
+    'blue': '#4318FF',
+    'blue_light': '#868CFF',
+    'green': '#05CD99',
+    'green_light': '#43E8B5',
+    'red': '#EE5D50',
+    'red_light': '#FF7D73',
+    'gold': '#FFB547',
+    'grey': '#A3AED0',
+    'muted': '#A3AED0',
+    'text': '#2B3674',
     'bg': '#FFFFFF',
-    'slate': '#F0F2F5',
-    'line': '#E8EAF0',
+    'slate': '#F4F7FE',
+    'line': '#E2E8F0',
 }
 
 # Palettes
-PAL_DIVERGING = ['#C0392B', '#E53935', '#FF7043', '#FFA726', '#66BB6A', '#43A047', '#0D6E3A']
-PAL_SEQUENTIAL = ['#E8F4FD', '#90CAF9', '#42A5F5', '#1E88E5', '#1565C0', '#0D47A1']
-PAL_CATEGORY = ['#0A1F44', '#FF5200', '#006FAD', '#0D6E3A', '#FFA726', '#78909C',
-                '#E53935', '#42A5F5', '#66BB6A', '#FF7043']
-PAL_ENPS = {'Promoter': '#0D6E3A', 'Passive': '#FFA726', 'Detractor': '#C0392B'}
-PAL_EI = {'Xuất sắc': '#0D6E3A', 'Khỏe mạnh': '#43A047', 'Cần theo dõi': '#FFA726', 'Nghiêm trọng': '#C0392B'}
-PAL_PILLAR = ['#0A1F44', '#FF5200', '#006FAD', '#0D6E3A', '#FFA726']
+PAL_DIVERGING = ['#EE5D50', '#FF7D73', '#FFB547', '#FFD18B', '#43E8B5', '#05CD99']
+PAL_SEQUENTIAL = ['#F4F7FE', '#868CFF', '#4318FF', '#1B2559']
+PAL_CATEGORY = ['#4318FF', '#05CD99', '#FFB547', '#EE5D50', '#2B3674', '#00B5D8', '#868CFF']
+PAL_ENPS = {'Promoter': '#05CD99', 'Passive': '#FFB547', 'Detractor': '#EE5D50'}
+PAL_EI = {'Xuất sắc': '#05CD99', 'Khỏe mạnh': '#43E8B5', 'Cần theo dõi': '#FFB547', 'Nghiêm trọng': '#EE5D50'}
+PAL_PILLAR = ['#4318FF', '#05CD99', '#FFB547', '#EE5D50', '#2B3674']
 
 # ══════════════════════════════════════════════════════════════
 # PLOTLY TEMPLATE
@@ -148,82 +147,64 @@ def generate_trend_data(current_val, delta, points=6):
 
 def make_html_kpi(title, value, delta=None, color="blue", icon="📊", progress_val=None, sparkline_data=None):
     """
-    Render a premium HTML KPI Card with glassmorphism to replace standard st.metric.
+    Render a premium HTML KPI Card with Circular Donut Progress (matches reference image).
     color: 'blue', 'orange', 'green', 'red'
-    progress_val: float (0-100) to render a mini progress bar
-    sparkline_data: list of numbers to render a sparkline
     """
     color_map = {
-        "blue": ("#006FAD", "rgba(0, 111, 173, 0.08)"),
-        "orange": ("#FF5200", "rgba(255, 82, 0, 0.08)"),
-        "green": ("#0D6E3A", "rgba(13, 110, 58, 0.08)"),
-        "red": ("#C0392B", "rgba(192, 57, 43, 0.08)"),
+        "blue": ("#4318FF", "rgba(67, 24, 255, 0.05)"),
+        "orange": ("#FFB547", "rgba(255, 181, 71, 0.05)"),
+        "green": ("#05CD99", "rgba(5, 205, 153, 0.05)"),
+        "red": ("#EE5D50", "rgba(238, 93, 80, 0.05)"),
     }
     main_color, bg_color = color_map.get(color, color_map["blue"])
     
-    delta_html = ""
-    if delta is not None:
-        delta_color = "#0D6E3A" if ("+" in str(delta) or float(str(delta).replace('%','')) > 0) else "#C0392B"
-        delta_sign = "+" if (isinstance(delta, (int, float)) and delta > 0) else ""
-        delta_html = f'<div style="font-size: 0.85rem; font-weight: 600; color: {delta_color}; margin-top: 8px;">{delta_sign}{delta} so với kỳ trước</div>'
+    delta_color = "#05CD99" if (delta and ("+" in str(delta) or float(str(delta).replace('%','')) > 0)) else "#EE5D50"
+    delta_sign = "+" if (isinstance(delta, (int, float)) and delta > 0) else ""
+    delta_str = f"{delta_sign}{delta}" if delta is not None else ""
 
-    if sparkline_data is None and progress_val is not None and delta is not None:
-        sparkline_data = generate_trend_data(progress_val, delta)
+    p_val = max(0, min(100, float(progress_val))) if progress_val is not None else 0
+    dash_val = (p_val / 100) * 100
 
-    progress_html = ""
+    donut_html = ""
     if progress_val is not None:
-        # Clamping
-        p_val = max(0, min(100, float(progress_val)))
-        progress_html = f"""<div style="margin-top: 12px; width: 100%; background-color: rgba(10,31,68,0.06); border-radius: 4px; height: 6px; overflow: hidden;">
-<div style="width: {p_val}%; background-color: {main_color}; height: 100%; border-radius: 4px; transition: width 1s ease-out;"></div>
-</div>"""
+        donut_html = f"""
+        <div style="position: relative; width: 64px; height: 64px;">
+            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#F4F7FE" stroke-width="4" />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="{main_color}" stroke-width="4" stroke-dasharray="{dash_val}, 100" stroke-linecap="round" />
+            </svg>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #2B3674;">
+                {int(p_val)}%
+            </div>
+        </div>
+        """
 
-    sparkline_html = ""
-    if sparkline_data and len(sparkline_data) > 1:
-        min_val, max_val = min(sparkline_data), max(sparkline_data)
-        range_val = max_val - min_val if max_val != min_val else 1
-        width, height = 100, 24
-        points = []
-        for i, val in enumerate(sparkline_data):
-            x = (i / (len(sparkline_data) - 1)) * width
-            y = height - ((val - min_val) / range_val) * height
-            points.append(f"{x},{y}")
-        pts_str = " ".join(points)
+    html = f"""
+    <div style="background: #FFFFFF; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; height: 100%; min-height: 150px;">
+        <!-- Top row: Title and pills -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <span style="color: #2B3674; font-weight: 700; font-size: 1.05rem;">{title}</span>
+            <div style="display: flex; gap: 4px;">
+                <span style="background: {bg_color}; color: {main_color}; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;">Metric</span>
+                <span style="background: {main_color}; color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;">{icon}</span>
+            </div>
+        </div>
         
-        # Thêm gradient fill cho đẹp
-        sparkline_html = f"""<div style="margin-top: 10px; width: 100%; height: {height+10}px;">
-<svg width="100%" height="100%" viewBox="0 -5 {width} {height+10}" preserveAspectRatio="none">
-<defs>
-<linearGradient id="grad_{color}" x1="0%" y1="0%" x2="0%" y2="100%">
-<stop offset="0%" stop-color="{main_color}" stop-opacity="0.2" />
-<stop offset="100%" stop-color="{main_color}" stop-opacity="0" />
-</linearGradient>
-</defs>
-<polygon fill="url(#grad_{color})" points="0,{height} {pts_str} {width},{height}" />
-<polyline fill="none" stroke="{main_color}" stroke-width="2.5" points="{pts_str}" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="{points[-1].split(',')[0]}" cy="{points[-1].split(',')[1]}" r="3" fill="{main_color}" />
-</svg>
-</div>"""
-
-    html = f"""<div style="
-background: rgba(255, 255, 255, 0.7);
-border: 1px solid rgba(255, 255, 255, 0.8);
-border-radius: 16px;
-padding: 20px;
-box-shadow: 0 4px 16px rgba(10, 31, 68, 0.04);
-backdrop-filter: blur(10px);
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-border-top: 3px solid {main_color};
-">
-<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-<div style="font-size: 0.95rem; font-weight: 600; color: #64748B;">{title}</div>
-{f'<div style="background: {bg_color}; padding: 6px 10px; border-radius: 8px; font-size: 1.1rem;">{icon}</div>' if icon else ''}
-</div>
-<div style="font-size: 2.2rem; font-weight: 800; color: #0A1F44; line-height: 1.1;">{value}</div>
-{progress_html}
-{sparkline_html}
-{delta_html}
-</div>"""
+        <!-- Middle row: Circular Progress and Value -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            {donut_html}
+            
+            <!-- Right side: Value and Button -->
+            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                <span style="font-size: 1.8rem; font-weight: 800; color: #2B3674; line-height: 1;">{value}</span>
+                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                    <span style="color: {delta_color}; font-size: 0.85rem; font-weight: 600;">{delta_str}</span>
+                    <div style="width: 24px; height: 24px; background: {main_color}; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
     return html
