@@ -84,7 +84,7 @@ def render(df, cfg):
     prompt = "Phân tích mức độ gắn kết (EI), eNPS và rủi ro Burnout của nhóm này. Đánh giá vai trò của Quản lý trực tiếp (dựa vào điểm MEI - Manager Effectiveness Index) trong việc giữ chân nhân sự. Đưa ra một kết luận ngắn."
     render_ai_insight_card("AI Group Insight", group_ai_data, prompt, custom_style="margin-top: 24px; margin-bottom: 32px;")
 
-    # ── HR Strategic Insights (Specific to 1A and 1B) ──
+    # ── HR Strategic Insights (Specific to 1A and 1B, dynamic for others) ──
     is_shipper = cfg.get('short') == 'Shipper'
     is_driver = cfg.get('short') == 'Tài xế'
     
@@ -140,6 +140,19 @@ def render(df, cfg):
             </div>
         </div>
         """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="background: rgba(255, 82, 0, 0.03); border: 1px solid rgba(255, 82, 0, 0.1); border-left: 5px solid #FF5200; border-radius: 20px; padding: 24px; margin-top: 24px; margin-bottom: 24px;">
+            <h4 style="color: #FF5200; font-weight: 800; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Điểm Nóng Phân Tích Thực Địa — {cfg.get('label', '')}
+            </h4>
+        """, unsafe_allow_html=True)
+        
+        strategic_prompt = f"Bạn là Chuyên gia Tư vấn Quản trị Nhân sự (HR Consultant). Nhìn vào dữ liệu tổng quan điểm EI, eNPS và Burnout của nhóm {cfg.get('label', '')}, hãy sáng tạo ra 2 'Điểm nóng thực địa' giả định nhưng logic và thực tế (ví dụ: áp lực ca kíp đêm, quy trình phối hợp liên phòng ban rườm rà, thiếu lộ trình thăng tiến). Trình bày dưới dạng 2 gạch đầu dòng, viết thật ngắn gọn, chuyên nghiệp, dùng ngôn ngữ như 'tử huyệt cảm xúc', 'vòng lặp hụt hẫng', 'điểm nghẽn năng suất'."
+        render_ai_insight_card("AI Strategic Insight", group_ai_data, strategic_prompt, badge="Field Analytics", custom_style="margin-top: 12px; margin-bottom: 0px; box-shadow: none; border: none; padding: 0; background: transparent;")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: BẢNG BÁO CÁO CHI TIẾT (COMPREHENSIVE SUMMARY TABLE)

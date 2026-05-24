@@ -39,6 +39,7 @@ def render(df, cfg):
         return 'Không ưu tiên'
 
     df_corr['Nhóm'] = df_corr.apply(_quadrant, axis=1)
+    df_high_priority = df_corr[df_corr['Nhóm'] == 'Ưu tiên cao']
     
     ai_data = {
         "High_Priority_Items": df_high_priority.head(3)[['Câu', 'Tên', 'Trụ cột', 'Điểm TB', 'Tương quan']].to_dict(orient='records') if not df_high_priority.empty else "Không có yếu tố nào",
