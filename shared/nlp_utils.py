@@ -188,10 +188,10 @@ def preprocess_text(text):
     # T6: Loại từ dừng (nhưng giữ phủ định)
     # Không loại ở đây vì cần ngữ cảnh cho phân tích cảm xúc
 
-    # T7: Chuẩn hóa từ đồng nghĩa (cơ bản)
+    # T7: Chuẩn hóa từ đồng nghĩa (cơ bản) sử dụng word boundary để tránh lỗi substring (VD: 'am' trong 'làm')
     for variant, standard in SYNONYM_MAP.items():
-        if variant in text:
-            text = text.replace(variant, standard)
+        pattern = r'\b' + re.escape(variant) + r'\b'
+        text = re.sub(pattern, standard, text)
 
     # Loại biểu tượng cảm xúc
     text = re.sub(r'[^\w\sàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ_]',
