@@ -248,7 +248,9 @@ def extract_sv_label(row, group, df_columns):
         for k, v in row.items():
             kl = str(k).lower()
             if any(kw in kl for kw in keywords):
-                return _clean(v)
+                val = _clean(v)
+                if val is not None:
+                    return val
         return None
 
     if group in ["1A", "1B", "2A"]:
