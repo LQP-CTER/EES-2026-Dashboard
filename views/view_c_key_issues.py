@@ -44,7 +44,7 @@ def render(df, cfg):
     from shared.plotly_theme import make_html_kpi, fig_card
     st.markdown(make_html_kpi("Tổng số ý kiến tự luận", f"{n_texts:,}", color="blue", icon="💬"), unsafe_allow_html=True)
 
-    tab1, tab2, tab3 = st.tabs(["Chủ đề nổi bật", "Promoter vs Detractor", "Trích dẫn tiêu biểu"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Chủ đề nổi bật", "Cụm từ khóa", "Promoter vs Detractor", "Trích dẫn tiêu biểu"])
 
     with tab1:
         topics = extract_topic_stats(texts)
@@ -74,6 +74,21 @@ def render(df, cfg):
             st.plotly_chart(fig, use_container_width=True)
 
     with tab2:
+        from shared.nlp_utils import extract_ngrams
+        st.markdown("#### Top Cụm từ khóa được nhắc nhiều nhất")
+        st.markdown("<span style='font-size:0.85rem; color:#64748B;'>Phân tích tần suất xuất hiện của các cụm từ (2-3 từ) để tìm ra từ khóa nóng nhất.</span>", unsafe_allow_html=True)
+        ngrams_data = extract_ngrams(texts, n=2, top_k=15)
+        if ngrams_data:
+            df_ng = pd.DataFrame(ngrams_data, columns=['Cụm từ', 'Tần suất']).sort_values('Tần suất', ascending=True)
+            fig_ng = px.bar(df_ng, y='Cụm từ', x='Tần suất', orientation='h', text='Tần suất', color_discrete_sequence=[COLORS['blue']])
+            fig_ng = fig_card(fig_ng, 'PHÂN BỔ TỪ KHÓA (N-GRAMS)', 'Cụm từ khóa lặp lại nhiều nhất')
+            fig_ng.update_traces(textposition='outside')
+            fig_ng.update_layout(height=450, xaxis_title='', yaxis_title='', margin=dict(l=120))
+            st.plotly_chart(fig_ng, use_container_width=True)
+        else:
+            st.info("Chưa có đủ cụm từ khóa nổi bật.")
+
+    with tab3:
         if 'eNPS_group' in df.columns:
             for group, label, color in [('Promoter', 'Promoter', COLORS['green']),
                                          ('Detractor', 'Detractor', COLORS['red'])]:
@@ -93,7 +108,7 @@ def render(df, cfg):
                         fig.update_layout(height=350, margin=dict(l=180))
                         st.plotly_chart(fig, width='stretch')
 
-    with tab3:
+    with tab4:
         if topic_data:
             sel_topic = st.selectbox("Chọn chủ đề", [l for l, _, _ in topic_data])
             # Reverse map short label to full name
@@ -104,3 +119,21 @@ def render(df, cfg):
                     st.markdown(f"> {i}. *\"{q[:200]}\"*")
             else:
                 st.info("Không tìm thấy trích dẫn.")
+                
+    st.markdown("<hr>", unsafe_allow_html=True)
+    import io
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        df_export = df[[sel_q, cc]].copy().dropna(subset=[cc])
+        df_export.columns = ['Câu trả lời gốc', 'Câu trả lời (Đã làm sạch)']
+        from shared.nlp_utils import classify_topics
+        df_export['Chủ đề'] = df_export['Câu trả lời (Đã làm sạch)'].apply(lambda x: ", ".join(classify_topics(x)))
+        df_export.to_excel(writer, index=False, sheet_name='Feedback')
+        
+    st.download_button(
+        label="📥 Tải chi tiết phản hồi (Excel)",
+        data=buffer.getvalue(),
+        file_name=f"EES_Feedback_{sel_q}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="export_nlp"
+    )
