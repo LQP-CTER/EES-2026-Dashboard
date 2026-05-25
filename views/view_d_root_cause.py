@@ -9,6 +9,10 @@ from utils.ai_generator import render_ai_insight_card
 def render(df_clean, cfg, sel_group):
     from shared.plotly_theme import section_header
 
+    if sel_group != '1A':
+        st.info("💡 Tính năng **Phân tích nguyên nhân gốc rễ (Root Cause)** kết nối trực tiếp với hệ thống dữ liệu nhân sự (HRIS) hiện tại chỉ được thiết kế dành riêng cho nhóm 1A (Tài xế/Giao nhận).")
+        return
+
     df_hris, _ = load_hris(sel_group)
     if df_hris is None:
         st.info(f"Nhóm {sel_group} chưa có dữ liệu HRIS — chỉ phân tích Ý định nghỉ.")
