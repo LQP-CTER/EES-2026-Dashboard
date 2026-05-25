@@ -135,40 +135,51 @@ def render(df_clean, cfg, sel_group):
             st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="👤", progress_val=pct), unsafe_allow_html=True)
 
 
-    st.markdown("#### Bước 2: Treemap")
-    treemap_path = ['intent_clean', 'income_label']
+    st.markdown("#### Bước 2: Đặc điểm của nhóm có rủi ro nghỉ việc cao")
+    st.markdown("Biểu đồ thể hiện **tỷ lệ nhân sự Muốn nghỉ** phân bổ theo mức Thu nhập, mức Phạt và Thâm niên, giúp nhận diện rõ nhóm đang gặp rủi ro cao nhất.")
+    
     if 'tong_phat' in df_m.columns and df_m['tong_phat'].notna().any():
         df_m['phat_label'] = df_m['tong_phat'].apply(
             lambda x: 'Không phạt' if pd.notna(x) and x <= 0 else (
-                '< 1tr' if pd.notna(x) and x < 1 else '≥ 1tr') if pd.notna(x) else 'N/A')
-        treemap_path.append('phat_label')
+                '< 1tr' if pd.notna(x) and x < 1 else '≥ 1tr') if pd.notna(x) else 'Chưa rõ')
+    else:
+        df_m['phat_label'] = 'Chưa rõ'
 
     tn_col = 'Nhóm Thâm Niên'
-    if tn_col in df_m.columns:
-        df_m['tenure_label'] = df_m[tn_col].fillna('Chưa rõ')
-        treemap_path.append('tenure_label')
-    else:
-        df_m['tenure_label'] = 'Chưa rõ'
+    df_m['tenure_label'] = df_m[tn_col].fillna('Chưa rõ') if tn_col in df_m.columns else 'Chưa rõ'
 
     ri_col = 'Range lương thực nhận'
     df_m['income_label'] = df_m[ri_col].fillna('Chưa rõ') if ri_col in df_m.columns else df_m.get('income_group', pd.Series('Chưa rõ', index=df_m.index)).astype(str)
 
-    # Clean intent labels for treemap
-    df_m['intent_clean'] = df_m['intent_risk'].apply(lambda x: x[2:] if pd.notna(x) and str(x).startswith(('🔴','🟡','🟢')) else x)
+    def _plot_risk(df, col, title):
+        df_valid = df[df[col] != 'Chưa rõ']
+        if df_valid.empty:
+            return go.Figure().update_layout(title=title, height=350, annotations=[dict(text="Không có dữ liệu", showarrow=False)])
+        
+        counts = df_valid.groupby(col).size().reset_index(name='Total')
+        risk_counts = df_valid[df_valid['intent_risk'].astype(str).str.contains('Muốn nghỉ')].groupby(col).size().reset_index(name='Risk')
+        
+        stats = pd.merge(counts, risk_counts, on=col, how='left').fillna(0)
+        stats['Pct'] = (stats['Risk'] / stats['Total'] * 100).round(1)
+        stats = stats[stats['Total'] >= 10].sort_values('Pct', ascending=True)
+        
+        if stats.empty:
+             return go.Figure().update_layout(title=title, height=350, annotations=[dict(text="Không đủ mẫu (N<10)", showarrow=False)])
+             
+        fig = go.Figure(go.Bar(
+            x=stats['Pct'], y=stats[col].astype(str), orientation='h',
+            marker_color=COLORS['red'], text=stats['Pct'].apply(lambda x: f"{x}%"), textposition='auto'
+        ))
+        fig.update_layout(title=title, height=350, xaxis_title="% Muốn nghỉ", yaxis_title="", margin=dict(l=10, r=10, t=40, b=10))
+        return fig
 
-    tree_mask = df_m['intent_clean'].notna() & df_m['income_label'].notna()
-    df_tree = df_m[tree_mask].groupby(treemap_path).agg(Count=('EI','count'), EI_avg=('EI','mean')).reset_index()
-    df_tree['EI_avg'] = df_tree['EI_avg'].round(1)
-    df_tree = df_tree[df_tree['Count'] >= 3]
-
-    if len(df_tree) > 5:
-        fig = px.treemap(df_tree, path=treemap_path,
-            values='Count', color='EI_avg', color_continuous_scale='RdYlGn', range_color=[40,85],
-            title='TREEMAP: Ý ĐỊNH → THU NHẬP → PHẠT → THÂM NIÊN',
-            labels={'EI_avg':'EI (%)', 'Count':'Số NV'}, hover_data={'EI_avg':':.1f'})
-        fig.update_layout(height=650)
-        fig.update_traces(textinfo='label+value', textfont_size=10)
-        st.plotly_chart(fig, width='stretch')
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.plotly_chart(_plot_risk(df_m, 'income_label', "Theo Thu Nhập"), use_container_width=True)
+    with c2:
+        st.plotly_chart(_plot_risk(df_m, 'phat_label', "Theo Mức Phạt"), use_container_width=True)
+    with c3:
+        st.plotly_chart(_plot_risk(df_m, 'tenure_label', "Theo Thâm Niên"), use_container_width=True)
 
     st.markdown("#### Bước 3: So sánh nhóm Muốn nghỉ vs Gắn bó")
     df_risk = df_m[df_m['intent_risk'].str.contains('Muốn nghỉ', na=False)]
