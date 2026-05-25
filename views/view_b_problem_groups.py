@@ -94,18 +94,7 @@ def render(df, cfg):
 
         st.dataframe(styled_met, use_container_width=True, hide_index=True, column_config=col_config)
 
-        import io
-        buffer1 = io.BytesIO()
-        with pd.ExcelWriter(buffer1, engine='xlsxwriter') as writer:
-            df_display.to_excel(writer, index=False, sheet_name='Summary')
-        
-        st.download_button(
-            label="📥 Tải báo cáo Bảng tổng hợp (Excel)",
-            data=buffer1.getvalue(),
-            file_name=f"EES_Drilldown_{level}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            key=f"export_tab1_{level}"
-        )
+
 
     with tab2:
         heat_data = []
@@ -130,15 +119,3 @@ def render(df, cfg):
             prompt_heat = f"Đây là biểu đồ nhiệt (Heatmap) đánh giá điểm mạnh/yếu của từng đơn vị qua các khía cạnh {ai_data_heat['Dimensions']}. Phân tích nhanh những rủi ro khi một đơn vị có màu đỏ (điểm thấp) ở nhiều cột liên tiếp. Khuyến nghị hành động tiếp theo cho quản lý cấp cao là gì?"
             render_ai_insight_card("AI Heatmap Analysis", ai_data_heat, prompt_heat, custom_style="margin-top: 16px; margin-bottom: 24px;")
             
-            buffer2 = io.BytesIO()
-            with pd.ExcelWriter(buffer2, engine='xlsxwriter') as writer:
-                df_heat.reset_index().to_excel(writer, index=False, sheet_name='Heatmap')
-            
-            st.download_button(
-                label="📥 Tải báo cáo Heatmap (Excel)",
-                data=buffer2.getvalue(),
-                file_name=f"EES_Heatmap_Section.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key="export_tab2"
-            )
-

@@ -149,15 +149,4 @@ def render(df, cfg):
 
     st.dataframe(styled_priorities, use_container_width=True, hide_index=True, column_config=col_config)
 
-    import io
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        df_priorities.to_excel(writer, index=False, sheet_name='Action_Priorities')
-    
-    st.download_button(
-        label="📥 Tải báo cáo Ma trận Ưu tiên (Excel)",
-        data=buffer.getvalue(),
-        file_name=f"EES_Action_Priorities.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="export_priorities"
-    )
+

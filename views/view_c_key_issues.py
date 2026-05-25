@@ -134,20 +134,3 @@ def render(df, cfg):
             else:
                 st.info("Không tìm thấy trích dẫn.")
                 
-    st.markdown("<hr>", unsafe_allow_html=True)
-    import io
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        df_export = df[[sel_q, cc]].copy().dropna(subset=[cc])
-        df_export.columns = ['Câu trả lời gốc', 'Câu trả lời (Đã làm sạch)']
-        from shared.nlp_utils import classify_topics
-        df_export['Chủ đề'] = df_export['Câu trả lời (Đã làm sạch)'].apply(lambda x: ", ".join(classify_topics(x)))
-        df_export.to_excel(writer, index=False, sheet_name='Feedback')
-        
-    st.download_button(
-        label="📥 Tải chi tiết phản hồi (Excel)",
-        data=buffer.getvalue(),
-        file_name=f"EES_Feedback_{sel_q}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="export_nlp"
-    )
