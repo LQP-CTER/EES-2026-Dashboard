@@ -46,7 +46,7 @@ html, body, .stApp {
     color: #1E293B !important;
 }
 .block-container {
-    padding-top: 2rem !important;
+    padding-top: 4.5rem !important;
     padding-left: 2.5rem !important;
     padding-right: 2.5rem !important;
     max-width: 100% !important;
