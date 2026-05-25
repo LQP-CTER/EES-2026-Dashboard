@@ -207,72 +207,72 @@ def render(df_clean, cfg, sel_group):
             don_gap = don_ok - don_risk
             don_pct = (don_gap / don_risk * 100) if don_risk > 0 else 0
 
-        cards_html = f"""
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 30px; margin-top: 15px;">
-            <!-- Card 1: Thu nhập -->
-            <div class="custom-metric-card">
-                <span class="metric-title">Thu nhập thực nhận (triệu)</span>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
-                    <div>
-                        <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
-                        <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{income_risk:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+        import textwrap
+        cards_html = textwrap.dedent(f"""
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 30px; margin-top: 15px;">
+                <!-- Card 1: Thu nhập -->
+                <div class="custom-metric-card">
+                    <span class="metric-title">Thu nhập thực nhận (triệu)</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
+                        <div>
+                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
+                            <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{income_risk:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+                        </div>
+                        <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
+                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
+                            <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{income_ok:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+                        </div>
                     </div>
-                    <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
-                        <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
-                        <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{income_ok:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+                    <div style="margin-top: 8px; font-size: 0.88rem; color: #475569; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.04);">
+                        Chênh lệch: <span class="metric-delta delta-positive" style="padding: 2px 8px; font-size: 0.75rem;">+{income_gap:.2f} triệu ({income_pct:+.1f}%)</span>
                     </div>
                 </div>
-                <div style="margin-top: 8px; font-size: 0.88rem; color: #475569; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.04);">
-                    Chênh lệch: <span class="metric-delta delta-positive" style="padding: 2px 8px; font-size: 0.75rem;">+{income_gap:.2f} triệu ({income_pct:+.1f}%)</span>
-                </div>
-            </div>
-        """
+        """)
         
         if has_phat:
-            cards_html += f"""
-            <!-- Card 2: Phạt & Truy thu -->
-            <div class="custom-metric-card">
-                <span class="metric-title">Phạt &amp; Truy thu COD (triệu)</span>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
-                    <div>
-                        <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
-                        <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{phat_risk:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+            cards_html += textwrap.dedent(f"""
+                <!-- Card 2: Phạt & Truy thu -->
+                <div class="custom-metric-card">
+                    <span class="metric-title">Phạt &amp; Truy thu COD (triệu)</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
+                        <div>
+                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
+                            <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{phat_risk:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+                        </div>
+                        <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
+                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
+                            <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{phat_ok:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+                        </div>
                     </div>
-                    <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
-                        <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
-                        <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{phat_ok:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
+                    <div style="margin-top: 8px; font-size: 0.88rem; color: #475569; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.04);">
+                        Mức giảm phạt: <span class="metric-delta delta-positive" style="padding: 2px 8px; font-size: 0.75rem;">{-phat_gap:.2f} triệu ({-phat_gap/(phat_risk or 1)*100:+.1f}%)</span>
                     </div>
                 </div>
-                <div style="margin-top: 8px; font-size: 0.88rem; color: #475569; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.04);">
-                    Mức giảm phạt: <span class="metric-delta delta-positive" style="padding: 2px 8px; font-size: 0.75rem;">{-phat_gap:.2f} triệu ({-phat_gap/(phat_risk or 1)*100:+.1f}%)</span>
-                </div>
-            </div>
-            """
+            """)
             
         if has_don:
-            cards_html += f"""
-            <!-- Card 3: Năng suất -->
-            <div class="custom-metric-card">
-                <span class="metric-title">Năng suất giao hàng ({don_unit})</span>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
-                    <div>
-                        <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
-                        <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{don_risk:.1f} <span style="font-size: 0.85rem; font-weight: 500;">đơn</span></p>
+            cards_html += textwrap.dedent(f"""
+                <!-- Card 3: Năng suất -->
+                <div class="custom-metric-card">
+                    <span class="metric-title">Năng suất giao hàng ({don_unit})</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
+                        <div>
+                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
+                            <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{don_risk:.1f} <span style="font-size: 0.85rem; font-weight: 500;">đơn</span></p>
+                        </div>
+                        <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
+                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
+                            <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{don_ok:.1f} <span style="font-size: 0.85rem; font-weight: 500;">đơn</span></p>
+                        </div>
                     </div>
-                    <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
-                        <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
-                        <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{don_ok:.1f} <span style="font-size: 0.85rem; font-weight: 500;">đơn</span></p>
+                    <div style="margin-top: 8px; font-size: 0.88rem; color: #475569; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.04);">
+                        Tăng trưởng: <span class="metric-delta delta-positive" style="padding: 2px 8px; font-size: 0.75rem;">+{don_gap:.1f} đơn ({don_pct:+.1f}%)</span>
                     </div>
                 </div>
-                <div style="margin-top: 8px; font-size: 0.88rem; color: #475569; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.04);">
-                    Tăng trưởng: <span class="metric-delta delta-positive" style="padding: 2px 8px; font-size: 0.75rem;">+{don_gap:.1f} đơn ({don_pct:+.1f}%)</span>
-                </div>
-            </div>
-            """
+            """)
             
-        cards_html += "</div>"
-        import textwrap
-        st.markdown(textwrap.dedent(cards_html), unsafe_allow_html=True)
+        cards_html += "\n</div>"
+        st.markdown(cards_html, unsafe_allow_html=True)
 
         # Plot dynamic chart for details
         chart_data = {'Chỉ số': ['Thu nhập (tr)'], 'Muốn nghỉ': [income_risk], 'Gắn bó': [income_ok]}
