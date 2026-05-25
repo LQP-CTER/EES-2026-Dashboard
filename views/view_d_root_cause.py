@@ -22,6 +22,20 @@ def _render_non_1a(df_clean, cfg, sel_group):
         else ('🟡 Phân vân (3)' if pd.notna(x) and x == 3
               else ('🟢 Gắn bó (4-5)' if pd.notna(x) else None)))
               
+    # Non-DA user context
+    st.markdown("""
+    <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
+        <div style="font-size:1.4rem;flex-shrink:0;">🔍</div>
+        <div>
+            <div style="font-size:0.82rem;font-weight:700;color:#15803D;margin-bottom:4px;">Phân tích Nguyên nhân Gốc rễ — Tại sao nhân viên muốn nghỉ?</div>
+            <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
+                Phần này <strong>so sánh trực tiếp</strong> nhóm <span style="background:#FEF2F2;color:#DC2626;padding:1px 6px;border-radius:4px;font-weight:700;">Muốn nghỉ</span> vs nhóm <span style="background:#F0FDF4;color:#15803D;padding:1px 6px;border-radius:4px;font-weight:700;">Gắn bó</span>:
+                Họ trả lời khác nhau như thế nào ở từng câu hỏi? Câu hỏi nào có khoảng cách lớn nhất chính là <strong>nguyên nhân thực sự</strong> đằng sau quyết định nghỉ việc.
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.markdown("<h4 style='color: #0A1F44; font-weight: 700;'>Bước 1: Phân nhóm ý định rời đi</h4>", unsafe_allow_html=True)
     risk_ov = df.groupby('intent_risk').agg(N=('EI','count')).reset_index()
     total_n = risk_ov['N'].sum()
@@ -34,8 +48,12 @@ def _render_non_1a(df_clean, cfg, sel_group):
         with col:
             st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="👤", progress_val=pct), unsafe_allow_html=True)
 
-    st.markdown("#### Bước 2: Top yếu tố bất mãn nhất ở nhóm Muốn nghỉ")
-    st.markdown("So sánh điểm trung bình các câu hỏi giữa nhóm **Muốn nghỉ** và nhóm **Gắn bó** để tìm ra những nguyên nhân gốc rễ (Root Cause) lớn nhất khiến nhân sự muốn rời đi.")
+    st.markdown("#### Bước 2: Câu hỏi nào có khoảng cách điểm lớn nhất?")
+    st.markdown("""
+    Biểu đồ bên dưới cho thấy <strong>sự khác biệt trong câu trả lời</strong> giữa 2 nhóm.
+    Khoảng cách <span style="color:#DC2626;font-weight:700;">càng rộng</span> = câu hỏi đó phản ánh <strong>vấn đề thực sự</strong> khiến nhân viên muốn rời đi.
+    Ưu tiên giải quyết những câu có khoảng cách lớn nhất.
+    """, unsafe_allow_html=True)
     
     df_risk = df[df['intent_risk'] == '🔴 Muốn nghỉ (1-2)']
     df_ok = df[df['intent_risk'] == '🟢 Gắn bó (4-5)']
@@ -327,20 +345,39 @@ def render(df_clean, cfg, sel_group):
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.markdown("""
+            # Build group-specific JD-R callout
+            group_short = cfg.get('short', '')
+            if group_short in ('Kho 2A', 'BC 2B'):
+                demands_text = "Ca đêm liên tục, thiết bị hỏng hóc ảnh hưởng KPI, khách hàng tức giận từ giao hàng thất bại, bốc vác nặng — đây là những áp lực thể chất và cảm xúc tích lũy ngày qua ngày."
+                resources_text = "Thiết bị đủ chuẩn, ca kíp hợp lý, quyền hạn giải quyết vấn đề cho khách hàng, lộ trình thăng tiến rõ ràng, và quản lý trực tiếp sẵn sàng hỗ trợ khi có sự cố."
+                shield_text = "Khi nhân viên biết mình có thể gọi cho ai khi gặp sự cố, khi thiết bị được bảo trì đúng hẹn, và khi sai sót được xử lý công bằng — họ chịu được áp lực cao hơn nhiều mà không bỏ cuộc."
+            elif group_short == 'BO 3A':
+                demands_text = "Khối lượng công việc tăng không kèm nguồn lực, quy trình phê duyệt đa tầng tốn thời gian, chiến lược thay đổi liên tục thiếu giải thích — những áp lực vô hình này bào mòn động lực làm việc của nhân viên BO."
+                resources_text = "Quyền tự quyết trong phạm vi công việc, công cụ và hệ thống hoạt động hiệu quả, cơ hội học hỏi và phát triển, và quan trọng nhất: cảm giác đóng góp được nhìn nhận và có giá trị."
+                shield_text = "Khi nhân viên BO được giải thích lý do đằng sau các quyết định chiến lược, khi công sức của họ được ghi nhận công khai và khi họ thấy con đường phát triển rõ ràng — họ có thể chịu đựng áp lực cao hơn nhiều mà không nghỉ việc."
+            elif group_short == 'Manager 3B':
+                demands_text = "Áp lực KPI từ HQ, nhân viên yêu cầu hỗ trợ, trách nhiệm tuyển dụng/giữ chân nhân sự, họp liên miên — quản lý cấp trung đang gánh nhiều áp lực nhất trong tổ chức nhưng ít được chú ý nhất."
+                resources_text = "Quyền hạn tương ứng với trách nhiệm (tuyển dụng, ngân sách nhỏ), thông tin chiến lược đầy đủ từ cấp trên, cộng đồng đồng đẳng để chia sẻ thách thức, và tài nguyên phát triển năng lực lãnh đạo."
+                shield_text = "Khi quản lý hiểu rõ 'mình được quyền quyết định gì', khi lãnh đạo cấp trên lắng nghe phản hồi từ cấp dưới, và khi có diễn đàn để bày tỏ khó khăn — burnout ở tầng quản lý giảm đáng kể, kéo theo cả đội nhóm của họ cũng gắn bó hơn."
+            else:
+                demands_text = "Khối lượng công việc, áp lực kết quả và các yếu tố gây căng thẳng làm bào mòn động lực và năng lượng của nhân viên theo thời gian."
+                resources_text = "Sự hỗ trợ từ cấp quản lý trực tiếp, môi trường làm việc phù hợp, cơ hội phát triển và văn hóa công nhận đóng góp."
+                shield_text = "Khi nguồn lực hỗ trợ đủ mạnh, nhân viên có thể chịu đựng áp lực cao mà không mất đi sự gắn kết. Chất lượng quản lý trực tiếp đóng vai trò quyết định trong việc duy trì sức khỏe tổ chức."
+
+            st.markdown(f"""
             <div class="framework-callout" style="border-left-color: #FF5200; background: linear-gradient(135deg, rgba(255, 82, 0, 0.03) 0%, rgba(10, 31, 68, 0.01) 100%);">
-                <div class="framework-callout-title" style="color: #FF5200; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    Lý thuyết JD-R (Job Demands-Resources) — Cán Cân Giữa Áp Lực &amp; Sự Hỗ Trợ
+                <div class="framework-callout-title" style="color: #FF5200; font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Tại sao nhân viên nghỉ? — Mô hình Áp lực &amp; Hỗ trợ (JD-R Framework)
                 </div>
-                <p style="font-size: 0.92rem; color: #475569; line-height: 1.65; margin: 0;">
-                    Dưới lăng kính khoa học của mô hình <strong>JD-R (Job Demands-Resources)</strong>, rủi ro rời đi của nhân viên là sự mất cân bằng nghiêm trọng giữa:
-                    <br>
-                    • <strong>Job Demands (Yêu cầu &amp; Áp lực):</strong> Khối lượng công việc, áp lực và các yếu tố gây căng thẳng làm bào mòn động lực.
-                    <br>
-                    • <strong>Job Resources (Nguồn lực &amp; Hỗ trợ):</strong> Sự hỗ trợ từ cấp quản lý trực tiếp, môi trường làm việc và văn hóa công nhận.
-                    <br>
-                    <span style="color: #0A1F44; font-weight: 700;">🛡️ Tấm Khiên Hấp Thụ Xung Lực:</span> Khi nguồn lực hỗ trợ từ quản lý được nâng cao, nó đóng vai trò như một tấm khiên bảo vệ, giúp trung hòa mọi áp lực và giảm tỷ lệ nghỉ việc. Chất lượng của người quản lý đóng vai trò cốt lõi trong việc duy trì sự gắn kết của nhân sự.
+                <p style="font-size: 0.88rem; color: #475569; line-height: 1.65; margin: 0;">
+                    Nghiên cứu khoa học về hành vi tổ chức chỉ ra: nhân viên không nghỉ việc vì áp lực cao — họ nghỉ vì <strong>áp lực quá cao mà thiếu hỗ trợ</strong>.
+                    <br><br>
+                    <strong>⚡ Áp lực thực tế của nhóm {cfg.get('label','')}:</strong> {demands_text}
+                    <br><br>
+                    <strong>🌱 Nguồn lực hỗ trợ cần có:</strong> {resources_text}
+                    <br><br>
+                    <span style="color:#0A1F44;font-weight:700;">🛡️ Điều tạo ra sự khác biệt:</span> {shield_text}
                 </p>
             </div>
             """, unsafe_allow_html=True)

@@ -11,6 +11,20 @@ def render(df, cfg):
 
     from shared.plotly_theme import section_header
 
+    # Non-DA user context banner
+    st.markdown("""
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
+        <div style="font-size:1.4rem;flex-shrink:0;">🗺️</div>
+        <div>
+            <div style="font-size:0.82rem;font-weight:700;color:#1D4ED8;margin-bottom:4px;">Ma trận Ưu tiên Hành động — Nên làm gì trước?</div>
+            <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
+                Biểu đồ này giúp bạn <strong>xác định đúng trọng tâm</strong>: không phải mọi điểm thấp đều cần giải quyết ngay. Chỉ những yếu tố <strong style="color:#DC2626;">ảnh hưởng lớn đến gắn kết MÀ điểm hiện tại lại thấp</strong> mới là ưu tiên thực sự.
+                Nhìn vào góc <span style="background:#FEF2F2;color:#DC2626;padding:1px 6px;border-radius:4px;font-weight:700;">đỏ trên-trái</span> trước tiên — đó là những nơi cần đầu tư nguồn lực ngay.
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     from scipy import stats as scipy_stats
 
     correlations = []
@@ -46,7 +60,7 @@ def render(df, cfg):
         "Total_High_Priority_Count": len(df_high_priority)
     }
     
-    prompt = "Phân tích 3 yếu tố rơi vào nhóm Ưu tiên cao (High Priority). Giải thích nhanh tại sao đây là những hành động cấp bách (vì điểm trung bình thấp nhưng tương quan cực mạnh với EI) và đề xuất hướng giải quyết ngắn gọn."
+    prompt = "Bạn đang tư vấn cho một Giám đốc HR không chuyên về data analytics. Dựa trên danh sách các yếu tố 'Ưu tiên cao' (điểm thấp nhưng ảnh hưởng lớn đến sự gắn kết), hãy giải thích bằng ngôn ngữ thông thường: (1) Các yếu tố này thực tế nghĩa là gì — nhân viên đang gặp phải vấn đề gì trong ngày làm việc? (2) Nếu cải thiện những điểm này, điều gì sẽ thay đổi? (3) Bước đầu tiên cần làm ngay là gì — một hành động cụ thể có thể triển khai trong tháng tới?"
     render_ai_insight_card("AI Action Priorities", ai_data, prompt, custom_style="margin-bottom: 24px;")
 
     color_map = {'Ưu tiên cao': COLORS['red'], 'Duy trì': COLORS['green'],
@@ -71,38 +85,45 @@ def render(df, cfg):
         import textwrap
         st.markdown(textwrap.dedent("""
         <div style="background: white; padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); height: 100%; box-shadow: 0 4px 12px rgba(10,31,68,0.02);">
-            <h4 style="color: #0A1F44; font-size: 1rem; margin-top: 0; font-weight: 700; border-bottom: 2px solid #E8EAF0; padding-bottom: 12px; margin-bottom: 16px;">Hướng dẫn đọc</h4>
-            
-            <div style="margin-bottom: 16px;">
-                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #C0392B; font-size: 0.95rem;">
-                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #C0392B; display: inline-block;"></span>
-                    Ưu tiên cao
+            <h4 style="color: #0A1F44; font-size: 0.95rem; margin-top: 0; font-weight: 700; border-bottom: 2px solid #E8EAF0; padding-bottom: 10px; margin-bottom: 14px;">
+                📋 Cách đọc biểu đồ này
+            </h4>
+            <p style="font-size: 0.78rem; color: #64748B; line-height: 1.55; margin-bottom: 14px; padding: 8px 10px; background: #F8FAFC; border-radius: 8px;">
+                Mỗi chấm = một câu hỏi khảo sát.<br>
+                <strong>Trục ngang (→)</strong>: điểm trung bình nhân viên cho câu đó (thấp = họ không hài lòng).<br>
+                <strong>Trục dọc (↑)</strong>: câu đó ảnh hưởng nhiều/ít đến sự gắn kết tổng thể.
+            </p>
+
+            <div style="margin-bottom: 14px; padding: 10px 12px; background: #FEF2F2; border-radius: 10px; border-left: 3px solid #C0392B;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #C0392B; font-size: 0.85rem; margin-bottom: 4px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #C0392B; display: inline-block; flex-shrink:0;"></span>
+                    🔴 Ưu tiên cao — Hành động ngay
                 </div>
-                <div style="font-size: 0.85rem; color: #64748B; margin-left: 20px; margin-top: 4px;">Tác động lớn, nhưng điểm đang thấp. Cần dồn lực cải thiện ngay.</div>
+                <div style="font-size: 0.78rem; color: #7F1D1D;">Điểm thấp <em>VÀ</em> ảnh hưởng lớn đến gắn kết. Đây là những điểm đau thực sự của nhân viên — nếu không cải thiện, rủi ro nghỉ việc tăng cao.</div>
             </div>
-            
-            <div style="margin-bottom: 16px;">
-                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #0D6E3A; font-size: 0.95rem;">
-                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #0D6E3A; display: inline-block;"></span>
-                    Duy trì
+
+            <div style="margin-bottom: 14px; padding: 10px 12px; background: #F0FDF4; border-radius: 10px; border-left: 3px solid #0D6E3A;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #0D6E3A; font-size: 0.85rem; margin-bottom: 4px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #0D6E3A; display: inline-block; flex-shrink:0;"></span>
+                    🟢 Duy trì — Thế mạnh hiện tại
                 </div>
-                <div style="font-size: 0.85rem; color: #64748B; margin-left: 20px; margin-top: 4px;">Thế mạnh của công ty. Tiếp tục phát huy.</div>
+                <div style="font-size: 0.78rem; color: #14532D;">Điểm cao <em>VÀ</em> ảnh hưởng lớn. Đây là lý do nhân viên chọn ở lại — cần bảo vệ và không để xuống cấp.</div>
             </div>
-            
-            <div style="margin-bottom: 16px;">
-                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #FFA726; font-size: 0.95rem;">
-                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #FFA726; display: inline-block;"></span>
-                    Theo dõi
+
+            <div style="margin-bottom: 14px; padding: 10px 12px; background: #FFFBEB; border-radius: 10px; border-left: 3px solid #FFA726;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #92400E; font-size: 0.85rem; margin-bottom: 4px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #FFA726; display: inline-block; flex-shrink:0;"></span>
+                    🟡 Theo dõi — Chưa cấp bách
                 </div>
-                <div style="font-size: 0.85rem; color: #64748B; margin-left: 20px; margin-top: 4px;">Điểm thấp nhưng tác động chưa lớn.</div>
+                <div style="font-size: 0.78rem; color: #78350F;">Điểm thấp nhưng ảnh hưởng chưa nhiều. Xếp sau khi đã giải quyết nhóm đỏ.</div>
             </div>
-            
-            <div>
-                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #78909C; font-size: 0.95rem;">
-                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #78909C; display: inline-block;"></span>
-                    Không ưu tiên
+
+            <div style="padding: 10px 12px; background: #F8FAFC; border-radius: 10px; border-left: 3px solid #78909C;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #475569; font-size: 0.85rem; margin-bottom: 4px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #78909C; display: inline-block; flex-shrink:0;"></span>
+                    ⚪ Không ưu tiên — Ổn định
                 </div>
-                <div style="font-size: 0.85rem; color: #64748B; margin-left: 20px; margin-top: 4px;">Điểm cao sẵn và ít tác động trực tiếp đến sự hài lòng chung.</div>
+                <div style="font-size: 0.78rem; color: #64748B;">Điểm đã cao và ít tác động trực tiếp. Không cần đầu tư thêm ở thời điểm này.</div>
             </div>
         </div>
         """), unsafe_allow_html=True)

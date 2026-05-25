@@ -8,7 +8,23 @@ from utils.ai_generator import render_ai_insight_card
 def render(df, cfg):
     apply_theme()
 
-    level = st.radio("Cấp độ", ['Division', 'Department', 'Section'], horizontal=True)
+    # Non-DA user context
+    st.markdown("""
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;">
+        <div style="font-size:1.4rem;flex-shrink:0;">🔎</div>
+        <div>
+            <div style="font-size:0.82rem;font-weight:700;color:#1D4ED8;margin-bottom:4px;">Xác định đơn vị nào đang gặp vấn đề</div>
+            <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
+                Chọn cấp độ <strong>Division → Department → Section</strong> để thu hẹp dần vào đơn vị cụ thể.
+                Màu <span style="color:#DC2626;font-weight:700;">đỏ/cam</span> = điểm thấp, cần chú ý.
+                Màu <span style="color:#15803D;font-weight:700;">xanh</span> = điểm tốt.
+                Dùng biểu đồ này để trả lời: <em>"Vấn đề là toàn hệ thống hay chỉ ở một bộ phận cụ thể?"</em>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    level = st.radio("Cấp độ phân tích", ['Division', 'Department', 'Section'], horizontal=True)
     col_map = {'Division': 'division', 'Department': 'department', 'Section': 'section'}
     grp_col = col_map[level]
 

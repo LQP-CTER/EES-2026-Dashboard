@@ -15,7 +15,22 @@ def render(df, cfg):
         st.info("Nhóm này không có câu hỏi mở.")
         return
 
-    sel_q = st.selectbox("Chọn câu hỏi mở", list(q_options.keys()),
+    # Non-DA user context
+    st.markdown("""
+    <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;">
+        <div style="font-size:1.4rem;flex-shrink:0;">💬</div>
+        <div>
+            <div style="font-size:0.82rem;font-weight:700;color:#C2410C;margin-bottom:4px;">Lắng nghe tiếng nói nhân viên — Họ thực sự nói gì?</div>
+            <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
+                Hệ thống tự động phân tích <strong>toàn bộ câu trả lời tự luận</strong> và nhóm chúng thành các chủ đề.
+                Chủ đề nào được nhắc nhiều nhất = vấn đề đang "nóng nhất" trong đầu nhân viên.
+                Bạn cũng có thể xem nhân viên gắn bó nhất (<em>Promoter</em>) và bất mãn nhất (<em>Detractor</em>) đang nói về điều gì khác nhau.
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    sel_q = st.selectbox("Chọn câu hỏi mở để phân tích:", list(q_options.keys()),
                          format_func=lambda q: f"{q}: {q_options[q]}")
     cc = f'{sel_q}_clean'
 
@@ -45,7 +60,7 @@ def render(df, cfg):
                 "Top_Topic_Percentage": round(top_topic[2], 1),
                 "Group_Name": cfg.get('label', '')
             }
-            prompt = "Phân tích cụm chủ đề (Topic) nổi bật nhất từ các phản hồi tự luận (Open-text). Đánh giá tầm quan trọng của chủ đề này và kết luận nó phản ánh 'tiếng lòng' gì của nhân viên."
+            prompt = f"Dựa trên dữ liệu: {ai_data['Total_Feedback']} nhân viên đã chia sẻ ý kiến tự luận, và chủ đề được nhắc nhiều nhất là '{ai_data['Top_Topic']}' ({ai_data['Top_Topic_Percentage']}% nhân viên đề cập). Hãy giải thích bằng ngôn ngữ thông thường cho một Giám đốc không chuyên về data: (1) Chủ đề này có nghĩa là gì trong thực tế công việc hàng ngày của nhân viên? (2) Tại sao đây lại là điều họ muốn nói nhất? (3) Lãnh đạo cần chú ý điều gì từ tín hiệu này?"
             render_ai_insight_card("AI Topic Insight", ai_data, prompt, custom_style="margin-top: 16px; margin-bottom: 24px;")
 
             labels, counts, pcts = zip(*topic_data)
