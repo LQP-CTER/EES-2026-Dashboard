@@ -170,7 +170,7 @@ def render(df, cfg):
     if grp_col:
         metrics_rows = []
         for name, g in df.groupby(grp_col):
-            if len(g) < 5: continue # Ignore groups that are too small to ensure anonymity
+            if len(g) < 1: continue # Hiển thị tất cả các phòng ban
             kpi = compute_kpis(g)
             row = {
                 grp_name: name, 
@@ -232,7 +232,7 @@ def render(df, cfg):
                 for name, g in df.groupby(col_id):
                     # Clean up empty or weird names
                     if pd.isna(name) or str(name).strip() == '': continue
-                    if len(g) < 5: continue
+                    if len(g) < 1: continue
                     
                     kpi = compute_kpis(g)
                     demo_data.append({'Nhóm': str(name), 'N': kpi['n'], 'EI (%)': kpi['ei_mean'], 'eNPS': kpi['enps_score']})
