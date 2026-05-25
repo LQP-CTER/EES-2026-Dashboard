@@ -201,18 +201,14 @@ def compute_kpis(df):
     }
 
 
-@st.cache_data(ttl=3600, show_spinner="📂 Đang tải HRIS...")
+@st.cache_data(ttl=3600, show_spinner="📂 Đang tải HRIS từ Google Sheet...")
 def load_hris(group_id: str):
-    """Load HRIS for a specific group."""
-    from config.groups import GROUP_REGISTRY
-    cfg = GROUP_REGISTRY[group_id]
-    if not cfg.get('hris_file'):
+    """Load HRIS for a specific group from central Google Sheet."""
+    hris_url = "https://docs.google.com/spreadsheets/d/19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo/export?format=csv"
+    try:
+        df_hris = pd.read_csv(hris_url)
+    except Exception:
         return None, None
-    fpath = os.path.join(DATA_DIR, cfg['hris_file'])
-    if not os.path.exists(fpath):
-        return None, None
-
-    df_hris = pd.read_excel(fpath, engine='openpyxl')
     month_col = df_hris.columns[1]
 
     def _parse_month(m):
