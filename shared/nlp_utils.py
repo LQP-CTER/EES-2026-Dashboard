@@ -235,7 +235,7 @@ def detect_warning_signals(text):
     Quét tín hiệu cảnh báo sớm trong phản hồi.
     Returns: list of (signal_type, matched_phrase)
     """
-    if text is None:
+    if not isinstance(text, str):
         return []
 
     text_lower = text.lower()
