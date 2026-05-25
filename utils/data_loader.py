@@ -204,7 +204,12 @@ def compute_kpis(df):
 @st.cache_data(ttl=3600, show_spinner="📂 Đang tải HRIS từ Google Sheet...")
 def load_hris(group_id: str):
     """Load HRIS for a specific group from central Google Sheet."""
-    hris_url = "https://docs.google.com/spreadsheets/d/19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo/export?format=csv"
+    try:
+        hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
+    except Exception:
+        hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
+    
+    hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
     try:
         df_hris = pd.read_csv(hris_url)
     except Exception:
