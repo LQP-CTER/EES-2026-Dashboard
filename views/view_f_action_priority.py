@@ -68,7 +68,8 @@ def render(df, cfg):
         st.plotly_chart(fig, use_container_width=True)
     
     with c2:
-        st.markdown("""
+        import textwrap
+        st.markdown(textwrap.dedent("""
         <div style="background: white; padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); height: 100%; box-shadow: 0 4px 12px rgba(10,31,68,0.02);">
             <h4 style="color: #0A1F44; font-size: 1rem; margin-top: 0; font-weight: 700; border-bottom: 2px solid #E8EAF0; padding-bottom: 12px; margin-bottom: 16px;">Hướng dẫn đọc</h4>
             
@@ -104,7 +105,7 @@ def render(df, cfg):
                 <div style="font-size: 0.85rem; color: #64748B; margin-left: 20px; margin-top: 4px;">Điểm cao sẵn và ít tác động trực tiếp đến sự hài lòng chung.</div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
     st.markdown("#### Chi tiết")
     df_priorities = df_corr[['Nhóm', 'Câu', 'Tên', 'Trụ cột', 'Điểm TB', 'Tương quan']].sort_values(
