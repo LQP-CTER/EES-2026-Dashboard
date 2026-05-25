@@ -79,7 +79,10 @@ def load_group(group_id: str):
     df['n_valid_likert'] = df[likert_cols].notna().sum(axis=1)
     df['flag_straightline'] = (df['_likert_sd'] == 0) & (df['n_valid_likert'] >= 10)
     df['flag_too_missing'] = (df[likert_cols].isna().sum(axis=1) / len(likert_cols) * 100) > 80
-    df_clean = df[~(df['flag_too_missing'] | df['flag_straightline'])].copy()
+    if group_id == '3B':
+        df_clean = df.copy() # Bỏ qua bộ lọc rác theo yêu cầu để giữ nguyên 109 khảo sát
+    else:
+        df_clean = df[~(df['flag_too_missing'] | df['flag_straightline'])].copy()
 
     # Org mapping
     vung_col = df_clean.columns[10]
