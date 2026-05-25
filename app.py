@@ -70,15 +70,10 @@ html, body, .stApp {
     margin-bottom: 4px;
 }
 .sb-logo {
-    background: #FF5200;
-    color: #FFFFFF;
-    font-weight: 900;
-    font-size: 0.9rem;
-    padding: 7px 11px;
-    border-radius: 8px;
-    display: inline-block;
-    letter-spacing: -0.01em;
-    margin-bottom: 10px;
+    height: 36px;
+    object-fit: contain;
+    margin-bottom: 12px;
+    display: block;
 }
 .sb-title {
     font-size: 0.875rem;
@@ -546,7 +541,7 @@ with st.sidebar:
     # Brand block
     st.markdown("""
     <div class="sb-brand">
-        <span class="sb-logo">GHN</span>
+        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" class="sb-logo" alt="GHN Logo">
         <span class="sb-title">EES 2026 Dashboard</span>
         <span class="sb-sub">Employee Engagement Survey · Q1/2026</span>
     </div>
