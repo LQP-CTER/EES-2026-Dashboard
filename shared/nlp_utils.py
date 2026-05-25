@@ -206,15 +206,42 @@ def preprocess_text(text):
 
 def analyze_sentiment_rule(text):
     """
-    Phân tích cảm xúc rule-based.
+    Phân tích cảm xúc rule-based nâng cao với ranh giới từ và phủ định.
     Returns: ('tích_cực' | 'tiêu_cực' | 'trung_lập', confidence_score)
     """
     if text is None:
         return None, 0.0
 
     text_lower = text.lower()
-    pos_count = sum(1 for w in POSITIVE_WORDS if w in text_lower)
-    neg_count = sum(1 for w in NEGATIVE_WORDS if w in text_lower)
+    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít']
+    pos_count = 0
+    neg_count = 0
+
+    # Đếm từ tích cực
+    for w in POSITIVE_WORDS:
+        pattern = r'(?:^|\W)(' + re.escape(w) + r')(?:\W|$)'
+        for match in re.finditer(pattern, text_lower):
+            start_idx = match.start(1)
+            context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+            words_before = context_before.split()
+            # Nếu trước từ tích cực là từ phủ định -> biến thành tiêu cực
+            if words_before and words_before[-1] in negation_words:
+                neg_count += 1
+            else:
+                pos_count += 1
+
+    # Đếm từ tiêu cực
+    for w in NEGATIVE_WORDS:
+        pattern = r'(?:^|\W)(' + re.escape(w) + r')(?:\W|$)'
+        for match in re.finditer(pattern, text_lower):
+            start_idx = match.start(1)
+            context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+            words_before = context_before.split()
+            # Nếu trước từ tiêu cực là từ phủ định -> biến thành tích cực
+            if words_before and words_before[-1] in negation_words:
+                pos_count += 1
+            else:
+                neg_count += 1
 
     total = pos_count + neg_count
     if total == 0:
@@ -380,7 +407,7 @@ TOPIC_SHORT_LABELS = {
 
 def classify_topics(text):
     """
-    Phân loại chủ đề từ text (multi-label).
+    Phân loại chủ đề từ text (multi-label) với ranh giới từ và phủ định.
     Returns: list of topic names found in text.
     """
     if not isinstance(text, str):
@@ -388,11 +415,25 @@ def classify_topics(text):
 
     text_lower = text.lower()
     topics_found = []
+    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít']
+    
     for topic, keywords in TOPIC_KEYWORDS.items():
+        matched = False
         for kw in keywords:
-            if kw in text_lower:
+            pattern = r'(?:^|\W)(' + re.escape(kw) + r')(?:\W|$)'
+            for match in re.finditer(pattern, text_lower):
+                start_idx = match.start(1)
+                context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+                words_before = context_before.split()
+                # Nếu từ liền trước là từ phủ định, bỏ qua
+                if words_before and words_before[-1] in negation_words:
+                    continue
+                matched = True
+                break
+            if matched:
                 topics_found.append(topic)
                 break  # 1 match đủ để gán topic
+                
     return topics_found if topics_found else ['❓ Khác']
 
 
