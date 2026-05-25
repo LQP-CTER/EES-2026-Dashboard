@@ -253,11 +253,11 @@ def extract_sv_label(row, group, df_columns):
                     return val
         return None
 
-    if group in ["1A", "1B", "2A"]:
+    if group in ["1A", "1B"]:
         is_appdriver = True
         sv_label = _find_val("id nhân viên", "employee id")
         sv_vung = _find_val("vùng")
-    elif group in ["2B"]:
+    elif group in ["2A", "2B"]:
         pb = _find_val("phòng ban")
         ktc = _find_val("ktc", "ttct", "tttc")
         sme = _find_val("bưu cục kinh doanh")
@@ -277,9 +277,9 @@ def extract_sv_label(row, group, df_columns):
             pl = pb.lower()
             if "warehouse" in pl or "fulfillment" in pl: sv_label = _clean(row[col_wh]) if col_wh else None
             elif "giao hàng nặng" in pl or "b2b" in pl: sv_label = _clean(row[col_gxt]) if col_gxt else None
-            elif "sme" in pl or "bưu cục kinh doanh" in pl: sv_label = _clean(row[col_sme]) if sme else None
+            elif "sme" in pl or "bưu cục kinh doanh" in pl: sv_label = sme
             elif ("kho trung chuyển" in pl or "ktc" in pl or "tttc" in pl) and "vùng" not in pl and "bưu cục" not in pl:
-                sv_label = _clean(row[ktc]) if ktc else None
+                sv_label = ktc
             elif "gxt" in pl: sv_label = pb
             else: sv_label = _clean(row[col_vung]) if col_vung else None
             
@@ -291,6 +291,28 @@ def extract_sv_label(row, group, df_columns):
             if pb: sv_label = pb
 
     return sv_label, sv_vung, is_appdriver
+
+_REGION_CODE_MAP = {
+    "hno": "Vùng HNO", "dsh": "Vùng DSH", "xbg": "Vùng XBG",
+    "tnt": "Vùng TNT", "dbb": "Vùng DBB", "tbb": "Vùng TBB",
+    "btb": "Vùng BTB", "ttb": "Vùng TTB", "tng": "Vùng TNG",
+    "ntb": "Vùng NTB", "dnb": "Vùng DNB", "tnb": "Vùng TNB",
+    "đcl": "Vùng ĐCL", "dcl": "Vùng ĐCL", "hcm": "Vùng HCM",
+}
+
+_VUNG_EXTENDED_MAP = {
+    "freight operations - hcm": ("Bộ Phận Vận Hành HCM", "Bộ Phận Vận Hành HCM"),
+    "freight operations - hn": ("Bộ Phận Vận Hành HN", "Bộ Phận Vận Hành HN"),
+    "b2b operations department - central": ("Phòng Vận Hành B2B Miền Trung", "Giao Hàng Nặng (Vận hành B2B)"),
+    "b2b operations department - eastern": ("Phòng Vận Hành B2B Miền Đông", "Giao Hàng Nặng (Vận hành B2B)"),
+    "b2b operations department - western": ("Phòng Vận Hành B2B Miền Tây", "Giao Hàng Nặng (Vận hành B2B)"),
+    "b2b operations department - north 1": ("Phòng Vận Hành B2B Miền Bắc 1", "Giao Hàng Nặng (Vận hành B2B)"),
+    "b2b operations department - north 2": ("Phòng Vận Hành B2B Miền Bắc 2", "Giao Hàng Nặng (Vận hành B2B)"),
+    "b2b operations department - north 3": ("Phòng Vận Hành B2B Miền Bắc 3", "Giao Hàng Nặng (Vận hành B2B)"),
+    "b2b operations department - hcm": ("Phòng Vận Hành B2B HCM", "Giao Hàng Nặng (Vận hành B2B)"),
+    "b2b operations department - hn": ("Phòng Vận Hành B2B HN", "Giao Hàng Nặng (Vận hành B2B)"),
+    "project 2x": ("Chưa xác định", "Chưa xác định"),
+}
 
 def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
     """
@@ -333,30 +355,10 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
             wf_info = emp_lookup.get(emp_id) or emp_lookup.get(str(emp_id).lower()) or {}
             if not wf_info:
                 if sv_vung:
-                    _REGION_CODE_MAP = {
-                        "hno": "Vùng HNO", "dsh": "Vùng DSH", "xbg": "Vùng XBG",
-                        "tnt": "Vùng TNT", "dbb": "Vùng DBB", "tbb": "Vùng TBB",
-                        "btb": "Vùng BTB", "ttb": "Vùng TTB", "tng": "Vùng TNG",
-                        "ntb": "Vùng NTB", "dnb": "Vùng DNB", "tnb": "Vùng TNB",
-                        "đcl": "Vùng ĐCL", "dcl": "Vùng ĐCL", "hcm": "Vùng HCM",
-                    }
-                    _VUNG_EXTENDED_MAP = {
-                        "freight operations - hcm": ("Bộ Phận Vận Hành HCM", "Bộ Phận Vận Hành HCM"),
-                        "freight operations - hn": ("Bộ Phận Vận Hành HN", "Bộ Phận Vận Hành HN"),
-                        "b2b operations department - central": ("Phòng Vận Hành B2B Miền Trung", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "b2b operations department - eastern": ("Phòng Vận Hành B2B Miền Đông", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "b2b operations department - western": ("Phòng Vận Hành B2B Miền Tây", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "b2b operations department - north 1": ("Phòng Vận Hành B2B Miền Bắc 1", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "b2b operations department - north 2": ("Phòng Vận Hành B2B Miền Bắc 2", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "b2b operations department - north 3": ("Phòng Vận Hành B2B Miền Bắc 3", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "b2b operations department - hcm": ("Phòng Vận Hành B2B HCM", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "b2b operations department - hn": ("Phòng Vận Hành B2B HN", "Giao Hàng Nặng (Vận hành B2B)"),
-                        "project 2x": ("Chưa xác định", "Chưa xác định"),
-                    }
-                    import re
                     sv_vung_lower = sv_vung.lower().replace(" region", "").strip()
                     mapped_vung = None
                     
+                    import re
                     match = re.search(r'\((.*?)\)', sv_vung_lower)
                     if match:
                         code = match.group(1).strip()
@@ -407,6 +409,40 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
                         wf_info = lookup_fallback.get(_norm(wf_val), {})
                 else:
                     wf_info = lookup_fallback.get(sv_norm, {})
+                    
+            if not wf_info and group in ("2A", "2B"):
+                if "sme" in sv_norm or "buucuckinhdoanh" in sv_norm:
+                    wf_info = {"wf_division_vn": "Khối Thị Trường", "wf_department_vn": "Phòng Phát Triển Kinh Doanh Khách Hàng Vừa Và Nhỏ", "wf_section_vn": "Phòng Phát Triển Kinh Doanh Khách Hàng Vừa Và Nhỏ"}
+                elif "gxt" in sv_norm or "giaohangnang" in sv_norm:
+                    wf_info = {"wf_division_vn": "Giao Hàng Nặng (Vận hành B2B)", "wf_department_vn": "Giao Hàng Nặng (Vận hành B2B)", "wf_section_vn": "Giao Hàng Nặng (Vận hành B2B)"}
+                elif "ktc" in sv_norm or "tttc" in sv_norm:
+                    wf_info = {"wf_division_vn": "Khối Thị Trường", "wf_department_vn": "Kho Trung Chuyển", "wf_section_vn": sv_val}
+                elif "warehouse" in sv_norm or "fulfillment" in sv_norm:
+                    wf_info = {"wf_division_vn": "Khối Thị Trường", "wf_department_vn": "Warehouse/Fulfillment", "wf_section_vn": sv_val}
+                elif sv_vung or ("vung" in sv_norm):
+                    v_str = sv_vung if sv_vung else sv_val
+                    import re
+                    sv_vung_lower = v_str.lower().replace(" region", "").strip()
+                    mapped_vung = None
+                    match = re.search(r'\((.*?)\)', sv_vung_lower)
+                    if match:
+                        code = match.group(1).strip()
+                        mapped_vung = _REGION_CODE_MAP.get(code)
+                    if not mapped_vung:
+                        mapped_vung = _REGION_CODE_MAP.get(sv_vung_lower)
+                    if not mapped_vung:
+                        for k, v in _REGION_CODE_MAP.items():
+                            if f" {k} " in f" {sv_vung_lower} ":
+                                mapped_vung = v
+                                break
+                    if mapped_vung:
+                        wf_info = {"wf_division_vn": "Vùng", "wf_department_vn": mapped_vung, "wf_section_vn": mapped_vung}
+                    else:
+                        ext_match = _VUNG_EXTENDED_MAP.get(sv_vung_lower)
+                        if ext_match:
+                            dept_name, div_name = ext_match
+                            wf_info = {"wf_division_vn": div_name, "wf_department_vn": dept_name, "wf_section_vn": dept_name}
+
             elif group in ("3A","3B"):
                 base_cands = [sv_val]
                 if "-" in sv_val:
