@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from shared.plotly_theme import COLORS, apply_custom_theme
+from shared.plotly_theme import COLORS, apply_theme
 
 def render(df, cfg):
     st.markdown('<div class="sec-h3"><div class="sec-accent"></div>MÔ PHỎNG TÁC ĐỘNG (KPI SIMULATOR)</div>', unsafe_allow_html=True)
