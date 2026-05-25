@@ -64,12 +64,13 @@ def load_group(group_id: str):
         'A': 'Dưới 1 tháng', 'B': 'Trên 1 đến 3 tháng', 'C': 'Trên 3 đến 6 tháng',
         'D': 'Trên 6 đến 9 tháng', 'E': 'Trên 9 đến 12 tháng', 'F': 'Trên 1 đến 2 năm',
         'G': 'Trên 2 đến 3 năm', 'H': 'Trên 3 đến 5 năm', 'I': 'Trên 5 năm',
-        'J': 'Chưa xác định'
+        'J': 'Khác'
     }
     if 'Q5' in df.columns:
-        df['Q5'] = df['Q5'].apply(lambda x: Q5_MAP.get(str(x).strip().upper(), str(x).strip()) if pd.notna(x) and str(x).strip() != '' else 'Chưa xác định')
-        # If it's a 1-character string not in Q5_MAP, map it to 'Chưa xác định'
-        df['Q5'] = df['Q5'].apply(lambda x: 'Chưa xác định' if isinstance(x, str) and len(x) == 1 and x.isupper() else x)
+        df['Q5'] = df['Q5'].apply(lambda x: Q5_MAP.get(str(x).strip().upper(), str(x).strip()) if pd.notna(x) and str(x).strip() != '' else 'Khác')
+        # If it's a 1-character string not in Q5_MAP, map it to 'Khác'
+        df['Q5'] = df['Q5'].apply(lambda x: 'Khác' if isinstance(x, str) and len(x) == 1 and x.isupper() else x)
+        df['Q5'] = df['Q5'].replace('Chưa xác định', 'Khác')
 
 
     # Quality flags

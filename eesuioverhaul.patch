@@ -1,0 +1,1766 @@
+From c4006332e354166ac5841f1a791519f27476a373 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 24 May 2026 16:48:04 +0000
+Subject: [PATCH] =?UTF-8?q?refactor:=20overhaul=20dashboard=20UI=20?=
+ =?UTF-8?q?=E2=80=94=20Clean=20Light=20design,=20fixed=20sidebar=20nav,=20?=
+ =?UTF-8?q?no=20emoji=20headers?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- app.py: Replace selectbox+pills nav with fixed sidebar navigation
+  - Sidebar: brand block, radio nav (groups + sub-views), filters in sidebar
+  - Remove emoji from all navigation labels
+  - New page-header component (eyebrow + title + subtitle + live badge)
+  - Complete CSS overhaul: Inter font, GHN orange accent, clean borders
+  - All CSS classes renamed for clarity (pg-*, sb-*, sec-*, ai-*)
+
+- shared/plotly_theme.py:
+  - Rewrite make_html_kpi(): clean donut + label + value + delta (no emoji icons)
+  - Add section_header() helper: accent bar + title + optional subtitle
+
+- utils/ai_generator.py: Replace ✨ emoji icon with clean 'AI' text badge
+
+- views/: Remove emoji from all section headers and page titles
+  - company_overview, group_detail, org_drilldown, nlp_analysis,
+    early_warning, action_priorities, deep_dive, hris_linkage
+  - Duplicate group-name headings removed (now provided by app.py)
+  - Section headers use new section_header() helper
+
+- .streamlit/config.toml: Update background to #F8FAFC (light slate)
+
+https://claude.ai/code/session_01TvLGQuFW6Y9uA4nTpQWkYZ
+---
+ .streamlit/config.toml     |    6 +-
+ app.py                     | 1146 ++++++++++++++++--------------------
+ shared/plotly_theme.py     |  164 +++---
+ utils/ai_generator.py      |   26 +-
+ views/action_priorities.py |    2 +-
+ views/company_overview.py  |    7 +-
+ views/deep_dive.py         |    2 +-
+ views/early_warning.py     |   19 +-
+ views/group_detail.py      |   11 +-
+ views/hris_linkage.py      |    2 +-
+ views/nlp_analysis.py      |    2 -
+ views/org_drilldown.py     |    1 -
+ 12 files changed, 622 insertions(+), 766 deletions(-)
+
+diff --git a/.streamlit/config.toml b/.streamlit/config.toml
+index 2a16f51..5af4cb0 100644
+--- a/.streamlit/config.toml
++++ b/.streamlit/config.toml
+@@ -1,8 +1,8 @@
+ [theme]
+ primaryColor = "#FF5200"
+-backgroundColor = "#FFFFFF"
+-secondaryBackgroundColor = "#F0F2F5"
+-textColor = "#2E3440"
++backgroundColor = "#F8FAFC"
++secondaryBackgroundColor = "#FFFFFF"
++textColor = "#1E293B"
+ font = "sans serif"
+ 
+ [server]
+diff --git a/app.py b/app.py
+index 61daa9b..976413d 100644
+--- a/app.py
++++ b/app.py
+@@ -26,7 +26,7 @@ try:
+ except Exception:
+     pass
+ 
+-st.set_page_config(page_title="GHN EES 2026", layout="wide", initial_sidebar_state="collapsed")
++st.set_page_config(page_title="GHN EES 2026", layout="wide", initial_sidebar_state="expanded")
+ 
+ # Import loaders and views
+ from utils.data_loader import load_group, load_all_available
+@@ -37,652 +37,489 @@ from views import (
+     early_warning, action_priorities
+ )
+ 
+-# ── Custom CSS ──
+-st.markdown("""
+-<style>
+-/* Adjust main container */
+-.block-container {
+-    padding-top: 3.5rem;
+-    padding-left: 3rem;
+-    padding-right: 3rem;
+-    max-width: 100%;
+-}
+-
+-/* Premium Modern White Background */
+-.stApp {
+-    background-color: #F4F7FE;
++# ── Custom CSS ──────────────────────────────────────────────────────────────
++st.markdown("""<style>
++/* ═══════ BASE ═══════ */
++html, body, .stApp {
++    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
++    background-color: #F8FAFC !important;
++    color: #1E293B !important;
+ }
+-
+-/* Global Font */
+-html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .stApp {
+-    font-family: 'Inter', 'Outfit', 'Segoe UI', system-ui, sans-serif !important;
++.block-container {
++    padding-top: 2rem !important;
++    padding-left: 2.5rem !important;
++    padding-right: 2.5rem !important;
++    max-width: 100% !important;
+ }
+ 
+-/* Premium Sidebar Base - Clean White */
++/* ═══════ SIDEBAR BASE ═══════ */
+ [data-testid="stSidebar"] {
+     background: #FFFFFF !important;
+     border-right: 1px solid #E2E8F0 !important;
+ }
++[data-testid="stSidebar"] > div:first-child,
++[data-testid="stSidebar"] section[data-testid="stSidebarContent"] {
++    padding-top: 0 !important;
++}
++
++/* ═══════ SIDEBAR BRAND ═══════ */
++.sb-brand {
++    padding: 22px 20px 16px;
++    border-bottom: 1px solid #F1F5F9;
++    margin-bottom: 4px;
++}
++.sb-logo {
++    background: #FF5200;
++    color: #FFFFFF;
++    font-weight: 900;
++    font-size: 0.9rem;
++    padding: 7px 11px;
++    border-radius: 8px;
++    display: inline-block;
++    letter-spacing: -0.01em;
++    margin-bottom: 10px;
++}
++.sb-title {
++    font-size: 0.875rem;
++    font-weight: 700;
++    color: #0A1F44;
++    display: block;
++    line-height: 1.3;
++}
++.sb-sub {
++    font-size: 0.72rem;
++    color: #94A3B8;
++    display: block;
++    margin-top: 3px;
++    font-weight: 500;
++}
+ 
+-/* Targeted Sidebar Text Elements */
+-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h1,
+-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h2,
+-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h3,
+-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h4,
+-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
+-    color: #4A5568 !important;
++/* ═══════ SIDEBAR NAV LABELS ═══════ */
++.sb-section {
++    font-size: 0.62rem;
++    font-weight: 700;
++    letter-spacing: 0.12em;
++    text-transform: uppercase;
++    color: #94A3B8;
++    padding: 14px 20px 5px;
++    display: block;
++}
++.sb-divider {
++    height: 1px;
++    background: #F1F5F9;
++    margin: 10px 0;
+ }
+ 
+-/* Premium Sidebar Navigation Menu */
++/* ═══════ SIDEBAR RADIO (NAV ITEMS) ═══════ */
+ [data-testid="stSidebar"] div[role="radiogroup"] {
+-    gap: 8px !important;
++    gap: 1px !important;
+     display: flex !important;
+     flex-direction: column !important;
+-    margin-top: 10px !important;
++    padding: 0 10px !important;
+ }
+ [data-testid="stSidebar"] div[role="radiogroup"] > label {
+-    padding: 12px 16px !important;
+-    border-radius: 12px !important;
+-    background-color: transparent !important;
++    padding: 9px 12px !important;
++    border-radius: 7px !important;
++    background: transparent !important;
+     border: none !important;
+-    transition: all 0.2s ease-in-out !important;
++    transition: background 0.12s ease !important;
+     cursor: pointer !important;
+-    margin-bottom: 4px !important;
+-    display: flex !important;
+-    align-items: center !important;
+-    color: #718096 !important;
+-    position: relative !important;
+ }
+ [data-testid="stSidebar"] div[role="radiogroup"] > label p {
+-    font-size: 0.95rem !important;
+-    line-height: 1.4 !important;
++    font-size: 0.84rem !important;
+     font-weight: 500 !important;
++    color: #475569 !important;
+     margin: 0 !important;
+-    color: #718096 !important;
++    line-height: 1.4 !important;
+ }
+ [data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
+-    background-color: #F7FAFC !important;
+-    color: #2D3748 !important;
++    background: #F8FAFC !important;
+ }
+ [data-testid="stSidebar"] div[role="radiogroup"] > label:hover p {
+-    color: #2D3748 !important;
++    color: #1E293B !important;
+ }
+ [data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) {
+-    background-color: rgba(67, 24, 255, 0.08) !important;
+-    color: #4318FF !important;
++    background: #FFF3EE !important;
+ }
+ [data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) p {
+-    font-weight: 700 !important;
+-    color: #4318FF !important;
++    font-weight: 600 !important;
++    color: #FF5200 !important;
+ }
+-/* Hide the actual radio circle */
+ [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child {
+     display: none !important;
+ }
+ 
+-/* ══════════════════════════════════════════════════════════════
+-   PROFESSIONAL AI INSIGHT CONTAINER (Clean & Minimalist)
+-   ══════════════════════════════════════════════════════════════ */
+-.ai-insight-container {
+-    background: #FFFFFF !important;
+-    border: 1px solid rgba(0, 0, 0, 0.03) !important;
+-    border-radius: 20px !important;
+-    padding: 24px 24px !important;
+-    margin-bottom: 24px !important;
+-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+-    font-family: 'Inter', sans-serif !important;
+-    position: relative;
+-    overflow: hidden;
+-}
+-.ai-insight-container::after {
+-    content: '';
+-    position: absolute;
+-    top: 0; left: 0; width: 4px; height: 100%;
+-    background: linear-gradient(180deg, #4318FF 0%, #05CD99 100%);
+-    border-radius: 20px 0 0 20px;
+-}
+-.ai-header {
+-    display: flex !important;
+-    align-items: center !important;
+-    gap: 10px !important;
+-    margin-bottom: 12px !important;
+-}
+-.ai-icon {
+-    font-size: 1.2rem !important;
+-    filter: drop-shadow(0 1px 2px rgba(255,82,0,0.2)) !important;
+-}
+-.ai-title {
+-    font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+-    font-size: 0.85rem !important;
+-    color: #475569 !important;
+-    text-transform: uppercase !important;
+-    letter-spacing: 1.2px !important;
+-    font-weight: 700 !important;
+-    margin: 0 !important;
+-}
+-.ai-badge {
+-    background: rgba(67, 24, 255, 0.05) !important;
+-    color: #4318FF !important;
+-    padding: 4px 12px !important;
++/* ═══════ SIDEBAR SELECT LABELS ═══════ */
++[data-testid="stSidebar"] [data-baseweb="select"] > div {
+     border-radius: 8px !important;
+-    font-size: 0.7rem !important;
+-    font-weight: 700 !important;
+-    margin-left: auto !important;
+-    letter-spacing: 0.5px !important;
+-    text-transform: uppercase !important;
+-    border: none !important;
+-}
+-.ai-content {
+-    font-size: 0.95rem !important;
+-    line-height: 1.6 !important;
+-    color: #A3AED0 !important;
+-}
+-.ai-content strong {
+-    color: #2B3674 !important;
+-    font-weight: 700 !important;
+-}
+-.ai-highlight {
+-    color: #05CD99 !important;
+-    font-weight: 700 !important;
+-    background: rgba(5, 205, 153, 0.06) !important;
+-    padding: 1px 6px !important;
+-    border-radius: 4px !important;
++    border-color: #E2E8F0 !important;
++    background: #F8FAFC !important;
++    font-size: 0.82rem !important;
+ }
+-.ai-warning {
+-    color: #EE5D50 !important;
+-    font-weight: 700 !important;
+-    background: rgba(238, 93, 80, 0.06) !important;
+-    padding: 1px 6px !important;
+-    border-radius: 4px !important;
++[data-testid="stSidebar"] .stSelectbox label,
++[data-testid="stSidebar"] .stSelectbox > label {
++    font-size: 0.72rem !important;
++    font-weight: 600 !important;
++    color: #64748B !important;
++    text-transform: uppercase !important;
++    letter-spacing: 0.07em !important;
+ }
+ 
+-
+-/* Premium Header Styling */
+-.ghn-header-container {
+-    background: rgba(255, 255, 255, 0.45) !important;
+-    backdrop-filter: blur(30px) !important;
+-    -webkit-backdrop-filter: blur(30px) !important;
+-    padding: 24px 36px;
+-    border-radius: 24px;
+-    box-shadow: 0 10px 40px rgba(10,31,68,0.02) !important;
++/* ═══════ PAGE HEADER ═══════ */
++.pg-header {
++    margin-bottom: 28px;
++    padding-bottom: 20px;
++    border-bottom: 1px solid #E2E8F0;
+     display: flex;
+-    align-items: center;
+     justify-content: space-between;
+-    margin-bottom: 36px;
+-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+-    transition: all 0.3s ease;
+-}
+-.ghn-header-container:hover {
+-    box-shadow: 0 16px 48px rgba(10, 31, 68, 0.04) !important;
+-    background: rgba(255, 255, 255, 0.55) !important;
+-}
+-.ghn-logo-box {
+-    background: linear-gradient(135deg, #FF5200 0%, #E64A00 100%) !important;
+-    color: white !important;
+-    font-weight: 900 !important;
+-    padding: 14px 22px !important;
+-    border-radius: 16px !important;
+-    font-size: 1.4rem !important;
+-    margin-right: 24px;
+-    display: flex;
+-    align-items: center;
+-    justify-content: center;
+-    box-shadow: 0 8px 24px rgba(255,82,0,0.22) !important;
+-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+-    letter-spacing: -0.03em !important;
++    align-items: flex-end;
+ }
+-.ghn-logo-box:hover {
+-    transform: translateY(-2px) scale(1.03) !important;
+-    box-shadow: 0 12px 28px rgba(255,82,0,0.35) !important;
++.pg-eyebrow {
++    font-size: 0.63rem;
++    font-weight: 700;
++    letter-spacing: 0.12em;
++    text-transform: uppercase;
++    color: #94A3B8;
++    margin: 0 0 4px;
+ }
+-.ghn-title {
+-    font-size: 1.5rem;
+-    font-weight: 900;
++.pg-title {
++    font-size: 1.45rem;
++    font-weight: 800;
+     color: #0A1F44;
+     margin: 0;
+-    line-height: 1.25;
+     letter-spacing: -0.025em;
++    line-height: 1.25;
+ }
+-.ghn-subtitle {
+-    font-size: 0.88rem;
++.pg-subtitle {
++    font-size: 0.82rem;
+     color: #64748B;
+-    margin: 0;
+-    margin-top: 6px;
++    margin: 5px 0 0;
+     font-weight: 500;
+ }
+-.ghn-badges {
+-    display: flex;
+-    gap: 12px;
+-    align-items: center;
+-}
+-.badge-live {
+-    background: rgba(16, 185, 129, 0.08) !important;
+-    color: #059669 !important;
+-    padding: 6px 14px;
+-    border-radius: 20px;
+-    font-size: 0.75rem;
+-    font-weight: 700;
+-    display: flex;
++.pg-badge {
++    display: inline-flex;
+     align-items: center;
+-    gap: 8px;
+-    border: 1px solid rgba(16,185,129,0.15) !important;
+-}
+-.badge-internal {
+-    background: rgba(245, 158, 11, 0.08) !important;
+-    color: #D97706 !important;
+-    padding: 6px 14px;
++    gap: 6px;
++    background: #F0FDF4;
++    color: #15803D;
++    border: 1px solid #BBF7D0;
++    padding: 5px 12px;
+     border-radius: 20px;
+-    font-size: 0.75rem;
++    font-size: 0.7rem;
+     font-weight: 700;
+-    border: 1px solid rgba(245,158,11,0.15) !important;
++    letter-spacing: 0.04em;
++    white-space: nowrap;
+ }
+-@keyframes pulseGreen {
+-    0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+-    70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+-    100% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+-}
+-.dot-pulse {
+-    display: inline-block;
+-    width: 7px;
+-    height: 7px;
+-    background-color: #10B981;
++.pg-badge-dot {
++    width: 6px;
++    height: 6px;
++    background: #22C55E;
+     border-radius: 50%;
+-    animation: pulseGreen 2s infinite;
++    display: inline-block;
+ }
+ 
+-/* Animations */
+-@keyframes fadeInUp {
+-    from {
+-        opacity: 0;
+-        transform: translateY(12px);
+-    }
+-    to {
+-        opacity: 1;
+-        transform: translateY(0);
+-    }
++/* ═══════ SECTION HEADERS ═══════ */
++.sec-h3 {
++    font-size: 0.92rem;
++    font-weight: 700;
++    color: #0A1F44;
++    margin: 30px 0 14px;
++    padding-bottom: 10px;
++    border-bottom: 1px solid #F1F5F9;
++    display: flex;
++    align-items: center;
++    gap: 8px;
+ }
+-.stApp {
+-    animation: fadeInUp 0.5s ease-out forwards;
++.sec-accent {
++    width: 3px;
++    height: 15px;
++    background: #FF5200;
++    border-radius: 2px;
++    display: inline-block;
++    flex-shrink: 0;
+ }
+-.hero-card, .custom-metric-card, .ai-insight-container {
+-    animation: fadeInUp 0.6s ease-out forwards;
++.sec-desc {
++    font-size: 0.82rem;
++    color: #64748B;
++    margin: -8px 0 18px;
++    font-weight: 500;
+ }
+ 
+-
+-/* Glassmorphism Metric Cards & Premium Cards */
+-.custom-metric-card, .premium-kpi-card {
+-    background: rgba(255, 255, 255, 0.65);
+-    backdrop-filter: blur(24px);
+-    -webkit-backdrop-filter: blur(24px);
+-    border-radius: 24px;
+-    padding: 24px 28px;
+-    box-shadow: 0 8px 30px rgba(10,31,68,0.015);
+-    border: 1px solid rgba(255, 255, 255, 0.45);
+-    transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+-    display: flex;
+-    flex-direction: column;
+-    height: 100%;
+-    position: relative;
+-    overflow: hidden;
++/* ═══════ TABS ═══════ */
++.stTabs [data-baseweb="tab-list"] {
++    background: #F8FAFC !important;
++    border: 1px solid #E2E8F0 !important;
++    border-radius: 10px !important;
++    padding: 4px !important;
++    gap: 4px !important;
++    box-shadow: none !important;
+ }
+-.custom-metric-card::before, .premium-kpi-card::before {
+-    content: '';
+-    position: absolute;
+-    top: 0; left: 0; width: 100%; height: 4px;
+-    background: linear-gradient(90deg, #0A1F44 0%, #FF5200 100%);
+-    opacity: 0;
+-    transition: opacity 0.3s ease;
++.stTabs [data-baseweb="tab"] {
++    border-radius: 7px !important;
++    padding: 8px 20px !important;
++    font-size: 0.84rem !important;
++    font-weight: 500 !important;
++    color: #64748B !important;
++    background: transparent !important;
++    border: none !important;
++    transition: all 0.12s ease !important;
++}
++.stTabs [data-baseweb="tab"]:hover {
++    color: #1E293B !important;
++    background: rgba(0,0,0,0.03) !important;
+ }
+-.custom-metric-card:hover, .premium-kpi-card:hover {
+-    transform: translateY(-6px);
+-    box-shadow: 0 20px 40px rgba(10, 31, 68, 0.06);
+-    border-color: rgba(255, 82, 0, 0.25);
+-    background: rgba(255, 255, 255, 0.8);
++.stTabs [aria-selected="true"] {
++    background: #FFFFFF !important;
++    color: #0A1F44 !important;
++    font-weight: 600 !important;
++    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+ }
+-.custom-metric-card:hover::before, .premium-kpi-card:hover::before {
+-    opacity: 1;
++.stTabs [data-baseweb="tab-highlight-bar"] {
++    display: none !important;
+ }
+ 
+-.metric-title {
+-    font-size: 0.85rem;
+-    color: #64748B;
+-    font-weight: 700;
+-    text-transform: uppercase;
+-    letter-spacing: 0.08em;
+-    margin-bottom: 12px;
++/* ═══════ PILLS / SEGMENTED CONTROL ═══════ */
++div[data-testid="stBaseButton-pill"] {
++    background: #F8FAFC !important;
++    color: #475569 !important;
++    border: 1px solid #E2E8F0 !important;
++    border-radius: 8px !important;
++    font-weight: 500 !important;
++    font-size: 0.83rem !important;
++    padding: 7px 16px !important;
++    transition: all 0.12s ease !important;
++    box-shadow: none !important;
+ }
+-.metric-value-row {
+-    display: flex;
+-    align-items: baseline;
+-    gap: 8px;
+-    margin-bottom: 12px;
++div[data-testid="stBaseButton-pill"]:hover {
++    background: #FFF3EE !important;
++    color: #FF5200 !important;
++    border-color: #FFD0B9 !important;
+ }
+-.metric-value {
+-    font-size: 2.4rem;
+-    font-weight: 900;
+-    color: #0A1F44;
+-    line-height: 1;
+-    letter-spacing: -0.03em;
++div[data-testid="stBaseButton-pill"][aria-selected="true"] {
++    background: #FF5200 !important;
++    color: #FFFFFF !important;
++    border-color: #FF5200 !important;
++    font-weight: 600 !important;
+ }
+-.metric-unit {
+-    font-size: 1.05rem;
+-    color: #94A3B8;
+-    font-weight: 600;
++
++/* ═══════ SELECT & INPUT ═══════ */
++div[data-baseweb="select"] > div {
++    border-radius: 8px !important;
++    border-color: #E2E8F0 !important;
++    background: #FFFFFF !important;
++    font-size: 0.875rem !important;
++    transition: border-color 0.12s ease !important;
+ }
+-.metric-delta {
+-    display: inline-flex;
+-    align-items: center;
+-    gap: 4px;
+-    font-size: 0.78rem;
+-    font-weight: 700;
+-    padding: 5px 12px;
+-    border-radius: 8px;
+-    width: fit-content;
++div[data-baseweb="select"] > div:hover {
++    border-color: #CBD5E1 !important;
+ }
+-.delta-positive { background: #ECFDF5; color: #059669; border: 1px solid rgba(16,185,129,0.18); }
+-.delta-negative { background: #FEF2F2; color: #DC2626; border: 1px solid rgba(220,38,38,0.18); }
+-.delta-neutral { background: #F8FAFC; color: #64748B; border: 1px solid rgba(100,116,139,0.18); }
+ 
+-/* Premium Dark Hero Card */
+-.hero-card {
+-    background: linear-gradient(135deg, #0A1F44 0%, #061530 100%);
+-    color: #F8FAFC !important;
+-    border-radius: 28px;
+-    padding: 36px 42px;
+-    box-shadow: 0 20px 50px rgba(10, 31, 68, 0.2);
+-    border: 1px solid rgba(255, 255, 255, 0.08);
+-    margin-bottom: 36px;
+-    position: relative;
+-    overflow: hidden;
+-}
+-.hero-card::before {
+-    content: '';
+-    position: absolute;
+-    top: -40%; right: -15%;
+-    width: 400px; height: 400px;
+-    background: radial-gradient(circle, rgba(255, 82, 0, 0.2) 0%, transparent 70%);
+-    filter: blur(45px);
+-    pointer-events: none;
++/* ═══════ AI INSIGHT CARD ═══════ */
++.ai-insight-container {
++    background: #FFFFFF !important;
++    border: 1px solid #E2E8F0 !important;
++    border-radius: 12px !important;
++    padding: 20px 22px !important;
++    margin-bottom: 20px !important;
++    position: relative !important;
++    overflow: hidden !important;
+ }
+-.hero-card::after {
++.ai-insight-container::before {
+     content: '';
+     position: absolute;
+-    bottom: -30%; left: -10%;
+-    width: 300px; height: 300px;
+-    background: radial-gradient(circle, rgba(0, 111, 173, 0.15) 0%, transparent 70%);
+-    filter: blur(40px);
+-    pointer-events: none;
+-}
+-.hero-title {
+-    font-size: 1.65rem;
+-    font-weight: 800;
+-    color: #FFFFFF !important;
+-    margin: 0 0 8px 0;
+-    display: flex;
+-    align-items: center;
+-    gap: 14px;
++    left: 0; top: 0;
++    width: 3px; height: 100%;
++    background: #FF5200;
++    border-radius: 12px 0 0 12px;
+ }
+-.hero-subtitle {
+-    font-size: 1rem;
+-    color: #94A3B8 !important;
+-    margin: 0 0 32px 0;
+-    font-weight: 500;
++.ai-header {
++    display: flex !important;
++    align-items: center !important;
++    gap: 8px !important;
++    margin-bottom: 10px !important;
+ }
+-.hero-metrics {
+-    display: grid;
+-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+-    gap: 24px;
+-    position: relative;
+-    z-index: 10;
++.ai-icon {
++    width: 22px; height: 22px;
++    background: #FFF3EE;
++    border-radius: 6px;
++    display: flex; align-items: center; justify-content: center;
++    font-size: 0.68rem; font-weight: 800; color: #FF5200;
++    flex-shrink: 0;
+ }
+-.hero-metric-box {
+-    display: flex;
+-    flex-direction: column;
+-    gap: 8px;
+-    background: rgba(255, 255, 255, 0.03);
+-    padding: 22px;
+-    border-radius: 20px;
+-    border: 1px solid rgba(255, 255, 255, 0.06);
+-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
++.ai-title {
++    font-size: 0.7rem !important;
++    font-weight: 700 !important;
++    color: #64748B !important;
++    text-transform: uppercase !important;
++    letter-spacing: 0.09em !important;
++    margin: 0 !important;
++    font-family: 'Inter', sans-serif !important;
+ }
+-.hero-metric-box:hover {
+-    background: rgba(255, 255, 255, 0.07);
+-    border-color: rgba(255, 82, 0, 0.35);
+-    transform: translateY(-3px);
+-    box-shadow: 0 10px 24px rgba(255, 82, 0, 0.12);
++.ai-badge {
++    background: #F8FAFC !important;
++    color: #64748B !important;
++    padding: 2px 8px !important;
++    border-radius: 6px !important;
++    font-size: 0.63rem !important;
++    font-weight: 600 !important;
++    margin-left: auto !important;
++    letter-spacing: 0.04em !important;
++    text-transform: uppercase !important;
++    border: 1px solid #E2E8F0 !important;
+ }
+-.hero-metric-label {
+-    font-size: 0.82rem;
+-    color: #94A3B8 !important;
+-    font-weight: 700;
+-    text-transform: uppercase;
+-    letter-spacing: 0.08em;
++.ai-content {
++    font-size: 0.875rem !important;
++    line-height: 1.7 !important;
++    color: #475569 !important;
+ }
+-.hero-metric-value {
+-    font-size: 2.8rem;
+-    font-weight: 900;
+-    color: #FFFFFF !important;
+-    line-height: 1;
+-    letter-spacing: -0.03em;
++.ai-content strong {
++    color: #0A1F44 !important;
++    font-weight: 700 !important;
+ }
+-
+-/* Streamlit Inputs override */
+-div[data-baseweb="select"] > div {
+-    border-radius: 14px !important;
+-    border-color: #E2E8F0 !important;
+-    background-color: white !important;
+-    box-shadow: 0 2px 10px rgba(10,31,68,0.02) !important;
+-    transition: all 0.2s !important;
++.ai-highlight {
++    color: #15803D !important;
++    font-weight: 700 !important;
++    background: #F0FDF4 !important;
++    padding: 1px 5px !important;
++    border-radius: 4px !important;
+ }
+-div[data-baseweb="select"] > div:hover {
+-    border-color: #CBD5E1 !important;
++.ai-warning {
++    color: #DC2626 !important;
++    font-weight: 700 !important;
++    background: #FEF2F2 !important;
++    padding: 1px 5px !important;
++    border-radius: 4px !important;
+ }
+ 
+-/* Elegant Left-Accented Insight Squares - Modern White UI */
++/* ═══════ INSIGHT SQUARES ═══════ */
+ .insight-square {
+     background: #FFFFFF;
+-    border-radius: 20px;
+-    padding: 26px;
++    border: 1px solid #E2E8F0;
++    border-radius: 12px;
++    padding: 20px;
+     height: 100%;
+-    border: 1px solid rgba(0, 0, 0, 0.03);
+-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
++    transition: border-color 0.15s ease;
+     position: relative;
+     overflow: hidden;
+ }
+-.insight-square::after {
++.insight-square::before {
+     content: '';
+     position: absolute;
+-    top: 0; left: 0; width: 4px; height: 100%;
+-    border-radius: 20px 0 0 20px;
+-}
+-.insight-square-total::after { background: #4318FF; }
+-.insight-square-top::after { background: #05CD99; }
+-.insight-square-warning::after { background: #FFB547; }
+-.insight-square-recommend::after { background: #EE5D50; }
+-
+-.insight-square:hover {
+-    transform: translateY(-4px);
+-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.05);
+-}
++    top: 0; left: 0;
++    width: 3px; height: 100%;
++    border-radius: 12px 0 0 12px;
++}
++.insight-square-total::before  { background: #FF5200; }
++.insight-square-top::before    { background: #10B981; }
++.insight-square-warning::before { background: #F59E0B; }
++.insight-square-recommend::before { background: #EF4444; }
++.insight-square:hover { border-color: #CBD5E1; }
+ .insight-header {
+-    display: flex;
+-    align-items: center;
+-    gap: 12px;
+-    margin-bottom: 16px;
+-    padding-bottom: 12px;
+-    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
++    display: flex; align-items: center; gap: 10px;
++    margin-bottom: 12px; padding-bottom: 10px;
++    border-bottom: 1px solid #F1F5F9;
+ }
+ .insight-icon {
+-    width: 38px;
+-    height: 38px;
++    width: 30px; height: 30px;
++    border-radius: 7px;
++    display: flex; align-items: center; justify-content: center;
++    font-size: 0.72rem; font-weight: 700;
++    background: #FFF3EE; color: #FF5200;
++    flex-shrink: 0;
++}
++.insight-title  { font-weight: 700; color: #0A1F44; font-size: 0.88rem; margin: 0; }
++.insight-body   { font-size: 0.875rem; color: #475569; line-height: 1.65; }
++.insight-highlight { font-weight: 700; color: #FF5200; }
++
++/* ═══════ KPI / METRIC CARDS ═══════ */
++.custom-metric-card, .premium-kpi-card {
++    background: #FFFFFF;
++    border: 1px solid #E2E8F0;
+     border-radius: 12px;
+-    display: flex;
+-    align-items: center;
+-    justify-content: center;
+-    font-size: 1.2rem;
+-    background: rgba(67, 24, 255, 0.05);
+-    color: #4318FF;
+-}
+-.insight-title {
+-    font-weight: 700;
+-    color: #2B3674;
+-    font-size: 1rem;
+-    margin: 0;
+-}
+-.insight-body {
+-    font-size: 0.92rem;
+-    color: #A3AED0;
+-    line-height: 1.65;
+-}
+-.insight-highlight {
+-    font-weight: 700;
+-    color: #4318FF;
+-}
+-
+-/* Custom Segmented Tabs */
+-.stTabs [data-baseweb="tab-list"] {
+-    gap: 10px;
+-    background-color: #FFFFFF;
+-    padding: 8px;
+-    border-radius: 16px;
+-    border: 1px solid rgba(0,0,0,0.03) !important;
+-    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+-}
+-.stTabs [data-baseweb="tab"] {
+-    height: auto !important;
+-    padding: 12px 28px !important;
+-    background-color: transparent !important;
+-    border-radius: 12px !important;
+-    border: none !important;
+-    color: #A3AED0 !important;
+-    font-weight: 600 !important;
+-    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+-}
+-.stTabs [data-baseweb="tab"]:hover {
+-    color: #2B3674 !important;
+-    background-color: rgba(67, 24, 255, 0.03) !important;
+-}
+-.stTabs [aria-selected="true"] {
+-    background-color: #4318FF !important;
+-    color: #FFFFFF !important;
+-    box-shadow: 0 6px 16px rgba(67, 24, 255, 0.2) !important;
+-    font-weight: 700 !important;
+-}
+-.stTabs [data-baseweb="tab-highlight-bar"] {
+-    display: none !important;
+-}
+-
+-/* Premium Segmented Controls for st.pills */
+-div[data-testid="stBaseButton-pill"] {
+-    background-color: #FFFFFF !important;
+-    color: #A3AED0 !important;
+-    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+-    padding: 8px 20px !important;
+-    border-radius: 16px !important;
+-    font-weight: 600 !important;
+-    font-size: 0.9rem !important;
+-    transition: all 0.22s ease-in-out !important;
+-    box-shadow: 0 2px 10px rgba(0,0,0,0.01) !important;
++    padding: 20px 22px;
++    height: 100%;
++    transition: border-color 0.15s ease;
++    position: relative;
++    overflow: hidden;
+ }
+-div[data-testid="stBaseButton-pill"]:hover {
+-    color: #4318FF !important;
+-    background-color: rgba(67, 24, 255, 0.03) !important;
+-    border-color: rgba(67, 24, 255, 0.2) !important;
+-    transform: translateY(-1px) !important;
++.custom-metric-card:hover, .premium-kpi-card:hover { border-color: #CBD5E1; }
++.metric-title {
++    font-size: 0.68rem; font-weight: 700;
++    text-transform: uppercase; letter-spacing: 0.09em;
++    color: #94A3B8; margin-bottom: 14px;
+ }
+-div[data-testid="stBaseButton-pill"][aria-selected="true"] {
+-    background-color: #4318FF !important;
+-    color: #FFFFFF !important;
+-    border-color: #4318FF !important;
+-    box-shadow: 0 8px 20px rgba(67, 24, 255, 0.2) !important;
+-    font-weight: 700 !important;
++.metric-value-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
++.metric-value { font-size: 2.2rem; font-weight: 900; color: #0A1F44; line-height: 1; letter-spacing: -0.03em; }
++.metric-unit  { font-size: 1rem; color: #94A3B8; font-weight: 600; }
++.metric-delta {
++    display: inline-flex; align-items: center; gap: 4px;
++    font-size: 0.72rem; font-weight: 600;
++    padding: 3px 10px; border-radius: 20px; width: fit-content;
+ }
++.delta-positive  { background: #F0FDF4; color: #16A34A; }
++.delta-negative  { background: #FEF2F2; color: #DC2626; }
++.delta-neutral   { background: #F8FAFC; color: #64748B;  }
+ 
+-/* Styled Framework Callouts */
++/* ═══════ FRAMEWORK CALLOUT ═══════ */
+ .framework-callout {
+-    background: linear-gradient(135deg, rgba(10,31,68,0.02) 0%, rgba(255,82,0,0.01) 100%);
+-    border: 1px solid rgba(10,31,68,0.05);
+-    border-left: 5px solid #006FAD;
+-    border-radius: 16px;
+-    padding: 20px 24px;
+-    margin-bottom: 24px;
++    background: #FAFAFA;
++    border: 1px solid #E2E8F0;
++    border-left: 3px solid #FF5200;
++    border-radius: 10px;
++    padding: 18px 22px;
++    margin-bottom: 20px;
+ }
+ .framework-callout-title {
+-    font-weight: 800;
+-    font-size: 1.05rem;
+-    color: #0A1F44;
+-    margin-top: 0;
+-    margin-bottom: 8px;
+-    display: flex;
+-    align-items: center;
+-    gap: 8px;
++    font-weight: 700; font-size: 0.9rem; color: #0A1F44;
++    margin: 0 0 6px;
++    display: flex; align-items: center; gap: 8px;
+ }
+ 
+-/* Beautiful Interactive Attrition Simulator Display */
++/* ═══════ SIMULATION GAUGE ═══════ */
+ .sim-gauge-container {
+-    background: radial-gradient(circle at 100% 0%, rgba(255, 82, 0, 0.05) 0%, transparent 60%), rgba(255,255,255,0.7);
+-    border: 1px solid rgba(255, 255, 255, 0.6);
+-    border-radius: 24px;
+-    padding: 32px;
+-    text-align: center;
+-    box-shadow: 0 10px 30px rgba(0,0,0,0.01);
++    background: #FFFFFF; border: 1px solid #E2E8F0;
++    border-radius: 12px; padding: 28px; text-align: center;
+ }
+ .sim-risk-value {
+-    font-size: 4rem;
+-    font-weight: 900;
+-    line-height: 1;
+-    letter-spacing: -0.04em;
+-    margin: 16px 0;
+-    transition: all 0.3s ease;
++    font-size: 3.5rem; font-weight: 900; line-height: 1;
++    letter-spacing: -0.04em; margin: 14px 0; transition: all 0.3s ease;
+ }
+ .sim-risk-meter {
+-    height: 10px;
+-    width: 100%;
+-    background-color: #E2E8F0;
+-    border-radius: 5px;
+-    overflow: hidden;
+-    margin-top: 12px;
+-    margin-bottom: 12px;
++    height: 8px; width: 100%; background: #F1F5F9;
++    border-radius: 4px; overflow: hidden; margin: 10px 0;
+ }
+-.sim-risk-bar {
+-    height: 100%;
+-    border-radius: 5px;
+-    transition: width 0.4s ease, background-color 0.4s ease;
+-}
+-</style>
+-""", unsafe_allow_html=True)
+-
+-# ── Render Header ──
+-st.markdown("""<div style="background: linear-gradient(135deg, #ffffff 0%, #fcfdfd 100%); border-radius: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 10px 30px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; padding: 20px 28px; margin-bottom: 32px; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.04)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.02)';">
+-<div style="display: flex; align-items: center; gap: 24px;">
+-    <!-- Minimalist Premium Logo -->
+-    <div style="display: flex; align-items: center; justify-content: center; padding-right: 24px; border-right: 2px solid #F1F5F9;">
+-        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778161/LOGO%20GHN/LOGO_CHUAN_hviaug.png" style="height: 48px; width: auto; object-fit: contain; drop-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+-    </div>
+-    <!-- Elegant Typography -->
+-    <div style="display: flex; flex-direction: column; gap: 6px;">
+-        <div style="display: flex; align-items: center; gap: 12px;">
+-            <h1 style="margin: 0; font-size: 1.3rem; font-weight: 900; color: #0A1F44; letter-spacing: -0.01em; line-height: 1;">EES 2026 DATA ANALYSIS</h1>
+-            <span style="background: rgba(67, 24, 255, 0.06); color: #4318FF; font-size: 0.7rem; padding: 3px 10px; border-radius: 8px; font-weight: 800; letter-spacing: 0.5px;">NỘI BỘ</span>
+-        </div>
+-        <p style="margin: 0; font-size: 0.85rem; color: #64748B; font-weight: 500;">Khảo sát Mức độ Gắn kết Nhân viên (EES) • Q1/2026 • Quy mô: 23,000+ nhân sự</p>
+-    </div>
+-</div>
+-<!-- Right Side Badges -->
+-<div style="display: flex; align-items: center; gap: 16px;">
+-    <div style="display: flex; align-items: center; gap: 6px; background: #F8FAFC; padding: 6px 14px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.03);">
+-        <span style="width: 8px; height: 8px; background: #05CD99; border-radius: 50%; box-shadow: 0 0 0 3px rgba(5,205,153,0.2);"></span>
+-        <span style="font-size: 0.8rem; font-weight: 800; color: #334155; letter-spacing: 0.5px;">LIVE</span>
+-    </div>
+-    <div style="font-size: 0.8rem; font-weight: 600; color: #94A3B8; background: #F1F5F9; padding: 6px 14px; border-radius: 12px;">
+-        Cập nhật: Hôm nay
+-    </div>
+-</div>
+-</div>""", unsafe_allow_html=True)
++.sim-risk-bar { height: 100%; border-radius: 4px; transition: width 0.35s ease; }
++
++/* ═══════ HERO CARD (legacy compatibility) ═══════ */
++.hero-card {
++    background: #0A1F44; color: #F8FAFC !important;
++    border-radius: 16px; padding: 32px 40px;
++    margin-bottom: 28px; position: relative; overflow: hidden;
++}
++.hero-card::before {
++    content: ''; position: absolute;
++    top: -30%; right: -10%;
++    width: 280px; height: 280px;
++    background: radial-gradient(circle, rgba(255,82,0,0.22) 0%, transparent 70%);
++    filter: blur(40px); pointer-events: none;
++}
++.hero-title    { font-size: 1.5rem; font-weight: 800; color: #FFF !important; margin: 0 0 6px; }
++.hero-subtitle { font-size: 0.9rem;  color: #94A3B8 !important; margin: 0 0 28px; }
++.hero-metrics  { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; position: relative; z-index: 10; }
++.hero-metric-box {
++    background: rgba(255,255,255,0.04); padding: 20px;
++    border-radius: 12px; border: 1px solid rgba(255,255,255,0.07);
++    transition: all 0.25s ease;
++}
++.hero-metric-box:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,82,0,0.3); }
++.hero-metric-label { font-size: 0.72rem; color: #94A3B8 !important; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
++.hero-metric-value { font-size: 2.5rem; font-weight: 900; color: #FFF !important; line-height: 1; letter-spacing: -0.03em; }
+ 
+-# ── Navigation & Global Filters ──
++/* ═══════ DATAFRAME ═══════ */
++[data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden !important; }
++</style>""", unsafe_allow_html=True)
++
++# ── State & Setup ───────────────────────────────────────────────────────────
+ available = get_available_groups()
+ group_opts = list(available.keys())
+ 
+@@ -690,8 +527,8 @@ if 'global_tenure' not in st.session_state:
+     st.session_state.global_tenure = 'Tất cả'
+ 
+ tenure_opts = [
+-    'Tất cả', 'Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng', 
+-    'Trên 6 đến 9 tháng', 'Trên 9 đến 12 tháng', 'Trên 1 đến 2 năm', 
++    'Tất cả', 'Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng',
++    'Trên 6 đến 9 tháng', 'Trên 9 đến 12 tháng', 'Trên 1 đến 2 năm',
+     'Trên 2 đến 3 năm', 'Trên 3 đến 5 năm', 'Trên 5 năm', 'Chưa xác định'
+ ]
+ 
+@@ -701,125 +538,170 @@ def apply_global_filters(df):
+             return df[df['Q5'] == st.session_state.global_tenure]
+     return df
+ 
+-def get_sidebar_label(item_label):
+-    if "Tổng quan" in item_label:
+-        return "Tổng quan Toàn Hệ thống"
+-    elif "1A" in item_label:
+-        return "Nhóm 1A — Shipper / NVPTTT"
+-    elif "1B" in item_label:
+-        return "Nhóm 1B — Tài xế GXT/TXXT"
+-    return item_label
+-
+-COMPANY_LABEL = "🌐 Tổng quan Toàn Hệ thống"
+-dashboard_options = [COMPANY_LABEL] + [get_sidebar_label(available[g]['label']) for g in group_opts]
+-
+-st.markdown("""<div style="background: #FFFFFF; border-radius: 20px; border: none; padding: 20px 24px 20px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 24px;">
+-<h3 style="margin-top: 0; color: #2B3674; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 16px;">🎯 Tùy chỉnh Phân tích</h3>
+-</div>""", unsafe_allow_html=True)
+-sel_col1, sel_col2, sel_col3, sel_col4, sel_col5 = st.columns(5)
+-with sel_col1:
+-    sel_dashboard = st.selectbox("📌 Phân khúc Báo cáo", dashboard_options)
+-
+-# ── Route to Main Dashboard vs Group Dashboards ──
+-if sel_dashboard == COMPANY_LABEL:
+-    # 1. COMPANY DASHBOARD
+-    with sel_col2:
+-        sel_tenure = st.selectbox("⏱️ Lọc Thâm niên (Global)", tenure_opts, index=tenure_opts.index(st.session_state.global_tenure))
+-        st.session_state.global_tenure = sel_tenure
+-
+-    st.write("") # Spacer
+-
+-    st.markdown('<h2 style="font-size:1.5rem; color:#0A1F44; font-weight:800; margin-bottom:1rem;">Tổng quan Toàn Công ty</h2>', unsafe_allow_html=True)
+-    try:
+-        all_data = load_all_available()
+-        # Apply global filters to all dataframes in the dictionary
+-        filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}
+-        company_overview.render(filtered_all_data, available)
+-    except Exception as e:
+-        st.error(f"Lỗi khi tải view Tổng quan: {e}")
+-        import traceback
+-        st.code(traceback.format_exc())
++COMPANY_LABEL = "Tổng quan Toàn Hệ thống"
++
++# ── SIDEBAR ─────────────────────────────────────────────────────────────────
++with st.sidebar:
++    # Brand block
++    st.markdown("""
++    <div class="sb-brand">
++        <span class="sb-logo">GHN</span>
++        <span class="sb-title">EES 2026 Dashboard</span>
++        <span class="sb-sub">Employee Engagement Survey · Q1/2026</span>
++    </div>
++    """, unsafe_allow_html=True)
++
++    # Main navigation
++    st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
++    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts]
++    sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
++
++    st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
++
++    is_company = (sel_dashboard == COMPANY_LABEL)
++
++    # Initialize scope variables
++    sel_group   = None
++    sel_nav     = None
++    df_filtered = None
++    n_before    = 0
++
++    if is_company:
++        # Company-level tenure filter
++        st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
++        sel_tenure_sb = st.selectbox(
++            "Thâm niên", tenure_opts,
++            index=tenure_opts.index(st.session_state.global_tenure),
++            key="tenure_co"
++        )
++        st.session_state.global_tenure = sel_tenure_sb
++
++    else:
++        # Identify selected group
++        for g in group_opts:
++            if available[g]['label'] == sel_dashboard:
++                sel_group = g
++                break
++
++        # Sub-navigation
++        st.markdown('<span class="sb-section">Góc nhìn phân tích</span>', unsafe_allow_html=True)
++        SUB_NAV = [
++            "Chi tiết Nhóm",
++            "Phân tích Tổ chức",
++            "HRIS — Thu nhập",
++            "Deep Dive",
++            "Câu hỏi Mở (NLP)",
++            "Cảnh báo Sớm",
++            "Ma trận Ưu tiên",
++        ]
++        sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
++
++        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
++
++        # Filters
++        st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
++
++        # Load raw data (for building filter options)
++        df_raw, n_before = load_group(sel_group)
++
++        sel_tenure_sb = st.selectbox(
++            "Thâm niên", tenure_opts,
++            index=tenure_opts.index(st.session_state.global_tenure),
++            key="tenure_grp"
++        )
++        st.session_state.global_tenure = sel_tenure_sb
++        df_filtered_tenure = apply_global_filters(df_raw)
++
++        div_opts = ['Tất cả Khối']
++        if 'division' in df_filtered_tenure.columns:
++            div_opts += sorted(df_filtered_tenure['division'].dropna().unique().tolist())
++        sel_div = st.selectbox("Khối", div_opts)
+ 
+-else:
+-    # 2. GROUP DASHBOARDS
+-    # Find which group was selected
+-    sel_group = None
+-    for g in group_opts:
+-        if g in sel_dashboard:
+-            sel_group = g
+-            break
+-            
+-    df, n_before = load_group(sel_group)
+-    cfg = available[sel_group]
+-    
+-    with sel_col2:
+-        sel_tenure = st.selectbox("⏱️ Thâm niên (Global)", tenure_opts, index=tenure_opts.index(st.session_state.global_tenure))
+-        st.session_state.global_tenure = sel_tenure
+-        
+-    df_filtered_tenure = apply_global_filters(df)
+-    
+-    with sel_col3:
+-        div_opts = ['Tất cả Khối'] + sorted(df_filtered_tenure['division'].dropna().unique().tolist()) if 'division' in df_filtered_tenure.columns else ['Tất cả Khối']
+-        sel_div = st.selectbox("🏢 Khối", div_opts)
+-    with sel_col4:
+         dept_opts = ['Tất cả Phòng ban']
+         if sel_div != 'Tất cả Khối':
+-            dept_opts += sorted(df_filtered_tenure[df_filtered_tenure['division'] == sel_div]['department'].dropna().unique().tolist())
++            dept_opts += sorted(
++                df_filtered_tenure[df_filtered_tenure['division'] == sel_div]
++                ['department'].dropna().unique().tolist()
++            )
+         elif 'department' in df_filtered_tenure.columns:
+             dept_opts += sorted(df_filtered_tenure['department'].dropna().unique().tolist())
+-        sel_dept = st.selectbox("🏘️ Phòng ban", dept_opts)
+-    with sel_col5:
++        sel_dept = st.selectbox("Phòng ban", dept_opts)
++
+         sec_opts = ['Tất cả Section']
+         if sel_dept != 'Tất cả Phòng ban':
+-            sec_opts += sorted(df_filtered_tenure[df_filtered_tenure['department'] == sel_dept]['section'].dropna().unique().tolist())
++            sec_opts += sorted(
++                df_filtered_tenure[df_filtered_tenure['department'] == sel_dept]
++                ['section'].dropna().unique().tolist()
++            )
+         elif 'section' in df_filtered_tenure.columns:
+             sec_opts += sorted(df_filtered_tenure['section'].dropna().unique().tolist())
+-        sel_sec = st.selectbox("📍 Section", sec_opts)
++        sel_sec = st.selectbox("Section", sec_opts)
+ 
+-    # Apply filters
+-    df_filtered = df_filtered_tenure.copy()
+-    if sel_div != 'Tất cả Khối': df_filtered = df_filtered[df_filtered['division'] == sel_div]
+-    if sel_dept != 'Tất cả Phòng ban': df_filtered = df_filtered[df_filtered['department'] == sel_dept]
+-    if sel_sec != 'Tất cả Section': df_filtered = df_filtered[df_filtered['section'] == sel_sec]
++        # Apply all filters
++        df_filtered = df_filtered_tenure.copy()
++        if sel_div  != 'Tất cả Khối':      df_filtered = df_filtered[df_filtered['division']    == sel_div]
++        if sel_dept != 'Tất cả Phòng ban': df_filtered = df_filtered[df_filtered['department']  == sel_dept]
++        if sel_sec  != 'Tất cả Section':   df_filtered = df_filtered[df_filtered['section']     == sel_sec]
+ 
++# ── MAIN CONTENT ─────────────────────────────────────────────────────────────
++if is_company:
+     st.markdown("""
+-    <div style="margin-top: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+-        <span style="font-size: 0.72rem; font-weight: 800; color: #FF5200; letter-spacing: 0.1em; text-transform: uppercase;">📊 CHỌN GÓC NHÌN PHÂN TÍCH</span>
++    <div class="pg-header">
++        <div>
++            <p class="pg-eyebrow">GHN Group · EES 2026</p>
++            <h1 class="pg-title">Tổng quan Toàn Hệ thống</h1>
++            <p class="pg-subtitle">Khảo sát Mức độ Gắn kết Nhân viên · Quy mô: 23,000+ nhân sự</p>
++        </div>
++        <span class="pg-badge">
++            <span class="pg-badge-dot"></span>Live · Cập nhật hôm nay
++        </span>
++    </div>
++    """, unsafe_allow_html=True)
++
++    try:
++        all_data = load_all_available()
++        filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}
++        company_overview.render(filtered_all_data, available)
++    except Exception as e:
++        st.error(f"Lỗi khi tải view Tổng quan: {e}")
++        import traceback
++        st.code(traceback.format_exc())
++
++else:
++    cfg    = available[sel_group]
++    n_resp = df_filtered.shape[0] if df_filtered is not None else 0
++
++    st.markdown(f"""
++    <div class="pg-header">
++        <div>
++            <p class="pg-eyebrow">EES 2026 · {sel_nav or 'Chi tiết Nhóm'}</p>
++            <h1 class="pg-title">{cfg['label']}</h1>
++            <p class="pg-subtitle">Q1/2026 · {n_resp:,} phản hồi hợp lệ</p>
++        </div>
++        <span class="pg-badge">
++            <span class="pg-badge-dot"></span>Live · Cập nhật hôm nay
++        </span>
+     </div>
+     """, unsafe_allow_html=True)
+ 
+-    # Group Sub-Navigation
+-    NAV_OPTIONS = [
+-        "🏢 Chi tiết Nhóm",
+-        "👥 Phân tích Tổ chức",
+-        "💰 HRIS (Thu nhập)",
+-        "🔍 Deep Dive",
+-        "💬 Câu hỏi Mở (NLP)",
+-        "🚨 Cảnh báo Sớm",
+-        "⚡ Ma trận Ưu tiên"
+-    ]
+-    sel_nav = st.pills("Góc nhìn Phân tích", NAV_OPTIONS, default="🏢 Chi tiết Nhóm", label_visibility="collapsed")
+-    st.divider()
+-    
+-    # Route to Views
+     try:
+-        if sel_nav == "🏢 Chi tiết Nhóm":
++        if sel_nav == "Chi tiết Nhóm":
+             group_detail.render(df_filtered, cfg)
+-        elif sel_nav == "👥 Phân tích Tổ chức":
++        elif sel_nav == "Phân tích Tổ chức":
+             org_drilldown.render(df_filtered, cfg)
+-        elif sel_nav == "💰 HRIS (Thu nhập)":
++        elif sel_nav == "HRIS — Thu nhập":
+             hris_linkage.render(df_filtered, cfg, sel_group)
+-        elif sel_nav == "🔍 Deep Dive":
++        elif sel_nav == "Deep Dive":
+             deep_dive.render(df_filtered, cfg, sel_group)
+-        elif sel_nav == "💬 Câu hỏi Mở (NLP)":
++        elif sel_nav == "Câu hỏi Mở (NLP)":
+             nlp_analysis.render(df_filtered, cfg)
+-        elif sel_nav == "🚨 Cảnh báo Sớm":
++        elif sel_nav == "Cảnh báo Sớm":
+             early_warning.render(df_filtered, cfg)
+-        elif sel_nav == "⚡ Ma trận Ưu tiên":
++        elif sel_nav == "Ma trận Ưu tiên":
+             action_priorities.render(df_filtered, cfg)
+         else:
+-            st.info("Vui lòng chọn một chức năng từ thanh menu bên trên.")
++            st.info("Chọn một góc nhìn từ sidebar bên trái.")
+     except Exception as e:
+-        st.error(f"Lỗi khi tải phân tích nhóm: {e}")
++        st.error(f"Lỗi khi tải phân tích: {e}")
+         import traceback
+         st.code(traceback.format_exc())
+diff --git a/shared/plotly_theme.py b/shared/plotly_theme.py
+index 53c26a2..8b7da27 100644
+--- a/shared/plotly_theme.py
++++ b/shared/plotly_theme.py
+@@ -126,97 +126,87 @@ def annotate_insight(fig, text, x=0.5, y=-0.15, xref='paper', yref='paper'):
+     )
+     return fig
+ 
+-import random
+-
+-def generate_trend_data(current_val, delta, points=6):
+-    try:
+-        c_val = float(current_val)
+-        d_val = float(str(delta).replace('%','').replace('+','')) if delta is not None else 0
+-    except:
+-        return None
+-    
+-    start_val = c_val - d_val
+-    trend = [start_val]
+-    for i in range(1, points - 1):
+-        progress = i / (points - 1)
+-        expected = start_val + (c_val - start_val) * progress
+-        noise = (random.random() - 0.5) * (abs(d_val) * 0.5 if d_val != 0 else c_val * 0.05)
+-        trend.append(expected + noise)
+-    trend.append(c_val)
+-    return trend
+-
+-def make_html_kpi(title, value, delta=None, color="blue", icon="📊", progress_val=None, sparkline_data=None):
++def make_html_kpi(title, value, delta=None, color="blue", icon="", progress_val=None, sparkline_data=None):
+     """
+-    Render a premium HTML KPI Card with Circular Donut Progress (matches reference image).
+-    color: 'blue', 'orange', 'green', 'red'
++    Clean, professional KPI card — no emoji icons, minimal design.
++    color: 'blue' (GHN orange accent) | 'orange' | 'green' | 'red'
+     """
+     color_map = {
+-        "blue": ("#4318FF", "rgba(67, 24, 255, 0.05)"),
+-        "orange": ("#FFB547", "rgba(255, 181, 71, 0.05)"),
+-        "green": ("#05CD99", "rgba(5, 205, 153, 0.05)"),
+-        "red": ("#EE5D50", "rgba(238, 93, 80, 0.05)"),
++        "blue":   ("#FF5200", "#FFF3EE"),
++        "orange": ("#F59E0B", "#FFFBEB"),
++        "green":  ("#10B981", "#F0FDF4"),
++        "red":    ("#EF4444", "#FEF2F2"),
+     }
+-    main_color, bg_color = color_map.get(color, color_map["blue"])
+-    
+-    delta_color = "#EE5D50"
+-    if delta:
+-        d_str = str(delta).replace('%', '').strip()
+-        if "+" in d_str:
+-            delta_color = "#05CD99"
+-        else:
+-            try:
+-                if float(d_str) > 0:
+-                    delta_color = "#05CD99"
+-            except ValueError:
+-                delta_color = "#A3AED0"
+-
+-    delta_sign = "+" if (isinstance(delta, (int, float)) and delta > 0) else ""
+-    delta_str = f"{delta_sign}{delta}" if delta is not None else ""
+-
+-    p_val = max(0, min(100, float(progress_val))) if progress_val is not None else 0
+-    dash_val = (p_val / 100) * 100
+-
++    main_color, _bg = color_map.get(color, color_map["blue"])
++
++    # Delta styling
++    delta_color = "#94A3B8"
++    delta_bg    = "#F8FAFC"
++    if delta and str(delta) not in ("N/A", "0", "0%", "0.0%"):
++        d_str = str(delta).replace('%', '').replace('+', '').strip()
++        try:
++            d_val = float(d_str)
++            if d_val > 0:
++                delta_color, delta_bg = "#16A34A", "#F0FDF4"
++            elif d_val < 0:
++                delta_color, delta_bg = "#DC2626", "#FEF2F2"
++        except ValueError:
++            pass
++
++    delta_html = ""
++    if delta and str(delta) != "N/A":
++        delta_html = (
++            f'<span style="font-size:0.71rem;font-weight:600;color:{delta_color};'
++            f'background:{delta_bg};padding:2px 8px;border-radius:20px;'
++            f'display:inline-block;margin-top:5px;">{delta} vs 2025</span>'
++        )
++
++    # Circular donut
++    p_val = max(0.0, min(100.0, float(progress_val))) if progress_val is not None else 0.0
+     donut_html = ""
+     if progress_val is not None:
+-        donut_html = f"""
+-        <div style="position: relative; width: 64px; height: 64px;">
+-            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#F4F7FE" stroke-width="4" />
+-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="{main_color}" stroke-width="4" stroke-dasharray="{dash_val}, 100" stroke-linecap="round" />
+-            </svg>
+-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #2B3674;">
+-                {int(p_val)}%
+-            </div>
+-        </div>
+-        """
+-
+-    html = f"""
+-    <div style="background: #FFFFFF; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; height: 100%; min-height: 150px;">
+-        <!-- Top row: Title and pills -->
+-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+-            <span style="color: #2B3674; font-weight: 700; font-size: 1.05rem;">{title}</span>
+-            <div style="display: flex; gap: 4px;">
+-                <span style="background: {bg_color}; color: {main_color}; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;">Metric</span>
+-                <span style="background: {main_color}; color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600;">{icon}</span>
+-            </div>
+-        </div>
+-        
+-        <!-- Middle row: Circular Progress and Value -->
+-        <div style="display: flex; justify-content: space-between; align-items: center;">
+-            {donut_html}
+-            
+-            <!-- Right side: Value and Button -->
+-            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+-                <span style="font-size: 1.8rem; font-weight: 800; color: #2B3674; line-height: 1;">{value}</span>
+-                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+-                    <span style="color: {delta_color}; font-size: 0.85rem; font-weight: 600;">{delta_str}</span>
+-                    <div style="width: 24px; height: 24px; background: {main_color}; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white;">
+-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+-                    </div>
+-                </div>
+-            </div>
+-        </div>
+-    </div>
+-    """
+-    html = "".join(line.strip() for line in html.split("\n"))
++        donut_html = (
++            f'<div style="position:relative;width:54px;height:54px;flex-shrink:0">'
++            f'<svg viewBox="0 0 36 36" style="width:100%;height:100%;transform:rotate(-90deg)">'
++            f'<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"'
++            f' fill="none" stroke="#F1F5F9" stroke-width="3.5"/>'
++            f'<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"'
++            f' fill="none" stroke="{main_color}" stroke-width="3.5"'
++            f' stroke-dasharray="{p_val:.1f},100" stroke-linecap="round"/>'
++            f'</svg>'
++            f'<div style="position:absolute;top:0;left:0;width:100%;height:100%;'
++            f'display:flex;align-items:center;justify-content:center;'
++            f'font-size:0.66rem;font-weight:700;color:#64748B">{int(p_val)}%</div>'
++            f'</div>'
++        )
++
++    html = (
++        f'<div style="background:#FFF;border:1px solid #E2E8F0;border-radius:12px;'
++        f'padding:20px 22px;height:100%;box-sizing:border-box">'
++        f'<div style="font-size:0.67rem;font-weight:700;letter-spacing:0.09em;'
++        f'text-transform:uppercase;color:#94A3B8;margin-bottom:16px">{title}</div>'
++        f'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
++        f'<div><div style="font-size:2.1rem;font-weight:900;color:#0A1F44;'
++        f'letter-spacing:-0.03em;line-height:1">{value}</div>{delta_html}</div>'
++        f'{donut_html}</div></div>'
++    )
+     return html
++
++
++def section_header(title, subtitle=None):
++    """Render a clean professional section header (no emoji)."""
++    accent = (
++        '<span style="width:3px;height:15px;background:#FF5200;border-radius:2px;'
++        'display:inline-block;flex-shrink:0"></span>'
++    )
++    h = (
++        f'<h3 style="font-size:0.92rem;font-weight:700;color:#0A1F44;'
++        f'margin:30px 0 14px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;'
++        f'display:flex;align-items:center;gap:8px">{accent}{title}</h3>'
++    )
++    if subtitle:
++        h += (
++            f'<p style="font-size:0.82rem;color:#64748B;'
++            f'margin:-8px 0 18px;font-weight:500">{subtitle}</p>'
++        )
++    return h
+diff --git a/utils/ai_generator.py b/utils/ai_generator.py
+index e2d154e..72aea1f 100644
+--- a/utils/ai_generator.py
++++ b/utils/ai_generator.py
+@@ -92,20 +92,18 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
+     container = st.empty()
+     
+     def _build_html(content, is_typing=False):
+-        cursor = "<span style='animation: blink 1s step-end infinite; border-right: 2px solid #FF5200; margin-left: 2px;'></span>" if is_typing else ""
+-        html = f"""
+-        <div class="ai-insight-container" style="{custom_style}">
+-            <div class="ai-header" style="margin-bottom: 12px;">
+-                <div class="ai-icon">✨</div>
+-                <h4 class="ai-title">{title}</h4>
+-                <div class="ai-badge">Model: {badge}</div>
+-            </div>
+-            <div class="ai-content" style="font-size: 0.9rem; transition: all 0.2s;">
+-                {format_ai_html(content)}{cursor}
+-            </div>
+-        </div>
+-        """
+-        return "".join(line.strip() for line in html.split('\n'))
++        cursor = "<span style='border-right:2px solid #FF5200;margin-left:2px;opacity:0.7'></span>" if is_typing else ""
++        html = (
++            f'<div class="ai-insight-container" style="{custom_style}">'
++            f'<div class="ai-header">'
++            f'<div class="ai-icon">AI</div>'
++            f'<h4 class="ai-title">{title}</h4>'
++            f'<div class="ai-badge">{badge}</div>'
++            f'</div>'
++            f'<div class="ai-content">{format_ai_html(content)}{cursor}</div>'
++            f'</div>'
++        )
++        return html
+ 
+     if cache_key in st.session_state:
+         # Load from cache
+diff --git a/views/action_priorities.py b/views/action_priorities.py
+index 5d1e629..1810940 100644
+--- a/views/action_priorities.py
++++ b/views/action_priorities.py
+@@ -9,7 +9,7 @@ def render(df, cfg):
+     codebook = cfg.get('codebook', {})
+     likert_cols = [q for q, info in codebook.items() if info['loại'] == 'likert']
+ 
+-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">⚡ Ma trận Ưu tiên Hành động — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
++    from shared.plotly_theme import section_header
+ 
+     from scipy import stats as scipy_stats
+ 
+diff --git a/views/company_overview.py b/views/company_overview.py
+index 688c5e4..3996da3 100644
+--- a/views/company_overview.py
++++ b/views/company_overview.py
+@@ -94,7 +94,8 @@ def render(all_data, available_groups):
+     # ══════════════════════════════════════════════════════════════
+     # SECTION 2: ORG DRILLDOWN (KHỐI / DIVISION)
+     # ══════════════════════════════════════════════════════════════
+-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#0A1F44;">🏢 1. Phân Tích Cấp Tổ Chức (Division)</h3>', unsafe_allow_html=True)
++    from shared.plotly_theme import section_header
++    st.markdown(section_header("Phân Tích Cấp Tổ Chức", "Mức độ gắn kết và sức khỏe tổ chức theo Khối / Division"), unsafe_allow_html=True)
+     
+     if not df_div_stats.empty:
+         df_div_stats = df_div_stats.sort_values('ei_mean', ascending=True)
+@@ -156,7 +157,7 @@ def render(all_data, available_groups):
+     # ══════════════════════════════════════════════════════════════
+     # SECTION 3: DEMOGRAPHICS (THÂM NIÊN & CẤP BẬC)
+     # ══════════════════════════════════════════════════════════════
+-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">👥 2. Phân Tích Nhân Khẩu Học (Demographics)</h3>', unsafe_allow_html=True)
++    st.markdown(section_header("Phân Tích Nhân Khẩu Học", "Phân mảnh mức độ gắn kết theo Thâm niên và Cấp bậc"), unsafe_allow_html=True)
+     
+     # Define demographic groups from Q5 if 'Q5' exists
+     demographics_cols = []
+@@ -226,7 +227,7 @@ def render(all_data, available_groups):
+     # ══════════════════════════════════════════════════════════════
+     # SECTION 4: EVP & NLP INSIGHTS
+     # ══════════════════════════════════════════════════════════════
+-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">💡 3. EVP & Lắng Nghe Nhân Viên (NLP)</h3>', unsafe_allow_html=True)
++    st.markdown(section_header("EVP & Lắng Nghe Nhân Viên (NLP)", "Phân tích từ khóa từ câu hỏi mở — định vị Thương hiệu Tuyển dụng"), unsafe_allow_html=True)
+     
+     # Collect all NLP clean responses
+     open_responses = []
+diff --git a/views/deep_dive.py b/views/deep_dive.py
+index d154e65..bd43157 100644
+--- a/views/deep_dive.py
++++ b/views/deep_dive.py
+@@ -7,7 +7,7 @@ from shared.plotly_theme import COLORS
+ from utils.ai_generator import render_ai_insight_card
+ 
+ def render(df_clean, cfg, sel_group):
+-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">🔍 Phân tích Chuyên sâu HRIS — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
++    from shared.plotly_theme import section_header
+ 
+     df_hris, _ = load_hris(sel_group)
+     if df_hris is None:
+diff --git a/views/early_warning.py b/views/early_warning.py
+index 73251c6..2951b77 100644
+--- a/views/early_warning.py
++++ b/views/early_warning.py
+@@ -8,15 +8,8 @@ def render(df, cfg):
+     codebook = cfg.get('codebook', {})
+     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
+ 
+-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">🚨 Cảnh báo Sớm & Dự báo Nghỉ việc — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+-
+-    # 🤖 ══════════════════════════════════════════════════════════════
+-    # INTERACTIVE RETENTION RISK SIMULATOR (XGBoost & SHAP)
+-    # 🤖 ══════════════════════════════════════════════════════════════
+-    st.markdown("<h4 style='color: #0A1F44; font-weight: 700; margin-top: 10px;'>🤖 Trình Giả Lập Rủi Ro Nghỉ Việc (What-If Simulation)</h4>", unsafe_allow_html=True)
+-    st.markdown("""
+-    Công cụ giả lập dựa trên luật của mô hình học máy **XGBoost** và trọng số **SHAP** phân tích trên dữ liệu thực tế của GHN.
+-    """)
++    from shared.plotly_theme import section_header
++    st.markdown(section_header("Trình Giả Lập Rủi Ro Nghỉ Việc", "Mô phỏng What-If dựa trên mô hình XGBoost & trọng số SHAP — dữ liệu thực GHN"), unsafe_allow_html=True)
+     
+     sim_tab1, sim_tab2 = st.tabs(["Cấp độ Cá nhân (Micro)", "Cấp độ Tổ chức (Macro)"])
+     
+@@ -183,11 +176,11 @@ def render(df, cfg):
+             </div>
+             """, unsafe_allow_html=True)
+         
+-    st.write("") 
++    st.write("")
+     st.divider()
+-    st.write("") 
+-    
+-    st.markdown("### 🗣️ Phân Phối Tín Hiệu &amp; Ý Kiến Phản Hồi Mở (NLP)")
++    st.write("")
++
++    st.markdown(section_header("Phân Phối Tín Hiệu & Phản Hồi Mở (NLP)", "Phát hiện tín hiệu tiêu cực từ câu hỏi mở qua phân tích ngôn ngữ tự nhiên"), unsafe_allow_html=True)
+ 
+     SIGNAL_LABELS = {
+         'ý_định_nghỉ': 'Ý định nghỉ',
+diff --git a/views/group_detail.py b/views/group_detail.py
+index c25b77d..9069ed0 100644
+--- a/views/group_detail.py
++++ b/views/group_detail.py
+@@ -13,10 +13,7 @@ def render(df, cfg):
+     # ══════════════════════════════════════════════════════════════
+     # SECTION 1: HERO METRICS & OVERALL DISTRIBUTION
+     # ══════════════════════════════════════════════════════════════
+-    st.markdown(f'<h3 style="color: #2B3674; font-weight: 800; margin-bottom: 0;">🏢 Phân tích Chi tiết — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+-    st.markdown(f'<p style="color: #A3AED0; margin-bottom: 24px;">Báo cáo Gắn kết Nhóm {cfg.get("short", "")} • Q1/2026</p>', unsafe_allow_html=True)
+-    
+-    from shared.plotly_theme import make_html_kpi
++    from shared.plotly_theme import make_html_kpi, section_header
+     col1, col2, col3, col4 = st.columns(4)
+     with col1:
+         st.markdown(make_html_kpi('Engagement (EI)', f"{kpis['ei_mean']:.1f}%", color="blue", icon="", progress_val=kpis['ei_mean'], delta="+2.1%"), unsafe_allow_html=True)
+@@ -157,8 +154,7 @@ def render(df, cfg):
+     # ══════════════════════════════════════════════════════════════
+     # SECTION 2: BẢNG BÁO CÁO CHI TIẾT (COMPREHENSIVE SUMMARY TABLE)
+     # ══════════════════════════════════════════════════════════════
+-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">📋 Bảng Báo Cáo Chi Tiết</h3>', unsafe_allow_html=True)
+-    st.markdown("Dữ liệu được bóc tách đến cấp độ Bộ phận / Vùng (Section), kết hợp với bảng màu Gradient để làm nổi bật các điểm nóng (Đỏ = Kém, Xanh = Tốt).")
++    st.markdown(section_header("Bảng Báo Cáo Chi Tiết", "Phân tách đến cấp Bộ phận / Vùng — bảng màu Gradient (Đỏ = Kém, Xanh = Tốt)"), unsafe_allow_html=True)
+     
+     # Determine the grouping level
+     if 'section' in df.columns and df['section'].nunique() > 1:
+@@ -219,8 +215,7 @@ def render(df, cfg):
+     # ══════════════════════════════════════════════════════════════
+     # SECTION 3: NHÂN KHẨU HỌC & CHỨC DANH (DEMOGRAPHICS)
+     # ══════════════════════════════════════════════════════════════
+-    st.markdown('<h3 style="margin-top:2rem; font-weight:800; color:#2B3674;">👥 Phân Tích Đặc Thù (Nhân khẩu học & Cấp bậc)</h3>', unsafe_allow_html=True)
+-    st.markdown("Nhận diện sự chênh lệch mức độ gắn kết giữa các nhóm nhân viên cũ/mới và giữa các vai trò công việc khác nhau (Direct vs Indirect).")
++    st.markdown(section_header("Phân Tích Nhân Khẩu Học & Cấp Bậc", "Chênh lệch gắn kết giữa nhóm cũ/mới và các vai trò Direct vs Indirect"), unsafe_allow_html=True)
+     
+     demo_cols = []
+     if 'Q5' in df.columns:
+diff --git a/views/hris_linkage.py b/views/hris_linkage.py
+index 1516390..463ef61 100644
+--- a/views/hris_linkage.py
++++ b/views/hris_linkage.py
+@@ -7,7 +7,7 @@ from utils.data_loader import load_hris, merge_survey_hris
+ from shared.plotly_theme import COLORS, PAL_CATEGORY, color_by_score
+ from utils.ai_generator import render_ai_insight_card
+ def render(df_clean, cfg, sel_group):
+-    st.markdown(f"## Phân tích Thu nhập — {cfg.get('label', '')}")
++    from shared.plotly_theme import section_header
+ 
+     df_hris, month_label = load_hris(sel_group)
+     if df_hris is None:
+diff --git a/views/nlp_analysis.py b/views/nlp_analysis.py
+index 85d1ad8..c4aa515 100644
+--- a/views/nlp_analysis.py
++++ b/views/nlp_analysis.py
+@@ -10,8 +10,6 @@ def render(df, cfg):
+     codebook = cfg.get('codebook', {})
+     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
+ 
+-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">💬 Phân tích Phản hồi Tự luận (NLP) — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+-
+     q_options = {q: codebook[q]['tên'] for q in open_cols if q in df.columns}
+     if not q_options:
+         st.info("Nhóm này không có câu hỏi mở.")
+diff --git a/views/org_drilldown.py b/views/org_drilldown.py
+index 124ff07..ee230b5 100644
+--- a/views/org_drilldown.py
++++ b/views/org_drilldown.py
+@@ -7,7 +7,6 @@ from utils.ai_generator import render_ai_insight_card
+ 
+ def render(df, cfg):
+     apply_theme()
+-    st.markdown(f'<h3 style="color: #0A1F44; font-weight: 800; margin-bottom: 24px;">👥 Phân tích Cấu trúc Tổ chức — {cfg.get("label", "")}</h3>', unsafe_allow_html=True)
+ 
+     level = st.radio("Cấp độ", ['Division', 'Department', 'Section'], horizontal=True)
+     col_map = {'Division': 'division', 'Department': 'department', 'Section': 'section'}
+-- 
+2.43.0
+
