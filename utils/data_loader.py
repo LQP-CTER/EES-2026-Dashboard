@@ -90,6 +90,20 @@ def load_group(group_id: str):
         raw_clean_df = df_raw.loc[df_clean.index].copy()
         df_clean = map_survey_to_org(df_clean, group=group_id, vung_col=vung_col,
                                      id_col=df_clean.columns[1], raw_df=raw_clean_df)
+                                     
+        if group_id == '3A':
+            EXCLUDE_DIVS = [
+                "phòng dịch vụ kho vận", 
+                "phòng kinh doanh khách hàng lớn",
+                "phòng nền tảng vận hành",
+                "technology operations department"
+            ]
+            m_exclude = (
+                df_clean["division"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
+                df_clean["department"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
+                df_clean["section"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS)
+            )
+            df_clean = df_clean[~m_exclude].copy()
     except Exception as e:
         print(f"Lỗi map data: {e}")
         df_clean['division'] = 'Khác'
