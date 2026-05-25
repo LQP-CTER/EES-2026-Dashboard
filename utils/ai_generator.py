@@ -46,23 +46,21 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
     8. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
     """
     
-    try:
-        stream = client.chat.completions.create(
-            messages=[{"role": "system", "content": system_prompt}],
-            model="qwen-2.5-32b",
-            temperature=0.3,
-            max_tokens=400,
-            stream=True
-        )
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
-    except Exception as e:
+    models_to_try = [
+        "qwen-2.5-32b",
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it"
+    ]
+    
+    last_error = ""
+    import time
+    for model in models_to_try:
         try:
-            # Fallback
             stream = client.chat.completions.create(
                 messages=[{"role": "system", "content": system_prompt}],
-                model="llama-3.1-8b-instant",
+                model=model,
                 temperature=0.3,
                 max_tokens=400,
                 stream=True
@@ -70,8 +68,15 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
             for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
                     yield chunk.choices[0].delta.content
-        except Exception as e2:
-            yield f"Lỗi kết nối AI (Groq API): {str(e2)}"
+            return  # Thành công thì thoát luôn
+        except Exception as e:
+            last_error = str(e)
+            # Nếu lỗi Rate Limit (429), nghỉ 2s rồi thử model tiếp theo
+            if "rate_limit_exceeded" in str(e).lower() or "429" in str(e):
+                time.sleep(2)
+            continue
+            
+    yield f"Lỗi kết nối AI (Groq API) sau khi thử nhiều model: {last_error}"
 
 def format_ai_html(text):
     html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
