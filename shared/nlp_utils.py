@@ -233,6 +233,7 @@ def analyze_sentiment_rule(text):
 def detect_warning_signals(text):
     """
     Quét tín hiệu cảnh báo sớm trong phản hồi.
+    Sử dụng regex ranh giới từ và kiểm tra từ phủ định (không, ko, k,...)
     Returns: list of (signal_type, matched_phrase)
     """
     if not isinstance(text, str):
@@ -240,10 +241,26 @@ def detect_warning_signals(text):
 
     text_lower = text.lower()
     signals = []
+    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít']
+    
     for signal_type, phrases in WARNING_SIGNALS.items():
         for phrase in phrases:
-            if phrase in text_lower:
+            # Dùng regex để đảm bảo tìm đúng từ nguyên vẹn (word boundary)
+            pattern = r'(?:^|\W)(' + re.escape(phrase) + r')(?:\W|$)'
+            for match in re.finditer(pattern, text_lower):
+                start_idx = match.start(1)
+                
+                # Lấy 15 ký tự ngay trước cụm từ đó để kiểm tra phủ định
+                context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+                words_before = context_before.split()
+                
+                # Nếu từ liền trước là từ phủ định thì bỏ qua
+                if words_before and words_before[-1] in negation_words:
+                    continue
+                
                 signals.append((signal_type, phrase))
+                break  # Ghi nhận 1 lần cho cụm từ này là đủ
+                
     return signals
 
 

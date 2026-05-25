@@ -218,18 +218,34 @@ def compute_kpis(df):
     }
 
 
-@st.cache_data(ttl=3600, show_spinner="Đang tải HRIS từ Google Sheet...")
+@st.cache_data(ttl=86400, show_spinner="Đang xử lý dữ liệu HRIS...")
 def load_hris():
-    """Load HRIS from central Google Sheet."""
-    try:
-        hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
-    except Exception:
-        hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
+    """Load HRIS from central Google Sheet with local Parquet caching for speed."""
+    import os
+    import time
+    local_cache = "data/hris_cache.parquet"
     
-    hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
     try:
-        df_hris = pd.read_csv(hris_url)
-        df_hris.columns = df_hris.columns.str.strip()
+        # Tối ưu hóa: Ưu tiên đọc từ file Parquet cục bộ nếu có (tốc độ ánh sáng)
+        if os.path.exists(local_cache) and (time.time() - os.path.getmtime(local_cache) < 86400 * 7):
+            df_hris = pd.read_parquet(local_cache)
+        else:
+            try:
+                hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
+            except Exception:
+                hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
+            
+            hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
+            df_hris = pd.read_csv(hris_url)
+            df_hris.columns = df_hris.columns.str.strip()
+            
+            # Lưu cache ra file parquet để dùng cho các lần sau
+            os.makedirs("data", exist_ok=True)
+            try:
+                df_hris.to_parquet(local_cache, index=False)
+            except Exception:
+                pass  # Bỏ qua nếu môi trường không hỗ trợ pyarrow/fastparquet
+                
     except Exception as e:
         import streamlit as st
         st.error(f"Lỗi tải HRIS: {e}")
