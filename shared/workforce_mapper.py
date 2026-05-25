@@ -353,8 +353,24 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
                         "b2b operations department - hn": ("Phòng Vận Hành B2B HN", "Giao Hàng Nặng (Vận hành B2B)"),
                         "project 2x": ("Chưa xác định", "Chưa xác định"),
                     }
+                    import re
                     sv_vung_lower = sv_vung.lower().replace(" region", "").strip()
-                    mapped_vung = _REGION_CODE_MAP.get(sv_vung_lower)
+                    mapped_vung = None
+                    
+                    match = re.search(r'\((.*?)\)', sv_vung_lower)
+                    if match:
+                        code = match.group(1).strip()
+                        mapped_vung = _REGION_CODE_MAP.get(code)
+                        
+                    if not mapped_vung:
+                        mapped_vung = _REGION_CODE_MAP.get(sv_vung_lower)
+                        
+                    if not mapped_vung:
+                        for k, v in _REGION_CODE_MAP.items():
+                            if f" {k} " in f" {sv_vung_lower} ":
+                                mapped_vung = v
+                                break
+                                
                     ext_match = _VUNG_EXTENDED_MAP.get(sv_vung.lower().strip())
                     
                     if mapped_vung:
