@@ -32,9 +32,10 @@ st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", la
 from utils.data_loader import load_group, load_all_available
 from config.groups import get_available_groups
 from views import (
-    company_overview, group_detail, org_drilldown,
-    hris_linkage, deep_dive, nlp_analysis,
-    early_warning, action_priorities
+    company_overview, hris_linkage,
+    view_a_current_state, view_b_problem_groups,
+    view_c_key_issues, view_d_root_cause,
+    view_e_impact_risk, view_f_action_priority, view_g_kpi_impact
 )
 
 # ── Custom CSS ──────────────────────────────────────────────────────────────
@@ -586,13 +587,13 @@ with st.sidebar:
         # Sub-navigation
         st.markdown('<span class="sb-section">Góc nhìn phân tích</span>', unsafe_allow_html=True)
         SUB_NAV = [
-            "Chi tiết Nhóm",
-            "Phân tích Tổ chức",
-            "HRIS — Thu nhập",
-            "Deep Dive",
-            "Câu hỏi Mở (NLP)",
-            "Cảnh báo Sớm",
-            "Ma trận Ưu tiên",
+            "A. Trạng thái Tổ chức",
+            "B. Nhóm gặp vấn đề",
+            "C. Vấn đề nghiêm trọng",
+            "D. Nguyên nhân gốc rễ",
+            "E. Rủi ro & Hệ lụy",
+            "F. Ưu tiên hành động",
+            "G. Đo lường Impact",
         ]
         sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
 
@@ -685,20 +686,22 @@ else:
     """, unsafe_allow_html=True)
 
     try:
-        if sel_nav == "Chi tiết Nhóm":
-            group_detail.render(df_filtered, cfg)
-        elif sel_nav == "Phân tích Tổ chức":
-            org_drilldown.render(df_filtered, cfg)
-        elif sel_nav == "HRIS — Thu nhập":
+        if sel_nav == "A. Trạng thái Tổ chức":
+            view_a_current_state.render(df_filtered, cfg)
+        elif sel_nav == "B. Nhóm gặp vấn đề":
+            view_b_problem_groups.render(df_filtered, cfg)
+        elif sel_nav == "C. Vấn đề nghiêm trọng":
+            view_c_key_issues.render(df_filtered, cfg)
+        elif sel_nav == "D. Nguyên nhân gốc rễ":
+            view_d_root_cause.render(df_filtered, cfg, sel_group)
+            st.markdown("---")
             hris_linkage.render(df_filtered, cfg, sel_group)
-        elif sel_nav == "Deep Dive":
-            deep_dive.render(df_filtered, cfg, sel_group)
-        elif sel_nav == "Câu hỏi Mở (NLP)":
-            nlp_analysis.render(df_filtered, cfg)
-        elif sel_nav == "Cảnh báo Sớm":
-            early_warning.render(df_filtered, cfg)
-        elif sel_nav == "Ma trận Ưu tiên":
-            action_priorities.render(df_filtered, cfg)
+        elif sel_nav == "E. Rủi ro & Hệ lụy":
+            view_e_impact_risk.render(df_filtered, cfg)
+        elif sel_nav == "F. Ưu tiên hành động":
+            view_f_action_priority.render(df_filtered, cfg)
+        elif sel_nav == "G. Đo lường Impact":
+            view_g_kpi_impact.render(df_filtered, cfg)
         else:
             st.info("Chọn một góc nhìn từ sidebar bên trái.")
     except Exception as e:
