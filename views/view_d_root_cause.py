@@ -271,7 +271,8 @@ def render(df_clean, cfg, sel_group):
             """
             
         cards_html += "</div>"
-        st.markdown(cards_html, unsafe_allow_html=True)
+        import textwrap
+        st.markdown(textwrap.dedent(cards_html), unsafe_allow_html=True)
 
         # Plot dynamic chart for details
         chart_data = {'Chỉ số': ['Thu nhập (tr)'], 'Muốn nghỉ': [income_risk], 'Gắn bó': [income_ok]}
