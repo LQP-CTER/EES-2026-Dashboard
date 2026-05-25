@@ -201,7 +201,7 @@ def compute_kpis(df):
     }
 
 
-@st.cache_data(ttl=3600, show_spinner="📂 Đang tải HRIS từ Google Sheet...")
+@st.cache_data(ttl=3600, show_spinner="Đang tải HRIS từ Google Sheet...")
 def load_hris(group_id: str):
     """Load HRIS for a specific group from central Google Sheet."""
     try:
@@ -212,7 +212,9 @@ def load_hris(group_id: str):
     hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
     try:
         df_hris = pd.read_csv(hris_url)
-    except Exception:
+    except Exception as e:
+        import streamlit as st
+        st.error(f"Lỗi tải HRIS: {e}")
         return None, None
     month_col = df_hris.columns[1]
 
