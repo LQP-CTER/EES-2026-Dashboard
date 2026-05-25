@@ -26,7 +26,7 @@ try:
 except Exception:
     pass
 
-st.set_page_config(page_title="GHN EES 2026", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", layout="wide", initial_sidebar_state="expanded")
 
 # Import loaders and views
 from utils.data_loader import load_group, load_all_available
