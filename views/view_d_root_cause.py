@@ -6,11 +6,101 @@ from utils.data_loader import load_hris, merge_survey_hris
 from shared.plotly_theme import COLORS
 from utils.ai_generator import render_ai_insight_card
 
+def _render_non_1a(df_clean, cfg, sel_group):
+    import streamlit as st
+    import pandas as pd
+    import plotly.graph_objects as go
+    from shared.plotly_theme import COLORS, make_html_kpi
+    
+    if 'intent' not in df_clean.columns or df_clean['intent'].notna().sum() < 30:
+        st.warning("Không đủ dữ liệu Ý định ở lại (Q30).")
+        return
+        
+    df = df_clean.copy()
+    df['intent_risk'] = df['intent'].apply(
+        lambda x: '🔴 Muốn nghỉ (1-2)' if pd.notna(x) and x <= 2
+        else ('🟡 Phân vân (3)' if pd.notna(x) and x == 3
+              else ('🟢 Gắn bó (4-5)' if pd.notna(x) else None)))
+              
+    st.markdown("<h4 style='color: #0A1F44; font-weight: 700;'>Bước 1: Phân nhóm ý định rời đi</h4>", unsafe_allow_html=True)
+    risk_ov = df.groupby('intent_risk').agg(N=('EI','count')).reset_index()
+    total_n = risk_ov['N'].sum()
+    
+    cols = st.columns(len(risk_ov))
+    for (idx, row), col in zip(risk_ov.iterrows(), cols):
+        pct = row['N'] / total_n * 100 if total_n > 0 else 0
+        clean_idx = str(row['intent_risk'])[2:]
+        color_theme = "red" if "nghỉ" in clean_idx.lower() else ("green" if "gắn" in clean_idx.lower() else "orange")
+        with col:
+            st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="👤", progress_val=pct), unsafe_allow_html=True)
+
+    st.markdown("#### Bước 2: Top yếu tố bất mãn nhất ở nhóm Muốn nghỉ")
+    st.markdown("So sánh điểm trung bình các câu hỏi giữa nhóm **Muốn nghỉ** và nhóm **Gắn bó** để tìm ra những nguyên nhân gốc rễ (Root Cause) lớn nhất khiến nhân sự muốn rời đi.")
+    
+    df_risk = df[df['intent_risk'] == '🔴 Muốn nghỉ (1-2)']
+    df_ok = df[df['intent_risk'] == '🟢 Gắn bó (4-5)']
+    
+    if len(df_risk) < 5 or len(df_ok) < 5:
+        st.info("Không đủ mẫu ở nhóm Muốn nghỉ / Gắn bó để phân tích so sánh.")
+        return
+        
+    codebook = cfg.get('codebook', {})
+    likert_cols = [q for q, info in codebook.items() if info['loại'] == 'likert' and q in df.columns]
+    
+    gaps = []
+    for q in likert_cols:
+        mean_risk = df_risk[q].mean()
+        mean_ok = df_ok[q].mean()
+        if pd.notna(mean_risk) and pd.notna(mean_ok):
+            gaps.append({
+                'Câu': q,
+                'Nội dung': codebook[q]['tên'],
+                'Muốn nghỉ': mean_risk,
+                'Gắn bó': mean_ok,
+                'Chênh lệch': mean_ok - mean_risk
+            })
+            
+    if not gaps:
+        return
+
+    df_gaps = pd.DataFrame(gaps).sort_values('Chênh lệch', ascending=False).head(10)
+    
+    # Plotly bar chart
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        y=df_gaps['Câu'] + " " + df_gaps['Nội dung'].str[:45] + "...",
+        x=df_gaps['Muốn nghỉ'],
+        name='Muốn nghỉ',
+        orientation='h',
+        marker_color=COLORS['red'],
+        text=df_gaps['Muốn nghỉ'].round(2),
+        textposition='inside'
+    ))
+    fig.add_trace(go.Bar(
+        y=df_gaps['Câu'] + " " + df_gaps['Nội dung'].str[:45] + "...",
+        x=df_gaps['Gắn bó'],
+        name='Gắn bó',
+        orientation='h',
+        marker_color=COLORS['green'],
+        text=df_gaps['Gắn bó'].round(2),
+        textposition='inside'
+    ))
+    
+    fig.update_layout(
+        barmode='group',
+        height=500,
+        yaxis=dict(autorange="reversed"),
+        title='TOP 10 CÂU HỎI CÓ ĐIỂM CHÊNH LỆCH LỚN NHẤT',
+        margin=dict(l=300),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 def render(df_clean, cfg, sel_group):
     from shared.plotly_theme import section_header
 
     if sel_group != '1A':
-        st.info("💡 Tính năng **Phân tích nguyên nhân gốc rễ (Root Cause)** kết nối trực tiếp với hệ thống dữ liệu nhân sự (HRIS) hiện tại chỉ được thiết kế dành riêng cho nhóm 1A (Tài xế/Giao nhận).")
+        _render_non_1a(df_clean, cfg, sel_group)
         return
 
     df_hris, _ = load_hris(sel_group)
