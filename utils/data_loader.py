@@ -257,11 +257,16 @@ def merge_survey_hris(df_clean, df_hris):
     df_m = df_clean.merge(df_hris[merge_cols], on='_nv_hash', how='left', suffixes=('', '_hris'))
 
     if 'Lương thực nhận' in df_m.columns:
+        df_m['Lương thực nhận'] = pd.to_numeric(df_m['Lương thực nhận'].astype(str).str.replace(r'[^\d.-]', '', regex=True), errors='coerce')
         df_m['income_m'] = df_m['Lương thực nhận'] / 1_000_000
         df_m['income_group'] = pd.cut(df_m['income_m'], bins=[0, 5, 7, 10, 15, 200],
                                        labels=['< 5 triệu', '5-7 triệu', '7-10 triệu', '10-15 triệu', '> 15 triệu'])
     if 'Phạt' in df_m.columns:
+        df_m['Phạt'] = pd.to_numeric(df_m['Phạt'].astype(str).str.replace(r'[^\d.-]', '', regex=True), errors='coerce')
         df_m['phat_m'] = df_m['Phạt'].fillna(0) / 1_000_000
+        
+        if 'Truy thu mất hàng COD' in df_m.columns:
+            df_m['Truy thu mất hàng COD'] = pd.to_numeric(df_m['Truy thu mất hàng COD'].astype(str).str.replace(r'[^\d.-]', '', regex=True), errors='coerce')
         truy_thu = df_m.get('Truy thu mất hàng COD', pd.Series(0, index=df_m.index)).fillna(0) / 1_000_000
         df_m['tong_phat'] = df_m['phat_m'] + truy_thu
     if 'intent' in df_m.columns:
