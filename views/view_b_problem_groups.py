@@ -123,6 +123,13 @@ def render(df, cfg):
             fig.update_layout(height=max(400, len(df_heat) * 25 + 150))
             st.plotly_chart(fig, use_container_width=True)
             
+            ai_data_heat = {
+                "Dimensions": list(df_heat.columns),
+                "Sample_Count": len(df_heat)
+            }
+            prompt_heat = f"Đây là biểu đồ nhiệt (Heatmap) đánh giá điểm mạnh/yếu của từng đơn vị qua các khía cạnh {ai_data_heat['Dimensions']}. Phân tích nhanh những rủi ro khi một đơn vị có màu đỏ (điểm thấp) ở nhiều cột liên tiếp. Khuyến nghị hành động tiếp theo cho quản lý cấp cao là gì?"
+            render_ai_insight_card("AI Heatmap Analysis", ai_data_heat, prompt_heat, custom_style="margin-top: 16px; margin-bottom: 24px;")
+            
             buffer2 = io.BytesIO()
             with pd.ExcelWriter(buffer2, engine='xlsxwriter') as writer:
                 df_heat.reset_index().to_excel(writer, index=False, sheet_name='Heatmap')

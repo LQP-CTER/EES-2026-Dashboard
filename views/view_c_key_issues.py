@@ -84,6 +84,13 @@ def render(df, cfg):
             fig_ng = fig_card(fig_ng, 'PHÂN BỔ TỪ KHÓA (N-GRAMS)', 'Cụm từ khóa lặp lại nhiều nhất')
             fig_ng.update_traces(textposition='outside')
             fig_ng.update_layout(height=450, xaxis_title='', yaxis_title='', margin=dict(l=120))
+            
+            ai_data_ng = {
+                "Top_Ngrams": df_ng.tail(3).to_dict(orient='records')
+            }
+            prompt_ng = f"Dựa trên 3 cụm từ xuất hiện nhiều nhất: {ai_data_ng['Top_Ngrams']}. Hãy phân tích ngắn gọn: Những cụm từ này tiết lộ điều gì về trải nghiệm thực tế của nhân viên? Tại sao các từ khóa này lại đi cùng nhau?"
+            render_ai_insight_card("AI N-Grams Insight", ai_data_ng, prompt_ng, custom_style="margin-bottom: 24px;")
+            
             st.plotly_chart(fig_ng, use_container_width=True)
         else:
             st.info("Chưa có đủ cụm từ khóa nổi bật.")
@@ -107,6 +114,13 @@ def render(df, cfg):
                         fig.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
                         fig.update_layout(height=350, margin=dict(l=180))
                         st.plotly_chart(fig, width='stretch')
+                        
+            # Thêm AI Insight chung cho Promoter vs Detractor
+            ai_data_diff = {
+                "Survey_Question": sel_q
+            }
+            prompt_diff = f"Chỉ dựa vào sự khác biệt tự nhiên trong hành vi: Phân tích ngắn gọn về sự khác nhau cơ bản trong cách Promoter (người gắn bó) và Detractor (người bất mãn) phản hồi về vấn đề này. Tại sao lãnh đạo cần quan tâm cả 2 luồng ý kiến?"
+            render_ai_insight_card("AI Sentiment Comparison", ai_data_diff, prompt_diff, custom_style="margin-top: 16px; margin-bottom: 24px;")
 
     with tab4:
         if topic_data:

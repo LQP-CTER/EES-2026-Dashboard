@@ -325,6 +325,15 @@ def render(df_clean, cfg, sel_group):
         )
         st.plotly_chart(fig, use_container_width=True)
         
+        # Thêm AI Insight cho biểu đồ chênh lệch
+        ai_data_comp = {
+            "Income_Gap": float(f"{-income_gap:.2f}") if income_gap < 0 else float(f"{income_gap:.2f}"),
+            "Penalty_Gap": float(f"{phat_gap:.2f}") if has_phat else 0,
+            "Productivity_Gap": float(f"{don_gap:.2f}") if has_don else 0
+        }
+        prompt_comp = f"Nhóm có ý định nghỉ việc đang có sự chênh lệch rõ rệt so với nhóm gắn bó: Thu nhập thấp hơn {ai_data_comp['Income_Gap']} triệu, Mức phạt cao hơn {ai_data_comp['Penalty_Gap']} triệu, Năng suất làm việc khác biệt {ai_data_comp['Productivity_Gap']} đơn. Phân tích tác động tâm lý của những con số này lên động lực của nhân viên. Sự chênh lệch này là nguyên nhân hay kết quả của thái độ làm việc?"
+        render_ai_insight_card("AI Root Cause Analysis", ai_data_comp, prompt_comp, custom_style="margin-top: 16px; margin-bottom: 32px;")
+        
         # ── JD-R Model Callout Box ──
         if sel_group == '1A':
             st.markdown("""
@@ -431,6 +440,15 @@ def render(df_clean, cfg, sel_group):
                         <span style="color: #DC2626; font-weight: 700;">🚨 Kịch bản rủi ro cao nhất:</span> Nhân sự có thu nhập <strong>{max_risk_cell['income_label']}</strong> nhưng phải chịu mức phạt <strong>{max_risk_cell['phat_label']}</strong> sẽ có xác suất nghỉ việc lên tới <strong>{max_risk_cell['Risk']:.1f}%</strong>.
                     </div>
                     """, unsafe_allow_html=True)
+                    
+                    ai_data_hm = {
+                        "Max_Risk_Income": max_risk_cell['income_label'],
+                        "Max_Risk_Penalty": max_risk_cell['phat_label'],
+                        "Max_Risk_Percentage": round(max_risk_cell['Risk'], 1)
+                    }
+                    prompt_hm = f"Dựa trên dữ liệu dự báo: Nhóm nhân sự chịu {ai_data_hm['Max_Risk_Penalty']} tiền phạt và có thu nhập {ai_data_hm['Max_Risk_Income']} đang có tỷ lệ muốn nghỉ việc cao nhất là {ai_data_hm['Max_Risk_Percentage']}%. Hãy đưa ra một góc nhìn chiến lược dành cho Giám đốc nhân sự: (1) Tại sao sự kết hợp 2 yếu tố này lại tạo ra rủi ro khủng hoảng cục bộ? (2) Cần hành động gì ngay lập tức để giữ chân nhóm này?"
+                    render_ai_insight_card("AI Predictive Insight", ai_data_hm, prompt_hm, badge="Predictive AI", custom_style="margin-top: 24px; margin-bottom: 24px;")
+
                 else:
                     st.info("Không đủ dữ liệu kết hợp Thu nhập & Mức phạt để chạy mô hình.")
 
