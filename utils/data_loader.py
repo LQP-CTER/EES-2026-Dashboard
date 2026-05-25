@@ -257,11 +257,13 @@ def merge_survey_hris(df_clean, df_hris):
     df_m = df_clean.merge(df_hris[merge_cols], on='_nv_hash', how='left', suffixes=('', '_hris'))
 
     numeric_cols = ['Lương thực nhận', 'Tổng', 'Phạt', 'Tổng Đơn giao', 'Năng suất Giao', 
-                    'Thâm niên (Đơn vị tính là tháng)', 'Lương đơn hàng', 
-                    'Thưởng/ Phạt GTC và LTC', 'Phụ cấp', 'Thưởng Doanh Thu', 'Truy thu mất hàng COD']
+                    'Lương đơn hàng', 'Thưởng/ Phạt GTC và LTC', 'Phụ cấp', 'Thưởng Doanh Thu', 'Truy thu mất hàng COD']
     for c in numeric_cols:
         if c in df_m.columns:
-            df_m[c] = pd.to_numeric(df_m[c].astype(str).str.replace(r'[^\d.-]', '', regex=True), errors='coerce')
+            df_m[c] = pd.to_numeric(df_m[c].astype(str).str.replace(r'[^\d-]', '', regex=True), errors='coerce')
+            
+    if 'Thâm niên (Đơn vị tính là tháng)' in df_m.columns:
+        df_m['Thâm niên (Đơn vị tính là tháng)'] = pd.to_numeric(df_m['Thâm niên (Đơn vị tính là tháng)'].astype(str).str.replace(',', '.').str.replace(r'[^\d.-]', '', regex=True), errors='coerce')
 
     if 'Lương thực nhận' in df_m.columns:
         df_m['income_m'] = df_m['Lương thực nhận'] / 1_000_000
