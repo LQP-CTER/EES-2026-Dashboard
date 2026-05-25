@@ -346,4 +346,54 @@ def render(df_clean, cfg, sel_group):
             """, unsafe_allow_html=True)
     else:
         st.info("Không đủ dữ liệu so sánh phân nhóm (Muốn nghỉ vs Gắn bó).")
+        
+    if sel_group == '1A':
+        st.markdown("<hr style='margin: 40px 0; border: 1px dashed rgba(0,0,0,0.1);'>", unsafe_allow_html=True)
+        st.markdown("#### Bước 4: Ma trận dự báo rủi ro (Risk Heatmap)")
+        st.markdown("Ma trận đa biến dự báo tỷ lệ % nhân sự **Muốn nghỉ** dựa trên sự kết hợp giữa 2 yếu tố trọng yếu: **Thu nhập** và **Mức phạt**.")
+        
+        if 'phat_label' in df_m.columns and 'income_label' in df_m.columns:
+            df_heat = df_m[(df_m['phat_label'] != 'Chưa rõ') & (df_m['income_label'] != 'Chưa rõ')]
+            if not df_heat.empty:
+                def risk_pct(x):
+                    tot = len(x)
+                    if tot < 5: return None
+                    risk = (x['intent_risk'].astype(str).str.contains('Muốn nghỉ')).sum()
+                    return risk / tot * 100
+                
+                heat_data = df_heat.groupby(['income_label', 'phat_label'], observed=True).apply(risk_pct).reset_index(name='Risk')
+                heat_data = heat_data.dropna()
+                
+                if not heat_data.empty:
+                    heat_pivot = heat_data.pivot(index='income_label', columns='phat_label', values='Risk')
+                    phat_order = ['Không phạt', '< 1tr', '≥ 1tr']
+                    phat_cols = [c for c in phat_order if c in heat_pivot.columns]
+                    for c in heat_pivot.columns:
+                        if c not in phat_cols: phat_cols.append(c)
+                    heat_pivot = heat_pivot[phat_cols]
+                    
+                    income_order = ['< 5 triệu', '5-7 triệu', '7-10 triệu', '10-15 triệu', '> 15 triệu']
+                    inc_idx = [i for i in income_order if i in heat_pivot.index]
+                    for i in heat_pivot.index:
+                        if i not in inc_idx: inc_idx.append(i)
+                    heat_pivot = heat_pivot.loc[inc_idx]
+                    
+                    fig = px.imshow(heat_pivot, 
+                                    text_auto='.1f', 
+                                    aspect='auto',
+                                    color_continuous_scale='RdYlGn_r',
+                                    labels=dict(color="% Muốn nghỉ", x="Mức Phạt", y="Mức Thu Nhập"))
+                    
+                    fig.update_layout(height=400, title="TỶ LỆ RỦI RO RỜI BỎ THEO MA TRẬN THU NHẬP - MỨC PHẠT", margin=dict(t=50, b=40, l=40, r=40))
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    max_risk_cell = heat_data.loc[heat_data['Risk'].idxmax()]
+                    st.markdown(f"""
+                    <div style="background-color: #FEF2F2; border-left: 4px solid #DC2626; padding: 12px 16px; border-radius: 4px; margin-top: 10px;">
+                        <span style="color: #DC2626; font-weight: 700;">🚨 Kịch bản rủi ro cao nhất:</span> Nhân sự có thu nhập <strong>{max_risk_cell['income_label']}</strong> nhưng phải chịu mức phạt <strong>{max_risk_cell['phat_label']}</strong> sẽ có xác suất nghỉ việc lên tới <strong>{max_risk_cell['Risk']:.1f}%</strong>.
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.info("Không đủ dữ liệu kết hợp Thu nhập & Mức phạt để chạy mô hình.")
 
