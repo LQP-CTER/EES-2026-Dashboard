@@ -212,6 +212,7 @@ def load_hris(group_id: str):
     hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
     try:
         df_hris = pd.read_csv(hris_url)
+        df_hris.columns = df_hris.columns.str.strip()
     except Exception as e:
         import streamlit as st
         st.error(f"Lỗi tải HRIS: {e}")
@@ -247,7 +248,7 @@ def merge_survey_hris(df_clean, df_hris):
 
     merge_cols = ['_nv_hash', 'Lương thực nhận', 'Tổng', 'Phạt', 'Tổng Đơn giao',
                   'Năng suất Giao', 'Phân loại Nhóm Năng Suất Giao',
-                  'Phân loại Chiến Binh ', 'Thâm niên (Đơn vị tính là tháng)',
+                  'Phân loại Chiến Binh', 'Thâm niên (Đơn vị tính là tháng)',
                   'Nhóm Thâm Niên', 'Range lương thực nhận', 'Ngày nghỉ việc',
                   'Lương đơn hàng', 'Thưởng/ Phạt GTC và LTC', 'Phụ cấp',
                   'Thưởng Doanh Thu', 'Truy thu mất hàng COD']
