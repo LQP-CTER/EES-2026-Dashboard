@@ -180,7 +180,7 @@ def render(all_data, available_groups):
                     order = [
                         'Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng',
                         'Trên 6 đến 9 tháng', 'Trên 9 đến 12 tháng', 'Trên 1 đến 2 năm',
-                        'Trên 2 đến 3 năm', 'Trên 3 đến 5 năm', 'Trên 5 năm', 'Chưa xác định'
+                        'Trên 2 đến 3 năm', 'Trên 3 đến 5 năm', 'Trên 5 năm', 'Khác'
                     ]
                     # Append any unknown J or other categories to the end
                     existing = df_demo['group'].tolist()
