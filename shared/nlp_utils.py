@@ -366,7 +366,7 @@ def classify_topics(text):
     Phân loại chủ đề từ text (multi-label).
     Returns: list of topic names found in text.
     """
-    if text is None:
+    if not isinstance(text, str):
         return []
 
     text_lower = text.lower()
