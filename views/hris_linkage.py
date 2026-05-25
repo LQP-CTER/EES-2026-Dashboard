@@ -9,7 +9,11 @@ from utils.ai_generator import render_ai_insight_card
 def render(df_clean, cfg, sel_group):
     from shared.plotly_theme import section_header
 
-    df_hris, month_label = load_hris(sel_group)
+    if sel_group != '1A':
+        st.info("💡 Tính năng phân tích liên kết HRIS hiện tại chỉ hỗ trợ cho nhóm 1A.")
+        return
+
+    df_hris, month_label = load_hris()
     if df_hris is None:
         st.info(f"Nhóm {sel_group} hiện chưa có dữ liệu HRIS.")
         return

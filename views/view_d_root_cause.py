@@ -103,7 +103,7 @@ def render(df_clean, cfg, sel_group):
         _render_non_1a(df_clean, cfg, sel_group)
         return
 
-    df_hris, _ = load_hris(sel_group)
+    df_hris, _ = load_hris()
     if df_hris is None:
         st.info(f"Nhóm {sel_group} chưa có dữ liệu HRIS — chỉ phân tích Ý định nghỉ.")
         return

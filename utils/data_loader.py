@@ -219,8 +219,8 @@ def compute_kpis(df):
 
 
 @st.cache_data(ttl=3600, show_spinner="Đang tải HRIS từ Google Sheet...")
-def load_hris(group_id: str):
-    """Load HRIS for a specific group from central Google Sheet."""
+def load_hris():
+    """Load HRIS from central Google Sheet."""
     try:
         hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
     except Exception:
