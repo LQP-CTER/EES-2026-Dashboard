@@ -73,20 +73,34 @@ def _try_gemini_insight(data_json, context_prompt, lang='VN'):
     genai = get_gemini_client()
     if not genai:
         return None
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.3,
-                max_output_tokens=400,
+    
+    gemini_models = [
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash-lite',
+        'gemini-2.0-flash',
+        'gemini-2.5-flash',
+    ]
+    prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
+    
+    for model_name in gemini_models:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.3,
+                    max_output_tokens=400,
+                )
             )
-        )
-        return response.text
-    except Exception as e:
-        print(f"Gemini insight error: {e}")
-        return None
+            return response.text
+        except Exception as e:
+            err = str(e)
+            if 'RESOURCE_EXHAUSTED' in err or '429' in err or 'quota' in err.lower():
+                time.sleep(1)
+                continue
+            print(f"Gemini insight error ({model_name}): {e}")
+            continue
+    return None
 
 
 def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
@@ -212,21 +226,33 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
     # ── Try Gemini first (primary for JSON tasks) ──
     genai = get_gemini_client()
     if genai:
-        try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(
-                validation_prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.1,
-                    max_output_tokens=2000,
+        gemini_models = [
+            'gemini-2.5-flash-lite',
+            'gemini-2.0-flash-lite',
+            'gemini-2.0-flash',
+            'gemini-2.5-flash',
+        ]
+        for model_name in gemini_models:
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(
+                    validation_prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=0.1,
+                        max_output_tokens=2000,
+                    )
                 )
-            )
-            results = _parse_ai_result(response.text.strip())
-            output = _map_results(results, signals_batch)
-            st.session_state[cache_key] = output
-            return output
-        except Exception as e:
-            print(f"Gemini validator error: {e}")
+                results = _parse_ai_result(response.text.strip())
+                output = _map_results(results, signals_batch)
+                st.session_state[cache_key] = output
+                return output
+            except Exception as e:
+                err = str(e)
+                if 'RESOURCE_EXHAUSTED' in err or '429' in err or 'quota' in err.lower():
+                    time.sleep(1)
+                    continue
+                print(f"Gemini validator error ({model_name}): {e}")
+                continue
     
     # ── Fallback: Try Groq ──
     client = get_groq_client()
