@@ -445,7 +445,7 @@ def render(df, cfg):
                         text=[f'{v:+.0f}' for v in df_demo['eNPS']], textposition='outside', marker_color=COLORS['green']
                     ))
                     fig = fig_card(fig, f'Gắn kết theo {col_name}', f'Phân tích nhóm {col_name.lower()} đông nhất')
-                    fig.update_layout(barmode='group', xaxis_tickangle=-30, yaxis=dict(range=[0, 105]))
+                    fig.update_layout(barmode='group', xaxis_tickangle=-30)
                     st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Dữ liệu hiện tại không chứa các cột về Thâm niên (Q5) hoặc Chức danh.")
