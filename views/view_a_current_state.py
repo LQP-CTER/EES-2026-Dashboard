@@ -192,8 +192,9 @@ def render(df, cfg):
         "Burnout_Risk": round(kpis.get('burnout_pct', 0), 1),
         "MEI_Score": round(kpis.get('mei_avg', 0), 1)
     }
-    prompt = f"Bạn đang nói chuyện với một Giám đốc/Trưởng phòng không chuyên về data. Dựa trên các chỉ số EI={group_ai_data['EI_Score']}%, eNPS={group_ai_data['eNPS_Score']:+.0f}, rủi ro nghỉ={group_ai_data['Long_Term_Intent']:.0f}% và MEI={group_ai_data['MEI_Score']:.1f}%, hãy trả lời 2 câu hỏi thiết thực: (1) Nhóm này đang ở trạng thái sức khỏe tổ chức nào — tốt, trung bình, hay đáng lo ngại? (2) Nếu không can thiệp trong 3 tháng tới, điều gì có thể xảy ra với nhóm này? Viết như đang báo cáo cho lãnh đạo cấp cao, không dùng thuật ngữ kỹ thuật."
-    render_ai_insight_card("AI Group Insight", group_ai_data, prompt, custom_style="margin-top: 24px; margin-bottom: 32px;")
+    ai_prompt = f"Bạn đang nói chuyện với một Giám đốc/Trưởng phòng không chuyên về data. Dựa trên các chỉ số EI={group_ai_data['EI_Score']}%, eNPS={group_ai_data['eNPS_Score']:+.0f}, rủi ro nghỉ={group_ai_data['Long_Term_Intent']:.0f}% và MEI={group_ai_data['MEI_Score']:.1f}%, hãy trả lời 2 câu hỏi thiết thực: (1) Nhóm này đang ở trạng thái sức khỏe tổ chức nào — tốt, trung bình, hay đáng lo ngại? (2) Nếu không can thiệp trong 3 tháng tới, điều gì có thể xảy ra với nhóm này? Viết như đang báo cáo cho lãnh đạo cấp cao, không dùng thuật ngữ kỹ thuật."
+    # ► Đặt chỗ trống cho AI — sẽ được render SAU khi toàn bộ UI đã hiển thị
+    ai_placeholder = st.empty()
 
     # ── HR Strategic Insights — Điểm Nóng Thực Địa theo từng Nhóm ──
     is_shipper      = cfg.get('short') == 'Shipper'
@@ -499,3 +500,14 @@ def render(df, cfg):
                         )
     else:
         st.info("Dữ liệu hiện tại không chứa các cột về Thâm niên (Q5) hoặc Chức danh.")
+
+    # =========================================================================
+    # LATE RENDER: Kích hoạt AI SAU khi toàn bộ UI đã được hiển thị xong
+    # =========================================================================
+    render_ai_insight_card(
+        "AI Group Insight",
+        group_ai_data,
+        ai_prompt,
+        custom_style="margin-top: 24px; margin-bottom: 32px;",
+        target_container=ai_placeholder
+    )

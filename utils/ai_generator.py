@@ -244,7 +244,7 @@ def format_ai_html(text):
     return html
 
 
-def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer-v2.0", custom_style=""):
+def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer-v2.0", custom_style="", target_container=None):
     """
     Render AI insight card với Groq dual-key streaming.
     Cache kết quả trong session_state để không gọi lại API khi F5.
@@ -252,7 +252,7 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
     data_json = json.dumps(data_dict, ensure_ascii=False)
     cache_key = f"ai_insight_{get_cache_key(data_json, context_prompt)}"
 
-    container = st.empty()
+    container = target_container if target_container is not None else st.empty()
 
     def _build_html(content, is_typing=False):
         cursor = "<span style='border-right:2px solid #FF5200;margin-left:2px;opacity:0.7'></span>" if is_typing else ""
