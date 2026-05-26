@@ -93,7 +93,6 @@ def render(df, cfg):
                 <strong>Trục ngang (→)</strong>: điểm trung bình nhân viên cho câu đó (thấp = họ không hài lòng).<br>
                 <strong>Trục dọc (↑)</strong>: câu đó ảnh hưởng nhiều/ít đến sự gắn kết tổng thể.
             </p>
-
             <div style="margin-bottom: 14px; padding: 10px 12px; background: #FEF2F2; border-radius: 10px; border-left: 3px solid #C0392B;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #C0392B; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #C0392B; display: inline-block; flex-shrink:0;"></span>
@@ -101,7 +100,6 @@ def render(df, cfg):
                 </div>
                 <div style="font-size: 0.78rem; color: #7F1D1D;">Điểm thấp <em>VÀ</em> ảnh hưởng lớn đến gắn kết. Đây là những điểm đau thực sự của nhân viên — nếu không cải thiện, rủi ro nghỉ việc tăng cao.</div>
             </div>
-
             <div style="margin-bottom: 14px; padding: 10px 12px; background: #F0FDF4; border-radius: 10px; border-left: 3px solid #0D6E3A;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #0D6E3A; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #0D6E3A; display: inline-block; flex-shrink:0;"></span>
@@ -109,7 +107,6 @@ def render(df, cfg):
                 </div>
                 <div style="font-size: 0.78rem; color: #14532D;">Điểm cao <em>VÀ</em> ảnh hưởng lớn. Đây là lý do nhân viên chọn ở lại — cần bảo vệ và không để xuống cấp.</div>
             </div>
-
             <div style="margin-bottom: 14px; padding: 10px 12px; background: #FFFBEB; border-radius: 10px; border-left: 3px solid #FFA726;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #92400E; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #FFA726; display: inline-block; flex-shrink:0;"></span>
@@ -117,7 +114,6 @@ def render(df, cfg):
                 </div>
                 <div style="font-size: 0.78rem; color: #78350F;">Điểm thấp nhưng ảnh hưởng chưa nhiều. Xếp sau khi đã giải quyết nhóm đỏ.</div>
             </div>
-
             <div style="padding: 10px 12px; background: #F8FAFC; border-radius: 10px; border-left: 3px solid #78909C;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #475569; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #78909C; display: inline-block; flex-shrink:0;"></span>
