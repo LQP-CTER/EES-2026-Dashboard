@@ -28,6 +28,44 @@ except Exception:
 
 st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", layout="wide", initial_sidebar_state="expanded")
 
+# Check Admin Token
+if 'token' in st.query_params:
+    if st.query_params['token'] == st.secrets.get("ADMIN_TOKEN", ""):
+        st.session_state.is_admin = True
+    st.query_params.clear()
+
+if 'preview_mode' not in st.session_state:
+    st.session_state.preview_mode = False
+
+import json
+APP_STATE_FILE = os.path.join("config", "app_state.json")
+is_locked = False
+if os.path.exists(APP_STATE_FILE):
+    with open(APP_STATE_FILE, "r") as f:
+        is_locked = json.load(f).get("is_locked", False)
+
+is_admin = st.session_state.get("is_admin", False)
+
+if is_admin and not st.session_state.preview_mode:
+    # Render admin panel
+    from views import admin_panel
+    admin_panel.render()
+    st.stop()
+
+if is_locked and not is_admin:
+    st.markdown("""
+    <div style='text-align: center; margin-top: 100px;'>
+        <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='200'>
+        <h1 style='color: #0A1F44; margin-top: 30px;'>Hệ Thống Đang Bảo Trì</h1>
+        <p style='color: #64748B; font-size: 1.1rem;'>Dashboard hiện đang tạm khóa để cập nhật dữ liệu. Vui lòng quay lại sau.</p>
+    </div>
+    <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        header[data-testid="stHeader"] { display: none !important; }
+    </style>
+    """, unsafe_allow_html=True)
+    st.stop()
+
 # Import loaders and views
 from utils.data_loader import load_group, load_all_available
 from config.groups import get_available_groups
@@ -555,6 +593,12 @@ COMPANY_LABEL = "Tổng quan Toàn Hệ thống"
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
+    if st.session_state.get("is_admin", False):
+        if st.button("⬅️ Trở về Admin Panel", use_container_width=True):
+            st.session_state.preview_mode = False
+            st.rerun()
+        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
+
     # Brand block
     st.markdown("""
     <div class="sb-brand">
