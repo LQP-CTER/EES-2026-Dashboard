@@ -2,7 +2,7 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from shared.nlp_utils import detect_warning_signals
-from utils.ai_generator import render_ai_insight_card
+from utils.ai_generator import render_ai_insight_card, validate_warning_signals_with_ai
 
 def render(df, cfg):
     codebook = cfg.get('codebook', {})
@@ -323,11 +323,60 @@ def render(df, cfg):
         st.info("Không phát hiện tín hiệu cảnh báo đáng lo ngại.")
         return
 
-    df_sig = pd.DataFrame(all_signals)
+    # ── AI VALIDATION: Gọi LLM xác nhận lại từng tín hiệu ──
+    n_before_ai = len(all_signals)
+    
+    # Chuẩn bị batch cho AI
+    ai_batch = []
+    for i, s in enumerate(all_signals):
+        ai_batch.append({
+            'index': i,
+            'signal_type': s['Loại'],
+            'phrase': s['Cụm từ'],
+            'full_text': s['Phản hồi'],
+        })
+    
+    # Gọi AI validator (batch 20 items mỗi lần)
+    ai_results = {}
+    with st.spinner('🤖 AI đang xác nhận tín hiệu cảnh báo...'):
+        for batch_start in range(0, len(ai_batch), 20):
+            batch = ai_batch[batch_start:batch_start + 20]
+            batch_result = validate_warning_signals_with_ai(batch)
+            ai_results.update(batch_result)
+    
+    # Gắn kết quả AI vào từng signal
+    for i, s in enumerate(all_signals):
+        ai_r = ai_results.get(i, {'valid': True, 'reason': ''})
+        s['AI_valid'] = ai_r['valid']
+        s['AI_reason'] = ai_r['reason']
+    
+    # Lọc bỏ false positives
+    confirmed_signals = [s for s in all_signals if s['AI_valid']]
+    rejected_signals = [s for s in all_signals if not s['AI_valid']]
+    n_after_ai = len(confirmed_signals)
+    
+    if not confirmed_signals:
+        st.success(f"✅ AI đã phân tích {n_before_ai} tín hiệu ban đầu và xác nhận tất cả đều **không đáng lo ngại** (false positive). Không có cảnh báo thực sự.")
+        if rejected_signals:
+            with st.expander(f"📋 Xem {len(rejected_signals)} tín hiệu đã bị AI loại bỏ"):
+                df_rej = pd.DataFrame(rejected_signals)[['Loại', 'Cụm từ', 'AI_reason', 'Phản hồi']]
+                df_rej.columns = ['Loại', 'Cụm từ', 'Lý do loại bỏ', 'Phản hồi']
+                st.dataframe(df_rej, use_container_width=True, hide_index=True)
+        return
+    
+    df_sig = pd.DataFrame(confirmed_signals)
     
     from shared.plotly_theme import make_html_kpi, fig_card
     
-    st.markdown(make_html_kpi("Tổng số tín hiệu phát hiện", f"{len(df_sig):,}", color="red", icon="🚨"), unsafe_allow_html=True)
+    # KPI row
+    kpi_c1, kpi_c2, kpi_c3 = st.columns(3)
+    with kpi_c1:
+        st.markdown(make_html_kpi("Tín hiệu đã xác nhận", f"{n_after_ai:,}", color="red", icon="🚨"), unsafe_allow_html=True)
+    with kpi_c2:
+        st.markdown(make_html_kpi("False positive đã lọc", f"{n_before_ai - n_after_ai:,}", color="green", icon="🤖"), unsafe_allow_html=True)
+    with kpi_c3:
+        accuracy_pct = (n_after_ai / n_before_ai * 100) if n_before_ai > 0 else 0
+        st.markdown(make_html_kpi("Tỷ lệ cảnh báo thật", f"{accuracy_pct:.0f}%", color="blue", icon="🎯"), unsafe_allow_html=True)
 
     sig_sum = df_sig['Loại'].value_counts()
     top_signal = sig_sum.index[0] if len(sig_sum) > 0 else "N/A"
@@ -373,3 +422,25 @@ def render(df, cfg):
     }
     
     st.dataframe(df_warn_disp, use_container_width=True, height=400, hide_index=True, column_config=col_config)
+    
+    # Hiển thị các tín hiệu bị AI loại bỏ
+    if rejected_signals:
+        with st.expander(f"🤖 Xem {len(rejected_signals)} tín hiệu đã bị AI loại bỏ (false positives)"):
+            st.markdown("""
+            <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.8rem;color:#166534;">
+                <strong>💡 Giải thích:</strong> Các tín hiệu dưới đây được hệ thống rule-based phát hiện, nhưng AI xác nhận rằng ngữ cảnh thực tế 
+                <strong>không mang tính tiêu cực</strong> (VD: "vui vẻ bớt áp lực", "làm nhiều thu nhập cao"). Chúng đã được lọc bỏ để báo cáo chính xác hơn.
+            </div>
+            """, unsafe_allow_html=True)
+            df_rej = pd.DataFrame(rejected_signals)
+            df_rej_disp = df_rej[['Loại', 'Cụm từ', 'AI_reason', 'Ngữ cảnh', 'Phản hồi']]
+            df_rej_disp.columns = ['Loại ban đầu', 'Cụm từ', 'Lý do AI loại bỏ', 'Ngữ cảnh', 'Phản hồi gốc']
+            
+            rej_col_config = {
+                'Loại ban đầu': st.column_config.TextColumn('Loại ban đầu', width="small"),
+                'Cụm từ': st.column_config.TextColumn('Cụm từ', width="small"),
+                'Lý do AI loại bỏ': st.column_config.TextColumn('Lý do AI loại bỏ', width="large"),
+                'Ngữ cảnh': st.column_config.TextColumn('Ngữ cảnh', width="large"),
+                'Phản hồi gốc': st.column_config.TextColumn('Phản hồi', width="large"),
+            }
+            st.dataframe(df_rej_disp, use_container_width=True, hide_index=True, column_config=rej_col_config)
