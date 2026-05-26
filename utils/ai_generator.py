@@ -7,13 +7,13 @@ import hashlib
 from groq import Groq
 
 # ============================================================
-# MULTI-PROVIDER AI CLIENT
-# Groq Key 1 + Key 2: Round-robin để tăng gấp đôi rate limit
-# Gemini: Fallback khi cả 2 Groq bị 429
+# DUAL GROQ KEY — ROUND-ROBIN LOAD BALANCER
+# Key 1 và Key 2 luân phiên xử lý request.
+# Nếu Key đang dùng bị Rate Limit (429) → tự động chuyển key kia.
 # ============================================================
 
 def _get_groq_keys():
-    """Trả về danh sách Groq API keys có sẵn (bỏ qua placeholder)."""
+    """Trả về danh sách Groq API keys hợp lệ."""
     keys = []
     for env_name in ["GROQ_API_KEY", "GROQ_API_KEY_2"]:
         try:
@@ -26,11 +26,10 @@ def _get_groq_keys():
 
 
 def get_groq_client():
-    """Lấy Groq client theo round-robin giữa các keys."""
+    """Lấy Groq client theo round-robin (dùng xen kẽ Key 1 và Key 2)."""
     keys = _get_groq_keys()
     if not keys:
         return None
-    # Round-robin dùng session_state counter
     if '_groq_key_idx' not in st.session_state:
         st.session_state['_groq_key_idx'] = 0
     idx = st.session_state['_groq_key_idx'] % len(keys)
@@ -43,7 +42,7 @@ def get_groq_client():
 
 
 def get_groq_clients_all():
-    """Trả về tất cả Groq clients để thử lần lượt khi gặp 429."""
+    """Trả về list tất cả Groq clients để thử lần lượt khi gặp 429."""
     clients = []
     for k in _get_groq_keys():
         try:
@@ -53,27 +52,22 @@ def get_groq_clients_all():
     return clients
 
 
-def get_gemini_client():
-    try:
-        import google.generativeai as genai
-        api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
-        if not api_key:
-            api_key = os.environ.get("GEMINI_API_KEY", "")
-        if api_key:
-            genai.configure(api_key=api_key)
-            return genai
-    except Exception as e:
-        print("Error initializing Gemini client:", e)
-    return None
-
-
 def get_cache_key(data_json, context_prompt):
     return hashlib.md5((data_json + context_prompt).encode()).hexdigest()
 
 
 # ============================================================
-# AI INSIGHT GENERATION (STREAM — Groq primary, Gemini fallback)
+# AI INSIGHT GENERATION (STREAM)
+# Thử Key 1 → nếu 429 chuyển Key 2 → thử từng model
 # ============================================================
+
+GROQ_MODELS = [
+    "qwen-2.5-32b",
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768",
+    "gemma2-9b-it",
+]
 
 def _build_insight_system_prompt(data_json, context_prompt, lang='VN'):
     return f"""
@@ -86,79 +80,30 @@ Nhiệm vụ:
 {context_prompt}
 
 YÊU CẦU ĐỊNH DẠNG VÀ TÔNG VĂN NGHIÊM NGẶT:
-1. Tông văn (Tone of voice): Khách quan, chuyên môn sâu, dựa trên dữ liệu (data-driven), chiến lược và đi thẳng vào vấn đề. 
-2. Tuyệt đối KHÔNG DÙNG các từ ngữ quá kịch tính, cảm xúc, hoặc dịch gượng ép (ví dụ: TUYỆT ĐỐI KHÔNG dùng từ "đột biến", "kinh hoàng", "báo động đỏ", v.v.).
-3. SỬ DỤNG ĐÚNG thuật ngữ chuyên ngành HR Analytics được chuẩn hóa: Engagement Index (EI), eNPS, Attrition Risk, Driver Analysis, Cohort, Root-cause, Turnover rate, Survival Analysis, Touchpoint, Moments that matter.
-4. KHÔNG SỬ DỤNG ký tự Markdown như **, *, #. KHÔNG viết Tiêu đề (Headers). KHÔNG dùng danh sách gạch đầu dòng (Bullet points) hay đánh số.
-5. BẮT BUỘC viết dưới dạng MỘT HOẶC HAI ĐOẠN VĂN bản liền mạch (Paragraphs). Đi thẳng vào insight cốt lõi và số liệu, tránh nói lời sáo rỗng.
+1. Tông văn (Tone of voice): Khách quan, chuyên môn sâu, dựa trên dữ liệu (data-driven), chiến lược và đi thẳng vào vấn đề.
+2. Tuyệt đối KHÔNG DÙNG các từ ngữ quá kịch tính (ví dụ: TUYỆT ĐỐI KHÔNG dùng "đột biến", "kinh hoàng", "báo động đỏ").
+3. SỬ DỤNG ĐÚNG thuật ngữ chuyên ngành HR Analytics: Engagement Index (EI), eNPS, Attrition Risk, Driver Analysis, Cohort, Root-cause, Turnover rate.
+4. KHÔNG SỬ DỤNG ký tự Markdown như **, *, #. KHÔNG viết Tiêu đề. KHÔNG dùng Bullet points.
+5. BẮT BUỘC viết dưới dạng MỘT HOẶC HAI ĐOẠN VĂN liền mạch. Đi thẳng vào insight cốt lõi.
 6. Độ dài tối đa: 2-3 câu ngắn gọn, súc tích, đậm chất tư duy chiến lược.
-7. Để nhấn mạnh, HÃY DÙNG thẻ HTML: `<span class="ai-highlight">` cho nhóm xuất sắc/chỉ số tốt và `<span class="ai-warning">` cho rủi ro/chỉ số xấu.
+7. Để nhấn mạnh, DÙNG thẻ HTML: `<span class="ai-highlight">` cho chỉ số tốt và `<span class="ai-warning">` cho rủi ro.
 8. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
 """
 
 
-def _try_gemini_insight(data_json, context_prompt, lang='VN'):
-    """Gọi Gemini (non-stream) làm fallback cho AI Insight."""
-    genai = get_gemini_client()
-    if not genai:
-        return None
-    
-    gemini_models = [
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash-lite',
-        'gemini-2.0-flash',
-        'gemini-2.5-flash',
-    ]
-    prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
-    
-    for model_name in gemini_models:
-        try:
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.3,
-                    max_output_tokens=400,
-                )
-            )
-            return response.text
-        except Exception as e:
-            err = str(e)
-            if 'RESOURCE_EXHAUSTED' in err or '429' in err or 'quota' in err.lower():
-                time.sleep(1)
-                continue
-            print(f"Gemini insight error ({model_name}): {e}")
-            continue
-    return None
-
-
 def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
     system_prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
-    
-    groq_models = [
-        "qwen-2.5-32b",
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "mixtral-8x7b-32768",
-        "gemma2-9b-it"
-    ]
-    
-    # Thử tất cả Groq keys × models (key1→model list, key2→model list)
-    all_groq_clients = get_groq_clients_all()
-    
-    if not all_groq_clients:
-        # Không có Groq key → fallback Gemini thẳng
-        result = _try_gemini_insight(data_json, context_prompt, lang)
-        if result:
-            yield result
-        else:
-            yield "⚠️ Cảnh báo: Không có API key hợp lệ. Vui lòng kiểm tra secrets.toml"
+    all_clients = get_groq_clients_all()
+
+    if not all_clients:
+        yield "⚠️ Cảnh báo: Không có Groq API key hợp lệ. Vui lòng kiểm tra secrets.toml"
         return
 
     last_error = ""
-    # Round-robin: thử key 1 trước, nếu 429 chuyển key 2, rồi tiếp tục
-    for client_idx, client in enumerate(all_groq_clients):
-        for model in groq_models:
+    # Key 1 → thử hết models → nếu rate limit → Key 2 → thử hết models
+    for client in all_clients:
+        rate_limited = False
+        for model in GROQ_MODELS:
             try:
                 stream = client.chat.completions.create(
                     messages=[{"role": "system", "content": system_prompt}],
@@ -174,56 +119,55 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
             except Exception as e:
                 last_error = str(e)
                 if "rate_limit_exceeded" in last_error.lower() or "429" in last_error:
-                    # Key này bị rate limit → break ra thử key tiếp theo
-                    break
+                    rate_limited = True
+                    break  # Key này bị rate limit → thử key tiếp theo
                 continue
-    
-    # Tất cả Groq keys thất bại → fallback sang Gemini
-    result = _try_gemini_insight(data_json, context_prompt, lang)
-    if result:
-        yield result
-    else:
-        yield f"Lỗi kết nối tất cả AI providers: {last_error}"
+        if not rate_limited:
+            break  # Lỗi khác (không phải 429) → không cần thử key tiếp
+
+    yield f"⚠️ Không thể kết nối AI sau khi thử {len(all_clients)} key: {last_error[:120]}"
 
 
 # ============================================================
-# AI VALIDATOR (NON-STREAM — Gemini primary, Groq fallback)
-# Gemini nhanh hơn cho JSON tasks, dùng làm primary ở đây
+# AI VALIDATOR (NON-STREAM)
+# Dùng để xác nhận tín hiệu cảnh báo NLP — cần JSON output
+# Thử Key 1 → nếu 429 chuyển Key 2
 # ============================================================
 
 def validate_warning_signals_with_ai(signals_batch):
     """
-    Dùng LLM làm 'thẩm phán' xác nhận lại tín hiệu cảnh báo.
-    Gemini là primary (nhanh, free), Groq là fallback.
-    
+    Dùng LLM làm 'thẩm phán' xác nhận tín hiệu cảnh báo NLP.
+    Rule-based phát hiện ứng viên → LLM lọc false positive.
+
     Args:
-        signals_batch: list of dict với keys: 'index', 'signal_type', 'phrase', 'full_text'
+        signals_batch: list of dict {'index', 'signal_type', 'phrase', 'full_text'}
     Returns:
         dict {index: {'valid': bool, 'reason': str}}
     """
     if not signals_batch:
         return {}
-    
+
     # Cache check
-    cache_key_data = json.dumps([s['full_text'][:100] + s['phrase'] for s in signals_batch], ensure_ascii=False)
+    cache_key_data = json.dumps(
+        [s['full_text'][:100] + s['phrase'] for s in signals_batch], ensure_ascii=False
+    )
     cache_key = f"ai_validate_{hashlib.md5(cache_key_data.encode()).hexdigest()}"
-    
     if cache_key in st.session_state:
         return st.session_state[cache_key]
-    
+
     # Build prompt
     items_text = ""
     for i, s in enumerate(signals_batch[:20]):
         items_text += f"\n[{i}] Loại: {s['signal_type']} | Từ khóa: \"{s['phrase']}\" | Câu gốc: \"{s['full_text'][:200]}\""
-    
+
     validation_prompt = f"""Bạn là chuyên gia phân tích ngôn ngữ tiếng Việt trong bối cảnh khảo sát nhân viên.
 
 NHIỆM VỤ: Xác định mỗi câu phản hồi dưới đây THỰC SỰ mang tín hiệu tiêu cực hay không.
 
-HƯỚNG DẪN QUAN TRỌNG:
-- Nếu câu nói mang ý tích cực hoặc trung lập (VD: "vui vẻ bớt áp lực", "làm nhiều thu nhập cao", "có đồng nghiệp giúp đỡ nên bớt mệt", "áp lực nhưng vượt qua được") → valid: false
-- Nếu câu nói thực sự phàn nàn, tiêu cực, kiệt sức (VD: "quá áp lực không chịu nổi", "mệt mỏi muốn nghỉ", "làm nhiều mà lương thấp") → valid: true
-- "bớt áp lực", "giảm áp lực", "không áp lực" → valid: false
+HƯỚNG DẪN:
+- Ý tích cực/trung lập (VD: "vui vẻ bớt áp lực", "làm nhiều thu nhập cao", "có đồng nghiệp giúp đỡ nên bớt mệt") → valid: false
+- Ý tiêu cực thực sự (VD: "quá áp lực không chịu nổi", "mệt mỏi muốn nghỉ", "lương thấp không đủ sống") → valid: true
+- "bớt áp lực", "không áp lực", "giảm áp lực" → valid: false
 - "làm nhiều" + ngữ cảnh tích cực → valid: false
 
 Danh sách cần phân loại:
@@ -232,15 +176,11 @@ Danh sách cần phân loại:
 OUTPUT: Chỉ trả JSON array, không viết gì thêm:
 [{{"id": 0, "valid": true/false, "reason": "lý do ngắn"}}]"""
 
-    def _parse_ai_result(raw_text):
-        """Parse JSON từ response text."""
-        json_match = re.search(r'\[.*?\]', raw_text, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        return json.loads(raw_text)
-    
-    def _map_results(results, signals_batch):
-        """Map AI results về index gốc."""
+    def _parse_result(raw_text):
+        m = re.search(r'\[.*?\]', raw_text, re.DOTALL)
+        return json.loads(m.group() if m else raw_text)
+
+    def _map_results(results):
         output = {}
         for r in results:
             batch_idx = r.get('id', -1)
@@ -250,48 +190,15 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
                     'valid': r.get('valid', True),
                     'reason': r.get('reason', '')
                 }
-        # Bổ sung items không có trong kết quả
         for s in signals_batch:
             if s['index'] not in output:
                 output[s['index']] = {'valid': True, 'reason': 'Chưa xác nhận'}
         return output
 
-    # ── Try Gemini first (primary for JSON tasks) ──
-    genai = get_gemini_client()
-    if genai:
-        gemini_models = [
-            'gemini-2.5-flash-lite',
-            'gemini-2.0-flash-lite',
-            'gemini-2.0-flash',
-            'gemini-2.5-flash',
-        ]
-        for model_name in gemini_models:
-            try:
-                model = genai.GenerativeModel(model_name)
-                response = model.generate_content(
-                    validation_prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        temperature=0.1,
-                        max_output_tokens=2000,
-                    )
-                )
-                results = _parse_ai_result(response.text.strip())
-                output = _map_results(results, signals_batch)
-                st.session_state[cache_key] = output
-                return output
-            except Exception as e:
-                err = str(e)
-                if 'RESOURCE_EXHAUSTED' in err or '429' in err or 'quota' in err.lower():
-                    time.sleep(1)
-                    continue
-                print(f"Gemini validator error ({model_name}): {e}")
-                continue
-    
-    # ── Fallback: Try tất cả Groq keys ──
-    groq_clients = get_groq_clients_all()
-    groq_models = ["qwen-2.5-32b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
-    for client in groq_clients:
-        for model in groq_models:
+    # Thử tất cả Groq keys × models
+    validator_models = ["qwen-2.5-32b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    for client in get_groq_clients_all():
+        for model in validator_models:
             try:
                 response = client.chat.completions.create(
                     messages=[{"role": "system", "content": validation_prompt}],
@@ -301,20 +208,19 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
                     stream=False
                 )
                 raw = response.choices[0].message.content.strip()
-                results = _parse_ai_result(raw)
-                output = _map_results(results, signals_batch)
+                results = _parse_result(raw)
+                output = _map_results(results)
                 st.session_state[cache_key] = output
                 return output
             except Exception as e:
                 if "rate_limit_exceeded" in str(e).lower() or "429" in str(e):
-                    break  # Key bị rate limit → thử key tiếp theo
+                    break  # Key rate limited → thử key tiếp theo
                 continue
-    
-    # Tất cả fail → giữ nguyên tất cả
+
+    # Tất cả fail → giữ nguyên (coi như hợp lệ)
     fallback = {s['index']: {'valid': True, 'reason': 'AI không khả dụng'} for s in signals_batch}
     st.session_state[cache_key] = fallback
     return fallback
-
 
 
 # ============================================================
@@ -332,17 +238,17 @@ def format_ai_html(text):
 
 def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer-v2.0", custom_style=""):
     """
-    Render AI insight card với Groq streaming + Gemini fallback.
-    Cache kết quả trong session_state để không gọi lại API.
+    Render AI insight card với Groq dual-key streaming.
+    Cache kết quả trong session_state để không gọi lại API khi F5.
     """
     data_json = json.dumps(data_dict, ensure_ascii=False)
     cache_key = f"ai_insight_{get_cache_key(data_json, context_prompt)}"
-    
+
     container = st.empty()
-    
+
     def _build_html(content, is_typing=False):
         cursor = "<span style='border-right:2px solid #FF5200;margin-left:2px;opacity:0.7'></span>" if is_typing else ""
-        html = (
+        return (
             f'<div class="ai-insight-container" style="{custom_style}">'
             f'<div class="ai-header">'
             f'<div class="ai-icon">AI</div>'
@@ -352,7 +258,6 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
             f'<div class="ai-content">{format_ai_html(content)}{cursor}</div>'
             f'</div>'
         )
-        return html
 
     if cache_key in st.session_state:
         container.markdown(_build_html(st.session_state[cache_key]), unsafe_allow_html=True)
@@ -361,6 +266,5 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
         for chunk in generate_ees_insight_stream(data_json, context_prompt):
             full_text += chunk
             container.markdown(_build_html(full_text, is_typing=True), unsafe_allow_html=True)
-        
         st.session_state[cache_key] = full_text
         container.markdown(_build_html(full_text), unsafe_allow_html=True)
