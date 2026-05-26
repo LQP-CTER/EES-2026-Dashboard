@@ -8,20 +8,49 @@ from groq import Groq
 
 # ============================================================
 # MULTI-PROVIDER AI CLIENT
-# Groq: AI Insight cards (stream)
-# Gemini: AI Validator + AI Insight fallback (non-stream, nhanh hơn)
+# Groq Key 1 + Key 2: Round-robin để tăng gấp đôi rate limit
+# Gemini: Fallback khi cả 2 Groq bị 429
 # ============================================================
 
+def _get_groq_keys():
+    """Trả về danh sách Groq API keys có sẵn (bỏ qua placeholder)."""
+    keys = []
+    for env_name in ["GROQ_API_KEY", "GROQ_API_KEY_2"]:
+        try:
+            k = st.secrets.get(env_name, os.environ.get(env_name, ""))
+        except Exception:
+            k = os.environ.get(env_name, "")
+        if k and k != "dien-api-key-cua-ban-vao-day":
+            keys.append(k)
+    return keys
+
+
 def get_groq_client():
+    """Lấy Groq client theo round-robin giữa các keys."""
+    keys = _get_groq_keys()
+    if not keys:
+        return None
+    # Round-robin dùng session_state counter
+    if '_groq_key_idx' not in st.session_state:
+        st.session_state['_groq_key_idx'] = 0
+    idx = st.session_state['_groq_key_idx'] % len(keys)
+    st.session_state['_groq_key_idx'] = (idx + 1) % len(keys)
     try:
-        api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
-        if not api_key:
-            api_key = os.environ.get("GROQ_API_KEY", "")
-        if api_key and api_key != "dien-api-key-cua-ban-vao-day":
-            return Groq(api_key=api_key)
+        return Groq(api_key=keys[idx])
     except Exception as e:
-        print("Error initializing Groq client:", e)
-    return None
+        print(f"Groq client error (key {idx+1}):", e)
+        return None
+
+
+def get_groq_clients_all():
+    """Trả về tất cả Groq clients để thử lần lượt khi gặp 429."""
+    clients = []
+    for k in _get_groq_keys():
+        try:
+            clients.append(Groq(api_key=k))
+        except Exception:
+            pass
+    return clients
 
 
 def get_gemini_client():
@@ -104,17 +133,6 @@ def _try_gemini_insight(data_json, context_prompt, lang='VN'):
 
 
 def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
-    client = get_groq_client()
-    
-    # Nếu không có Groq key → dùng Gemini thẳng
-    if not client:
-        result = _try_gemini_insight(data_json, context_prompt, lang)
-        if result:
-            yield result
-        else:
-            yield "⚠️ Cảnh báo: Không có API key hợp lệ. Vui lòng kiểm tra secrets.toml"
-        return
-
     system_prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
     
     groq_models = [
@@ -125,27 +143,42 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
         "gemma2-9b-it"
     ]
     
-    last_error = ""
-    for model in groq_models:
-        try:
-            stream = client.chat.completions.create(
-                messages=[{"role": "system", "content": system_prompt}],
-                model=model,
-                temperature=0.3,
-                max_tokens=400,
-                stream=True
-            )
-            for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    yield chunk.choices[0].delta.content
-            return  # Thành công
-        except Exception as e:
-            last_error = str(e)
-            if "rate_limit_exceeded" in str(e).lower() or "429" in str(e):
-                time.sleep(1)
-            continue
+    # Thử tất cả Groq keys × models (key1→model list, key2→model list)
+    all_groq_clients = get_groq_clients_all()
     
-    # Groq thất bại hoàn toàn → fallback sang Gemini
+    if not all_groq_clients:
+        # Không có Groq key → fallback Gemini thẳng
+        result = _try_gemini_insight(data_json, context_prompt, lang)
+        if result:
+            yield result
+        else:
+            yield "⚠️ Cảnh báo: Không có API key hợp lệ. Vui lòng kiểm tra secrets.toml"
+        return
+
+    last_error = ""
+    # Round-robin: thử key 1 trước, nếu 429 chuyển key 2, rồi tiếp tục
+    for client_idx, client in enumerate(all_groq_clients):
+        for model in groq_models:
+            try:
+                stream = client.chat.completions.create(
+                    messages=[{"role": "system", "content": system_prompt}],
+                    model=model,
+                    temperature=0.3,
+                    max_tokens=400,
+                    stream=True
+                )
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
+                return  # Thành công
+            except Exception as e:
+                last_error = str(e)
+                if "rate_limit_exceeded" in last_error.lower() or "429" in last_error:
+                    # Key này bị rate limit → break ra thử key tiếp theo
+                    break
+                continue
+    
+    # Tất cả Groq keys thất bại → fallback sang Gemini
     result = _try_gemini_insight(data_json, context_prompt, lang)
     if result:
         yield result
@@ -254,10 +287,10 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
                 print(f"Gemini validator error ({model_name}): {e}")
                 continue
     
-    # ── Fallback: Try Groq ──
-    client = get_groq_client()
-    if client:
-        groq_models = ["qwen-2.5-32b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    # ── Fallback: Try tất cả Groq keys ──
+    groq_clients = get_groq_clients_all()
+    groq_models = ["qwen-2.5-32b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    for client in groq_clients:
         for model in groq_models:
             try:
                 response = client.chat.completions.create(
@@ -274,13 +307,14 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
                 return output
             except Exception as e:
                 if "rate_limit_exceeded" in str(e).lower() or "429" in str(e):
-                    time.sleep(2)
+                    break  # Key bị rate limit → thử key tiếp theo
                 continue
     
-    # Cả 2 fail → giữ tất cả
+    # Tất cả fail → giữ nguyên tất cả
     fallback = {s['index']: {'valid': True, 'reason': 'AI không khả dụng'} for s in signals_batch}
     st.session_state[cache_key] = fallback
     return fallback
+
 
 
 # ============================================================
