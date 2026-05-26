@@ -123,7 +123,7 @@ st.markdown("""<style>
 /* ═══════ BASE ═══════ */
 /* Hide Streamlit Toolbar & Deploy Button */
 #MainMenu {visibility: hidden !important;}
-header {visibility: hidden !important;}
+/* header {visibility: hidden !important;} */
 footer {visibility: hidden !important;}
 .stAppDeployButton {display:none !important;}
 .stDeployButton {display:none !important;}
