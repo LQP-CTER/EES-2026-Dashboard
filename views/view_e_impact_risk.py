@@ -300,9 +300,20 @@ def render(df, cfg):
         for idx, text in df[cc].items():
             if text:
                 for signal_type, phrase in detect_warning_signals(text):
+                    # Trích xuất ngữ cảnh xung quanh cụm từ
+                    text_lower = text.lower()
+                    phrase_pos = text_lower.find(phrase.lower())
+                    if phrase_pos >= 0:
+                        ctx_start = max(0, phrase_pos - 30)
+                        ctx_end = min(len(text), phrase_pos + len(phrase) + 30)
+                        context_snippet = ('...' if ctx_start > 0 else '') + text[ctx_start:ctx_end] + ('...' if ctx_end < len(text) else '')
+                    else:
+                        context_snippet = text[:80]
+                    
                     all_signals.append({
                         'Câu': q, 'Loại': SIGNAL_LABELS.get(signal_type, signal_type),
                         'Cụm từ': phrase,
+                        'Ngữ cảnh': context_snippet,
                         'Section': df.loc[idx, 'section'] if 'section' in df.columns else '',
                         'eNPS': df.loc[idx, 'eNPS_group'] if 'eNPS_group' in df.columns else '',
                         'Phản hồi': text[:150],
@@ -350,13 +361,14 @@ def render(df, cfg):
 
     st.markdown("#### Bảng Chi tiết")
     type_filter = st.multiselect("Lọc loại tín hiệu", df_sig['Loại'].unique(), default=list(df_sig['Loại'].unique()))
-    df_warn_disp = df_sig[df_sig['Loại'].isin(type_filter)][['Loại', 'Section', 'eNPS', 'Cụm từ', 'Phản hồi']]
+    df_warn_disp = df_sig[df_sig['Loại'].isin(type_filter)][['Loại', 'Section', 'eNPS', 'Cụm từ', 'Ngữ cảnh', 'Phản hồi']]
     
     col_config = {
         'Loại': st.column_config.TextColumn('Tín hiệu cảnh báo', width="medium"),
         'Section': st.column_config.TextColumn('Section / Bộ phận', width="medium"),
         'eNPS': st.column_config.TextColumn('Nhóm eNPS', width="small"),
-        'Cụm từ': st.column_config.TextColumn('Cụm từ nhạy cảm', width="medium"),
+        'Cụm từ': st.column_config.TextColumn('Cụm từ nhạy cảm', width="small"),
+        'Ngữ cảnh': st.column_config.TextColumn('Ngữ cảnh', width="large", help="Đoạn văn bản xung quanh cụm từ nhạy cảm"),
         'Phản hồi': st.column_config.TextColumn('Nội dung phản hồi', width="large"),
     }
     

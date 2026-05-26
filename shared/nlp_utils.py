@@ -204,6 +204,29 @@ def preprocess_text(text):
     return text
 
 
+def split_sentences(text):
+    """
+    Tách câu/mệnh đề tiếng Việt để phân tích riêng từng ý.
+    VD: "lương thấp nhưng vui vẻ" → ["lương thấp", "vui vẻ"]
+    """
+    if not isinstance(text, str) or len(text) < 5:
+        return [text] if isinstance(text, str) else []
+    
+    # Tách theo dấu câu
+    parts = re.split(r'[.!?;]\s*', text)
+    
+    # Tách tiếp theo liên từ đối lập
+    refined = []
+    for part in parts:
+        sub_parts = re.split(
+            r',\s*(?:nhưng|tuy nhiên|còn|mà|tuy|song|thế nhưng|dù vậy|mặc dù|tuy vậy)\s',
+            part
+        )
+        refined.extend(sub_parts)
+    
+    return [p.strip() for p in refined if len(p.strip()) > 5]
+
+
 def analyze_sentiment_rule(text):
     """
     Phân tích cảm xúc rule-based nâng cao với ranh giới từ và phủ định.
@@ -255,6 +278,48 @@ def analyze_sentiment_rule(text):
         return 'tiêu_cực', confidence
     else:
         return 'trung_lập', 0.5
+
+
+def compute_sentiment_intensity(text):
+    """
+    Tính cường độ cảm xúc từ -1.0 (cực kỳ tiêu cực) đến +1.0 (cực kỳ tích cực).
+    Sử dụng tách câu để phân tích từng mệnh đề riêng biệt.
+    Returns: (float score, str label)
+    """
+    if not isinstance(text, str):
+        return 0.0, 'trung_lập'
+    
+    sentences = split_sentences(text)
+    if not sentences:
+        return 0.0, 'trung_lập'
+    
+    total_score = 0.0
+    n_sentences = 0
+    
+    for sent in sentences:
+        sentiment, confidence = analyze_sentiment_rule(sent)
+        if sentiment == 'tích_cực':
+            total_score += confidence
+        elif sentiment == 'tiêu_cực':
+            total_score -= confidence
+        n_sentences += 1
+    
+    if n_sentences == 0:
+        return 0.0, 'trung_lập'
+    
+    avg_score = total_score / n_sentences
+    
+    # Clamp to [-1, 1]
+    avg_score = max(-1.0, min(1.0, avg_score))
+    
+    if avg_score > 0.15:
+        label = 'tích_cực'
+    elif avg_score < -0.15:
+        label = 'tiêu_cực'
+    else:
+        label = 'trung_lập'
+    
+    return round(avg_score, 3), label
 
 
 def detect_warning_signals(text):
@@ -327,6 +392,53 @@ def extract_ngrams(texts, n=2, top_k=20):
             if not ngram_words.issubset(STOP_WORDS):
                 ngram_counter[ngram] += 1
     return ngram_counter.most_common(top_k)
+
+
+# ============================================================
+# 7B. TRÍCH XUẤT ĐỀ XUẤT HÀNH ĐỘNG
+# ============================================================
+
+ACTION_PATTERNS = [
+    r'(?:nên|cần|mong|muốn|đề xuất|kiến nghị|ước gì|nếu được|hy vọng|mong muốn|mong rằng|xin|đề nghị|yêu cầu|kính mong)\s+(.{10,})',
+    r'(?:hãy|vui lòng|làm ơn|xin hãy)\s+(.{10,})',
+    r'(?:cải thiện|nâng cao|tăng|giảm|bỏ|thêm|sửa|đổi|thay đổi)\s+(.{8,})',
+]
+
+def extract_action_suggestions(texts):
+    """
+    Trích xuất các câu có tính chất đề xuất/kiến nghị từ danh sách phản hồi.
+    Returns: list of dict {text, pattern_matched, topic}
+    """
+    suggestions = []
+    seen = set()
+    
+    for text in texts:
+        if not isinstance(text, str) or len(text) < 15:
+            continue
+        
+        text_lower = text.lower()
+        for pattern in ACTION_PATTERNS:
+            match = re.search(pattern, text_lower)
+            if match:
+                # Tránh trùng lặp
+                key = text[:50]
+                if key in seen:
+                    continue
+                seen.add(key)
+                
+                topics = classify_topics(text)
+                topic_str = topics[0] if topics else '❓ Khác'
+                
+                _, tone_label = compute_sentiment_intensity(text)
+                
+                suggestions.append({
+                    'text': text,
+                    'topic': topic_str,
+                    'tone': tone_label,
+                })
+                break  # 1 match per text is enough
+    
+    return suggestions
 
 
 # ============================================================
@@ -433,7 +545,7 @@ def classify_topics(text):
 
     text_lower = text.lower()
     topics_found = []
-    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít']
+    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít', 'chẳng']
     
     for topic, keywords in TOPIC_KEYWORDS.items():
         matched = False
@@ -441,10 +553,10 @@ def classify_topics(text):
             pattern = r'(?:^|\W)(' + re.escape(kw) + r')(?:\W|$)'
             for match in re.finditer(pattern, text_lower):
                 start_idx = match.start(1)
-                context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+                context_before = text_lower[max(0, start_idx-25):start_idx].strip()
                 words_before = context_before.split()
                 # Nếu từ liền trước là từ phủ định, bỏ qua
-                if words_before and words_before[-1] in negation_words:
+                if any(w in negation_words for w in words_before[-3:]):
                     continue
                 matched = True
                 break
@@ -453,6 +565,49 @@ def classify_topics(text):
                 break  # 1 match đủ để gán topic
                 
     return topics_found if topics_found else ['❓ Khác']
+
+
+def classify_topics_with_tone(text):
+    """
+    Phân loại chủ đề kèm giọng điệu (tone) của từng chủ đề.
+    Returns: list of (topic_name, tone_label, intensity_score)
+    VD: [('💰 Thu nhập & Đơn giá', 'tiêu_cực', -0.7)]
+    """
+    if not isinstance(text, str):
+        return []
+    
+    topics = classify_topics(text)
+    if not topics or topics == ['❓ Khác']:
+        intensity, tone = compute_sentiment_intensity(text)
+        return [('❓ Khác', tone, intensity)]
+    
+    # Tách câu để gán tone chính xác hơn cho từng topic
+    sentences = split_sentences(text)
+    results = []
+    
+    for topic in topics:
+        # Tìm câu nào liên quan đến topic này
+        topic_keywords = TOPIC_KEYWORDS.get(topic, [])
+        relevant_sentences = []
+        
+        for sent in sentences:
+            sent_lower = sent.lower()
+            for kw in topic_keywords:
+                if kw in sent_lower:
+                    relevant_sentences.append(sent)
+                    break
+        
+        if relevant_sentences:
+            # Tính sentiment intensity chỉ cho các câu liên quan
+            combined = '. '.join(relevant_sentences)
+            intensity, tone = compute_sentiment_intensity(combined)
+        else:
+            # Fallback: dùng toàn bộ text
+            intensity, tone = compute_sentiment_intensity(text)
+        
+        results.append((topic, tone, intensity))
+    
+    return results
 
 
 def extract_topic_stats(texts, labels=None):
@@ -467,6 +622,29 @@ def extract_topic_stats(texts, labels=None):
         for topic in classify_topics(text):
             topic_counts[topic] += 1
     return topic_counts
+
+
+def extract_topic_stats_with_tone(texts):
+    """
+    Tính thống kê topic kèm tone từ danh sách texts.
+    Returns: dict {topic: {'positive': count, 'negative': count, 'neutral': count, 'total': count}}
+    """
+    topic_tone = {}
+    for text in texts:
+        if text is None:
+            continue
+        results = classify_topics_with_tone(text)
+        for topic, tone, _ in results:
+            if topic not in topic_tone:
+                topic_tone[topic] = {'positive': 0, 'negative': 0, 'neutral': 0, 'total': 0}
+            topic_tone[topic]['total'] += 1
+            if tone == 'tích_cực':
+                topic_tone[topic]['positive'] += 1
+            elif tone == 'tiêu_cực':
+                topic_tone[topic]['negative'] += 1
+            else:
+                topic_tone[topic]['neutral'] += 1
+    return topic_tone
 
 
 def extract_topic_by_group(df, text_col, group_col, group_values=None):
