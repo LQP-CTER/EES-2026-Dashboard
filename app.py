@@ -654,7 +654,7 @@ def apply_global_filters(df):
             return df[df['Q5'] == st.session_state.global_tenure]
     return df
 
-COMPANY_LABEL = "Tổng quan Toàn Hệ thống"
+COMPANY_LABEL = "Toàn bộ Giao Hàng Nhanh"
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -769,19 +769,6 @@ with st.sidebar:
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
 if is_company:
-    st.markdown("""
-    <div class="pg-header">
-        <div>
-            <p class="pg-eyebrow">GIAO HANG NHANH · EES 2026</p>
-            <h1 class="pg-title">Tổng quan Toàn Hệ thống</h1>
-            <p class="pg-subtitle">Khảo sát Mức độ Gắn kết Nhân viên · Quy mô: 23,000+ nhân sự</p>
-        </div>
-        <span class="pg-badge">
-            <span class="pg-badge-dot"></span>Live · Cập nhật hôm nay
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-
     try:
         all_data = load_all_available()
         filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}

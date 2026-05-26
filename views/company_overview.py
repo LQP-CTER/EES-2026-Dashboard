@@ -38,6 +38,30 @@ def render(all_data, available_groups):
     rr_delta = total_rr - bm['response_rate']
 
     # ══════════════════════════════════════════════════════════════
+    # HERO CARD OVERVIEW
+    # ══════════════════════════════════════════════════════════════
+    st.markdown(f'''
+    <div class="hero-card">
+        <h1 class="hero-title">Toàn bộ Giao Hàng Nhanh</h1>
+        <p class="hero-subtitle">Khảo sát Mức độ Gắn kết Nhân viên 2026</p>
+        <div class="hero-metrics">
+            <div class="hero-metric-box">
+                <div class="hero-metric-label">Nhân sự khảo sát</div>
+                <div class="hero-metric-value">{total_n:,}</div>
+            </div>
+            <div class="hero-metric-box">
+                <div class="hero-metric-label">Tổng số mẫu (6 form)</div>
+                <div class="hero-metric-value">{total_n_before:,}</div>
+            </div>
+            <div class="hero-metric-box">
+                <div class="hero-metric-label">Tỷ lệ phản hồi</div>
+                <div class="hero-metric-value">{total_rr}%</div>
+            </div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+
+    # ══════════════════════════════════════════════════════════════
     # SECTION 1: EXECUTIVE SUMMARY (Modern UI KPI Cards)
     # ══════════════════════════════════════════════════════════════
     from shared.plotly_theme import make_html_kpi
