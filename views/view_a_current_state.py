@@ -39,12 +39,12 @@ def render(df, cfg):
     st.markdown(f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:16px 20px;margin-bottom:20px;">
         <div style="font-size:0.68rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">
-            📖 Hướng dẫn đọc chỉ số — Bạn đang xem điều gì?
+            Hướng dẫn đọc chỉ số — Bạn đang xem điều gì?
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px;">
             <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #3B82F6;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
                 <div style="font-size:0.75rem;font-weight:700;color:#1D4ED8;margin-bottom:5px;">
-                    📊 Engagement Index · {_ei_v:.1f}%&nbsp;
+                    Engagement Index · {_ei_v:.1f}%&nbsp;
                     <span style="background:{_ei_s[2]};color:{_ei_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_ei_s[0]}</span>
                 </div>
                 <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
@@ -54,7 +54,7 @@ def render(df, cfg):
             </div>
             <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #F59E0B;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
                 <div style="font-size:0.75rem;font-weight:700;color:#B45309;margin-bottom:5px;">
-                    ❤️ eNPS · {_enps_v:+.0f} điểm&nbsp;
+                    eNPS · {_enps_v:+.0f} điểm&nbsp;
                     <span style="background:{_enps_s[2]};color:{_enps_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_enps_s[0]}</span>
                 </div>
                 <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
@@ -64,7 +64,7 @@ def render(df, cfg):
             </div>
             <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #10B981;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
                 <div style="font-size:0.75rem;font-weight:700;color:#065F46;margin-bottom:5px;">
-                    🛡️ Manager Effectiveness (MEI) · {_mei_v:.1f}%
+                    Manager Effectiveness (MEI) · {_mei_v:.1f}%
                 </div>
                 <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
                     Chất lượng <strong style="color:#475569;">quản lý trực tiếp</strong> qua đánh giá của nhân viên: hỗ trợ, công bằng và tạo động lực.
@@ -73,7 +73,7 @@ def render(df, cfg):
             </div>
             <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #EF4444;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
                 <div style="font-size:0.75rem;font-weight:700;color:#991B1B;margin-bottom:5px;">
-                    ⚠️ Rủi ro nghỉ việc · {_risk_v:.1f}%&nbsp;
+                    Rủi ro nghỉ việc · {_risk_v:.1f}%&nbsp;
                     <span style="background:{_risk_s[2]};color:{_risk_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_risk_s[0]}</span>
                 </div>
                 <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">

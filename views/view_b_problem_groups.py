@@ -8,10 +8,8 @@ from utils.ai_generator import render_ai_insight_card
 def render(df, cfg):
     apply_theme()
 
-    # Non-DA user context
     st.markdown("""
-    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;">
-        <div style="font-size:1.4rem;flex-shrink:0;">🔎</div>
+    <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:16px 20px;margin-bottom:18px;">
         <div>
             <div style="font-size:0.82rem;font-weight:700;color:#1D4ED8;margin-bottom:4px;">Xác định đơn vị nào đang gặp vấn đề</div>
             <div style="font-size:0.8rem;color:#475569;line-height:1.55;">

@@ -21,8 +21,7 @@ def render(df, cfg):
 
     # Non-DA user context
     st.markdown("""
-    <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;">
-        <div style="font-size:1.4rem;flex-shrink:0;">💬</div>
+    <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:16px 20px;margin-bottom:16px;">
         <div>
             <div style="font-size:0.82rem;font-weight:700;color:#C2410C;margin-bottom:4px;">Lắng nghe tiếng nói nhân viên — Họ thực sự nói gì?</div>
             <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
@@ -46,7 +45,7 @@ def render(df, cfg):
     n_texts = len(texts)
     
     from shared.plotly_theme import make_html_kpi, fig_card
-    st.markdown(make_html_kpi("Tổng số ý kiến tự luận", f"{n_texts:,}", color="blue", icon="💬"), unsafe_allow_html=True)
+    st.markdown(make_html_kpi("Tổng số ý kiến tự luận", f"{n_texts:,}", color="blue", icon=""), unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Chủ đề nổi bật", "Cụm từ khóa", "Đề xuất hành động", 
@@ -134,7 +133,7 @@ def render(df, cfg):
                 anno_html = " · ".join([f"<strong>{r['Chủ đề']}</strong> ({r['Neg_Pct']:.0f}% tiêu cực)" for _, r in anno.iterrows()])
                 st.markdown(f"""
                 <div style="background: #FEF2F2; border-left: 4px solid #DC2626; padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; color: #7F1D1D;">
-                    🎯 <strong>Top chủ đề tiêu cực nhất:</strong> {anno_html}
+                    <strong>Top chủ đề tiêu cực nhất:</strong> {anno_html}
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -168,7 +167,7 @@ def render(df, cfg):
             st.plotly_chart(fig_ng, use_container_width=True)
             
             # Treemap Word Cloud
-            st.markdown("#### 🌐 Bản đồ Từ khóa (Word Cloud)")
+            st.markdown("#### Bản đồ Từ khóa (Word Cloud)")
             df_tree = pd.DataFrame(ngrams_data, columns=['Cụm từ', 'Tần suất'])
             fig_tree = px.treemap(
                 df_tree, path=['Cụm từ'], values='Tần suất',
@@ -191,7 +190,7 @@ def render(df, cfg):
     with tab3:
         st.markdown("""
         <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 16px;margin-bottom:16px;">
-            <strong style="color:#166534;font-size:0.85rem;">💡 Vàng ẩn trong dữ liệu:</strong>
+            <strong style="color:#166534;font-size:0.85rem;">Phát hiện đề xuất hành động:</strong>
             <span style="font-size:0.8rem;color:#475569;"> Hệ thống tự động lọc ra các câu mang tính <strong>đề xuất, kiến nghị, mong muốn</strong> từ nhân viên — những insight có giá trị hành động cao nhất.</span>
         </div>
         """, unsafe_allow_html=True)
@@ -199,7 +198,7 @@ def render(df, cfg):
         suggestions = extract_action_suggestions(texts)
         
         if suggestions:
-            st.markdown(make_html_kpi("Số đề xuất phát hiện", f"{len(suggestions):,}", color="green", icon="💡"), unsafe_allow_html=True)
+            st.markdown(make_html_kpi("Số đề xuất phát hiện", f"{len(suggestions):,}", color="green", icon=""), unsafe_allow_html=True)
             
             # Group by topic
             df_sug = pd.DataFrame(suggestions)

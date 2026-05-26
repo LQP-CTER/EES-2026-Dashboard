@@ -144,8 +144,7 @@ def render(df, cfg):
 
     # Non-DA user explanation
     st.markdown("""
-    <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
-        <div style="font-size:1.4rem;flex-shrink:0;">💰</div>
+    <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
         <div>
             <div style="font-size:0.82rem;font-weight:700;color:#15803D;margin-bottom:4px;">Công cụ tính ROI — Nếu cải thiện X thì tiết kiệm được bao nhiêu tiền?</div>
             <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
@@ -221,21 +220,21 @@ def render(df, cfg):
         c1, c2, c3 = st.columns(3)
         with c1:
             st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
-            st.markdown('<div class="metric-title">📊 eNPS dự báo mới</div>', unsafe_allow_html=True)
+            st.markdown('<div class="metric-title">eNPS dự báo mới</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-value-row"><span class="metric-value" style="color:{COLORS["green"]}">{new_enps:+.1f}</span></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-delta delta-positive">Tăng {enps_increase:+.1f} điểm</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with c2:
             st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
-            st.markdown('<div class="metric-title">👥 Nhân sự giữ chân được</div>', unsafe_allow_html=True)
+            st.markdown('<div class="metric-title">Nhân sự giữ chân được</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-value-row"><span class="metric-value" style="color:{COLORS["blue"]}">{people_saved}</span><span class="metric-unit">người</span></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-delta delta-neutral">Từ nhóm có nguy cơ nghỉ</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with c3:
             st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
-            st.markdown('<div class="metric-title">💰 Tiết kiệm chi phí (ROI)</div>', unsafe_allow_html=True)
+            st.markdown('<div class="metric-title">Tiết kiệm chi phí (ROI)</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-value-row"><span class="metric-value" style="color:{COLORS["orange"]}">{money_saved/1_000_000:,.0f}</span><span class="metric-unit">Tr VNĐ</span></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-delta delta-positive">Chi phí tuyển mới + đào tạo</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
@@ -246,7 +245,7 @@ def render(df, cfg):
         cost_per_person_m = cost_per_hire / 1_000_000
         st.markdown(f"""
         <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px;font-size:0.82rem;line-height:1.65;">
-            <strong style="color:#92400E;">💡 Cách đọc con số này:</strong>
+            <strong style="color:#92400E;">Cách đọc con số này:</strong>
             Mỗi nhân viên nghỉ việc khiến công ty mất khoảng <strong style="color:#B45309;">{cost_per_person_m:.1f} triệu VNĐ</strong>
             (tuyển dụng + onboarding + đào tạo + mất năng suất trong 2–3 tháng đầu).
             Nếu cải thiện <em>"{selected_factor}"</em> giúp giữ lại <strong>{people_saved} người</strong>,
