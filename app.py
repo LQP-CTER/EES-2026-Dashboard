@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import sys, os
 import importlib
+import base64
 
 # Setup paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -735,6 +736,122 @@ div[data-baseweb="select"] > div:hover {
 /* ═══════ DATAFRAME ═══════ */
 [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden !important; }
 </style>""", unsafe_allow_html=True)
+
+# ── Keyboard Shortcut & Custom Toggle Button (JavaScript Injection) ──────────
+js_shortcut_code = """
+(function() {
+    let doc = document;
+    try {
+        if (window.parent && window.parent.document) {
+            doc = window.parent.document;
+        }
+    } catch (e) {
+        console.warn('Cross-origin access to parent document blocked:', e);
+    }
+    
+    function toggleSidebar() {
+        let collapseBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button') || 
+                          doc.querySelector('button[aria-label="Collapse sidebar"]') ||
+                          doc.querySelector('button[title="Collapse sidebar"]') ||
+                          doc.querySelector('button[aria-label="Thu nhỏ thanh bên"]') ||
+                          doc.querySelector('button[title="Thu nhỏ thanh bên"]');
+                          
+        if (collapseBtn) {
+            collapseBtn.click();
+            return;
+        }
+        
+        let expandBtn = doc.querySelector('[data-testid="collapsedControl"] button') || 
+                        doc.querySelector('button[aria-label="Expand sidebar"]') ||
+                        doc.querySelector('button[title="Expand sidebar"]') ||
+                        doc.querySelector('button[aria-label="Mở rộng thanh bên"]') ||
+                        doc.querySelector('button[title="Mở rộng thanh bên"]');
+                        
+        if (expandBtn) {
+            expandBtn.click();
+            return;
+        }
+    }
+
+    const handleKeyDown = (e) => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'm' || e.key === 'M')) {
+            e.preventDefault();
+            toggleSidebar();
+        }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    try {
+        if (window.parent) {
+            window.parent.addEventListener('keydown', handleKeyDown);
+        }
+    } catch (e) {}
+    
+    // Custom floating toggle button (hamburger style)
+    if (!document.getElementById('custom-sidebar-toggle')) {
+        const btn = document.createElement('div');
+        btn.id = 'custom-sidebar-toggle';
+        btn.innerHTML = '☰'; // Hamburger menu
+        btn.style.cssText = `
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: #FF5200;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(255, 82, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 9999999999;
+            transition: all 0.2s ease;
+            user-select: none;
+        `;
+        
+        btn.onmouseover = () => { 
+            btn.style.backgroundColor = '#E04800'; 
+            btn.style.transform = 'scale(1.05)'; 
+        };
+        btn.onmouseout = () => { 
+            btn.style.backgroundColor = '#FF5200'; 
+            btn.style.transform = 'scale(1)'; 
+        };
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            toggleSidebar();
+            setTimeout(updateCustomButtonVisibility, 150);
+        };
+        
+        document.body.appendChild(btn);
+    }
+    
+    function updateCustomButtonVisibility() {
+        const customBtn = document.getElementById('custom-sidebar-toggle');
+        if (!customBtn) return;
+        
+        const collapseBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button') || 
+                            doc.querySelector('button[aria-label="Collapse sidebar"]') ||
+                            doc.querySelector('button[title="Collapse sidebar"]') ||
+                            doc.querySelector('button[aria-label="Thu nhỏ thanh bên"]') ||
+                            doc.querySelector('button[title="Thu nhỏ thanh bên"]');
+                            
+        if (collapseBtn) {
+            customBtn.style.display = 'none';
+        } else {
+            customBtn.style.display = 'flex';
+        }
+    }
+    
+    setInterval(updateCustomButtonVisibility, 500);
+})();
+"""
+
+encoded_js = base64.b64encode(js_shortcut_code.encode('utf-8')).decode('utf-8')
+st.markdown(f'<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="eval(atob(\'{encoded_js}\'))" style="display:none;">', unsafe_allow_html=True)
 
 # ── State & Setup ───────────────────────────────────────────────────────────
 available = get_available_groups()
