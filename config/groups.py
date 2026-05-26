@@ -13,11 +13,44 @@ from shared.codebook import (
 import streamlit as st
 
 def get_secret(key):
+    # Try reading from Streamlit Secrets
     try:
-        return st.secrets.get(key, "")
+        val = st.secrets.get(key, "")
+        if val:
+            return val
     except Exception:
-        import os
-        return os.environ.get(key, "")
+        pass
+    
+    # Try reading from Environment Variables
+    import os
+    val = os.environ.get(key, "")
+    if val:
+        return val
+
+    # Fallback to the consolidated Central Sheet ID if specific sheet is not specified
+    try:
+        central_id = st.secrets.get("CENTRAL_SHEET_ID", st.secrets.get("WF_SHEET_ID", "1wiv9c12jnSe7QFbqD-SHQo2tOWMD5My0pyE5JbmtYkU"))
+    except Exception:
+        central_id = os.environ.get("CENTRAL_SHEET_ID", os.environ.get("WF_SHEET_ID", "1wiv9c12jnSe7QFbqD-SHQo2tOWMD5My0pyE5JbmtYkU"))
+
+    if not central_id:
+        central_id = "1wiv9c12jnSe7QFbqD-SHQo2tOWMD5My0pyE5JbmtYkU"
+
+    # Map keys to sheet tabs in the unified central Google Sheet
+    sheet_map = {
+        'SHEET_1A': '1A - Data',
+        'SHEET_1B': '1B - Data',
+        'SHEET_2A': '2A - Data',
+        'SHEET_2B': '2B - Data',
+        'SHEET_3A': '3A - Data',
+        'SHEET_3B': '3B - Data'
+    }
+    
+    if key in sheet_map:
+        sheet_name_encoded = sheet_map[key].replace(' ', '%20')
+        return f"https://docs.google.com/spreadsheets/d/{central_id}/gviz/tq?tqx=out:csv&sheet={sheet_name_encoded}"
+
+    return ""
 
 GROUP_REGISTRY = {
     '1A': {
