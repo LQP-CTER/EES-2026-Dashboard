@@ -213,7 +213,7 @@ def analyze_sentiment_rule(text):
         return None, 0.0
 
     text_lower = text.lower()
-    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít']
+    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít', 'chẳng']
     pos_count = 0
     neg_count = 0
 
@@ -222,10 +222,10 @@ def analyze_sentiment_rule(text):
         pattern = r'(?:^|\W)(' + re.escape(w) + r')(?:\W|$)'
         for match in re.finditer(pattern, text_lower):
             start_idx = match.start(1)
-            context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+            context_before = text_lower[max(0, start_idx-25):start_idx].strip()
             words_before = context_before.split()
             # Nếu trước từ tích cực là từ phủ định -> biến thành tiêu cực
-            if words_before and words_before[-1] in negation_words:
+            if any(w_b in negation_words for w_b in words_before[-3:]):
                 neg_count += 1
             else:
                 pos_count += 1
@@ -235,10 +235,10 @@ def analyze_sentiment_rule(text):
         pattern = r'(?:^|\W)(' + re.escape(w) + r')(?:\W|$)'
         for match in re.finditer(pattern, text_lower):
             start_idx = match.start(1)
-            context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+            context_before = text_lower[max(0, start_idx-25):start_idx].strip()
             words_before = context_before.split()
             # Nếu trước từ tiêu cực là từ phủ định -> biến thành tích cực
-            if words_before and words_before[-1] in negation_words:
+            if any(w_b in negation_words for w_b in words_before[-3:]):
                 pos_count += 1
             else:
                 neg_count += 1
@@ -260,7 +260,8 @@ def analyze_sentiment_rule(text):
 def detect_warning_signals(text):
     """
     Quét tín hiệu cảnh báo sớm trong phản hồi.
-    Sử dụng regex ranh giới từ và kiểm tra từ phủ định (không, ko, k,...)
+    Sử dụng regex ranh giới từ và kiểm tra từ phủ định (không, ko, k,...),
+    đồng thời lọc bỏ các bối cảnh tích cực làm trung hòa cảnh báo (vượt qua, quen rồi).
     Returns: list of (signal_type, matched_phrase)
     """
     if not isinstance(text, str):
@@ -268,7 +269,8 @@ def detect_warning_signals(text):
 
     text_lower = text.lower()
     signals = []
-    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít']
+    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít', 'chẳng']
+    neutralizing_words = ['vượt qua', 'vượt lên', 'chấp nhận', 'cố gắng', 'quen rồi', 'xứng đáng', 'đền đáp', 'ok', 'ổn', 'bình thường', 'tốt']
     
     for signal_type, phrases in WARNING_SIGNALS.items():
         for phrase in phrases:
@@ -276,13 +278,29 @@ def detect_warning_signals(text):
             pattern = r'(?:^|\W)(' + re.escape(phrase) + r')(?:\W|$)'
             for match in re.finditer(pattern, text_lower):
                 start_idx = match.start(1)
+                end_idx = match.end(1)
                 
-                # Lấy 15 ký tự ngay trước cụm từ đó để kiểm tra phủ định
-                context_before = text_lower[max(0, start_idx-15):start_idx].strip()
+                # Lấy 25 ký tự trước để kiểm tra phủ định (khoảng 3-4 từ)
+                context_before = text_lower[max(0, start_idx-25):start_idx].strip()
                 words_before = context_before.split()
                 
-                # Nếu từ liền trước là từ phủ định thì bỏ qua
-                if words_before and words_before[-1] in negation_words:
+                # Nếu từ liền trước (trong vòng 3 từ) là từ phủ định thì bỏ qua (VD: "k bị áp lực")
+                if any(w in negation_words for w in words_before[-3:]):
+                    continue
+                    
+                # Lấy 40 ký tự sau để kiểm tra trung hòa (khoảng 5-7 từ)
+                context_after = text_lower[end_idx:min(len(text_lower), end_idx+40)].strip()
+                words_after = context_after.split()
+                
+                # Nếu các từ theo sau làm trung hòa tín hiệu thì bỏ qua (VD: "áp lực cần phải vượt qua")
+                is_neutral = False
+                for nw in neutralizing_words:
+                    # Kiểm tra xem từ trung hòa có xuất hiện trong đoạn context sau không
+                    if nw in context_after:
+                        is_neutral = True
+                        break
+                
+                if is_neutral:
                     continue
                 
                 signals.append((signal_type, phrase))
