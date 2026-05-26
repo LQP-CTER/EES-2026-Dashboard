@@ -40,9 +40,12 @@ if 'preview_mode' not in st.session_state:
 import json
 APP_STATE_FILE = os.path.join("config", "app_state.json")
 is_locked = False
+announcement = {"active": False, "text": ""}
 if os.path.exists(APP_STATE_FILE):
     with open(APP_STATE_FILE, "r") as f:
-        is_locked = json.load(f).get("is_locked", False)
+        state_data = json.load(f)
+        is_locked = state_data.get("is_locked", False)
+        announcement = state_data.get("announcement", {"active": False, "text": ""})
 
 is_admin = st.session_state.get("is_admin", False)
 
@@ -65,6 +68,17 @@ if is_locked and not is_admin:
     </style>
     """, unsafe_allow_html=True)
     st.stop()
+
+# --- GLOBAL ANNOUNCEMENT BANNER ---
+if announcement.get("active") and announcement.get("text"):
+    st.markdown(f"""
+    <div style="background-color: #FFF3EE; border-left: 4px solid #FF5200; padding: 12px 20px; border-radius: 4px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.2rem;">📢</span>
+            <span style="color: #0F172A; font-weight: 500; font-size: 0.95rem;">{announcement['text']}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Import loaders and views
 from utils.data_loader import load_group, load_all_available

@@ -1,3 +1,10 @@
 {
-    "is_locked": false
+    "is_locked": false,
+    "announcement": {
+        "active": false,
+        "text": ""
+    },
+    "ai_config": {
+        "temperature": 0.3
+    }
 }

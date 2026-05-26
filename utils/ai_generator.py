@@ -95,6 +95,15 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
     system_prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
     all_clients = get_groq_clients_all()
 
+    APP_STATE_FILE = os.path.join("config", "app_state.json")
+    ai_temp = 0.3
+    try:
+        if os.path.exists(APP_STATE_FILE):
+            with open(APP_STATE_FILE, "r") as f:
+                ai_temp = float(json.load(f).get("ai_config", {}).get("temperature", 0.3))
+    except Exception:
+        pass
+
     if not all_clients:
         yield "⚠️ Cảnh báo: Không có Groq API key hợp lệ. Vui lòng kiểm tra secrets.toml"
         return
@@ -108,7 +117,7 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
                 stream = client.chat.completions.create(
                     messages=[{"role": "system", "content": system_prompt}],
                     model=model,
-                    temperature=0.3,
+                    temperature=ai_temp,
                     max_tokens=400,
                     stream=True
                 )

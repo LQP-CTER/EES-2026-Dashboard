@@ -1,6 +1,9 @@
 import streamlit as st
 import json
 import os
+import time
+from utils.data_loader import load_all_available
+from utils.ai_generator import _get_groq_keys
 
 APP_STATE_FILE = os.path.join("config", "app_state.json")
 
@@ -8,7 +11,11 @@ def load_state():
     if os.path.exists(APP_STATE_FILE):
         with open(APP_STATE_FILE, "r") as f:
             return json.load(f)
-    return {"is_locked": False}
+    return {
+        "is_locked": False,
+        "announcement": {"active": False, "text": ""},
+        "ai_config": {"temperature": 0.3}
+    }
 
 def save_state(state):
     with open(APP_STATE_FILE, "w") as f:
@@ -104,11 +111,17 @@ def render():
     """, unsafe_allow_html=True)
     
     state = load_state()
-    is_locked = state.get("is_locked", False)
     
+    # Initialize defaults if not present
+    is_locked = state.get("is_locked", False)
+    announcement = state.get("announcement", {"active": False, "text": ""})
+    ai_config = state.get("ai_config", {"temperature": 0.3})
+    
+    # --- ROW 1 ---
     col1, col2 = st.columns([1, 1])
     
     with col1:
+        # Access Management
         st.markdown("""
         <div class="admin-card">
             <div class="admin-card-header">
@@ -136,6 +149,7 @@ def render():
         st.markdown('</div>', unsafe_allow_html=True)
         
     with col2:
+        # System Status & Health
         st.markdown("""
         <div class="admin-card">
             <div class="admin-card-header">
@@ -154,9 +168,6 @@ def render():
                     ĐANG BẢO TRÌ (MAINTENANCE)
                 </div>
             </div>
-            <p style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin-bottom: 32px;">
-                Hệ thống báo cáo đang tạm dừng hoạt động. Tất cả truy cập đều được điều hướng về trang thông báo bảo trì.
-            </p>
             """, unsafe_allow_html=True)
         else:
             st.markdown("""
@@ -166,20 +177,92 @@ def render():
                     HOẠT ĐỘNG BÌNH THƯỜNG (ONLINE)
                 </div>
             </div>
-            <p style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin-bottom: 32px;">
-                Hệ thống đang phục vụ. Người dùng có thể truy cập đầy đủ các phân hệ báo cáo dựa trên phân quyền sẵn có.
-            </p>
             """, unsafe_allow_html=True)
             
-        st.markdown("<hr style='border: none; border-top: 1px solid #F1F5F9; margin: 0 0 24px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border: none; border-top: 1px solid #F1F5F9; margin: 16px 0;'>", unsafe_allow_html=True)
+        
+        # Health Check
+        groq_keys = _get_groq_keys()
+        n_keys = len(groq_keys)
+        
+        st.markdown(f"""
+            <p style="color: #0F172A; font-weight: 600; font-size: 0.95rem; margin-bottom: 8px;">Health Check</p>
+            <p style="color: #475569; font-size: 0.85rem; margin-bottom: 4px;">• API Groq: <strong>{n_keys} key(s) đang khả dụng</strong></p>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Cache Control
+        if st.button("Làm mới bộ nhớ đệm (Clear Cache)", use_container_width=True):
+            st.cache_data.clear()
+            st.toast("Đã xóa bộ nhớ đệm thành công!", icon="✅")
+            
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- ROW 2 ---
+    col3, col4 = st.columns([1, 1])
+    
+    with col3:
+        # Announcements
+        st.markdown("""
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <div class="admin-card-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"></path></svg>
+                </div>
+                <h3 class="admin-card-title">Thông báo Toàn cục (Banner)</h3>
+            </div>
+            <p style="color: #475569; font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
+                Cài đặt một thông báo nổi bật xuất hiện ở đầu trang của tất cả người dùng.
+            </p>
+        """, unsafe_allow_html=True)
+        
+        new_ann_text = st.text_area("Nội dung thông báo", value=announcement.get("text", ""), height=100)
+        new_ann_active = st.toggle("Hiển thị Thông báo", value=announcement.get("active", False))
+        
+        if st.button("Lưu Thông báo"):
+            state["announcement"] = {
+                "text": new_ann_text,
+                "active": new_ann_active
+            }
+            save_state(state)
+            st.toast("Đã cập nhật thông báo!", icon="✅")
+            st.rerun()
+            
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col4:
+        # AI Config
+        st.markdown("""
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <div class="admin-card-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <h3 class="admin-card-title">Cấu hình AI (Groq)</h3>
+            </div>
+            <p style="color: #475569; font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">
+                Điều chỉnh thông số của mô hình AI khi tạo nhận xét (Insight).
+            </p>
+        """, unsafe_allow_html=True)
+        
+        new_temp = st.slider("Độ sáng tạo (Temperature)", min_value=0.0, max_value=1.0, value=float(ai_config.get("temperature", 0.3)), step=0.1)
+        
+        if st.button("Lưu Cấu hình AI"):
+            state["ai_config"] = {
+                "temperature": new_temp
+            }
+            save_state(state)
+            st.toast("Đã lưu cấu hình AI!", icon="✅")
+
+        st.markdown("<hr style='border: none; border-top: 1px solid #F1F5F9; margin: 24px 0;'>", unsafe_allow_html=True)
         
         st.markdown("""
-            <p style="color: #0F172A; font-weight: 600; font-size: 0.95rem; margin-bottom: 8px;">Môi trường Giả lập (Preview)</p>
-            <p style="color: #475569; font-size: 0.85rem; margin-bottom: 16px;">Mô phỏng phiên truy cập để kiểm tra tính toàn vẹn của báo cáo.</p>
+            <p style="color: #0F172A; font-weight: 600; font-size: 0.95rem; margin-bottom: 8px;">Môi trường Giả lập</p>
         """, unsafe_allow_html=True)
         
         if st.button("Truy cập với quyền tiêu chuẩn (User)", use_container_width=True):
             st.session_state.preview_mode = True
             st.rerun()
-            
+
         st.markdown('</div>', unsafe_allow_html=True)
+
