@@ -124,6 +124,8 @@ st.markdown("""<style>
 /* Hide Streamlit Toolbar & Deploy Button */
 #MainMenu {visibility: hidden !important;}
 /* header {visibility: hidden !important;} */
+[data-testid="stHeader"] { visibility: visible !important; background: transparent !important; }
+[data-testid="collapsedControl"] { visibility: visible !important; display: flex !important; z-index: 999999 !important; }
 footer {visibility: hidden !important;}
 .stAppDeployButton {display:none !important;}
 .stDeployButton {display:none !important;}
