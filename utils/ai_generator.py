@@ -84,10 +84,12 @@ YÊU CẦU ĐỊNH DẠNG VÀ TÔNG VĂN NGHIÊM NGẶT:
 2. Tuyệt đối KHÔNG DÙNG các từ ngữ quá kịch tính (ví dụ: TUYỆT ĐỐI KHÔNG dùng "đột biến", "kinh hoàng", "báo động đỏ").
 3. SỬ DỤNG ĐÚNG thuật ngữ chuyên ngành HR Analytics: Engagement Index (EI), eNPS, Attrition Risk, Driver Analysis, Cohort, Root-cause, Turnover rate.
 4. KHÔNG SỬ DỤNG ký tự Markdown như **, *, #. KHÔNG viết Tiêu đề. KHÔNG dùng Bullet points.
-5. BẮT BUỘC viết dưới dạng MỘT HOẶC HAI ĐOẠN VĂN liền mạch. Đi thẳng vào insight cốt lõi.
-6. Độ dài tối đa: 2-3 câu ngắn gọn, súc tích, đậm chất tư duy chiến lược.
-7. Để nhấn mạnh, DÙNG thẻ HTML: `<span class="ai-highlight">` cho chỉ số tốt và `<span class="ai-warning">` cho rủi ro.
-8. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
+5. TUYỆT ĐỐI KHÔNG mở đầu bằng các từ chào hỏi (ví dụ: "Kính gửi...", "Chào bạn...", "Thưa..."). Bắt đầu phân tích ngay lập tức.
+6. TUYỆT ĐỐI KHÔNG viết các câu kết luận sáo rỗng, chung chung (ví dụ: "cần tiếp tục theo dõi...", "cần lưu ý rằng...", "điều này cho thấy..."). Chỉ viết Insight thực sự có giá trị.
+7. BẮT BUỘC viết dưới dạng MỘT HOẶC HAI ĐOẠN VĂN liền mạch. Đi thẳng vào insight cốt lõi.
+8. Độ dài tối đa: 2-3 câu ngắn gọn, súc tích, đậm chất tư duy chiến lược.
+9. Để nhấn mạnh, DÙNG thẻ HTML: `<span class="ai-highlight">` cho chỉ số tốt và `<span class="ai-warning">` cho rủi ro.
+10. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
 """
 
 

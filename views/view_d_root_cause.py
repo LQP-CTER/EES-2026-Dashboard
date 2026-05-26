@@ -395,60 +395,153 @@ def render(df_clean, cfg, sel_group):
         
     if sel_group == '1A':
         st.markdown("<hr style='margin: 40px 0; border: 1px dashed rgba(0,0,0,0.1);'>", unsafe_allow_html=True)
-        st.markdown("#### Bước 4: Ma trận dự báo rủi ro (Risk Heatmap)")
-        st.markdown("Ma trận đa biến dự báo tỷ lệ % nhân sự **Muốn nghỉ** dựa trên sự kết hợp giữa 2 yếu tố trọng yếu: **Thu nhập** và **Mức phạt**.")
+        st.markdown("#### Bước 4: Bản đồ rủi ro nghỉ việc theo Thu nhập × Mức phạt")
+        st.markdown("""
+        Mỗi **bong bóng** đại diện cho một nhóm nhân sự. **Màu sắc** = tỷ lệ % muốn nghỉ (đỏ càng đậm = rủi ro càng cao).
+        **Kích thước bong bóng** = số lượng nhân sự trong nhóm đó. Chỉ hiển thị nhóm có **≥ 10 người** để đảm bảo độ tin cậy thống kê.
+        """)
         
-        if 'phat_label' in df_m.columns and 'income_label' in df_m.columns:
-            df_heat = df_m[(df_m['phat_label'] != 'Chưa rõ') & (df_m['income_label'] != 'Chưa rõ')]
+        # Dùng income_group (từ pd.cut) thay vì Range lương HRIS để đảm bảo nhất quán
+        income_col = 'income_group' if 'income_group' in df_m.columns else None
+        
+        if income_col and 'phat_label' in df_m.columns:
+            df_heat = df_m[
+                (df_m['phat_label'] != 'Chưa rõ') &
+                (df_m[income_col].notna())
+            ].copy()
+            df_heat[income_col] = df_heat[income_col].astype(str)
+            
             if not df_heat.empty:
-                def risk_pct(x):
+                def risk_pct_n(x):
                     tot = len(x)
-                    if tot < 5: return None
+                    if tot < 10:  # Yêu cầu tối thiểu 10 người để tránh nhiễu thống kê
+                        return pd.Series({'Risk': None, 'N': tot})
                     risk = (x['intent_risk'].astype(str).str.contains('Muốn nghỉ')).sum()
-                    return risk / tot * 100
+                    return pd.Series({'Risk': round(risk / tot * 100, 1), 'N': tot})
                 
-                heat_data = df_heat.groupby(['income_label', 'phat_label'], observed=True).apply(risk_pct).reset_index(name='Risk')
-                heat_data = heat_data.dropna()
+                heat_data = df_heat.groupby([income_col, 'phat_label'], observed=True).apply(risk_pct_n).reset_index()
+                heat_data = heat_data.dropna(subset=['Risk'])
                 
                 if not heat_data.empty:
-                    heat_pivot = heat_data.pivot(index='income_label', columns='phat_label', values='Risk')
-                    phat_order = ['Không phạt', '< 1tr', '≥ 1tr']
-                    phat_cols = [c for c in phat_order if c in heat_pivot.columns]
-                    for c in heat_pivot.columns:
-                        if c not in phat_cols: phat_cols.append(c)
-                    heat_pivot = heat_pivot[phat_cols]
+                    # Sắp xếp đúng thứ tự thu nhập
+                    income_order_map = {
+                        '< 5 triệu': 1, '5-7 triệu': 2, '7-10 triệu': 3,
+                        '10-15 triệu': 4, '> 15 triệu': 5
+                    }
+                    phat_order_map = {'Không phạt': 1, '< 1tr': 2, '≥ 1tr': 3}
                     
-                    income_order = ['< 5 triệu', '5-7 triệu', '7-10 triệu', '10-15 triệu', '> 15 triệu']
-                    inc_idx = [i for i in income_order if i in heat_pivot.index]
-                    for i in heat_pivot.index:
-                        if i not in inc_idx: inc_idx.append(i)
-                    heat_pivot = heat_pivot.loc[inc_idx]
+                    heat_data['_inc_ord'] = heat_data[income_col].map(income_order_map).fillna(99)
+                    heat_data['_phat_ord'] = heat_data['phat_label'].map(phat_order_map).fillna(99)
+                    heat_data = heat_data.sort_values(['_inc_ord', '_phat_ord'])
                     
-                    fig = px.imshow(heat_pivot, 
-                                    text_auto='.1f', 
-                                    aspect='auto',
-                                    color_continuous_scale='RdYlGn_r',
-                                    labels=dict(color="% Muốn nghỉ", x="Mức Phạt", y="Mức Thu Nhập"))
+                    # Bubble Chart
+                    fig = go.Figure()
                     
-                    fig.update_layout(height=400, title="TỶ LỆ RỦI RO RỜI BỎ THEO MA TRẬN THU NHẬP - MỨC PHẠT", margin=dict(t=50, b=40, l=40, r=40))
+                    # Tạo color scale từ Risk %
+                    max_risk = heat_data['Risk'].max()
+                    
+                    for _, row in heat_data.iterrows():
+                        risk_val = row['Risk']
+                        n_val = int(row['N'])
+                        inc_label = str(row[income_col])
+                        phat_label = str(row['phat_label'])
+                        
+                        # Màu sắc theo risk %
+                        normalized = risk_val / max_risk if max_risk > 0 else 0
+                        if normalized < 0.33:
+                            color = f'rgba(16, 185, 129, {0.5 + normalized})'  # xanh lá
+                        elif normalized < 0.66:
+                            color = f'rgba(245, 158, 11, {0.6 + normalized * 0.4})'  # cam
+                        else:
+                            color = f'rgba(220, 38, 38, {0.6 + normalized * 0.4})'  # đỏ
+                        
+                        bubble_size = max(20, min(80, n_val * 1.5))
+                        
+                        fig.add_trace(go.Scatter(
+                            x=[phat_label],
+                            y=[inc_label],
+                            mode='markers+text',
+                            marker=dict(
+                                size=bubble_size,
+                                color=color,
+                                line=dict(color='rgba(255,255,255,0.8)', width=2)
+                            ),
+                            text=[f"<b>{risk_val:.1f}%</b><br><span style='font-size:10px'>N={n_val}</span>"],
+                            textposition='middle center',
+                            name=f"{inc_label} × {phat_label}",
+                            hovertemplate=(
+                                f"<b>Thu nhập:</b> {inc_label}<br>"
+                                f"<b>Mức phạt:</b> {phat_label}<br>"
+                                f"<b>% Muốn nghỉ:</b> {risk_val:.1f}%<br>"
+                                f"<b>Số mẫu:</b> {n_val} người<br>"
+                                "<extra></extra>"
+                            ),
+                            showlegend=False
+                        ))
+                    
+                    # Thêm legend màu sắc chú giải
+                    for label, clr, desc in [
+                        ('Rủi ro thấp (<3%)', 'rgba(16,185,129,0.7)', '< 3%'),
+                        ('Rủi ro trung bình (3-7%)', 'rgba(245,158,11,0.7)', '3-7%'),
+                        ('Rủi ro cao (>7%)', 'rgba(220,38,38,0.8)', '> 7%'),
+                    ]:
+                        fig.add_trace(go.Scatter(
+                            x=[None], y=[None],
+                            mode='markers',
+                            marker=dict(size=14, color=clr),
+                            name=label,
+                            showlegend=True
+                        ))
+                    
+                    # Sắp xếp trục Y theo thứ tự thu nhập tăng dần
+                    y_order = [r for r in ['< 5 triệu', '5-7 triệu', '7-10 triệu', '10-15 triệu', '> 15 triệu']
+                               if r in heat_data[income_col].values]
+                    x_order = [c for c in ['Không phạt', '< 1tr', '≥ 1tr']
+                               if c in heat_data['phat_label'].values]
+                    
+                    fig.update_layout(
+                        height=420,
+                        title='BẢN ĐỒ RỦI RO NGHỈ VIỆC: THU NHẬP × MỨC PHẠT',
+                        xaxis=dict(
+                            title='Mức Phạt / Truy thu',
+                            categoryorder='array',
+                            categoryarray=x_order
+                        ),
+                        yaxis=dict(
+                            title='Mức Thu Nhập',
+                            categoryorder='array',
+                            categoryarray=y_order
+                        ),
+                        margin=dict(t=60, b=60, l=120, r=40),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
+                        plot_bgcolor='#F8FAFC',
+                        paper_bgcolor='#FFFFFF'
+                    )
                     
                     st.plotly_chart(fig, use_container_width=True)
                     
-                    max_risk_cell = heat_data.loc[heat_data['Risk'].idxmax()]
+                    # Chú thích cỡ mẫu
+                    st.caption("ℹ️ Chỉ hiển thị các nhóm có ≥ 10 người để đảm bảo độ tin cậy thống kê. Bong bóng không xuất hiện = nhóm đó có ít hơn 10 mẫu.")
+                    
+                    max_risk_row = heat_data.loc[heat_data['Risk'].idxmax()]
                     st.markdown(f"""
                     <div style="background-color: #FEF2F2; border-left: 4px solid #DC2626; padding: 12px 16px; border-radius: 4px; margin-top: 10px;">
-                        <span style="color: #DC2626; font-weight: 700;">🚨 Kịch bản rủi ro cao nhất:</span> Nhân sự có thu nhập <strong>{max_risk_cell['income_label']}</strong> nhưng phải chịu mức phạt <strong>{max_risk_cell['phat_label']}</strong> sẽ có xác suất nghỉ việc lên tới <strong>{max_risk_cell['Risk']:.1f}%</strong>.
+                        <span style="color: #DC2626; font-weight: 700;">🚨 Kịch bản rủi ro cao nhất:</span> Nhân sự có thu nhập <strong>{max_risk_row[income_col]}</strong> nhưng phải chịu mức phạt <strong>{max_risk_row['phat_label']}</strong> sẽ có xác suất nghỉ việc lên tới <strong>{max_risk_row['Risk']:.1f}%</strong> (N={int(max_risk_row['N'])} người).
                     </div>
                     """, unsafe_allow_html=True)
                     
                     ai_data_hm = {
-                        "Max_Risk_Income": max_risk_cell['income_label'],
-                        "Max_Risk_Penalty": max_risk_cell['phat_label'],
-                        "Max_Risk_Percentage": round(max_risk_cell['Risk'], 1)
+                        "Max_Risk_Income": max_risk_row[income_col],
+                        "Max_Risk_Penalty": max_risk_row['phat_label'],
+                        "Max_Risk_Percentage": round(max_risk_row['Risk'], 1),
+                        "Sample_Size": int(max_risk_row['N'])
                     }
-                    prompt_hm = f"Dựa trên dữ liệu dự báo: Nhóm nhân sự chịu {ai_data_hm['Max_Risk_Penalty']} tiền phạt và có thu nhập {ai_data_hm['Max_Risk_Income']} đang có tỷ lệ muốn nghỉ việc cao nhất là {ai_data_hm['Max_Risk_Percentage']}%. Hãy đưa ra một góc nhìn chiến lược dành cho Giám đốc nhân sự: (1) Tại sao sự kết hợp 2 yếu tố này lại tạo ra rủi ro khủng hoảng cục bộ? (2) Cần hành động gì ngay lập tức để giữ chân nhóm này?"
+                    prompt_hm = f"Dựa trên dữ liệu dự báo từ {ai_data_hm['Sample_Size']} nhân sự: Nhóm có thu nhập {ai_data_hm['Max_Risk_Income']} và chịu {ai_data_hm['Max_Risk_Penalty']} tiền phạt đang có tỷ lệ muốn nghỉ việc cao nhất là {ai_data_hm['Max_Risk_Percentage']}%. Hãy đưa ra một góc nhìn chiến lược dành cho Giám đốc nhân sự: (1) Tại sao sự kết hợp 2 yếu tố này lại tạo ra rủi ro cục bộ? (2) Cần hành động gì ngay lập tức để giữ chân nhóm này?"
                     render_ai_insight_card("AI Predictive Insight", ai_data_hm, prompt_hm, badge="Predictive AI", custom_style="margin-top: 24px; margin-bottom: 24px;")
-
+                
                 else:
-                    st.info("Không đủ dữ liệu kết hợp Thu nhập & Mức phạt để chạy mô hình.")
+                    st.info("Không đủ dữ liệu (N≥10) ở bất kỳ ô nào để vẽ bản đồ rủi ro.")
+        else:
+            st.info("Không đủ dữ liệu kết hợp Thu nhập & Mức phạt để chạy mô hình.")
+
 
