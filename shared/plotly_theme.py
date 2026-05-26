@@ -136,6 +136,8 @@ def make_html_kpi(title, value, delta=None, color="blue", icon="", progress_val=
         "orange": ("#F59E0B", "#FFFBEB"),
         "green":  ("#10B981", "#F0FDF4"),
         "red":    ("#EF4444", "#FEF2F2"),
+        "purple": ("#8B5CF6", "#F5F3FF"),
+        "teal":   ("#06B6D4", "#ECFEFF"),
     }
     main_color, _bg = color_map.get(color, color_map["blue"])
 

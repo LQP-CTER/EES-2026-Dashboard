@@ -15,10 +15,15 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     from shared.plotly_theme import make_html_kpi, section_header
 
-    _ei_v   = kpis['ei_mean']
-    _enps_v = kpis['enps_score']
-    _mei_v  = kpis['mei_avg']
-    _risk_v = kpis['intent_pct_low']
+    _ei_v      = kpis['ei_mean']
+    _enps_v    = kpis['enps_score']
+    _mei_v     = kpis['mei_avg']
+    _risk_v    = kpis['intent_pct_low']
+    _burnout_v = kpis['burnout_pct']
+    _stay_v    = kpis.get('stay_score_avg', 0)
+    _stay_fl   = kpis.get('stay_flight_pct', 0)
+    _stay_ar   = kpis.get('stay_atrisk_pct', 0)
+    _stay_st   = kpis.get('stay_stable_pct', 0)
 
     def _ei_tag(v):
         if v >= 80: return ("Xuất sắc",    "#15803D", "#F0FDF4")
@@ -33,8 +38,17 @@ def render(df, cfg):
         if v <= 10: return ("Thấp",      "#15803D", "#F0FDF4")
         if v <= 20: return ("Trung bình","#CA8A04", "#FEFCE8")
         return            ("Cao",        "#DC2626", "#FEF2F2")
+    def _burnout_tag(v):
+        if v <= 15: return ("An toàn",   "#15803D", "#F0FDF4")
+        if v <= 30: return ("Cần chú ý","#CA8A04", "#FEFCE8")
+        return            ("Nguy hiểm",  "#DC2626", "#FEF2F2")
+    def _stay_tag(v):
+        if v >= 4.0: return ("Tốt",      "#15803D", "#F0FDF4")
+        if v >= 3.0: return ("Trung bình","#CA8A04", "#FEFCE8")
+        return             ("Nguy hiểm",  "#DC2626", "#FEF2F2")
 
     _ei_s, _enps_s, _risk_s = _ei_tag(_ei_v), _enps_tag(_enps_v), _risk_tag(_risk_v)
+    _burnout_s, _stay_s = _burnout_tag(_burnout_v), _stay_tag(_stay_v)
 
     st.markdown(f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:16px 20px;margin-bottom:20px;">
@@ -81,23 +95,48 @@ def render(df, cfg):
                     <br><span style="font-size:0.71rem;color:#94A3B8;">Cảnh báo &gt; 15% · Nguy hiểm &gt; 25%</span>
                 </div>
             </div>
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #8B5CF6;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                <div style="font-size:0.75rem;font-weight:700;color:#6D28D9;margin-bottom:5px;">
+                    Burnout Score &middot; {_burnout_v:.1f}%&nbsp;
+                    <span style="background:{_burnout_s[2]};color:{_burnout_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_burnout_s[0]}</span>
+                </div>
+                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
+                    Tỷ lệ nhân viên có dấu hiệu <strong style="color:#475569;">quá tải và kiệt sức</strong> — càng cao càng nguy hiểm về năng suất và nghỉ việc.
+                    <br><span style="font-size:0.71rem;color:#94A3B8;">An toàn &le; 15% &middot; Cần chú ý &le; 30%</span>
+                </div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #06B6D4;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                <div style="font-size:0.75rem;font-weight:700;color:#0E7490;margin-bottom:5px;">
+                    Điểm Ý định ửe lại (Q22) &middot; {_stay_v:.2f}/5&nbsp;
+                    <span style="background:{_stay_s[2]};color:{_stay_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_stay_s[0]}</span>
+                </div>
+                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
+                    Mức độ nhân viên <strong style="color:#475569;">có kế hoạch gắn bó với GHN</strong> trong thời gian tới. Thang 1&ndash;5.
+                    <br><span style="font-size:0.71rem;color:#94A3B8;">Flight Risk: Q22 &le; 2 ({_stay_fl:.1f}%) &middot; At Risk: Q22 = 3 ({_stay_ar:.1f}%) &middot; Stable: Q22 &ge; 4 ({_stay_st:.1f}%)</span>
+                </div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ══════════════════════════════════════════════════════════════
-    # SECTION 1: HERO METRICS & OVERALL DISTRIBUTION
-    # ══════════════════════════════════════════════════════════════
+    # ══ SECTION 1: HERO METRICS ══
     st.markdown(f"<div style='font-size:1.1rem; font-weight:600; color:#0F172A; margin-bottom:15px; margin-top:20px;'>Quy mô mẫu dữ liệu hiện tại: <span style='color:#1D4ED8;'>{len(df):,}</span> nhân sự</div>", unsafe_allow_html=True)
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(make_html_kpi('Engagement (EI)', f"{kpis['ei_mean']:.1f}%", color="blue", icon="", progress_val=kpis['ei_mean'], delta="+2.1%"), unsafe_allow_html=True)
     with col2:
         st.markdown(make_html_kpi('eNPS Score', f"{kpis['enps_score']:+.0f}", color="orange", icon="", progress_val=(kpis['enps_score']+100)/2, delta="+4"), unsafe_allow_html=True)
     with col3:
         st.markdown(make_html_kpi('Manager EI (MEI)', f"{kpis['mei_avg']:.1f}%", color="green", icon="", progress_val=kpis['mei_avg'], delta="+1.2%"), unsafe_allow_html=True)
+
+    col4, col5, col6 = st.columns(3)
     with col4:
         st.markdown(make_html_kpi('Rủi ro nghỉ việc', f"{kpis['intent_pct_low']:.1f}%", color="red", icon="", progress_val=kpis['intent_pct_low'], delta="-1.5%"), unsafe_allow_html=True)
+    with col5:
+        st.markdown(make_html_kpi('Burnout Score', f"{kpis['burnout_pct']:.1f}%", color="purple", icon="", progress_val=kpis['burnout_pct']), unsafe_allow_html=True)
+    with col6:
+        stay_label = f"{kpis.get('stay_score_avg',0):.2f}/5"
+        st.markdown(make_html_kpi('Ý định Ở lại (Q22)', stay_label, color="teal", icon="", progress_val=kpis.get('stay_score_avg', 0) / 5 * 100), unsafe_allow_html=True)
 
 
     # ── eNPS + EI Distribution + Pillars ──

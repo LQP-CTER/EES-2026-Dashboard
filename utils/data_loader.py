@@ -142,6 +142,15 @@ def load_group(group_id: str):
     if pressure and resource:
         df_clean['burnout_risk'] = df_clean[pressure].mean(axis=1) - df_clean[resource].mean(axis=1)
 
+    # Stay Intention Score (Q22): Thang 1–5, cao = muốn ở lại
+    # Flight Risk: Q22 ≤ 2 | At Risk: Q22 = 3 | Stable: Q22 ≥ 4
+    if 'Q22' in df_clean.columns:
+        df_clean['stay_intention'] = df_clean['Q22']  # giữ nguyên điểm thô 1-5
+        df_clean['stay_risk_group'] = df_clean['Q22'].apply(
+            lambda v: 'Flight Risk' if v <= 2 else ('At Risk' if v == 3 else 'Stable')
+            if pd.notna(v) else None
+        )
+
     # NLP prep
     try:
         from shared.nlp_utils import preprocess_text
@@ -192,7 +201,9 @@ def compute_kpis(df):
     if n == 0:
         return {'n': 0, 'ei_mean': 0, 'enps_score': 0, 'promoters': 0,
                 'passives': 0, 'detractors': 0, 'mei_avg': 0,
-                'intent_pct_low': 0, 'burnout_pct': 0}
+                'intent_pct_low': 0, 'burnout_pct': 0,
+                'stay_score_avg': 0, 'stay_flight_pct': 0,
+                'stay_atrisk_pct': 0, 'stay_stable_pct': 0}
 
     ei_mean = df['EI'].mean()
     enps_col = df.get('eNPS', pd.Series(dtype=float))
@@ -208,13 +219,27 @@ def compute_kpis(df):
     burnout_high = (df['burnout_risk'] > 0).sum() if 'burnout_risk' in df.columns else 0
     burnout_pct = burnout_high / n * 100
 
+    # Stay Intention Score (Q22)
+    q22_col = df.get('stay_intention', pd.Series(dtype=float))
+    q22_valid = q22_col.notna().sum()
+    stay_score_avg = round(q22_col.mean(), 2) if q22_valid > 0 else 0
+    stay_flight_pct = round((q22_col <= 2).sum() / q22_valid * 100, 1) if q22_valid > 0 else 0
+    stay_atrisk_pct = round((q22_col == 3).sum() / q22_valid * 100, 1) if q22_valid > 0 else 0
+    stay_stable_pct = round((q22_col >= 4).sum() / q22_valid * 100, 1) if q22_valid > 0 else 0
+    intent_pct_high = round((intent_col >= 4).sum() / intent_col.notna().sum() * 100, 1) if intent_col.notna().sum() > 0 else 0
+
     return {
         'n': n, 'ei_mean': round(ei_mean, 1),
         'enps_score': round(enps_score, 0),
         'promoters': int(promoters), 'passives': int(passives), 'detractors': int(detractors),
         'mei_avg': round(mei_avg, 1),
         'intent_pct_low': round(intent_pct, 1),
+        'intent_pct_high': intent_pct_high,
         'burnout_pct': round(burnout_pct, 1),
+        'stay_score_avg': stay_score_avg,
+        'stay_flight_pct': stay_flight_pct,
+        'stay_atrisk_pct': stay_atrisk_pct,
+        'stay_stable_pct': stay_stable_pct,
     }
 
 
