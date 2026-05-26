@@ -145,6 +145,15 @@ html, body, .stApp {
     max-width: 100% !important;
 }
 
+/* Make sidebar un-closeable per user request */
+[data-testid="stSidebarCollapseButton"],
+button[title="Collapse sidebar"],
+button[aria-label="Collapse sidebar"],
+button[aria-label="Thu nhỏ thanh bên"],
+button[title="Thu nhỏ thanh bên"] {
+    display: none !important;
+}
+
 /* ═══════ SIDEBAR BASE ═══════ */
 [data-testid="stSidebar"] {
     background: #FFFFFF !important;
