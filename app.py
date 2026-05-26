@@ -735,9 +735,70 @@ div[data-baseweb="select"] > div:hover {
 
 /* ═══════ DATAFRAME ═══════ */
 [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden !important; }
-</style>""", unsafe_allow_html=True)
 
-# ── Keyboard Shortcut & Custom Toggle Button (JavaScript Injection) ──────────
+/* ═══════ CUSTOM SIDEBAR TOGGLE BUTTON ═══════ */
+#custom-sidebar-toggle {
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    width: 40px !important;
+    height: 40px !important;
+    background-color: #FF5200 !important;
+    color: #FFFFFF !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(255, 82, 0, 0.4) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+    z-index: 99999 !important; /* Higher than main content, lower than expanded sidebar to naturally hide behind it */
+    transition: all 0.2s ease !important;
+    user-select: none !important;
+}
+#custom-sidebar-toggle:hover {
+    background-color: #E04800 !important;
+    transform: scale(1.05) !important;
+}
+#custom-sidebar-toggle:active {
+    transform: scale(0.95) !important;
+}
+</style>
+<div id="custom-sidebar-toggle" onclick="
+(function() {
+    let doc = document;
+    try {
+        if (window.parent && window.parent.document) {
+            doc = window.parent.document;
+        }
+    } catch (e) {}
+    
+    let collapseBtn = doc.querySelector(`[data-testid='stSidebarCollapseButton'] button`) || 
+                      doc.querySelector(`button[aria-label='Collapse sidebar']`) ||
+                      doc.querySelector(`button[title='Collapse sidebar']`) ||
+                      doc.querySelector(`button[aria-label='Thu nhỏ thanh bên']`) ||
+                      doc.querySelector(`button[title='Thu nhỏ thanh bên']`);
+                      
+    if (collapseBtn) {
+        collapseBtn.click();
+        return;
+    }
+    
+    let expandBtn = doc.querySelector(`[data-testid='collapsedControl'] button`) || 
+                    doc.querySelector(`button[aria-label='Expand sidebar']`) ||
+                    doc.querySelector(`button[title='Expand sidebar']`) ||
+                    doc.querySelector(`button[aria-label='Mở rộng thanh bên']`) ||
+                    doc.querySelector(`button[title='Mở rộng thanh bên']`);
+                    
+    if (expandBtn) {
+        expandBtn.click();
+        return;
+    }
+})()
+">☰</div>
+""", unsafe_allow_html=True)
+
+# ── Keyboard Shortcut & Custom Toggle Button Sync (JavaScript Injection) ────
 js_shortcut_code = """
 (function() {
     let doc = document;
@@ -773,60 +834,20 @@ js_shortcut_code = """
         }
     }
 
-    const handleKeyDown = (e) => {
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'm' || e.key === 'M')) {
-            e.preventDefault();
-            toggleSidebar();
-        }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    try {
-        if (window.parent) {
-            window.parent.addEventListener('keydown', handleKeyDown);
-        }
-    } catch (e) {}
-    
-    // Custom floating toggle button (hamburger style)
-    if (!document.getElementById('custom-sidebar-toggle')) {
-        const btn = document.createElement('div');
-        btn.id = 'custom-sidebar-toggle';
-        btn.innerHTML = '☰'; // Hamburger menu
-        btn.style.cssText = `
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            width: 40px;
-            height: 40px;
-            background-color: #FF5200;
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(255, 82, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            cursor: pointer;
-            z-index: 9999999999;
-            transition: all 0.2s ease;
-            user-select: none;
-        `;
-        
-        btn.onmouseover = () => { 
-            btn.style.backgroundColor = '#E04800'; 
-            btn.style.transform = 'scale(1.05)'; 
+    if (!window.sidebarShortcutSetup) {
+        window.sidebarShortcutSetup = true;
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'm' || e.key === 'M')) {
+                e.preventDefault();
+                toggleSidebar();
+            }
         };
-        btn.onmouseout = () => { 
-            btn.style.backgroundColor = '#FF5200'; 
-            btn.style.transform = 'scale(1)'; 
-        };
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            toggleSidebar();
-            setTimeout(updateCustomButtonVisibility, 150);
-        };
-        
-        document.body.appendChild(btn);
+        window.addEventListener('keydown', handleKeyDown);
+        try {
+            if (window.parent) {
+                window.parent.addEventListener('keydown', handleKeyDown);
+            }
+        } catch (e) {}
     }
     
     function updateCustomButtonVisibility() {
@@ -846,7 +867,14 @@ js_shortcut_code = """
         }
     }
     
-    setInterval(updateCustomButtonVisibility, 500);
+    // Initial sync
+    updateCustomButtonVisibility();
+    
+    // Interval sync (survives Streamlit reruns)
+    if (!window.sidebarIntervalSetup) {
+        window.sidebarIntervalSetup = true;
+        setInterval(updateCustomButtonVisibility, 300);
+    }
 })();
 """
 
