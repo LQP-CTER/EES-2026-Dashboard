@@ -47,7 +47,77 @@ if os.path.exists(APP_STATE_FILE):
         is_locked = state_data.get("is_locked", False)
         announcement = state_data.get("announcement", {"active": False, "text": ""})
 
+# --- AUTHENTICATION FLOW ---
+from utils.auth import get_google_auth_url, get_user_info
+
+# Load client secrets
+GOOGLE_CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET", "")
+REDIRECT_URI = st.secrets.get("REDIRECT_URI", "http://localhost:8501/")
+
 is_admin = st.session_state.get("is_admin", False)
+
+if not is_admin:
+    # Check if redirect contains auth code
+    if "code" in st.query_params:
+        code = st.query_params.get("code")
+        user_info = get_user_info(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI)
+        if user_info and "email" in user_info:
+            st.session_state.user_email = user_info["email"]
+            st.session_state.user_name = user_info.get("name", "User")
+            st.session_state.user_picture = user_info.get("picture", "")
+        else:
+            st.error("Xác thực Google thất bại. Vui lòng thử lại.")
+        st.query_params.clear()
+        st.rerun()
+
+    # Check session
+    user_email = st.session_state.get("user_email")
+    if not user_email:
+        # Show Login Screen
+        st.markdown("""
+        <div style='text-align: center; margin-top: 100px;'>
+            <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='200'>
+            <h1 style='color: #0A1F44; margin-top: 30px;'>EES 2026 Dashboard</h1>
+            <p style='color: #64748B; font-size: 1.1rem;'>Đăng nhập bằng tài khoản nội bộ @ghn.vn để tiếp tục</p>
+        </div>
+        <style>
+            [data-testid="stSidebar"] { display: none !important; }
+            header[data-testid="stHeader"] { display: none !important; }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+            auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
+            st.markdown(f"""
+            <div style="display: flex; justify-content: center; margin-top: 30px;">
+                <a href="{auth_url}" target="_self" style="background-color: #FFFFFF; color: #757575; font-family: Roboto, sans-serif; font-weight: 500; font-size: 14px; padding: 12px 24px; text-decoration: none; border-radius: 4px; border: 1px solid #DADCE0; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); display: flex; align-items: center; gap: 12px;">
+                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="LgbsSe-Bz112c" style="width: 18px; height: 18px;"><g><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></g></svg>
+                    Đăng nhập bằng Google
+                </a>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.warning("⚠️ Lỗi cấu hình: Thiếu GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET trong file secrets.")
+        st.stop()
+        
+    elif not user_email.endswith("@ghn.vn"):
+        st.markdown(f"""
+        <div style='text-align: center; margin-top: 100px;'>
+            <h1 style='color: #DC2626;'>🚫 Từ chối truy cập</h1>
+            <p style='color: #64748B; font-size: 1.1rem;'>Tài khoản <b>{user_email}</b> không thuộc hệ thống GHN.</p>
+        </div>
+        <style>
+            [data-testid="stSidebar"] {{ display: none !important; }}
+            header[data-testid="stHeader"] {{ display: none !important; }}
+        </style>
+        """, unsafe_allow_html=True)
+        st.markdown("<br><div style='text-align: center;'>", unsafe_allow_html=True)
+        if st.button("Đăng xuất & Thử lại"):
+            st.session_state.clear()
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.stop()
 
 if is_admin and not st.session_state.preview_mode:
     # Render admin panel
@@ -610,6 +680,21 @@ with st.sidebar:
     if st.session_state.get("is_admin", False):
         if st.button("⬅️ Trở về Admin Panel", use_container_width=True):
             st.session_state.preview_mode = False
+            st.rerun()
+        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
+
+    if st.session_state.get("user_email"):
+        st.markdown(f"""
+        <div style="padding: 5px 20px 10px; display: flex; align-items: center; gap: 10px;">
+            <img src="{st.session_state.get('user_picture', 'https://via.placeholder.com/32')}" style="width: 32px; height: 32px; border-radius: 50%;">
+            <div style="overflow: hidden;">
+                <div style="font-weight: 600; font-size: 0.85rem; color: #0F172A; text-overflow: ellipsis; white-space: nowrap;">{st.session_state.get('user_name', 'User')}</div>
+                <div style="font-size: 0.7rem; color: #64748B; text-overflow: ellipsis; white-space: nowrap;">{st.session_state.get('user_email', '')}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🚪 Đăng xuất", use_container_width=True):
+            st.session_state.clear()
             st.rerun()
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
