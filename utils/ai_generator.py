@@ -118,7 +118,7 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
                     messages=[{"role": "system", "content": system_prompt}],
                     model=model,
                     temperature=ai_temp,
-                    max_tokens=400,
+                    max_tokens=1500,
                     stream=True
                 )
                 for chunk in stream:
