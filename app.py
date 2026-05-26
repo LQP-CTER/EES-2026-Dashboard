@@ -367,6 +367,23 @@ div[data-baseweb="select"] > div:hover {
     font-size: 0.875rem !important;
     line-height: 1.7 !important;
     color: #475569 !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    padding-right: 8px !important;
+}
+.ai-content::-webkit-scrollbar {
+    width: 5px;
+}
+.ai-content::-webkit-scrollbar-track {
+    background: #F8FAFC;
+    border-radius: 4px;
+}
+.ai-content::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+}
+.ai-content::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
 }
 .ai-content strong {
     color: #0A1F44 !important;
