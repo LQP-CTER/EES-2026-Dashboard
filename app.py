@@ -121,6 +121,12 @@ from views import (
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""<style>
 /* ═══════ BASE ═══════ */
+/* Hide Streamlit Toolbar & Deploy Button */
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+footer {visibility: hidden;}
+.stDeployButton {display:none;}
+
 html, body, .stApp {
     font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
     background-color: #F8FAFC !important;
