@@ -129,7 +129,10 @@ header, [data-testid="stHeader"] {
     background: transparent !important;
     z-index: 999990 !important;
 }
-[data-testid="collapsedControl"] {
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+button[aria-label="Expand sidebar"],
+button[title="Expand sidebar"] {
     visibility: visible !important;
     display: flex !important;
     position: fixed !important;
@@ -144,11 +147,17 @@ header, [data-testid="stHeader"] {
     justify-content: center !important;
     align-items: center !important;
     transition: background-color 0.2s ease !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
 }
-[data-testid="collapsedControl"]:hover {
+[data-testid="collapsedControl"]:hover,
+[data-testid="stSidebarCollapseButton"]:hover,
+button[aria-label="Expand sidebar"]:hover,
+button[title="Expand sidebar"]:hover {
     background: #E04800 !important;
 }
-[data-testid="collapsedControl"] button {
+[data-testid="collapsedControl"] button,
+[data-testid="stSidebarCollapseButton"] button {
     color: #FFFFFF !important;
     background: transparent !important;
     border: none !important;
@@ -159,8 +168,13 @@ header, [data-testid="stHeader"] {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
 }
-[data-testid="collapsedControl"] svg {
+[data-testid="collapsedControl"] svg,
+[data-testid="stSidebarCollapseButton"] svg,
+button[aria-label="Expand sidebar"] svg,
+button[title="Expand sidebar"] svg {
     fill: #FFFFFF !important;
     color: #FFFFFF !important;
     width: 22px !important;
