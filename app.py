@@ -622,6 +622,8 @@ div[data-baseweb="select"] > div:hover {
 
 /* ═══════ DATAFRAME ═══════ */
 [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden !important; }
+</style>
+""", unsafe_allow_html=True)
 
 
 # ── State & Setup ───────────────────────────────────────────────────────────
