@@ -644,7 +644,7 @@ if is_company:
     st.markdown("""
     <div class="pg-header">
         <div>
-            <p class="pg-eyebrow">GHN Group · EES 2026</p>
+            <p class="pg-eyebrow">GIAO HANG NHANH · EES 2026</p>
             <h1 class="pg-title">Tổng quan Toàn Hệ thống</h1>
             <p class="pg-subtitle">Khảo sát Mức độ Gắn kết Nhân viên · Quy mô: 23,000+ nhân sự</p>
         </div>
@@ -672,7 +672,7 @@ else:
         <div>
             <p class="pg-eyebrow">EES 2026 · {sel_nav or 'Chi tiết Nhóm'}</p>
             <h1 class="pg-title">{cfg['label']}</h1>
-            <p class="pg-subtitle">Q1/2026 · {n_resp:,} phản hồi hợp lệ</p>
+            <p class="pg-subtitle">2026 · {n_resp:,} phản hồi hợp lệ</p>
         </div>
         <span class="pg-badge">
             <span class="pg-badge-dot"></span>Live · Cập nhật hôm nay
