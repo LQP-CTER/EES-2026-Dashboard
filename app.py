@@ -764,7 +764,7 @@ div[data-baseweb="select"] > div:hover {
     transform: scale(0.95) !important;
 }
 </style>
-<div id="custom-sidebar-toggle" onclick="
+<div id="custom-sidebar-toggle" onclick='
 (function() {
     let doc = document;
     try {
@@ -773,29 +773,29 @@ div[data-baseweb="select"] > div:hover {
         }
     } catch (e) {}
     
-    let collapseBtn = doc.querySelector(`[data-testid='stSidebarCollapseButton'] button`) || 
-                      doc.querySelector(`button[aria-label='Collapse sidebar']`) ||
-                      doc.querySelector(`button[title='Collapse sidebar']`) ||
-                      doc.querySelector(`button[aria-label='Thu nhỏ thanh bên']`) ||
-                      doc.querySelector(`button[title='Thu nhỏ thanh bên']`);
+    let collapseBtn = doc.querySelector(\"[data-testid=stSidebarCollapseButton] button\") || 
+                      doc.querySelector(\"button[aria-label=\'Collapse sidebar\']\") ||
+                      doc.querySelector(\"button[title=\'Collapse sidebar\']\") ||
+                      doc.querySelector(\"button[aria-label=\'Thu nhỏ thanh bên\']\") ||
+                      doc.querySelector(\"button[title=\'Thu nhỏ thanh bên\']\");
                       
     if (collapseBtn) {
         collapseBtn.click();
         return;
     }
     
-    let expandBtn = doc.querySelector(`[data-testid='collapsedControl'] button`) || 
-                    doc.querySelector(`button[aria-label='Expand sidebar']`) ||
-                    doc.querySelector(`button[title='Expand sidebar']`) ||
-                    doc.querySelector(`button[aria-label='Mở rộng thanh bên']`) ||
-                    doc.querySelector(`button[title='Mở rộng thanh bên']`);
+    let expandBtn = doc.querySelector(\"[data-testid=collapsedControl] button\") || 
+                    doc.querySelector(\"button[aria-label=\'Expand sidebar\']\") ||
+                    doc.querySelector(\"button[title=\'Expand sidebar\']\") ||
+                    doc.querySelector(\"button[aria-label=\'Mở rộng thanh bên\']\") ||
+                    doc.querySelector(\"button[title=\'Mở rộng thanh bên\']\");
                     
     if (expandBtn) {
         expandBtn.click();
         return;
     }
 })()
-">☰</div>
+'>☰</div>
 """, unsafe_allow_html=True)
 
 # ── Keyboard Shortcut & Custom Toggle Button Sync (JavaScript Injection) ────
