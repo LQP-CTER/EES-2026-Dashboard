@@ -447,5 +447,15 @@ def render(df, cfg):
                     fig = fig_card(fig, f'Gắn kết theo {col_name}', f'Phân tích nhóm {col_name.lower()} đông nhất')
                     fig.update_layout(barmode='group', xaxis_tickangle=-30)
                     st.plotly_chart(fig, use_container_width=True)
+                    
+                    if col_id == 'Q5':
+                        prompt = "Hãy giải thích nguyên nhân vì sao nhóm nhân viên có thâm niên 'Trên 3 đến 5 năm' lại có chỉ số eNPS thấp (có thể là số âm) so với các nhóm khác. Dựa vào vòng đời nhân sự (Employee Lifecycle) để giải thích thực trạng chững lại về nhiệt huyết và kỳ vọng nghề nghiệp ở giai đoạn này."
+                        render_ai_insight_card(
+                            title="AI Insight: Phân tích chênh lệch gắn kết giai đoạn 3-5 năm",
+                            data_dict={"Thâm_niên": demo_data},
+                            context_prompt=prompt,
+                            badge="Tenure-Analysis",
+                            custom_style="margin-top: 15px;"
+                        )
     else:
         st.info("Dữ liệu hiện tại không chứa các cột về Thâm niên (Q5) hoặc Chức danh.")
