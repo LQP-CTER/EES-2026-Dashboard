@@ -125,7 +125,42 @@ st.markdown("""<style>
 #MainMenu {visibility: hidden !important;}
 /* header {visibility: hidden !important;} */
 [data-testid="stHeader"] { visibility: visible !important; background: transparent !important; }
-[data-testid="collapsedControl"] { visibility: visible !important; display: flex !important; z-index: 999999 !important; }
+[data-testid="collapsedControl"] {
+    visibility: visible !important;
+    display: flex !important;
+    z-index: 999999 !important;
+    background: #FF5200 !important;
+    border-radius: 0 8px 8px 0 !important;
+    box-shadow: 0 4px 12px rgba(255, 82, 0, 0.3) !important;
+    top: 15px !important;
+    left: 0px !important;
+    width: 40px !important;
+    height: 40px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    transition: background-color 0.2s ease !important;
+}
+[data-testid="collapsedControl"]:hover {
+    background: #E04800 !important;
+}
+[data-testid="collapsedControl"] button {
+    color: #FFFFFF !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+[data-testid="collapsedControl"] svg {
+    fill: #FFFFFF !important;
+    color: #FFFFFF !important;
+    width: 22px !important;
+    height: 22px !important;
+}
 footer {visibility: hidden !important;}
 .stAppDeployButton {display:none !important;}
 .stDeployButton {display:none !important;}
