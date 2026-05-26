@@ -285,10 +285,33 @@ def extract_sv_label(row, group, df_columns):
             
             if not sv_label: sv_label = pb
     elif group in ["3A", "3B"]:
-        sv_label = _find_val("bạn thuộc?")
+        # Logic giống ees-tracking: scan TẤT CẢ cột "Bạn thuộc?" (col 8..13)
+        # để tìm giá trị cụ thể nhất (phòng ban/section), không chỉ cột đầu tiên.
+        thuoc_cols = [
+            k for k in row.keys()
+            if "bạn thuộc" in str(k).lower()
+            and "gắn bó" not in str(k).lower()
+            and "thuộc về" not in str(k).lower()
+        ]
+        for col in thuoc_cols:
+            v = _clean(row[col])
+            if v:
+                sv_label = v
+                break
+
+        # Fallback: lấy Division lớn từ cột phòng ban / khối
         if not sv_label:
-            pb = _find_val("phòng ban")
-            if pb: sv_label = pb
+            pb_cols = [
+                k for k in row.keys()
+                if ("phòng ban" in str(k).lower() or "khối" in str(k).lower())
+                and "cơ cấu" not in str(k).lower()
+                and "khối lượng" not in str(k).lower()
+            ]
+            for c_pb in pb_cols:
+                v = _clean(row[c_pb])
+                if v:
+                    sv_label = v
+                    break
 
     return sv_label, sv_vung, is_appdriver
 
@@ -464,6 +487,17 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
                     else:
                         wf_info = lookup_fallback.get(c_norm, {})
                     if wf_info: break
+                
+                # Hardcoded fallback cho các giá trị 3A/3B không có trong MAP_3AB
+                if not wf_info and sv_val:
+                    _3AB_HARDCODED = {
+                        "hrbp freight": {"wf_division_vn": "Khối Nhân Lực", "wf_department_vn": "Phòng Đối Tác Nhân Sự", "wf_section_vn": "HRBP Freight"},
+                        "hrbp market": {"wf_division_vn": "Khối Nhân Lực", "wf_department_vn": "Phòng Đối Tác Nhân Sự", "wf_section_vn": "HRBP Market"},
+                        "hrbp customer": {"wf_division_vn": "Khối Nhân Lực", "wf_department_vn": "Phòng Đối Tác Nhân Sự", "wf_section_vn": "HRBP Customer"},
+                        "hrbp technology": {"wf_division_vn": "Khối Nhân Lực", "wf_department_vn": "Phòng Đối Tác Nhân Sự", "wf_section_vn": "HRBP Technology"},
+                        "technology operations department": {"wf_division_vn": "Khối Công Nghệ", "wf_department_vn": "Technology Operations Department", "wf_section_vn": "Technology Operations Department"},
+                    }
+                    wf_info = _3AB_HARDCODED.get(sv_val.strip().lower(), {})
                     
         # Gán default là Chưa xác định nếu map fail
         div_val = wf_info.get("wf_division_vn")
