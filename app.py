@@ -641,20 +641,7 @@ with st.sidebar:
             st.rerun()
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
-    if st.session_state.get("user_email"):
-        st.markdown(f"""
-        <div style="padding: 5px 20px 10px; display: flex; align-items: center; gap: 10px;">
-            <img src="{st.session_state.get('user_picture', 'https://via.placeholder.com/32')}" style="width: 32px; height: 32px; border-radius: 50%;">
-            <div style="overflow: hidden;">
-                <div style="font-weight: 600; font-size: 0.85rem; color: #0F172A; text-overflow: ellipsis; white-space: nowrap;">{st.session_state.get('user_name', 'User')}</div>
-                <div style="font-size: 0.7rem; color: #64748B; text-overflow: ellipsis; white-space: nowrap;">{st.session_state.get('user_email', '')}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🚪 Đăng xuất", use_container_width=True):
-            st.session_state.clear()
-            st.rerun()
-        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
+    # [Đã ẩn Avatar và Nút Đăng xuất do đang dùng chế độ Bypass]
 
     # Brand block
     st.markdown("""
