@@ -100,9 +100,9 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
         return
 
     last_error = ""
-    # Key 1 → thử hết models → nếu rate limit → Key 2 → thử hết models
+    # Thử từng key, với mỗi key thử từng model. Groq rate limit là theo model,
+    # nên nếu 1 model bị 429 thì vẫn tiếp tục thử model khác trên cùng key đó.
     for client in all_clients:
-        rate_limited = False
         for model in GROQ_MODELS:
             try:
                 stream = client.chat.completions.create(
@@ -119,13 +119,10 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
             except Exception as e:
                 last_error = str(e)
                 if "rate_limit_exceeded" in last_error.lower() or "429" in last_error:
-                    rate_limited = True
-                    break  # Key này bị rate limit → thử key tiếp theo
+                    time.sleep(0.5)  # Nghỉ xíu rồi thử model khác
                 continue
-        if not rate_limited:
-            break  # Lỗi khác (không phải 429) → không cần thử key tiếp
 
-    yield f"⚠️ Không thể kết nối AI sau khi thử {len(all_clients)} key: {last_error[:120]}"
+    yield f"⚠️ Không thể kết nối AI sau khi thử {len(all_clients)} key và tất cả các model: {last_error[:120]}"
 
 
 # ============================================================
