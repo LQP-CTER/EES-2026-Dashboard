@@ -127,37 +127,38 @@ header, [data-testid="stHeader"] {
     display: block !important;
     visibility: visible !important;
     background: transparent !important;
-    z-index: 999990 !important;
+    z-index: 999999999 !important;
 }
-[data-testid="collapsedControl"],
-[data-testid="stSidebarCollapseButton"],
-button[aria-label="Expand sidebar"],
-button[title="Expand sidebar"] {
-    visibility: visible !important;
+/* ═══════ EXPAND BUTTON (WHEN COLLAPSED) ═══════ */
+/* Style the outer wrapper to act as our floating orange action tab */
+[data-testid="collapsedControl"] {
     display: flex !important;
+    visibility: visible !important;
     position: fixed !important;
-    z-index: 999999 !important;
-    background: #FF5200 !important;
-    border-radius: 0 8px 8px 0 !important;
-    box-shadow: 0 4px 12px rgba(255, 82, 0, 0.3) !important;
     top: 15px !important;
     left: 0px !important;
     width: 40px !important;
     height: 40px !important;
+    background: #FF5200 !important;
+    border-radius: 0 8px 8px 0 !important;
+    box-shadow: 0 4px 12px rgba(255, 82, 0, 0.3) !important;
+    z-index: 999999999 !important;
     justify-content: center !important;
     align-items: center !important;
     transition: background-color 0.2s ease !important;
     pointer-events: auto !important;
     cursor: pointer !important;
 }
-[data-testid="collapsedControl"]:hover,
-[data-testid="stSidebarCollapseButton"]:hover,
-button[aria-label="Expand sidebar"]:hover,
-button[title="Expand sidebar"]:hover {
+[data-testid="collapsedControl"]:hover {
     background: #E04800 !important;
 }
+
+/* Style the button element inside the expand control wrapper */
 [data-testid="collapsedControl"] button,
-[data-testid="stSidebarCollapseButton"] button {
+button[aria-label="Expand sidebar"],
+button[title="Expand sidebar"],
+button[aria-label="Mở rộng thanh bên"],
+button[title="Mở rộng thanh bên"] {
     color: #FFFFFF !important;
     background: transparent !important;
     border: none !important;
@@ -170,15 +171,70 @@ button[title="Expand sidebar"]:hover {
     align-items: center !important;
     pointer-events: auto !important;
     cursor: pointer !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
 }
+
+/* Style the expand icon inside the button */
 [data-testid="collapsedControl"] svg,
-[data-testid="stSidebarCollapseButton"] svg,
 button[aria-label="Expand sidebar"] svg,
-button[title="Expand sidebar"] svg {
+button[title="Expand sidebar"] svg,
+button[aria-label="Mở rộng thanh bên"] svg,
+button[title="Mở rộng thanh bên"] svg {
     fill: #FFFFFF !important;
     color: #FFFFFF !important;
     width: 22px !important;
     height: 22px !important;
+}
+
+/* ═══════ COLLAPSE BUTTON (WHEN EXPANDED) ═══════ */
+/* Style the collapse button in the top right of the sidebar to be beautifully prominent */
+[data-testid="stSidebarCollapseButton"],
+button[aria-label="Collapse sidebar"],
+button[title="Collapse sidebar"],
+button[aria-label="Thu nhỏ thanh bên"],
+button[title="Thu nhỏ thanh bên"] {
+    background: #FF5200 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(255, 82, 0, 0.2) !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+}
+[data-testid="stSidebarCollapseButton"]:hover,
+button[aria-label="Collapse sidebar"]:hover,
+button[title="Collapse sidebar"]:hover,
+button[aria-label="Thu nhỏ thanh bên"]:hover,
+button[title="Thu nhỏ thanh bên"]:hover {
+    background: #E04800 !important;
+}
+[data-testid="stSidebarCollapseButton"] button,
+button[aria-label="Collapse sidebar"] button,
+button[aria-label="Thu nhỏ thanh bên"] button {
+    color: #FFFFFF !important;
+    background: transparent !important;
+    border: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+[data-testid="stSidebarCollapseButton"] svg,
+button[aria-label="Collapse sidebar"] svg,
+button[title="Collapse sidebar"] svg,
+button[aria-label="Thu nhỏ thanh bên"] svg,
+button[title="Thu nhỏ thanh bên"] svg {
+    fill: #FFFFFF !important;
+    color: #FFFFFF !important;
+    width: 20px !important;
+    height: 20px !important;
 }
 footer {visibility: hidden !important;}
 .stAppDeployButton {display:none !important;}
