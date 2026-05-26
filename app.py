@@ -543,7 +543,7 @@ with st.sidebar:
     <div class="sb-brand">
         <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" class="sb-logo" alt="GHN Logo">
         <span class="sb-title">EES 2026 Dashboard</span>
-        <span class="sb-sub">Employee Engagement Survey · Q1/2026</span>
+        <span class="sb-sub">Employee Engagement Survey · 2026</span>
     </div>
     """, unsafe_allow_html=True)
 
