@@ -122,10 +122,16 @@ from views import (
 st.markdown("""<style>
 /* ═══════ BASE ═══════ */
 /* Hide Streamlit Toolbar & Deploy Button */
-#MainMenu {visibility: hidden;}
-header {visibility: hidden;}
-footer {visibility: hidden;}
-.stDeployButton {display:none;}
+#MainMenu {visibility: hidden !important;}
+header {visibility: hidden !important;}
+footer {visibility: hidden !important;}
+.stAppDeployButton {display:none !important;}
+.stDeployButton {display:none !important;}
+[data-testid="stToolbar"] {display: none !important;}
+/* Hide Streamlit Cloud Viewer Badge (Avatar/Profile) */
+.viewerBadge_container {display: none !important;}
+.viewerBadge_link {display: none !important;}
+[class*="viewerBadge"] {display: none !important;}
 
 html, body, .stApp {
     font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
