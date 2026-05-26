@@ -88,7 +88,7 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 1: HERO METRICS & OVERALL DISTRIBUTION
     # ══════════════════════════════════════════════════════════════
-    st.markdown(f"<div style='font-size:1.1rem; font-weight:600; color:#0F172A; margin-bottom:15px; margin-top:20px;'>👥 Quy mô mẫu dữ liệu hiện tại: <span style='color:#1D4ED8;'>{len(df):,}</span> nhân sự</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size:1.1rem; font-weight:600; color:#0F172A; margin-bottom:15px; margin-top:20px;'>Quy mô mẫu dữ liệu hiện tại: <span style='color:#1D4ED8;'>{len(df):,}</span> nhân sự</div>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(make_html_kpi('Engagement (EI)', f"{kpis['ei_mean']:.1f}%", color="blue", icon="", progress_val=kpis['ei_mean'], delta="+2.1%"), unsafe_allow_html=True)
