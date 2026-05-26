@@ -123,11 +123,16 @@ st.markdown("""<style>
 /* ═══════ BASE ═══════ */
 /* Hide Streamlit Toolbar & Deploy Button */
 #MainMenu {visibility: hidden !important;}
-/* header {visibility: hidden !important;} */
-[data-testid="stHeader"] { visibility: visible !important; background: transparent !important; }
+header, [data-testid="stHeader"] {
+    display: block !important;
+    visibility: visible !important;
+    background: transparent !important;
+    z-index: 999990 !important;
+}
 [data-testid="collapsedControl"] {
     visibility: visible !important;
     display: flex !important;
+    position: fixed !important;
     z-index: 999999 !important;
     background: #FF5200 !important;
     border-radius: 0 8px 8px 0 !important;
