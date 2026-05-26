@@ -436,8 +436,8 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
             if not wf_info and group in ("2A", "2B"):
                 if "sme" in sv_norm or "buucuckinhdoanh" in sv_norm:
                     wf_info = {"wf_division_vn": "Khối Thị Trường", "wf_department_vn": "Phòng Phát Triển Kinh Doanh Khách Hàng Vừa Và Nhỏ", "wf_section_vn": "Phòng Phát Triển Kinh Doanh Khách Hàng Vừa Và Nhỏ"}
-                elif "gxt" in sv_norm or "giaohangnang" in sv_norm:
-                    wf_info = {"wf_division_vn": "Giao Hàng Nặng (Vận hành B2B)", "wf_department_vn": "Giao Hàng Nặng (Vận hành B2B)", "wf_section_vn": "Giao Hàng Nặng (Vận hành B2B)"}
+                elif "gxt" in sv_norm or "giaohangnang" in sv_norm or "b2b" in sv_norm:
+                    wf_info = {"wf_division_vn": "Giao Hàng Nặng (Vận hành B2B)", "wf_department_vn": "Phòng Vận Hành B2B", "wf_section_vn": "Phòng Vận Hành B2B"}
                 elif "ktc" in sv_norm or "tttc" in sv_norm:
                     wf_info = {"wf_division_vn": "Khối Thị Trường", "wf_department_vn": "Kho Trung Chuyển", "wf_section_vn": sv_val}
                 elif "warehouse" in sv_norm or "fulfillment" in sv_norm:
