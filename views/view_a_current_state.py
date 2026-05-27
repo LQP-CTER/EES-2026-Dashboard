@@ -492,7 +492,27 @@ def render(df, cfg):
                         unique_secs = _sec_valid['section'].unique()
                         has_specific = any(str(s).strip().lower() != dname_norm for s in unique_secs)
 
+
                         if has_specific:
+                            # Thêm hàng tổng hợp cho department (Kho Trung Chuyển / Vùng) trước khi mở rộng
+                            dkpi_parent = compute_kpis(dg)
+                            parent_row = {
+                                _ROW_LBL: f'📦 {dname}' if 'kho' in dname_norm else f'🗺️ {dname}',
+                                'N': dkpi_parent['n'],
+                                'EI (%)': round(dkpi_parent['ei_mean'], 1),
+                                'eNPS': round(dkpi_parent['enps_score'], 0),
+                                'MEI': round(dkpi_parent.get('mei_avg', 0), 1),
+                                'Burnout (%)': round(dkpi_parent.get('burnout_pct', 0), 1),
+                                '% Muốn nghỉ': round(dkpi_parent['intent_pct_low'], 1),
+                            }
+                            for p, plabel in PILLAR_LABELS.items():
+                                pcol = f'{p}_pct'
+                                if pcol in dg.columns:
+                                    parent_row[plabel] = round(dg[pcol].mean(), 1)
+                                    if plabel not in dept_pillars_seen:
+                                        dept_pillars_seen.append(plabel)
+                            dept_rows.append(parent_row)
+
                             for sname, sg in _sec_valid.groupby('section', dropna=True):
                                 if len(sg) < 1:
                                     continue
@@ -513,6 +533,7 @@ def render(df, cfg):
                                         if plabel not in dept_pillars_seen:
                                             dept_pillars_seen.append(plabel)
                                 dept_rows.append(srow)
+
                         else:
                             # Không có sub-section → hiển thị aggregate row cho department
                             dkpi = compute_kpis(dg)
@@ -553,8 +574,12 @@ def render(df, cfg):
                         dept_rows.append(drow)
 
                 if dept_rows:
-                    df_dept_tbl = pd.DataFrame(dept_rows).sort_values('EI (%)', ascending=False)
+                    df_dept_tbl = pd.DataFrame(dept_rows)
+                    # Giữ insertion order nếu có parent-child (↳) — tránh tách hàng tổng khỏi hàng con
+                    if not df_dept_tbl[_ROW_LBL].str.contains('↳', na=False).any():
+                        df_dept_tbl = df_dept_tbl.sort_values('EI (%)', ascending=False)
                     _grad = ['EI (%)', 'MEI'] + dept_pillars_seen
+
                     _red  = ['Burnout (%)', '% Muốn nghỉ']
                     styled = df_dept_tbl.style \
                         .background_gradient(
