@@ -460,7 +460,12 @@ def render(df, cfg):
     
 
     # Determine the grouping level — ưu tiên department (phòng ban/nhóm)
-    if 'department' in df.columns and df['department'].nunique() > 1:
+    # Trường hợp đặc biệt: nếu division = "Vùng", drill down xuống section
+    _has_vung = 'division' in df.columns and df['division'].eq('Vùng').any()
+    if _has_vung and 'section' in df.columns and df['section'].nunique() > 1:
+        grp_col = 'section'
+        grp_name = 'Section / Vùng'
+    elif 'department' in df.columns and df['department'].nunique() > 1:
         grp_col = 'department'
         grp_name = 'Phòng ban / Nhóm'
     elif 'section' in df.columns and df['section'].nunique() > 1:

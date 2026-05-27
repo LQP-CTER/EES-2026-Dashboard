@@ -513,12 +513,6 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
     df_result['section'] = secs
 
     # ── Post-process: chuẩn hóa section theo từng nhóm ──
-    #
-    # Nhóm 1A/1B (Shipper/Tài xế): trong HR data, wf_section_vn là cụm KTC/bưu cục
-    # cụ thể (quá chi tiết). Dashboard cần group theo Vùng (department level).
-    # → Gán section = department để bảng chi tiết luôn hiển thị Vùng.
-    if group in ('1A', '1B'):
-        df_result['section'] = df_result['department']
 
     # Các dòng không map được (Chưa xác định) → set None để groupby tự bỏ qua.
     _BAD_MAP = {'Chưa xác định', 'Không xác định', 'Khác', 'nan', 'None', ''}
