@@ -679,14 +679,12 @@ def render(df, cfg):
 
 
     # ══════════════════════════════════════════════════════════════
-    # SECTION 2B: DEEP DIVE — Phân tích bất thường theo đơn vị
+    # SECTION 2B: DEEP DIVE — Chọn đơn vị để xem phân tích chi tiết
     # ══════════════════════════════════════════════════════════════
     try:
-        from shared.anomaly_detector import detect_unit_anomalies, PATTERNS
-        _MIN_N = 15
-        _all_units = []
+        from shared.anomaly_detector import detect_unit_anomalies
 
-        # Lấy tất cả section (cấp nhỏ nhất) có đủ mẫu
+        _MIN_N = 15
         _sec_col = None
         for _c in ['section', 'department']:
             if _c in df.columns and df[_c].notna().sum() > 0:
@@ -696,70 +694,117 @@ def render(df, cfg):
         if _sec_col:
             _BAD_DD = {None, 'None', 'Khác', 'Chưa xác định', 'Không xác định', 'nan', ''}
             _df_valid = df[df[_sec_col].notna() & ~df[_sec_col].isin(_BAD_DD)]
-            for _uname, _udf in _df_valid.groupby(_sec_col, dropna=True):
-                if len(_udf) < _MIN_N:
-                    continue
-                _anomalies = detect_unit_anomalies(_udf, min_n=_MIN_N)
-                # Bỏ high_performer nếu đã có anomaly khác (ưu tiên cảnh báo)
-                _non_positive = [a for a in _anomalies if a['id'] != 'high_performer']
-                _positive     = [a for a in _anomalies if a['id'] == 'high_performer']
-                _show = _non_positive if _non_positive else _positive
-                if _show:
-                    _all_units.append((_uname, len(_udf), _show))
+            _unit_options = sorted([
+                u for u, g in _df_valid.groupby(_sec_col)
+                if len(g) >= _MIN_N
+            ])
 
-        if _all_units:
-            st.markdown(section_header(
-                "Deep Dive — Phân tích bất thường theo đơn vị",
-                "Tự động phát hiện các pattern rủi ro và điểm nổi bật ở từng bộ phận (N ≥ 15)"
-            ), unsafe_allow_html=True)
+            if _unit_options:
+                st.markdown(section_header(
+                    "Deep Dive — Phân tích chi tiết theo đơn vị",
+                    "Chọn một bộ phận để xem phân tích chuyên sâu về các chỉ số và dấu hiệu bất thường"
+                ), unsafe_allow_html=True)
 
-            # Sắp xếp: cảnh báo nghiêm trọng lên trên
-            _PRIORITY = {'flight_risk': 0, 'silent_disengaged': 1, 'committed_pressure': 2,
-                         'manager_island': 3, 'data_reliability': 4, 'high_performer': 5}
-            _all_units.sort(key=lambda x: min(_PRIORITY.get(a['id'], 9) for a in x[2]))
+                _sel_unit = st.selectbox(
+                    "Chọn đơn vị cần phân tích:",
+                    options=["— Chọn bộ phận —"] + _unit_options,
+                    key=f"deepdive_unit_{cfg.get('id','')}"
+                )
 
-            for _uname, _usize, _anomalies in _all_units:
-                # Build badge HTML
-                _badges = ''.join([
-                    f'<span style="background:{a["bg"]};color:{a["color"]};'
-                    f'font-size:0.68rem;font-weight:700;padding:3px 10px;'
-                    f'border-radius:20px;margin-right:6px;white-space:nowrap;">'
-                    f'{a["label"]}</span>'
-                    for a in _anomalies
-                ])
+                if _sel_unit and _sel_unit != "— Chọn bộ phận —":
+                    _udf = _df_valid[_df_valid[_sec_col] == _sel_unit].copy()
+                    _ukpis = compute_kpis(_udf)
+                    _grp_kpis = kpis  # so sánh với toàn nhóm
 
-                # Build metrics HTML per anomaly
-                _detail_blocks = ''
-                for a in _anomalies:
-                    _metric_pills = ''.join([
-                        f'<span style="background:#F1F5F9;color:#475569;font-size:0.68rem;'
-                        f'padding:2px 8px;border-radius:6px;margin-right:4px;">'
-                        f'{k}: <strong>{v}</strong></span>'
-                        for k, v in a['metrics'].items()
-                    ])
-                    _detail_blocks += f"""
-                    <div style="border-left:3px solid {a['color']};padding:8px 12px;
-                                margin-top:8px;background:{a['bg']};border-radius:0 8px 8px 0;">
-                        <div style="font-size:0.72rem;font-weight:700;color:{a['color']};
-                                    margin-bottom:5px;">{a['label']}</div>
-                        <div style="margin-bottom:5px;">{_metric_pills}</div>
-                        <div style="font-size:0.73rem;color:#64748B;line-height:1.55;">{a['desc']}</div>
-                    </div>"""
-
-                st.markdown(f"""
-                <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;
-                            padding:14px 18px;margin-bottom:10px;">
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-                        <span style="font-size:0.88rem;font-weight:700;color:#0F172A;">{_uname}</span>
-                        <span style="font-size:0.7rem;color:#94A3B8;background:#F1F5F9;
-                                     padding:2px 8px;border-radius:6px;">N={_usize:,}</span>
-                        <div style="display:flex;flex-wrap:wrap;gap:4px;">{_badges}</div>
+                    # ── Header card ──
+                    st.markdown(f"""
+                    <div style="background:linear-gradient(135deg,#1D4ED8 0%,#3B82F6 100%);
+                                border-radius:12px;padding:16px 20px;margin:10px 0 14px 0;">
+                        <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;font-weight:600;
+                                    text-transform:uppercase;letter-spacing:0.08em;">Đơn vị được chọn</div>
+                        <div style="color:#fff;font-size:1.2rem;font-weight:800;margin-top:4px;">{_sel_unit}</div>
+                        <div style="color:rgba(255,255,255,0.65);font-size:0.78rem;margin-top:2px;">
+                            N = {len(_udf):,} nhân sự &nbsp;·&nbsp; Toàn nhóm: N = {len(df):,}
+                        </div>
                     </div>
-                    {_detail_blocks}
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+
+                    # ── Metrics so sánh với toàn nhóm ──
+                    m1, m2, m3, m4, m5 = st.columns(5)
+
+                    def _delta(unit_val, grp_val, invert=False):
+                        d = unit_val - grp_val
+                        if invert: d = -d
+                        return f"{d:+.1f}pp" if abs(d) >= 0.1 else "±0"
+
+                    with m1:
+                        st.metric("EI (%)", f"{_ukpis['ei_mean']:.1f}%",
+                                  delta=_delta(_ukpis['ei_mean'], _grp_kpis['ei_mean']))
+                    with m2:
+                        st.metric("eNPS", f"{_ukpis['enps_score']:+.0f}",
+                                  delta=_delta(_ukpis['enps_score'], _grp_kpis['enps_score']))
+                    with m3:
+                        st.metric("MEI (%)", f"{_ukpis['mei_avg']:.1f}%",
+                                  delta=_delta(_ukpis['mei_avg'], _grp_kpis['mei_avg']))
+                    with m4:
+                        st.metric("Burnout (%)", f"{_ukpis['burnout_pct']:.1f}%",
+                                  delta=_delta(_ukpis['burnout_pct'], _grp_kpis['burnout_pct'], invert=True),
+                                  delta_color="inverse")
+                    with m5:
+                        st.metric("Muốn nghỉ (%)", f"{_ukpis['intent_pct_low']:.1f}%",
+                                  delta=_delta(_ukpis['intent_pct_low'], _grp_kpis['intent_pct_low'], invert=True),
+                                  delta_color="inverse")
+
+                    st.caption("Delta (pp) so với trung bình toàn nhóm. Xanh = tốt hơn, Đỏ = kém hơn.")
+
+                    # ── Anomaly patterns ──
+                    _anomalies = detect_unit_anomalies(_udf, min_n=_MIN_N)
+                    if _anomalies:
+                        st.markdown("**Phát hiện bất thường:**")
+                        for _a in _anomalies:
+                            with st.expander(f"**{_a['label']}**", expanded=True):
+                                # Metrics pills
+                                _metric_str = "   |   ".join([f"**{k}**: {v}" for k, v in _a['metrics'].items()])
+                                st.markdown(_metric_str)
+                                st.markdown(f"> {_a['desc']}")
+                    else:
+                        st.success("Không phát hiện dấu hiệu bất thường nào ở đơn vị này.")
+
+                    # ── Pillar breakdown cho đơn vị ──
+                    _pillar_rows = []
+                    for _p, _plabel in PILLAR_LABELS.items():
+                        _pcol = f'{_p}_pct'
+                        if _pcol in _udf.columns:
+                            _pillar_rows.append({
+                                'Trụ cột': _plabel,
+                                'Đơn vị': round(_udf[_pcol].mean(), 1),
+                                'Toàn nhóm': round(df[_pcol].mean(), 1) if _pcol in df.columns else 0
+                            })
+                    if _pillar_rows:
+                        st.markdown("**5 Trụ cột Gắn kết:**")
+                        df_pillars_dd = pd.DataFrame(_pillar_rows)
+                        fig_dd = go.Figure()
+                        fig_dd.add_trace(go.Bar(
+                            name=_sel_unit, x=df_pillars_dd['Trụ cột'],
+                            y=df_pillars_dd['Đơn vị'], marker_color=COLORS['blue'],
+                            text=[f"{v:.1f}%" for v in df_pillars_dd['Đơn vị']],
+                            textposition='outside'
+                        ))
+                        fig_dd.add_trace(go.Bar(
+                            name='Toàn nhóm', x=df_pillars_dd['Trụ cột'],
+                            y=df_pillars_dd['Toàn nhóm'], marker_color='rgba(148,163,184,0.5)',
+                            text=[f"{v:.1f}%" for v in df_pillars_dd['Toàn nhóm']],
+                            textposition='outside'
+                        ))
+                        fig_dd = fig_card(fig_dd, f'Trụ cột — {_sel_unit}', 'So sánh với toàn nhóm')
+                        fig_dd.update_layout(barmode='group', xaxis_tickangle=-30,
+                                            showlegend=True, yaxis=dict(range=[0, 110]))
+                        st.plotly_chart(fig_dd, use_container_width=True)
+
     except Exception as _dd_err:
         st.caption(f"Deep Dive không khả dụng: {_dd_err}")
+
+
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 3: NHÂN KHẨU HỌC & CHỨC DANH (DEMOGRAPHICS)
