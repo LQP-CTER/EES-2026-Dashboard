@@ -263,51 +263,51 @@ def _card(accent_color: str, title: str, subtitle: str,
             for p in classification_pills
         )
         pills_html = f"""
-        <div style="margin-top: 2px;">
-            <p class="apx-label">Phân loại</p>
-            <div class="apx-cls-bar">{pills}</div>
-        </div>
-        """
+<div style="margin-top: 2px;">
+    <p class="apx-label">Phân loại</p>
+    <div class="apx-cls-bar">{pills}</div>
+</div>
+"""
 
     scale_html = ""
     if scale:
         scale_html = f"""
-        <div class="apx-meta-item">
-            <p class="apx-meta-label">Thang đo</p>
-            <p class="apx-meta-value">{scale}</p>
-        </div>
-        """
+<div class="apx-meta-item">
+    <p class="apx-meta-label">Thang đo</p>
+    <p class="apx-meta-value">{scale}</p>
+</div>
+"""
 
     questions_html = f"""
-    <div class="apx-meta-item">
-        <p class="apx-meta-label">Câu hỏi sử dụng</p>
-        <p class="apx-meta-value">{questions}</p>
-    </div>
-    """
+<div class="apx-meta-item">
+    <p class="apx-meta-label">Câu hỏi sử dụng</p>
+    <p class="apx-meta-value">{questions}</p>
+</div>
+"""
 
     meta_html = f"""
-    <div class="apx-meta-grid">
-        {questions_html}
-        {scale_html}
-    </div>
-    """
+<div class="apx-meta-grid">
+    {questions_html}
+    {scale_html}
+</div>
+"""
 
     return f"""
-    <div class="apx-card">
-        <div class="apx-card-accent" style="background: {accent_color};"></div>
-        <div class="apx-card-body">
-            <p class="apx-card-title">{title}</p>
-            <p class="apx-card-subtitle">{subtitle}</p>
-            <p class="apx-label">Ý nghĩa</p>
-            <p class="apx-desc">{description}</p>
-            <p class="apx-label">Công thức</p>
-            <div class="apx-formula-box">{formula}</div>
-            <p class="apx-note">{formula_note}</p>
-            {meta_html}
-            {pills_html}
-        </div>
+<div class="apx-card">
+    <div class="apx-card-accent" style="background: {accent_color};"></div>
+    <div class="apx-card-body">
+        <p class="apx-card-title">{title}</p>
+        <p class="apx-card-subtitle">{subtitle}</p>
+        <p class="apx-label">Ý nghĩa</p>
+        <p class="apx-desc">{description}</p>
+        <p class="apx-label">Công thức</p>
+        <div class="apx-formula-box">{formula}</div>
+        <p class="apx-note">{formula_note}</p>
+        {meta_html}
+        {pills_html}
     </div>
-    """
+</div>
+"""
 
 
 def _render_core_metrics():
