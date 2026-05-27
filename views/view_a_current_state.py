@@ -456,19 +456,19 @@ def render(df, cfg):
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: BẢNG BÁO CÁO CHI TIẾT (COMPREHENSIVE SUMMARY TABLE)
     # ══════════════════════════════════════════════════════════════
-    st.markdown(section_header("Bảng Báo Cáo Chi Tiết", "Phân tách đến cấp Bộ phận / Vùng — bảng màu Gradient (Đỏ = Kém, Xanh = Tốt)"), unsafe_allow_html=True)
+    st.markdown(section_header("Bảng Báo Cáo Chi Tiết", "Phân tách theo Phòng ban / Nhóm trong nhóm khảo sát — bảng màu Gradient (Đỏ = Kém, Xanh = Tốt)"), unsafe_allow_html=True)
     
 
-    # Determine the grouping level
-    if 'section' in df.columns and df['section'].nunique() > 1:
-        grp_col = 'section'
-        grp_name = 'Bộ phận / Vùng'
-    elif 'department' in df.columns and df['department'].nunique() > 1:
+    # Determine the grouping level — ưu tiên department (phòng ban/nhóm)
+    if 'department' in df.columns and df['department'].nunique() > 1:
         grp_col = 'department'
-        grp_name = 'Phòng ban'
+        grp_name = 'Phòng ban / Nhóm'
+    elif 'section' in df.columns and df['section'].nunique() > 1:
+        grp_col = 'section'
+        grp_name = 'Section'
     else:
-        grp_col = 'division' if 'division' in df.columns else None
-        grp_name = 'Khối'
+        grp_col = None
+        grp_name = 'Phòng ban / Nhóm'
 
     if grp_col:
         # Lọc bỏ các dòng không map được (None / Khác / Chưa xác định)
