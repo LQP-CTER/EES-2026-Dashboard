@@ -436,11 +436,11 @@ div[data-baseweb="select"] > div:hover {
     margin-bottom: 10px !important;
 }
 .ai-icon {
-    width: 22px; height: 22px;
+    width: 26px; height: 26px;
     background: #FFF3EE;
-    border-radius: 6px;
+    border-radius: 7px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.68rem; font-weight: 800; color: #FF5200;
+    color: #FF5200;
     flex-shrink: 0;
 }
 .ai-title {

@@ -534,6 +534,181 @@ TOPIC_SHORT_LABELS = {
     '⚠️ Muốn nghỉ / Bất mãn': 'Bất mãn',
 }
 
+# ============================================================
+# NHÃN CON (SUB-LABELS) — PHÂN LOẠI CHI TIẾT HƠN
+# Cấu trúc: {label_cha: {label_con: [keywords]}}
+# ============================================================
+
+TOPIC_SUB_LABELS = {
+    '😰 Áp lực & Cường độ': {
+        'Do Quản lý': [
+            'sếp giao nhiều', 'quản lý giao việc', 'am giao nhiều', 'sếp tạo áp lực',
+            'chỉ tiêu cao', 'kpi cao', 'kpi', 'chỉ tiêu', 'target',
+        ],
+        'Do Công việc': [
+            'nhiều hàng', 'hàng nhiều', 'số đơn nhiều', 'đơn nhiều', 'làm nhiều',
+            'công việc nhiều', 'khối lượng công việc', 'quá nhiều việc', 'việc nhiều',
+        ],
+        'Môi trường/Điều kiện': [
+            'nắng', 'mưa', 'thời tiết', 'đường xa', 'giao xa', 'đường xấu',
+            'nặng', 'hàng nặng', 'cồng kềnh', 'vác nặng', 'khuân vác',
+        ],
+        'Thời gian/Ca làm': [
+            'không có ngày nghỉ', 'làm ca đêm', 'tăng ca', 'overtime',
+            'giờ giấc', 'ca kéo dài', 'làm thêm giờ', 'không ngày nghỉ',
+        ],
+    },
+    '👨‍💼 Quản lý trực tiếp': {
+        'Thiên vị & Không công bằng': [
+            'thiên vị', 'ưu tiên người quen', 'không công bằng', 'ko công bằng',
+            'phân biệt', 'bất công', 'phân đơn không công bằng', 'phân đơn',
+        ],
+        'Thiếu hỗ trợ': [
+            'không hỗ trợ', 'không quan tâm', 'không lắng nghe', 'không giải quyết',
+            'am không hỗ trợ', 'sếp không hỗ trợ', 'thiếu hỗ trợ',
+        ],
+        'Giao tiếp kém': [
+            'không thông báo', 'không giải thích', 'không rõ ràng', 'mập mờ',
+            'không minh bạch', 'thông tin không rõ', 'thiếu thông tin',
+        ],
+        'Thái độ tiêu cực': [
+            'sếp tệ', 'ql không tốt', 'quản lý yếu', 'sếp quát', 'la hét',
+            'không tôn trọng', 'thái độ xấu', 'nói nặng',
+        ],
+    },
+    '💰 Thu nhập & Đơn giá': {
+        'Lương thấp': [
+            'lương thấp', 'thu nhập thấp', 'lương ít', 'lương không đủ',
+            'lương thấp quá', 'lương không xứng', 'tiền lương',
+        ],
+        'Đơn giá thấp': [
+            'đơn giá thấp', 'đơn giá ít', 'giá đơn', 'đơn giá không tốt',
+            'chiết khấu thấp', 'hoa hồng thấp', 'giảm đơn giá',
+        ],
+        'Không tăng lương': [
+            'không tăng lương', 'chưa tăng lương', 'tăng lương', 'chờ tăng lương',
+            'lương không tăng', 'lương giữ nguyên',
+        ],
+        'Khấu trừ không rõ': [
+            'trừ tiền không rõ', 'khấu trừ', 'trừ không hiểu', 'giải thích khấu trừ',
+            'không hiểu sao bị trừ', 'bảng lương không rõ',
+        ],
+    },
+    '⚖️ Phạt & Chính sách': {
+        'Phạt vô lý': [
+            'phạt vô lý', 'phạt không hợp lý', 'phạt oan', 'bị phạt oan',
+            'phạt không đúng', 'phạt quá nặng', 'phạt nặng',
+        ],
+        'Chính sách mập mờ': [
+            'chính sách không rõ', 'quy định mập mờ', 'không minh bạch',
+            'chính sách khó hiểu', 'không rõ chính sách', 'thiếu minh bạch',
+        ],
+        'Thay đổi đột ngột': [
+            'thay đổi đột ngột', 'chính sách thay đổi', 'quy định thay đổi',
+            'không báo trước', 'thay đổi bất ngờ', 'thay đổi liên tục',
+        ],
+    },
+    '🤝 Đồng nghiệp & Văn hóa': {
+        'Đoàn kết yếu': [
+            'không đoàn kết', 'ít hỗ trợ nhau', 'không hỗ trợ nhau', 'chia rẽ',
+            'ganh đua không lành mạnh', 'cạnh tranh xấu',
+        ],
+        'Xung đột nội bộ': [
+            'xung đột', 'mâu thuẫn', 'cãi nhau', 'bất đồng',
+            'không hợp nhau', 'mất đoàn kết',
+        ],
+        'Văn hóa tốt': [
+            'vui vẻ', 'hòa đồng', 'thân thiện', 'đoàn kết', 'gắn kết',
+            'hỗ trợ nhau', 'anh em tốt', 'team tốt',
+        ],
+    },
+    '🏢 Môi trường làm việc': {
+        'Cơ sở vật chất': [
+            'chật hẹp', 'không có chỗ', 'thiếu chỗ', 'bưu cục chật',
+            'không điều hòa', 'nóng', 'không quạt', 'thiếu tiện nghi',
+        ],
+        'Tải trọng thể chất': [
+            'hàng nặng', 'vác nặng', 'khuân vác', 'cồng kềnh', 'hàng cồng kềnh',
+            'tổn thương', 'đau lưng', 'mỏi người',
+        ],
+        'Điều kiện môi trường': [
+            'nắng nóng', 'mưa', 'thời tiết xấu', 'bụi', 'ô nhiễm',
+            'đường xá', 'đường xấu',
+        ],
+    },
+    '🚀 Phát triển & Thăng tiến': {
+        'Thiếu đào tạo': [
+            'không được đào tạo', 'thiếu đào tạo', 'không học', 'không có training',
+            'không được học', 'training', 'đào tạo ít',
+        ],
+        'Không có lộ trình': [
+            'không có lộ trình', 'không biết thăng tiến thế nào', 'lộ trình không rõ',
+            'không thấy cơ hội', 'không có tương lai',
+        ],
+        'Cơ hội thăng tiến ít': [
+            'ít cơ hội thăng tiến', 'không được thăng chức', 'thăng tiến khó',
+            'cơ hội ít', 'không được lên chức',
+        ],
+    },
+    '🎁 Phúc lợi & Chế độ': {
+        'Bảo hiểm': [
+            'bảo hiểm', 'bhxh', 'bảo hiểm xã hội', 'bảo hiểm y tế',
+            'không có bảo hiểm', 'đóng bảo hiểm', 'bảo hiểm thấp',
+        ],
+        'Phụ cấp & Trợ cấp': [
+            'phụ cấp', 'trợ cấp', 'xăng xe', 'hỗ trợ xăng', 'phụ cấp ít',
+            'trợ cấp ít', 'không có phụ cấp',
+        ],
+        'Thưởng': [
+            'thưởng', 'thưởng ít', 'không có thưởng', 'thưởng không công bằng',
+            'thưởng thấp', 'bonus',
+        ],
+    },
+}
+
+
+def classify_sub_topics(text, parent_topic):
+    """
+    Phân loại sub-topic (nhãn con) cho một text dựa trên parent topic.
+    Returns: list of sub-topic labels found in text.
+    """
+    if not isinstance(text, str) or parent_topic not in TOPIC_SUB_LABELS:
+        return []
+
+    text_lower = text.lower()
+    sub_labels_found = []
+    negation_words = ['không', 'ko', 'k', 'chưa', 'chả', 'đỡ', 'hết', 'ít', 'chẳng']
+
+    for sub_label, keywords in TOPIC_SUB_LABELS[parent_topic].items():
+        for kw in keywords:
+            pattern = r'(?:^|\W)(' + re.escape(kw) + r')(?:\W|$)'
+            for match in re.finditer(pattern, text_lower):
+                start_idx = match.start(1)
+                context_before = text_lower[max(0, start_idx - 25):start_idx].strip()
+                words_before = context_before.split()
+                if any(w in negation_words for w in words_before[-3:]):
+                    continue
+                sub_labels_found.append(sub_label)
+                break
+            if sub_label in sub_labels_found:
+                break
+
+    return sub_labels_found
+
+
+def extract_sub_topic_stats(texts, parent_topic):
+    """
+    Thống kê sub-topic counts từ danh sách texts cho một parent topic.
+    Returns: dict {sub_label: count}
+    """
+    counts = Counter()
+    for text in texts:
+        if text is None:
+            continue
+        for sub in classify_sub_topics(text, parent_topic):
+            counts[sub] += 1
+    return dict(counts)
+
 
 def classify_topics(text):
     """

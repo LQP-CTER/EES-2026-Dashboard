@@ -389,10 +389,74 @@ def render(df, cfg):
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
+    # SECTION 2A: BẢNG TỔNG HỢP THEO KHỐI (DIVISION SUMMARY)  ← MỚI
+    # ══════════════════════════════════════════════════════════════
+    st.markdown(section_header("Tổng Hợp Theo Khối", "So sánh các Khối trong khảo sát — bảng màu Gradient (Đỏ = Kém, Xanh = Tốt)"), unsafe_allow_html=True)
+
+    # Tìm cột phân chia Khối: ưu tiên 'nhóm' > 'section' > 'tên_bài'
+    div_col = None
+    for candidate in ['nhóm', 'group', 'tên_bài', 'section']:
+        if candidate in df.columns and df[candidate].nunique() > 1:
+            div_col = candidate
+            break
+
+    if div_col:
+        div_rows = []
+        div_pillars_seen = []
+        for dname, dg in df.groupby(div_col):
+            if len(dg) < 2:
+                continue
+            dkpi = compute_kpis(dg)
+            drow = {
+                'Khối / Nhóm': str(dname),
+                'N': dkpi['n'],
+                'EI (%)': round(dkpi['ei_mean'], 1),
+                'eNPS': round(dkpi['enps_score'], 0),
+                'MEI': round(dkpi.get('mei_avg', 0), 1),
+                'Burnout (%)': round(dkpi.get('burnout_pct', 0), 1),
+                '% Muốn nghỉ': round(dkpi['intent_pct_low'], 1),
+            }
+            for p, plabel in PILLAR_LABELS.items():
+                pcol = f'{p}_pct'
+                if pcol in dg.columns:
+                    drow[plabel] = round(dg[pcol].mean(), 1)
+                    if plabel not in div_pillars_seen:
+                        div_pillars_seen.append(plabel)
+            div_rows.append(drow)
+
+        if div_rows:
+            df_div = pd.DataFrame(div_rows).sort_values('EI (%)', ascending=False)
+            _grad_cols = ['EI (%)', 'MEI'] + div_pillars_seen
+            _red_cols  = ['Burnout (%)', '% Muốn nghỉ']
+            styled_div = df_div.style \
+                .background_gradient(cmap='RdYlGn', subset=[c for c in _grad_cols if c in df_div.columns], vmin=50, vmax=90) \
+                .background_gradient(cmap='RdYlGn_r', subset=[c for c in _red_cols if c in df_div.columns], vmin=0, vmax=20) \
+                .format(precision=1)
+
+            col_cfg_div = {
+                'Khối / Nhóm': st.column_config.TextColumn('Khối / Nhóm', width='medium'),
+                'N': st.column_config.NumberColumn('Mẫu (N)', format='%d', width='small'),
+                'EI (%)': st.column_config.NumberColumn('EI (%)', format='%.1f%%', width='small'),
+                'eNPS': st.column_config.NumberColumn('eNPS', format='%+.0f', width='small'),
+                'MEI': st.column_config.NumberColumn('MEI', format='%.1f', width='small'),
+                'Burnout (%)': st.column_config.NumberColumn('Burnout (%)', format='%.1f%%', width='small'),
+                '% Muốn nghỉ': st.column_config.NumberColumn('% Muốn nghỉ', format='%.1f%%', width='small'),
+            }
+            for pl in div_pillars_seen:
+                col_cfg_div[pl] = st.column_config.NumberColumn(pl, format='%.1f%%', width='small')
+
+            st.dataframe(styled_div, use_container_width=True, hide_index=True, column_config=col_cfg_div)
+        else:
+            st.info("Không đủ dữ liệu để tạo bảng tổng hợp theo Khối (cần ít nhất 2 Khối với ≥ 2 người mỗi Khối).")
+    else:
+        st.info("Dữ liệu không có cột phân chia Khối (nhóm/section/tên_bài). Bảng tổng hợp theo Khối sẽ xuất hiện khi xem ở trang 'Toàn bộ Giao Hàng Nhanh'.")
+
+    # ══════════════════════════════════════════════════════════════
     # SECTION 2: BẢNG BÁO CÁO CHI TIẾT (COMPREHENSIVE SUMMARY TABLE)
     # ══════════════════════════════════════════════════════════════
     st.markdown(section_header("Bảng Báo Cáo Chi Tiết", "Phân tách đến cấp Bộ phận / Vùng — bảng màu Gradient (Đỏ = Kém, Xanh = Tốt)"), unsafe_allow_html=True)
     
+
     # Determine the grouping level
     if 'section' in df.columns and df['section'].nunique() > 1:
         grp_col = 'section'

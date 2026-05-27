@@ -270,15 +270,92 @@ def render(df, cfg):
             prompt_diff = f"Chỉ dựa vào sự khác biệt tự nhiên trong hành vi: Phân tích ngắn gọn về sự khác nhau cơ bản trong cách Promoter (người gắn bó) và Detractor (người bất mãn) phản hồi về vấn đề này. Tại sao lãnh đạo cần quan tâm cả 2 luồng ý kiến?"
             render_ai_insight_card("AI Sentiment Comparison", ai_data_diff, prompt_diff, custom_style="margin-top: 16px; margin-bottom: 24px;")
 
-    # ── TAB 5: TRÍCH DẪN TIÊU BIỂU ──
+    # ── TAB 5: TRÍCH DẪN TIÊU BIỂU + SUB-LABELS ──
     with tab5:
+        from shared.nlp_utils import (
+            TOPIC_SUB_LABELS, classify_sub_topics, extract_sub_topic_stats
+        )
         if topic_data:
-            sel_topic = st.selectbox("Chọn chủ đề", [l for l, _, _ in topic_data])
-            # Reverse map short label to full name
-            full_name = next((k for k, v in TOPIC_SHORT_LABELS.items() if v.replace('❓', '').strip() == sel_topic), sel_topic)
+            sel_topic_short = st.selectbox("Chọn chủ đề", [l for l, _, _ in topic_data])
+            # Reverse map short label → full name
+            full_name = next(
+                (k for k, v in TOPIC_SHORT_LABELS.items()
+                 if v.replace('❓', '').strip() == sel_topic_short),
+                sel_topic_short
+            )
+
+            # ── Sub-label breakdown (if this parent has children) ──
+            if full_name in TOPIC_SUB_LABELS:
+                sub_counts = extract_sub_topic_stats(texts, full_name)
+                if sub_counts:
+                    total_sub = sum(sub_counts.values())
+                    st.markdown(f"""
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;
+                                padding:14px 18px;margin-bottom:16px;">
+                        <div style="font-size:0.7rem;font-weight:700;color:#94A3B8;
+                                    text-transform:uppercase;letter-spacing:0.09em;margin-bottom:10px;">
+                            Phân tích chi tiết nhãn con — {sel_topic_short}
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    """, unsafe_allow_html=True)
+
+                    color_pool = [
+                        '#FF5200', '#F59E0B', '#10B981', '#3B82F6',
+                        '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899'
+                    ]
+                    for i, (sub_label, count) in enumerate(
+                        sorted(sub_counts.items(), key=lambda x: -x[1])
+                    ):
+                        pct = count / len(texts) * 100
+                        col_hex = color_pool[i % len(color_pool)]
+                        st.markdown(f"""
+                        <span style="background:{col_hex}18;color:{col_hex};
+                                     border:1px solid {col_hex}44;
+                                     padding:4px 12px;border-radius:20px;
+                                     font-size:0.78rem;font-weight:600;display:inline-block;">
+                            {sub_label} &nbsp;·&nbsp; {count} ({pct:.1f}%)
+                        </span>
+                        """, unsafe_allow_html=True)
+
+                    st.markdown("</div></div>", unsafe_allow_html=True)
+
+                    # Bar chart of sub-labels
+                    import plotly.express as px
+                    from shared.plotly_theme import fig_card
+                    df_sub = pd.DataFrame(
+                        [(k, v, v / len(texts) * 100) for k, v in sub_counts.items()],
+                        columns=['Nhãn con', 'Số lượng', '%']
+                    ).sort_values('Số lượng', ascending=True)
+
+                    fig_sub = px.bar(
+                        df_sub, y='Nhãn con', x='Số lượng', orientation='h',
+                        text='Số lượng', color='%',
+                        color_continuous_scale='Oranges'
+                    )
+                    fig_sub = fig_card(
+                        fig_sub,
+                        f'Phân tách nhãn con — {sel_topic_short}',
+                        f'Nhân viên đề cập đến nguyên nhân chi tiết nào nhiều nhất?'
+                    )
+                    fig_sub.update_traces(textposition='outside')
+                    fig_sub.update_layout(
+                        height=max(300, len(df_sub) * 50 + 80),
+                        coloraxis_showscale=False,
+                        margin=dict(l=160)
+                    )
+                    st.plotly_chart(fig_sub, use_container_width=True)
+                else:
+                    st.info(f"Không tìm thấy đủ dữ liệu nhãn con cho chủ đề '{sel_topic_short}'. "
+                            f"Hệ thống sẽ tiếp tục hiển thị trích dẫn gốc bên dưới.")
+            else:
+                st.info(f"Chủ đề '{sel_topic_short}' chưa có phân tích nhãn con.")
+
+            st.markdown("---")
+            st.markdown(f"**📝 Trích dẫn tiêu biểu — {sel_topic_short}**")
             quotes = extract_representative_quotes(df, cc, full_name, n=10)
             if quotes:
                 for i, q in enumerate(quotes, 1):
                     st.markdown(f"> {i}. *\"{q[:200]}\"*")
             else:
                 st.info("Không tìm thấy trích dẫn.")
+
