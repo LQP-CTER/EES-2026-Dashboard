@@ -677,12 +677,13 @@ with st.sidebar:
 
     # Main navigation
     st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
-    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts]
+    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["H. Phụ lục & Chỉ số"]
     sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
     is_company = (sel_dashboard == COMPANY_LABEL)
+    is_appendix = (sel_dashboard == "H. Phụ lục & Chỉ số")
 
     # Initialize scope variables
     sel_group   = None
@@ -690,7 +691,10 @@ with st.sidebar:
     df_filtered = None
     n_before    = 0
 
-    if is_company:
+    if is_appendix:
+        pass
+
+    elif is_company:
         # Company-level tenure filter
         st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
         sel_tenure_sb = st.selectbox(
@@ -717,7 +721,6 @@ with st.sidebar:
             "E. Rủi ro & Hệ lụy",
             "F. Ưu tiên hành động",
             "G. Đo lường Impact",
-            "H. Phụ lục & Chỉ số",
         ]
         sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
 
@@ -769,7 +772,15 @@ with st.sidebar:
         if sel_sec  != 'Tất cả Section':   df_filtered = df_filtered[df_filtered['section']     == sel_sec]
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
-if is_company:
+if is_appendix:
+    try:
+        view_h_appendix.render()
+    except Exception as e:
+        st.error(f"Lỗi khi tải Phụ lục: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+
+elif is_company:
     try:
         all_data = load_all_available()
         filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}
@@ -813,8 +824,6 @@ else:
             view_f_action_priority.render(df_filtered, cfg)
         elif sel_nav == "G. Đo lường Impact":
             view_g_kpi_impact.render(df_filtered, cfg)
-        elif sel_nav == "H. Phụ lục & Chỉ số":
-            view_h_appendix.render(df_filtered, cfg)
         else:
             st.info("Chọn một góc nhìn từ sidebar bên trái.")
     except Exception as e:
