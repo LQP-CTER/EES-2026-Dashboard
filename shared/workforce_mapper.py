@@ -71,7 +71,7 @@ def load_workforce_and_mapping() -> tuple[pd.DataFrame, dict, dict]:
     # 2. Tải Workforce (Ưu tiên Supabase vì siêu nặng)
     try:
         conn = st.connection("supabase", type="sql")
-        df_wf = conn.query("SELECT * FROM hris_workforce", ttl=3600)
+        df_wf = conn.query("SELECT * FROM workforce_data", ttl=3600)
     except Exception as db_err:
         print(f"Lỗi đọc Supabase ({db_err}), fallback Workforce về Google Sheets...")
         for attempt in range(3):
