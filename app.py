@@ -677,13 +677,13 @@ with st.sidebar:
 
     # Main navigation
     st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
-    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["H. Phụ lục & Chỉ số"]
+    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["H. Phụ lục"]
     sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
     is_company = (sel_dashboard == COMPANY_LABEL)
-    is_appendix = (sel_dashboard == "H. Phụ lục & Chỉ số")
+    is_appendix = (sel_dashboard == "H. Phụ lục")
 
     # Initialize scope variables
     sel_group   = None
