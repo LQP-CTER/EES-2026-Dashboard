@@ -88,8 +88,24 @@ def load_group(group_id: str):
     df['n_valid_likert'] = df[likert_cols].notna().sum(axis=1)
     df['flag_straightline'] = (df['_likert_sd'] == 0) & (df['n_valid_likert'] >= 10)
     df['flag_too_missing'] = (df[likert_cols].isna().sum(axis=1) / len(likert_cols) * 100) > 80
-    if group_id in ['1A', '1B', '3B']:
-        df_clean = df.copy() # Bỏ qua bộ lọc rác theo yêu cầu để giữ nguyên khảo sát
+
+    # Hàm kiểm tra câu hỏi mở có ý nghĩa không
+    def is_meaningless(text):
+        if pd.isna(text): return True
+        t = str(text).strip().lower()
+        if t in ['', 'không', 'khong', 'không có', 'khong co', 'không ý kiến', 'khong y kien', 'k', 'ko', 'none', 'na', 'n/a', '-', '.']:
+            return True
+        if len(t) < 2 and not t.isalnum(): return True
+        return False
+
+    df['flag_empty_open'] = df[open_cols].apply(lambda row: all(is_meaningless(x) for x in row), axis=1) if open_cols else True
+    df['flag_straightline_and_empty'] = df['flag_straightline'] & df['flag_empty_open']
+
+    if group_id in ['1A', '1B']:
+        # Đối với 1A, 1B: Loại nếu đánh bừa (straight-line) VÀ không ghi ý kiến mở
+        df_clean = df[~df['flag_straightline_and_empty']].copy()
+    elif group_id == '3B':
+        df_clean = df.copy() # Bỏ qua bộ lọc rác theo yêu cầu trước đó để giữ nguyên khảo sát
     else:
         df_clean = df[~(df['flag_too_missing'] | df['flag_straightline'])].copy()
 
