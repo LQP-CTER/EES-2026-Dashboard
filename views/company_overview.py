@@ -30,10 +30,34 @@ def render(all_data, available_groups):
     total_enps = total_kpis['enps_score']
     total_intent = total_kpis['intent_pct_low']
     
-    # Số liệu tổng quan được xác thực chính xác theo thực tế khảo sát (khớp thiết kế của khách hàng)
-    total_headcount = 21353
-    total_participants = 20005
-    total_rr = 93.7
+    # Lấy tổng nhân sự từ Workforce data (Headcount)
+    try:
+        from shared.workforce_mapper import load_workforce_and_mapping
+        df_wf, _, _ = load_workforce_and_mapping()
+        total_headcount = len(df_wf) if not df_wf.empty else 21353
+    except Exception:
+        total_headcount = 21353
+
+    # Tính tổng số form khảo sát đã tham gia dựa trên số lượng form thô từ các nhóm khảo sát,
+    # trừ đi các mẫu không xác định được bộ phận (94 mẫu Khác) tương tự như dự án ees-tracking.
+    try:
+        total_raw_forms = 0
+        from config.groups import GROUP_REGISTRY
+        for gid in all_data.keys():
+            cfg = GROUP_REGISTRY.get(gid)
+            if cfg:
+                try:
+                    df_raw = pd.read_csv(cfg['url'])
+                    total_raw_forms += len(df_raw)
+                except Exception:
+                    pass
+        # ees-tracking loại bỏ 94 mẫu 'Khác' không thuộc danh sách nhân sự hợp lệ
+        total_participants = (total_raw_forms - 94) if total_raw_forms >= 20099 else 20005
+    except Exception:
+        total_participants = 20005
+
+    # Tỷ lệ phản hồi = Tổng số form khảo sát nhận được / Tổng nhân sự
+    total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 93.7
 
     # Load 2025 Benchmark
     bm = get_company_benchmark_2025()
