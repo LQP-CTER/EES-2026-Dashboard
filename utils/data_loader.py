@@ -33,7 +33,14 @@ def load_group(group_id: str):
     from config.groups import GROUP_REGISTRY
     cfg = GROUP_REGISTRY[group_id]
     codebook = cfg['codebook']
-    df_raw = pd.read_csv(cfg['url'])
+    try:
+        # Load directly from Supabase via standard SQL Connection
+        conn = st.connection("supabase", type="sql")
+        table_name = f"survey_{group_id.lower()}"
+        df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
+    except Exception as e:
+        # Fallback to CSV if DB is not reachable
+        df_raw = pd.read_csv(cfg['url'])
     n_before = len(df_raw)
 
     # Rename columns
