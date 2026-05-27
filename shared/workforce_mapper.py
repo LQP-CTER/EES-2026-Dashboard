@@ -56,20 +56,26 @@ def load_workforce_and_mapping() -> tuple[pd.DataFrame, dict, dict]:
     df_wf = pd.DataFrame()
     df_map = pd.DataFrame()
     
-    for attempt in range(3):
-        try:
+    try:
+        conn = st.connection("supabase", type="sql")
+        df_wf = conn.query("SELECT * FROM hris_workforce", ttl=3600)
+        df_map = conn.query("SELECT * FROM hris_mapping", ttl=3600)
+    except Exception as db_err:
+        print(f"Lỗi đọc Supabase ({db_err}), fallback về Google Sheets...")
+        for attempt in range(3):
             try:
-                df_wf = pd.read_excel(export_url, sheet_name="Workforce Data", engine="calamine")
-                df_map = pd.read_excel(export_url, sheet_name="Mapping", engine="calamine")
-            except ImportError:
-                df_wf = pd.read_excel(export_url, sheet_name="Workforce Data")
-                df_map = pd.read_excel(export_url, sheet_name="Mapping")
-            break
-        except Exception as e:
-            if attempt == 2:
-                print(f"Lỗi tải Workforce: {e}")
-            else:
-                time.sleep(2)
+                try:
+                    df_wf = pd.read_excel(export_url, sheet_name="Workforce Data", engine="calamine")
+                    df_map = pd.read_excel(export_url, sheet_name="Mapping", engine="calamine")
+                except ImportError:
+                    df_wf = pd.read_excel(export_url, sheet_name="Workforce Data")
+                    df_map = pd.read_excel(export_url, sheet_name="Mapping")
+                break
+            except Exception as e:
+                if attempt == 2:
+                    print(f"Lỗi tải Workforce: {e}")
+                else:
+                    time.sleep(2)
 
     # ── Chuẩn hóa workforce ──
     if df_wf.empty:
