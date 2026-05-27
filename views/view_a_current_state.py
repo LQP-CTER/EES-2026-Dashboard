@@ -9,10 +9,6 @@ from utils.ai_generator import render_ai_insight_card
 def render(df, cfg):
     apply_theme()
     kpis = compute_kpis(df)
-
-    # ══════════════════════════════════════════════════════════════
-    # SECTION 0: METRIC EDUCATION PANEL — Hướng dẫn đọc chỉ số
-    # ══════════════════════════════════════════════════════════════
     from shared.plotly_theme import make_html_kpi, section_header
 
     _ei_v      = kpis['ei_mean']
@@ -43,104 +39,88 @@ def render(df, cfg):
         if v <= 30: return ("Cần chú ý","#CA8A04", "#FEFCE8")
         return            ("Nguy hiểm",  "#DC2626", "#FEF2F2")
     def _stay_tag(v):
-        if v >= 4.0: return ("Tốt",      "#15803D", "#F0FDF4")
+        if v >= 4.0: return ("Tốt",       "#15803D", "#F0FDF4")
         if v >= 3.0: return ("Trung bình","#CA8A04", "#FEFCE8")
         return             ("Nguy hiểm",  "#DC2626", "#FEF2F2")
 
     _ei_s, _enps_s, _risk_s = _ei_tag(_ei_v), _enps_tag(_enps_v), _risk_tag(_risk_v)
     _burnout_s, _stay_s = _burnout_tag(_burnout_v), _stay_tag(_stay_v)
 
-    st.markdown(f"""
-    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:16px 20px;margin-bottom:20px;">
-        <div style="font-size:0.68rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">
-            Hướng dẫn đọc chỉ số — Bạn đang xem điều gì?
+    # ══ SECTION 1: COMPACT HERO KPI — 1 hàng 6 cột ══
+    st.markdown(
+        f"<div style='font-size:0.85rem;color:#64748B;margin-bottom:10px;'>"
+        f"Quy mô mẫu: <strong style='color:#1D4ED8;'>{len(df):,}</strong> nhân sự</div>",
+        unsafe_allow_html=True
+    )
+
+    def _kpi_chip(label, value, tag_text, tag_color, tag_bg, sub, border_color):
+        return (
+            f'<div style="background:#fff;border:1px solid #E2E8F0;border-top:3px solid {border_color};'
+            f'border-radius:10px;padding:13px 14px;height:100%;box-sizing:border-box;">'
+            f'<div style="font-size:0.64rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;'
+            f'color:#94A3B8;margin-bottom:7px;">{label}</div>'
+            f'<div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;">'
+            f'<span style="font-size:1.55rem;font-weight:900;color:#0A1F44;letter-spacing:-0.03em;line-height:1;">{value}</span>'
+            f'<span style="font-size:0.68rem;font-weight:700;color:{tag_color};background:{tag_bg};'
+            f'padding:2px 7px;border-radius:20px;white-space:nowrap;">{tag_text}</span>'
+            f'</div>'
+            f'<div style="font-size:0.67rem;color:#94A3B8;margin-top:5px;">{sub}</div>'
+            f'</div>'
+        )
+
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    with c1:
+        st.markdown(_kpi_chip("Engagement (EI)", f"{_ei_v:.1f}%", _ei_s[0], _ei_s[1], _ei_s[2],
+                              "Ngưỡng tốt ≥ 65%", "#3B82F6"), unsafe_allow_html=True)
+    with c2:
+        st.markdown(_kpi_chip("eNPS", f"{_enps_v:+.0f}", _enps_s[0], _enps_s[1], _enps_s[2],
+                              "Tốt ≥ +30 | Xấu < 0", "#F59E0B"), unsafe_allow_html=True)
+    with c3:
+        mei_tag = _ei_tag(_mei_v)
+        st.markdown(_kpi_chip("Manager MEI", f"{_mei_v:.1f}%", mei_tag[0], mei_tag[1], mei_tag[2],
+                              "Xuất sắc ≥ 75%", "#10B981"), unsafe_allow_html=True)
+    with c4:
+        st.markdown(_kpi_chip("Rủi ro nghỉ", f"{_risk_v:.1f}%", _risk_s[0], _risk_s[1], _risk_s[2],
+                              "Cảnh báo > 15%", "#EF4444"), unsafe_allow_html=True)
+    with c5:
+        st.markdown(_kpi_chip("Burnout", f"{_burnout_v:.1f}%", _burnout_s[0], _burnout_s[1], _burnout_s[2],
+                              "An toàn ≤ 15%", "#8B5CF6"), unsafe_allow_html=True)
+    with c6:
+        st.markdown(_kpi_chip("Ý định ở lại", f"{_stay_v:.2f}/5", _stay_s[0], _stay_s[1], _stay_s[2],
+                              f"Flight {_stay_fl:.0f}% · Stable {_stay_st:.0f}%", "#06B6D4"), unsafe_allow_html=True)
+
+    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+
+    # ══ HƯỚNG DẪN ĐỌC CHỈ SỐ — Thu gọn thành expander ══
+    with st.expander("ℹ️ Hướng dẫn đọc chỉ số — Bạn đang xem điều gì?", expanded=False):
+        st.markdown(f"""
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;padding:4px 0;">
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #3B82F6;">
+                <div style="font-size:0.75rem;font-weight:700;color:#1D4ED8;margin-bottom:4px;">Engagement Index (EI) · {_ei_v:.1f}%&nbsp;<span style="background:{_ei_s[2]};color:{_ei_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;">{_ei_s[0]}</span></div>
+                <div style="font-size:0.76rem;color:#64748B;line-height:1.5;">Tỷ lệ nhân viên <strong>thực sự gắn kết</strong> — không chỉ đến làm việc mà còn nỗ lực vượt kỳ vọng và muốn ở lại lâu dài.<br><span style="font-size:0.7rem;color:#94A3B8;">Ngưỡng lành mạnh ≥ 65% · Xuất sắc ≥ 80%</span></div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #F59E0B;">
+                <div style="font-size:0.75rem;font-weight:700;color:#B45309;margin-bottom:4px;">eNPS · {_enps_v:+.0f} điểm&nbsp;<span style="background:{_enps_s[2]};color:{_enps_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;">{_enps_s[0]}</span></div>
+                <div style="font-size:0.76rem;color:#64748B;line-height:1.5;">Nhân viên có <strong>sẵn sàng giới thiệu GHN</strong> là nơi làm việc tốt không? Thang −100 → +100.<br><span style="font-size:0.7rem;color:#94A3B8;">Tích cực ≥ 0 · Xuất sắc ≥ +30</span></div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #10B981;">
+                <div style="font-size:0.75rem;font-weight:700;color:#065F46;margin-bottom:4px;">Manager Effectiveness (MEI) · {_mei_v:.1f}%</div>
+                <div style="font-size:0.76rem;color:#64748B;line-height:1.5;">Chất lượng <strong>quản lý trực tiếp</strong> qua đánh giá của nhân viên: hỗ trợ, công bằng và tạo động lực.<br><span style="font-size:0.7rem;color:#94A3B8;">Tốt ≥ 65% · Xuất sắc ≥ 75%</span></div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #EF4444;">
+                <div style="font-size:0.75rem;font-weight:700;color:#991B1B;margin-bottom:4px;">Rủi ro nghỉ việc · {_risk_v:.1f}%&nbsp;<span style="background:{_risk_s[2]};color:{_risk_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;">{_risk_s[0]}</span></div>
+                <div style="font-size:0.76rem;color:#64748B;line-height:1.5;">Tỷ lệ nhân viên cho biết <strong>có ý định rời GHN</strong> trong vòng 3 tháng tới.<br><span style="font-size:0.7rem;color:#94A3B8;">Cảnh báo &gt; 15% · Nguy hiểm &gt; 25%</span></div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #8B5CF6;">
+                <div style="font-size:0.75rem;font-weight:700;color:#6D28D9;margin-bottom:4px;">Burnout Score · {_burnout_v:.1f}%&nbsp;<span style="background:{_burnout_s[2]};color:{_burnout_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;">{_burnout_s[0]}</span></div>
+                <div style="font-size:0.76rem;color:#64748B;line-height:1.5;">Tỷ lệ nhân viên có dấu hiệu <strong>quá tải và kiệt sức</strong> — càng cao càng nguy hiểm.<br><span style="font-size:0.7rem;color:#94A3B8;">An toàn ≤ 15% · Cần chú ý ≤ 30%</span></div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #06B6D4;">
+                <div style="font-size:0.75rem;font-weight:700;color:#0E7490;margin-bottom:4px;">Ý định Ở lại (Q22) · {_stay_v:.2f}/5&nbsp;<span style="background:{_stay_s[2]};color:{_stay_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;">{_stay_s[0]}</span></div>
+                <div style="font-size:0.76rem;color:#64748B;line-height:1.5;">Mức độ nhân viên <strong>có kế hoạch gắn bó với GHN</strong>. Thang 1–5.<br><span style="font-size:0.7rem;color:#94A3B8;">Flight Risk: Q22 ≤ 2 ({_stay_fl:.1f}%) · At Risk: Q22 = 3 ({_stay_ar:.1f}%) · Stable: Q22 ≥ 4 ({_stay_st:.1f}%)</span></div>
+            </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px;">
-            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #3B82F6;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-                <div style="font-size:0.75rem;font-weight:700;color:#1D4ED8;margin-bottom:5px;">
-                    Engagement Index · {_ei_v:.1f}%&nbsp;
-                    <span style="background:{_ei_s[2]};color:{_ei_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_ei_s[0]}</span>
-                </div>
-                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
-                    Tỷ lệ nhân viên <strong style="color:#475569;">thực sự gắn kết</strong> — không chỉ đến làm việc mà còn nỗ lực vượt kỳ vọng và muốn ở lại lâu dài.
-                    <br><span style="font-size:0.71rem;color:#94A3B8;">Ngưỡng lành mạnh ≥ 65% · Xuất sắc ≥ 80%</span>
-                </div>
-            </div>
-            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #F59E0B;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-                <div style="font-size:0.75rem;font-weight:700;color:#B45309;margin-bottom:5px;">
-                    eNPS · {_enps_v:+.0f} điểm&nbsp;
-                    <span style="background:{_enps_s[2]};color:{_enps_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_enps_s[0]}</span>
-                </div>
-                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
-                    Nhân viên có <strong style="color:#475569;">sẵn sàng giới thiệu GHN</strong> là nơi làm việc tốt không? Thang −100 → +100.
-                    <br><span style="font-size:0.71rem;color:#94A3B8;">Tích cực ≥ 0 · Xuất sắc ≥ +30</span>
-                </div>
-            </div>
-            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #10B981;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-                <div style="font-size:0.75rem;font-weight:700;color:#065F46;margin-bottom:5px;">
-                    Manager Effectiveness (MEI) · {_mei_v:.1f}%
-                </div>
-                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
-                    Chất lượng <strong style="color:#475569;">quản lý trực tiếp</strong> qua đánh giá của nhân viên: hỗ trợ, công bằng và tạo động lực.
-                    <br><span style="font-size:0.71rem;color:#94A3B8;">Tốt ≥ 65% · Xuất sắc ≥ 75%</span>
-                </div>
-            </div>
-            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #EF4444;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-                <div style="font-size:0.75rem;font-weight:700;color:#991B1B;margin-bottom:5px;">
-                    Rủi ro nghỉ việc · {_risk_v:.1f}%&nbsp;
-                    <span style="background:{_risk_s[2]};color:{_risk_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_risk_s[0]}</span>
-                </div>
-                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
-                    Tỷ lệ nhân viên cho biết <strong style="color:#475569;">có ý định rời GHN</strong> trong vòng 3 tháng tới.
-                    <br><span style="font-size:0.71rem;color:#94A3B8;">Cảnh báo &gt; 15% · Nguy hiểm &gt; 25%</span>
-                </div>
-            </div>
-            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #8B5CF6;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-                <div style="font-size:0.75rem;font-weight:700;color:#6D28D9;margin-bottom:5px;">
-                    Burnout Score &middot; {_burnout_v:.1f}%&nbsp;
-                    <span style="background:{_burnout_s[2]};color:{_burnout_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_burnout_s[0]}</span>
-                </div>
-                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
-                    Tỷ lệ nhân viên có dấu hiệu <strong style="color:#475569;">quá tải và kiệt sức</strong> — càng cao càng nguy hiểm về năng suất và nghỉ việc.
-                    <br><span style="font-size:0.71rem;color:#94A3B8;">An toàn &le; 15% &middot; Cần chú ý &le; 30%</span>
-                </div>
-            </div>
-            <div style="background:white;border-radius:10px;padding:12px 14px;border-left:3px solid #06B6D4;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-                <div style="font-size:0.75rem;font-weight:700;color:#0E7490;margin-bottom:5px;">
-                    Điểm Ý định ửe lại (Q22) &middot; {_stay_v:.2f}/5&nbsp;
-                    <span style="background:{_stay_s[2]};color:{_stay_s[1]};padding:1px 7px;border-radius:9px;font-size:0.67rem;font-weight:700;">{_stay_s[0]}</span>
-                </div>
-                <div style="font-size:0.77rem;color:#64748B;line-height:1.55;">
-                    Mức độ nhân viên <strong style="color:#475569;">có kế hoạch gắn bó với GHN</strong> trong thời gian tới. Thang 1&ndash;5.
-                    <br><span style="font-size:0.71rem;color:#94A3B8;">Flight Risk: Q22 &le; 2 ({_stay_fl:.1f}%) &middot; At Risk: Q22 = 3 ({_stay_ar:.1f}%) &middot; Stable: Q22 &ge; 4 ({_stay_st:.1f}%)</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ══ SECTION 1: HERO METRICS ══
-    st.markdown(f"<div style='font-size:1.1rem; font-weight:600; color:#0F172A; margin-bottom:15px; margin-top:20px;'>Quy mô mẫu dữ liệu hiện tại: <span style='color:#1D4ED8;'>{len(df):,}</span> nhân sự</div>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(make_html_kpi('Engagement (EI)', f"{kpis['ei_mean']:.1f}%", color="blue", icon="", progress_val=kpis['ei_mean'], delta="+2.1%"), unsafe_allow_html=True)
-    with col2:
-        st.markdown(make_html_kpi('eNPS Score', f"{kpis['enps_score']:+.0f}", color="orange", icon="", progress_val=(kpis['enps_score']+100)/2, delta="+4"), unsafe_allow_html=True)
-    with col3:
-        st.markdown(make_html_kpi('Manager EI (MEI)', f"{kpis['mei_avg']:.1f}%", color="green", icon="", progress_val=kpis['mei_avg'], delta="+1.2%"), unsafe_allow_html=True)
-
-    col4, col5, col6 = st.columns(3)
-    with col4:
-        st.markdown(make_html_kpi('Rủi ro nghỉ việc', f"{kpis['intent_pct_low']:.1f}%", color="red", icon="", progress_val=kpis['intent_pct_low'], delta="-1.5%"), unsafe_allow_html=True)
-    with col5:
-        st.markdown(make_html_kpi('Burnout Score', f"{kpis['burnout_pct']:.1f}%", color="purple", icon="", progress_val=kpis['burnout_pct']), unsafe_allow_html=True)
-    with col6:
-        stay_label = f"{kpis.get('stay_score_avg',0):.2f}/5"
-        st.markdown(make_html_kpi('Ý định Ở lại (Q22)', stay_label, color="teal", icon="", progress_val=kpis.get('stay_score_avg', 0) / 5 * 100), unsafe_allow_html=True)
-
-
-    # ── eNPS + EI Distribution + Pillars ──
-    col1, col2, col3 = st.columns([1, 1.2, 1.2])
+        """, unsafe_allow_html=True)
 
     with col1:
         fig1 = go.Figure(go.Pie(
