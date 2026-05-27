@@ -116,7 +116,7 @@ from views import (
     company_overview, hris_linkage,
     view_a_current_state, view_b_problem_groups,
     view_c_key_issues, view_d_root_cause,
-    view_e_impact_risk, view_f_action_priority, view_g_kpi_impact
+    view_e_impact_risk, view_f_action_priority, view_g_kpi_impact, view_h_appendix
 )
 
 # ── Custom CSS ──────────────────────────────────────────────────────────────
@@ -717,6 +717,7 @@ with st.sidebar:
             "E. Rủi ro & Hệ lụy",
             "F. Ưu tiên hành động",
             "G. Đo lường Impact",
+            "H. Phụ lục & Chỉ số",
         ]
         sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
 
@@ -812,6 +813,8 @@ else:
             view_f_action_priority.render(df_filtered, cfg)
         elif sel_nav == "G. Đo lường Impact":
             view_g_kpi_impact.render(df_filtered, cfg)
+        elif sel_nav == "H. Phụ lục & Chỉ số":
+            view_h_appendix.render(df_filtered, cfg)
         else:
             st.info("Chọn một góc nhìn từ sidebar bên trái.")
     except Exception as e:
