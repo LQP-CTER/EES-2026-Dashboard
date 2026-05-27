@@ -104,10 +104,19 @@ def load_group(group_id: str):
     if group_id in ['1A', '1B']:
         # Đối với 1A, 1B: Loại nếu đánh bừa (straight-line) VÀ không ghi ý kiến mở
         df_clean = df[~df['flag_straightline_and_empty']].copy()
+        _filter_method = 'straight_and_empty'
+        _filter_desc   = 'Loại phiếu: đánh cùng 1 điểm cho tất cả câu (straight-line) VÀ không có câu trả lời mở ý nghĩa'
     elif group_id == '3B':
-        df_clean = df.copy() # Bỏ qua bộ lọc rác theo yêu cầu trước đó để giữ nguyên khảo sát
+        df_clean = df.copy()
+        _filter_method = 'none'
+        _filter_desc   = 'Giữ nguyên toàn bộ mẫu — không áp dụng bộ lọc chất lượng'
     else:
         df_clean = df[~(df['flag_too_missing'] | df['flag_straightline'])].copy()
+        _filter_method = 'standard'
+        _filter_desc   = 'Loại phiếu: bỏ trống >80% câu hỏi hoặc đánh cùng 1 điểm cho tất cả câu (straight-line)'
+
+    _n_removed = n_before - len(df_clean)
+    _pct_removed = round(_n_removed / n_before * 100, 1) if n_before > 0 else 0
 
     # Org mapping
     vung_col = df_clean.columns[10]
@@ -200,10 +209,15 @@ def load_group(group_id: str):
     df_clean = df_clean.drop(columns=[id_col])
 
     # Store metadata
-    df_clean.attrs['group_id'] = group_id
-    df_clean.attrs['likert_cols'] = likert_cols
-    df_clean.attrs['open_cols'] = open_cols
-    df_clean.attrs['codebook'] = codebook
+    df_clean.attrs['group_id']      = group_id
+    df_clean.attrs['likert_cols']   = likert_cols
+    df_clean.attrs['open_cols']     = open_cols
+    df_clean.attrs['codebook']      = codebook
+    df_clean.attrs['n_before']      = n_before
+    df_clean.attrs['n_removed']     = _n_removed
+    df_clean.attrs['pct_removed']   = _pct_removed
+    df_clean.attrs['filter_method'] = _filter_method
+    df_clean.attrs['filter_desc']   = _filter_desc
 
     return df_clean, n_before
 

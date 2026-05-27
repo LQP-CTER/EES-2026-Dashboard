@@ -47,11 +47,49 @@ def render(df, cfg):
     _burnout_s, _stay_s = _burnout_tag(_burnout_v), _stay_tag(_stay_v)
 
     # ══ SECTION 1: COMPACT HERO KPI — 1 hàng 6 cột ══
-    st.markdown(
-        f"<div style='font-size:0.85rem;color:#64748B;margin-bottom:10px;'>"
-        f"Quy mô mẫu: <strong style='color:#1D4ED8;'>{len(df):,}</strong> nhân sự</div>",
-        unsafe_allow_html=True
-    )
+    # ── Data Quality Summary Panel ──
+    _n_before    = df.attrs.get('n_before', len(df))
+    _n_removed   = df.attrs.get('n_removed', 0)
+    _pct_removed = df.attrs.get('pct_removed', 0.0)
+    _filter_desc = df.attrs.get('filter_desc', 'Áp dụng bộ lọc chất lượng tiêu chuẩn')
+    _filter_meth = df.attrs.get('filter_method', 'standard')
+    _n_final     = len(df)
+    _keep_pct    = round(_n_final / _n_before * 100, 1) if _n_before > 0 else 100
+
+    _meth_color = {"none": "#0EA5E9", "straight_and_empty": "#8B5CF6", "standard": "#10B981"}.get(_filter_meth, "#64748B")
+    _meth_label = {"none": "Không lọc", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn"}.get(_filter_meth, "Lọc chuẩn")
+
+    st.markdown(f"""
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 18px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+            <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94A3B8;">📊 Xử lý dữ liệu</span>
+            <span style="background:{_meth_color}18;color:{_meth_color};font-size:0.68rem;font-weight:700;padding:2px 10px;border-radius:20px;">{_meth_label}</span>
+            <span style="font-size:0.72rem;color:#64748B;margin-left:auto;">{_filter_desc}</span>
+        </div>
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+            <div style="text-align:center;">
+                <div style="font-size:1.3rem;font-weight:900;color:#1E293B;letter-spacing:-0.03em;">{_n_before:,}</div>
+                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu thu thập</div>
+            </div>
+            <div style="font-size:1.2rem;color:#CBD5E1;">→</div>
+            <div style="text-align:center;">
+                <div style="font-size:1.3rem;font-weight:900;color:#DC2626;letter-spacing:-0.03em;">−{_n_removed:,}</div>
+                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Loại bỏ ({_pct_removed:.1f}%)</div>
+            </div>
+            <div style="font-size:1.2rem;color:#CBD5E1;">→</div>
+            <div style="text-align:center;">
+                <div style="font-size:1.3rem;font-weight:900;color:#15803D;letter-spacing:-0.03em;">{_n_final:,}</div>
+                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu phân tích ({_keep_pct:.1f}%)</div>
+            </div>
+            <div style="flex:1;min-width:120px;">
+                <div style="background:#E2E8F0;border-radius:99px;height:6px;overflow:hidden;">
+                    <div style="background:linear-gradient(90deg,#15803D,#22C55E);height:100%;width:{_keep_pct}%;border-radius:99px;transition:width 0.5s;"></div>
+                </div>
+                <div style="font-size:0.65rem;color:#94A3B8;margin-top:3px;text-align:right;">{_keep_pct:.1f}% được sử dụng</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     def _kpi_chip(label, value, tag_text, tag_color, tag_bg, sub, border_color):
         return (
