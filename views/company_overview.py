@@ -29,7 +29,17 @@ def render(all_data, available_groups):
     total_ei = total_kpis['ei_mean']
     total_enps = total_kpis['enps_score']
     total_intent = total_kpis['intent_pct_low']
-    total_rr = round(total_n / total_n_before * 100, 1) if total_n_before > 0 else 0
+    
+    # Lấy tổng nhân sự từ Workforce data để tính tỷ lệ phản hồi chính xác
+    try:
+        from shared.workforce_mapper import load_workforce_and_mapping
+        df_wf, _, _ = load_workforce_and_mapping()
+        total_headcount = len(df_wf) if not df_wf.empty else total_n_before
+    except Exception:
+        total_headcount = total_n_before
+
+    # Tỷ lệ phản hồi = Tổng form thu được / Tổng nhân sự
+    total_rr = round((total_n_before / total_headcount) * 100, 1) if total_headcount > 0 else 0
 
     # Load 2025 Benchmark
     bm = get_company_benchmark_2025()
@@ -46,20 +56,25 @@ def render(all_data, available_groups):
         <p class="hero-subtitle">Khảo sát Mức độ Gắn kết Nhân viên 2026</p>
         <div class="hero-metrics">
             <div class="hero-metric-box">
-                <div class="hero-metric-label">Nhân sự khảo sát</div>
-                <div class="hero-metric-value">{total_n:,}</div>
+                <div class="hero-metric-label">Tổng nhân sự</div>
+                <div class="hero-metric-value">{total_headcount:,}</div>
             </div>
             <div class="hero-metric-box">
-                <div class="hero-metric-label">Tổng số mẫu (6 form)</div>
+                <div class="hero-metric-label">Form thu về</div>
                 <div class="hero-metric-value">{total_n_before:,}</div>
             </div>
             <div class="hero-metric-box">
-                <div class="hero-metric-label">Tỷ lệ phản hồi</div>
+                <div class="hero-metric-label">Mẫu hợp lệ</div>
+                <div class="hero-metric-value">{total_n:,}</div>
+            </div>
+            <div class="hero-metric-box">
+                <div class="hero-metric-label">Tỷ lệ tham gia</div>
                 <div class="hero-metric-value">{total_rr}%</div>
             </div>
         </div>
     </div>
     ''', unsafe_allow_html=True)
+
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 1: EXECUTIVE SUMMARY (Modern UI KPI Cards)
