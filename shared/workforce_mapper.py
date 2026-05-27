@@ -520,21 +520,6 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
         df_result[col] = df_result[col].replace({v: None for v in _BAD_MAP})
         df_result[col] = df_result[col].where(df_result[col].notna(), None)
 
-    # Nhóm 2A/2B: lọc bỏ section cấp KTC quá chi tiết nếu department đã là KTC tổng
-    if group in ('2A', '2B'):
-        def _clean_2ab_section(row):
-            sec = row.get('section', '')
-            dept = row.get('department', '')
-            if not sec or not dept:
-                return sec
-            sec_l = str(sec).lower()
-            dept_l = str(dept).lower()
-            # Nếu section = tên cụm KTC cụ thể nhưng dept đã là "Kho Trung Chuyển" → dùng dept
-            if ('cụm' in sec_l or 'cum' in sec_l) and 'kho trung chuyển' in dept_l:
-                return dept
-            return sec
-        df_result['section'] = df_result.apply(_clean_2ab_section, axis=1)
-
     # ── Nhóm 1A / 1B: loại bỏ các department không thuộc scope Shipper/Tài xế ──
     # Nguyên nhân: employee lookup WF trả về HR classification thực tế của người đó
     # nhưng họ điền form khảo sát nhầm nhóm (1A = Shipper, 1B = Tài xế).

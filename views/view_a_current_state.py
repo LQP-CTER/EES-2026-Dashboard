@@ -483,30 +483,59 @@ def render(df, cfg):
                     if len(dg) < 1:
                         continue
 
-                    # Nếu department = "Vùng" → thay bằng các Vùng con (section)
-                    is_vung_dept = str(dname).strip().lower() == 'vùng'
-                    if is_vung_dept and 'section' in dg.columns:
+                    # Departments cần drill down vào section nếu có dữ liệu chi tiết hơn:
+                    # - "Vùng" → Vùng HCM, HNO, DNB...
+                    # - "Kho Trung Chuyển" → Cụm KTC Xuyên Á, M12, Đài Tư...
+                    _EXPAND_DEPTS = {'vùng', 'kho trung chuyển'}
+                    dname_norm = str(dname).strip().lower()
+                    is_expand_dept = dname_norm in _EXPAND_DEPTS
+
+                    if is_expand_dept and 'section' in dg.columns:
                         _sec_valid = dg[dg['section'].notna() & ~dg['section'].isin(_BAD_VALS)]
-                        for sname, sg in _sec_valid.groupby('section', dropna=True):
-                            if len(sg) < 1:
-                                continue
-                            skpi = compute_kpis(sg)
-                            srow = {
-                                _ROW_LBL: f'  ↳ {sname}',  # indent để phân biệt là section
-                                'N': skpi['n'],
-                                'EI (%)': round(skpi['ei_mean'], 1),
-                                'eNPS': round(skpi['enps_score'], 0),
-                                'MEI': round(skpi.get('mei_avg', 0), 1),
-                                'Burnout (%)': round(skpi.get('burnout_pct', 0), 1),
-                                '% Muốn nghỉ': round(skpi['intent_pct_low'], 1),
+                        # Chỉ expand nếu có ít nhất 1 section khác tên department
+                        unique_secs = _sec_valid['section'].unique()
+                        has_specific = any(str(s).strip().lower() != dname_norm for s in unique_secs)
+
+                        if has_specific:
+                            for sname, sg in _sec_valid.groupby('section', dropna=True):
+                                if len(sg) < 1:
+                                    continue
+                                skpi = compute_kpis(sg)
+                                srow = {
+                                    _ROW_LBL: f'  ↳ {sname}',
+                                    'N': skpi['n'],
+                                    'EI (%)': round(skpi['ei_mean'], 1),
+                                    'eNPS': round(skpi['enps_score'], 0),
+                                    'MEI': round(skpi.get('mei_avg', 0), 1),
+                                    'Burnout (%)': round(skpi.get('burnout_pct', 0), 1),
+                                    '% Muốn nghỉ': round(skpi['intent_pct_low'], 1),
+                                }
+                                for p, plabel in PILLAR_LABELS.items():
+                                    pcol = f'{p}_pct'
+                                    if pcol in sg.columns:
+                                        srow[plabel] = round(sg[pcol].mean(), 1)
+                                        if plabel not in dept_pillars_seen:
+                                            dept_pillars_seen.append(plabel)
+                                dept_rows.append(srow)
+                        else:
+                            # Không có sub-section → hiển thị aggregate row cho department
+                            dkpi = compute_kpis(dg)
+                            drow = {
+                                _ROW_LBL: str(dname),
+                                'N': dkpi['n'],
+                                'EI (%)': round(dkpi['ei_mean'], 1),
+                                'eNPS': round(dkpi['enps_score'], 0),
+                                'MEI': round(dkpi.get('mei_avg', 0), 1),
+                                'Burnout (%)': round(dkpi.get('burnout_pct', 0), 1),
+                                '% Muốn nghỉ': round(dkpi['intent_pct_low'], 1),
                             }
                             for p, plabel in PILLAR_LABELS.items():
                                 pcol = f'{p}_pct'
-                                if pcol in sg.columns:
-                                    srow[plabel] = round(sg[pcol].mean(), 1)
+                                if pcol in dg.columns:
+                                    drow[plabel] = round(dg[pcol].mean(), 1)
                                     if plabel not in dept_pillars_seen:
                                         dept_pillars_seen.append(plabel)
-                            dept_rows.append(srow)
+                            dept_rows.append(drow)
                     else:
                         # Department thường (không phải Vùng) → row trực tiếp
                         dkpi = compute_kpis(dg)
