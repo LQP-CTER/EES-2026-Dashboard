@@ -66,83 +66,110 @@ def render(all_data, available_groups):
     rr_delta = total_rr - bm['response_rate']
 
     # ══════════════════════════════════════════════════════════════
-    # HERO CARD OVERVIEW (Match User Screenshot exactly)
+    # HERO CARD OVERVIEW — Survey Coverage
     # ══════════════════════════════════════════════════════════════
     st.markdown(f'''
     <style>
-    .overview-container {{
+    .cov-container {{
         display: flex;
-        background-color: #FFFFFF;
+        gap: 0;
+        background: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         margin-bottom: 28px;
         overflow: hidden;
     }}
-    .overview-section {{
+    .cov-card {{
         flex: 1;
-        padding: 28px 36px;
+        padding: 24px 28px;
         position: relative;
     }}
-    .overview-section::before {{
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 4px;
+    .cov-card + .cov-card {{
+        border-left: 1px solid #F1F5F9;
     }}
-    .overview-section-left::before {{
-        background-color: #0A1F44;
-    }}
-    .overview-section-right::before {{
-        background-color: #006FAD;
-    }}
-    .overview-divider {{
-        width: 1px;
-        background-color: #E2E8F0;
-        align-self: stretch;
-    }}
-    .overview-label {{
-        font-size: 0.8rem;
+    .cov-label {{
+        font-size: 0.68rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         color: #94A3B8;
-        margin-bottom: 12px;
-        font-family: 'Inter', sans-serif;
+        margin-bottom: 10px;
     }}
-    .overview-value {{
-        font-size: 3.2rem;
+    .cov-value {{
+        font-size: 2.4rem;
         font-weight: 800;
         line-height: 1;
-        margin-bottom: 12px;
-        letter-spacing: -0.02em;
-        font-family: 'Inter', sans-serif;
+        letter-spacing: -0.03em;
+        margin-bottom: 8px;
     }}
-    .overview-value-left {{
-        color: #0A1F44;
-    }}
-    .overview-value-right {{
-        color: #006FAD;
-    }}
-    .overview-subtext {{
-        font-size: 0.85rem;
+    .cov-sub {{
+        font-size: 0.8rem;
         color: #64748B;
         font-weight: 500;
-        font-family: 'Inter', sans-serif;
+        line-height: 1.5;
+    }}
+    .cov-progress-track {{
+        width: 100%;
+        height: 6px;
+        background: #F1F5F9;
+        border-radius: 3px;
+        margin-top: 12px;
+        overflow: hidden;
+    }}
+    .cov-progress-fill {{
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s ease;
+    }}
+    .cov-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }}
+    .cov-badge-dot {{
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
     }}
     </style>
 
-    <div class="overview-container">
-        <div class="overview-section overview-section-left">
-            <div class="overview-label">TỔNG NHÂN SỰ</div>
-            <div class="overview-value overview-value-left">{total_headcount:,}</div>
-            <div class="overview-subtext">HC của nhóm đã chọn</div>
+    <div class="cov-container">
+        <div class="cov-card">
+            <div class="cov-label">Tổng nhân sự</div>
+            <div class="cov-value" style="color: #0A1F44;">{total_headcount:,}</div>
+            <div class="cov-sub">Headcount toàn tổ chức GHN</div>
         </div>
-        <div class="overview-divider"></div>
-        <div class="overview-section overview-section-right">
-            <div class="overview-label">ĐÃ THAM GIA</div>
-            <div class="overview-value overview-value-right">{total_participants:,}</div>
-            <div class="overview-subtext">{total_rr}% trên tổng HC</div>
+        <div class="cov-card">
+            <div class="cov-label">Đã tham gia khảo sát</div>
+            <div class="cov-value" style="color: #006FAD;">{total_participants:,}</div>
+            <div class="cov-sub">
+                <span class="cov-badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
+                    <span class="cov-badge-dot" style="background: #3B82F6;"></span>
+                    {total_rr}% tỷ lệ phản hồi
+                </span>
+            </div>
+            <div class="cov-progress-track">
+                <div class="cov-progress-fill" style="width: {min(total_rr, 100):.1f}%; background: linear-gradient(90deg, #3B82F6, #006FAD);"></div>
+            </div>
+        </div>
+        <div class="cov-card">
+            <div class="cov-label">Chưa tham gia</div>
+            <div class="cov-value" style="color: #94A3B8;">{max(total_headcount - total_participants, 0):,}</div>
+            <div class="cov-sub">
+                <span class="cov-badge" style="background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0;">
+                    <span class="cov-badge-dot" style="background: #CBD5E1;"></span>
+                    {max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi
+                </span>
+            </div>
+            <div class="cov-progress-track">
+                <div class="cov-progress-fill" style="width: {min(max(round((1 - total_participants / total_headcount) * 100, 1), 0), 100):.1f}%; background: #E2E8F0;"></div>
+            </div>
         </div>
     </div>
     ''', unsafe_allow_html=True)
