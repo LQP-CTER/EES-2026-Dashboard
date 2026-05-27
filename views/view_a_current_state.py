@@ -679,8 +679,92 @@ def render(df, cfg):
 
 
     # ══════════════════════════════════════════════════════════════
+    # SECTION 2B: DEEP DIVE — Phân tích bất thường theo đơn vị
+    # ══════════════════════════════════════════════════════════════
+    try:
+        from shared.anomaly_detector import detect_unit_anomalies, PATTERNS
+        _MIN_N = 15
+        _all_units = []
+
+        # Lấy tất cả section (cấp nhỏ nhất) có đủ mẫu
+        _sec_col = None
+        for _c in ['section', 'department']:
+            if _c in df.columns and df[_c].notna().sum() > 0:
+                _sec_col = _c
+                break
+
+        if _sec_col:
+            _BAD_DD = {None, 'None', 'Khác', 'Chưa xác định', 'Không xác định', 'nan', ''}
+            _df_valid = df[df[_sec_col].notna() & ~df[_sec_col].isin(_BAD_DD)]
+            for _uname, _udf in _df_valid.groupby(_sec_col, dropna=True):
+                if len(_udf) < _MIN_N:
+                    continue
+                _anomalies = detect_unit_anomalies(_udf, min_n=_MIN_N)
+                # Bỏ high_performer nếu đã có anomaly khác (ưu tiên cảnh báo)
+                _non_positive = [a for a in _anomalies if a['id'] != 'high_performer']
+                _positive     = [a for a in _anomalies if a['id'] == 'high_performer']
+                _show = _non_positive if _non_positive else _positive
+                if _show:
+                    _all_units.append((_uname, len(_udf), _show))
+
+        if _all_units:
+            st.markdown(section_header(
+                "Deep Dive — Phân tích bất thường theo đơn vị",
+                "Tự động phát hiện các pattern rủi ro và điểm nổi bật ở từng bộ phận (N ≥ 15)"
+            ), unsafe_allow_html=True)
+
+            # Sắp xếp: cảnh báo nghiêm trọng lên trên
+            _PRIORITY = {'flight_risk': 0, 'silent_disengaged': 1, 'committed_pressure': 2,
+                         'manager_island': 3, 'data_reliability': 4, 'high_performer': 5}
+            _all_units.sort(key=lambda x: min(_PRIORITY.get(a['id'], 9) for a in x[2]))
+
+            for _uname, _usize, _anomalies in _all_units:
+                # Build badge HTML
+                _badges = ''.join([
+                    f'<span style="background:{a["bg"]};color:{a["color"]};'
+                    f'font-size:0.68rem;font-weight:700;padding:3px 10px;'
+                    f'border-radius:20px;margin-right:6px;white-space:nowrap;">'
+                    f'{a["label"]}</span>'
+                    for a in _anomalies
+                ])
+
+                # Build metrics HTML per anomaly
+                _detail_blocks = ''
+                for a in _anomalies:
+                    _metric_pills = ''.join([
+                        f'<span style="background:#F1F5F9;color:#475569;font-size:0.68rem;'
+                        f'padding:2px 8px;border-radius:6px;margin-right:4px;">'
+                        f'{k}: <strong>{v}</strong></span>'
+                        for k, v in a['metrics'].items()
+                    ])
+                    _detail_blocks += f"""
+                    <div style="border-left:3px solid {a['color']};padding:8px 12px;
+                                margin-top:8px;background:{a['bg']};border-radius:0 8px 8px 0;">
+                        <div style="font-size:0.72rem;font-weight:700;color:{a['color']};
+                                    margin-bottom:5px;">{a['label']}</div>
+                        <div style="margin-bottom:5px;">{_metric_pills}</div>
+                        <div style="font-size:0.73rem;color:#64748B;line-height:1.55;">{a['desc']}</div>
+                    </div>"""
+
+                st.markdown(f"""
+                <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;
+                            padding:14px 18px;margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+                        <span style="font-size:0.88rem;font-weight:700;color:#0F172A;">{_uname}</span>
+                        <span style="font-size:0.7rem;color:#94A3B8;background:#F1F5F9;
+                                     padding:2px 8px;border-radius:6px;">N={_usize:,}</span>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;">{_badges}</div>
+                    </div>
+                    {_detail_blocks}
+                </div>
+                """, unsafe_allow_html=True)
+    except Exception as _dd_err:
+        st.caption(f"Deep Dive không khả dụng: {_dd_err}")
+
+    # ══════════════════════════════════════════════════════════════
     # SECTION 3: NHÂN KHẨU HỌC & CHỨC DANH (DEMOGRAPHICS)
     # ══════════════════════════════════════════════════════════════
+
     st.markdown(section_header("Phân Tích Nhân Khẩu Học & Cấp Bậc", "Chênh lệch gắn kết giữa nhóm cũ/mới và các vai trò Direct vs Indirect"), unsafe_allow_html=True)
     
     demo_cols = []
