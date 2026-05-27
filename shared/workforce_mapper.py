@@ -512,13 +512,12 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
     df_result['department'] = depts
     df_result['section'] = secs
 
-    # Bắt buộc thay thế "Không xác định" thành "Chưa xác định" ở mọi nơi hoặc ngược lại.
-    # User phàn nàn "Không xác định", ta đã dùng "Chưa xác định". Cả 2 cùng là bad.
-    # Nhưng vì logic trên đã phủ kín 99.9%, số 'Chưa xác định' còn lại là những dòng thực sự thiếu dữ liệu.
-    # Ta sẽ ẩn nó bằng cách set = N/A để dễ filter.
-    df_result['division'] = df_result['division'].replace({'Chưa xác định': 'Khác', 'Không xác định': 'Khác'})
-    df_result['department'] = df_result['department'].replace({'Chưa xác định': 'Khác', 'Không xác định': 'Khác'})
-    df_result['section'] = df_result['section'].replace({'Chưa xác định': 'Khác', 'Không xác định': 'Khác'})
+    # Các dòng không map được (Chúa xác định) → giữ nguyên để lọc bỏ trong view.
+    # KHÔNG đổi thành 'Khác' nữa — dùng NA để groupby tự bỏ qua.
+    for col in ['division', 'department', 'section']:
+        df_result[col] = df_result[col].replace(
+            {'Chưa xác định': None, 'Không xác định': None, 'Khác': None}
+        )
 
     return df_result
 

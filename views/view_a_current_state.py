@@ -389,26 +389,28 @@ def render(df, cfg):
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
-    # SECTION 2A: BẢNG TỔNG HỢP THEO KHỐI (DIVISION SUMMARY)  ← MỚI
+    # SECTION 2A: BẢNG TỔNG HỢP THEO KHỐI (DIVISION SUMMARY)
     # ══════════════════════════════════════════════════════════════
     st.markdown(section_header("Tổng Hợp Theo Khối", "So sánh các Khối trong khảo sát — bảng màu Gradient (Đỏ = Kém, Xanh = Tốt)"), unsafe_allow_html=True)
 
-    # Tìm cột phân chia Khối: ưu tiên 'nhóm' > 'section' > 'tên_bài'
-    div_col = None
-    for candidate in ['nhóm', 'group', 'tên_bài', 'section']:
-        if candidate in df.columns and df[candidate].nunique() > 1:
-            div_col = candidate
-            break
+    # Dùng đúng cột 'division' — lọc bỏ None (không map được)
+    _BAD_VALS = {None, 'None', 'Khác', 'Chưa xác định', 'Không xác định', 'nan', ''}
+    if 'division' in df.columns:
+        df_div_valid = df[df['division'].notna() & ~df['division'].isin(_BAD_VALS)].copy()
+        unique_divs = df_div_valid['division'].nunique()
+    else:
+        df_div_valid = pd.DataFrame()
+        unique_divs = 0
 
-    if div_col:
+    if unique_divs > 1:
         div_rows = []
         div_pillars_seen = []
-        for dname, dg in df.groupby(div_col):
+        for dname, dg in df_div_valid.groupby('division', dropna=True):
             if len(dg) < 2:
                 continue
             dkpi = compute_kpis(dg)
             drow = {
-                'Khối / Nhóm': str(dname),
+                'Khối': str(dname),
                 'N': dkpi['n'],
                 'EI (%)': round(dkpi['ei_mean'], 1),
                 'eNPS': round(dkpi['enps_score'], 0),
@@ -425,16 +427,16 @@ def render(df, cfg):
             div_rows.append(drow)
 
         if div_rows:
-            df_div = pd.DataFrame(div_rows).sort_values('EI (%)', ascending=False)
+            df_div_tbl = pd.DataFrame(div_rows).sort_values('EI (%)', ascending=False)
             _grad_cols = ['EI (%)', 'MEI'] + div_pillars_seen
             _red_cols  = ['Burnout (%)', '% Muốn nghỉ']
-            styled_div = df_div.style \
-                .background_gradient(cmap='RdYlGn', subset=[c for c in _grad_cols if c in df_div.columns], vmin=50, vmax=90) \
-                .background_gradient(cmap='RdYlGn_r', subset=[c for c in _red_cols if c in df_div.columns], vmin=0, vmax=20) \
+            styled_div = df_div_tbl.style \
+                .background_gradient(cmap='RdYlGn', subset=[c for c in _grad_cols if c in df_div_tbl.columns], vmin=50, vmax=90) \
+                .background_gradient(cmap='RdYlGn_r', subset=[c for c in _red_cols if c in df_div_tbl.columns], vmin=0, vmax=20) \
                 .format(precision=1)
 
             col_cfg_div = {
-                'Khối / Nhóm': st.column_config.TextColumn('Khối / Nhóm', width='medium'),
+                'Khối': st.column_config.TextColumn('Khối', width='medium'),
                 'N': st.column_config.NumberColumn('Mẫu (N)', format='%d', width='small'),
                 'EI (%)': st.column_config.NumberColumn('EI (%)', format='%.1f%%', width='small'),
                 'eNPS': st.column_config.NumberColumn('eNPS', format='%+.0f', width='small'),
@@ -447,9 +449,9 @@ def render(df, cfg):
 
             st.dataframe(styled_div, use_container_width=True, hide_index=True, column_config=col_cfg_div)
         else:
-            st.info("Không đủ dữ liệu để tạo bảng tổng hợp theo Khối (cần ít nhất 2 Khối với ≥ 2 người mỗi Khối).")
+            st.info("Không đủ dữ liệu để tạo bảng tổng hợp theo Khối.")
     else:
-        st.info("Dữ liệu không có cột phân chia Khối (nhóm/section/tên_bài). Bảng tổng hợp theo Khối sẽ xuất hiện khi xem ở trang 'Toàn bộ Giao Hàng Nhanh'.")
+        st.info("Ưu ý: Khảo sát này chỉ có một Khối — bảng so sánh Khối sẽ xuất hiện khi xem ở cấp Toàn công ty.")
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: BẢNG BÁO CÁO CHI TIẾT (COMPREHENSIVE SUMMARY TABLE)
@@ -469,8 +471,11 @@ def render(df, cfg):
         grp_name = 'Khối'
 
     if grp_col:
+        # Lọc bỏ các dòng không map được (None / Khác / Chưa xác định)
+        _BAD = {None, 'None', 'Khác', 'Chưa xác định', 'Không xác định', 'nan', ''}
+        df_grp_valid = df[df[grp_col].notna() & ~df[grp_col].isin(_BAD)].copy()
         metrics_rows = []
-        for name, g in df.groupby(grp_col):
+        for name, g in df_grp_valid.groupby(grp_col, dropna=True):
             if len(g) < 1: continue # Hiển thị tất cả các phòng ban
             kpi = compute_kpis(g)
             row = {
