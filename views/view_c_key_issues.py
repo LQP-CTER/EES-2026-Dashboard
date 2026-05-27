@@ -69,19 +69,33 @@ def render(df, cfg):
         rows.append({
             'Chủ đề': short,
             'Chủ đề đầy đủ': topic,
-            'Tích cực': counts['positive'] / total * 100,
-            'Trung lập': counts['neutral'] / total * 100,
-            'Tiêu cực': counts['negative'] / total * 100,
+            'Tích cực': counts['positive'],
+            'Trung lập': counts['neutral'],
+            'Tiêu cực': counts['negative'],
             'Total': total,
-            'Pct': total / n_texts * 100,
-            'Neg_Pct': counts['negative'] / total * 100,
         })
 
-    df_topic = pd.DataFrame(rows)
+    df_raw = pd.DataFrame(rows)
 
-    if df_topic.empty:
+    if df_raw.empty:
         st.info("Không có chủ đề nào được phát hiện.")
         return
+
+    df_topic = df_raw.groupby('Chủ đề', as_index=False).agg({
+        'Chủ đề đầy đủ': 'first',
+        'Tích cực': 'sum',
+        'Trung lập': 'sum',
+        'Tiêu cực': 'sum',
+        'Total': 'sum',
+    })
+
+    df_topic['Pct'] = df_topic['Total'] / n_texts * 100
+    df_topic['Neg_Pct'] = df_topic['Tiêu cực'] / df_topic['Total'] * 100
+    df_topic['Tích cực'] = df_topic['Tích cực'] / df_topic['Total'] * 100
+    df_topic['Trung lập'] = df_topic['Trung lập'] / df_topic['Total'] * 100
+    df_topic['Tiêu cực'] = df_topic['Tiêu cực'] / df_topic['Total'] * 100
+
+    df_topic = df_topic.sort_values('Total', ascending=False).reset_index(drop=True)
 
     top_topic = df_topic.iloc[0]
     ai_data = {
@@ -145,12 +159,18 @@ def render(df, cfg):
     st.markdown("Bảng dưới đây hiển thị từng chủ đề (label cha) và các nguyên nhân chi tiết (label con) bên trong.")
 
     hierarchical_rows = []
+    seen_parents = set()
+
     for _, row in df_topic.iterrows():
         parent_short = row['Chủ đề']
         parent_full = row['Chủ đề đầy đủ']
         parent_total = row['Total']
         parent_pct = row['Pct']
         parent_neg = row['Neg_Pct']
+
+        if parent_short in seen_parents:
+            continue
+        seen_parents.add(parent_short)
 
         hierarchical_rows.append({
             'Cấp': 'Cha',
@@ -165,7 +185,11 @@ def render(df, cfg):
         if parent_full in TOPIC_SUB_LABELS:
             sub_counts = extract_sub_topic_stats(texts, parent_full)
             if sub_counts:
+                seen_subs = set()
                 for sub_label, sub_count in sorted(sub_counts.items(), key=lambda x: -x[1]):
+                    if sub_label in seen_subs:
+                        continue
+                    seen_subs.add(sub_label)
                     sub_pct = sub_count / n_texts * 100
                     hierarchical_rows.append({
                         'Cấp': 'Con',
