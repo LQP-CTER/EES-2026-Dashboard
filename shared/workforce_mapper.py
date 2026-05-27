@@ -512,12 +512,35 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
     df_result['department'] = depts
     df_result['section'] = secs
 
-    # Các dòng không map được (Chúa xác định) → giữ nguyên để lọc bỏ trong view.
-    # KHÔNG đổi thành 'Khác' nữa — dùng NA để groupby tự bỏ qua.
+    # ── Post-process: chuẩn hóa section theo từng nhóm ──
+    #
+    # Nhóm 1A/1B (Shipper/Tài xế): trong HR data, wf_section_vn là cụm KTC/bưu cục
+    # cụ thể (quá chi tiết). Dashboard cần group theo Vùng (department level).
+    # → Gán section = department để bảng chi tiết luôn hiển thị Vùng.
+    if group in ('1A', '1B'):
+        df_result['section'] = df_result['department']
+
+    # Các dòng không map được (Chưa xác định) → set None để groupby tự bỏ qua.
+    _BAD_MAP = {'Chưa xác định', 'Không xác định', 'Khác', 'nan', 'None', ''}
     for col in ['division', 'department', 'section']:
-        df_result[col] = df_result[col].replace(
-            {'Chưa xác định': None, 'Không xác định': None, 'Khác': None}
-        )
+        df_result[col] = df_result[col].replace({v: None for v in _BAD_MAP})
+        df_result[col] = df_result[col].where(df_result[col].notna(), None)
+
+    # Nhóm 2A/2B: lọc bỏ section cấp KTC quá chi tiết nếu department đã là KTC tổng
+    if group in ('2A', '2B'):
+        def _clean_2ab_section(row):
+            sec = row.get('section', '')
+            dept = row.get('department', '')
+            if not sec or not dept:
+                return sec
+            sec_l = str(sec).lower()
+            dept_l = str(dept).lower()
+            # Nếu section = tên cụm KTC cụ thể nhưng dept đã là "Kho Trung Chuyển" → dùng dept
+            if ('cụm' in sec_l or 'cum' in sec_l) and 'kho trung chuyển' in dept_l:
+                return dept
+            return sec
+        df_result['section'] = df_result.apply(_clean_2ab_section, axis=1)
+
 
     return df_result
 
