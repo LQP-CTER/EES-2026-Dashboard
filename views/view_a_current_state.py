@@ -122,6 +122,9 @@ def render(df, cfg):
         </div>
         """, unsafe_allow_html=True)
 
+    # ── eNPS + EI Distribution + Pillars ──
+    col1, col2, col3 = st.columns([1, 1.2, 1.2])
+
     with col1:
         fig1 = go.Figure(go.Pie(
             labels=['Promoter', 'Passive', 'Detractor'],
