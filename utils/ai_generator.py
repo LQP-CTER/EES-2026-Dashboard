@@ -13,8 +13,28 @@ from groq import Groq
 # ============================================================
 
 def _get_groq_keys():
-    """Trả về danh sách Groq API keys hợp lệ."""
+    """Trả về danh sách Groq API keys hợp lệ. Hỗ trợ Local và Snowflake SiS."""
     keys = []
+    
+    # 1. Thử lấy từ Snowflake (nếu đang chạy trên Streamlit in Snowflake)
+    try:
+        import _snowflake
+        # Đọc secret từ cấu hình Snowflake
+        for sf_secret_name in ["groq_key", "groq_key_2"]:
+            try:
+                k = _snowflake.get_generic_secret_string(sf_secret_name)
+                if k and k != "dien-api-key-cua-ban-vao-day":
+                    keys.append(k)
+            except Exception:
+                pass
+    except ImportError:
+        pass # Không có _snowflake, nghĩa là đang chạy local
+        
+    # Nếu trên Snowflake đã lấy được key thì ưu tiên dùng luôn
+    if keys:
+        return keys
+
+    # 2. Fallback: Local/Môi trường thường dùng st.secrets hoặc os.environ
     for env_name in ["GROQ_API_KEY", "GROQ_API_KEY_2"]:
         try:
             k = st.secrets.get(env_name, os.environ.get(env_name, ""))
@@ -22,6 +42,7 @@ def _get_groq_keys():
             k = os.environ.get(env_name, "")
         if k and k != "dien-api-key-cua-ban-vao-day":
             keys.append(k)
+            
     return keys
 
 
