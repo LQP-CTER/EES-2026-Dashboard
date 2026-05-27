@@ -472,30 +472,60 @@ def render(df, cfg):
             """, unsafe_allow_html=True)
 
             # ── Bảng Department bên trong Division ──
-            if dept_col and dept_col in df_div.columns:
-                df_dept_valid = df_div[df_div[dept_col].notna() & ~df_div[dept_col].isin(_BAD_VALS)]
+            # Nếu department == 'Vùng' → drill down thêm 1 cấp vào section (Vùng 1, Vùng 2, ...)
+            _ROW_LBL = 'Phòng ban / Vùng'
+            if 'department' in df_div.columns:
+                df_dept_valid = df_div[df_div['department'].notna() & ~df_div['department'].isin(_BAD_VALS)]
                 dept_rows = []
                 dept_pillars_seen = []
-                for dname, dg in df_dept_valid.groupby(dept_col, dropna=True):
+
+                for dname, dg in df_dept_valid.groupby('department', dropna=True):
                     if len(dg) < 1:
                         continue
-                    dkpi = compute_kpis(dg)
-                    drow = {
-                        dept_name: str(dname),
-                        'N': dkpi['n'],
-                        'EI (%)': round(dkpi['ei_mean'], 1),
-                        'eNPS': round(dkpi['enps_score'], 0),
-                        'MEI': round(dkpi.get('mei_avg', 0), 1),
-                        'Burnout (%)': round(dkpi.get('burnout_pct', 0), 1),
-                        '% Muốn nghỉ': round(dkpi['intent_pct_low'], 1),
-                    }
-                    for p, plabel in PILLAR_LABELS.items():
-                        pcol = f'{p}_pct'
-                        if pcol in dg.columns:
-                            drow[plabel] = round(dg[pcol].mean(), 1)
-                            if plabel not in dept_pillars_seen:
-                                dept_pillars_seen.append(plabel)
-                    dept_rows.append(drow)
+
+                    # Nếu department = "Vùng" → thay bằng các Vùng con (section)
+                    is_vung_dept = str(dname).strip().lower() == 'vùng'
+                    if is_vung_dept and 'section' in dg.columns:
+                        _sec_valid = dg[dg['section'].notna() & ~dg['section'].isin(_BAD_VALS)]
+                        for sname, sg in _sec_valid.groupby('section', dropna=True):
+                            if len(sg) < 1:
+                                continue
+                            skpi = compute_kpis(sg)
+                            srow = {
+                                _ROW_LBL: f'  ↳ {sname}',  # indent để phân biệt là section
+                                'N': skpi['n'],
+                                'EI (%)': round(skpi['ei_mean'], 1),
+                                'eNPS': round(skpi['enps_score'], 0),
+                                'MEI': round(skpi.get('mei_avg', 0), 1),
+                                'Burnout (%)': round(skpi.get('burnout_pct', 0), 1),
+                                '% Muốn nghỉ': round(skpi['intent_pct_low'], 1),
+                            }
+                            for p, plabel in PILLAR_LABELS.items():
+                                pcol = f'{p}_pct'
+                                if pcol in sg.columns:
+                                    srow[plabel] = round(sg[pcol].mean(), 1)
+                                    if plabel not in dept_pillars_seen:
+                                        dept_pillars_seen.append(plabel)
+                            dept_rows.append(srow)
+                    else:
+                        # Department thường (không phải Vùng) → row trực tiếp
+                        dkpi = compute_kpis(dg)
+                        drow = {
+                            _ROW_LBL: str(dname),
+                            'N': dkpi['n'],
+                            'EI (%)': round(dkpi['ei_mean'], 1),
+                            'eNPS': round(dkpi['enps_score'], 0),
+                            'MEI': round(dkpi.get('mei_avg', 0), 1),
+                            'Burnout (%)': round(dkpi.get('burnout_pct', 0), 1),
+                            '% Muốn nghỉ': round(dkpi['intent_pct_low'], 1),
+                        }
+                        for p, plabel in PILLAR_LABELS.items():
+                            pcol = f'{p}_pct'
+                            if pcol in dg.columns:
+                                drow[plabel] = round(dg[pcol].mean(), 1)
+                                if plabel not in dept_pillars_seen:
+                                    dept_pillars_seen.append(plabel)
+                        dept_rows.append(drow)
 
                 if dept_rows:
                     df_dept_tbl = pd.DataFrame(dept_rows).sort_values('EI (%)', ascending=False)
@@ -515,7 +545,7 @@ def render(df, cfg):
                         .format(precision=1)
 
                     col_cfg = {
-                        dept_name: st.column_config.TextColumn(dept_name, width='medium'),
+                        _ROW_LBL: st.column_config.TextColumn(_ROW_LBL, width='medium'),
                         'N': st.column_config.NumberColumn('Mẫu (N)', format='%d', width='small'),
                         'EI (%)': st.column_config.NumberColumn('EI (%)', format='%.1f%%', width='small'),
                         'eNPS': st.column_config.NumberColumn('eNPS', format='%+.0f', width='small'),
@@ -528,10 +558,56 @@ def render(df, cfg):
 
                     st.dataframe(styled, use_container_width=True, hide_index=True, column_config=col_cfg)
                 else:
-                    st.caption(f"  ↳ Chưa đủ dữ liệu để phân rã theo {dept_name}.")
+                    st.caption("  ↳ Chưa đủ dữ liệu để phân rã.")
+            elif dept_col and dept_col in df_div.columns:
+                # Fallback: dùng dept_col gốc (section) nếu không có 'department'
+                df_dept_valid = df_div[df_div[dept_col].notna() & ~df_div[dept_col].isin(_BAD_VALS)]
+                dept_rows = []
+                dept_pillars_seen = []
+                for dname, dg in df_dept_valid.groupby(dept_col, dropna=True):
+                    if len(dg) < 1:
+                        continue
+                    dkpi = compute_kpis(dg)
+                    drow = {
+                        _ROW_LBL: str(dname),
+                        'N': dkpi['n'],
+                        'EI (%)': round(dkpi['ei_mean'], 1),
+                        'eNPS': round(dkpi['enps_score'], 0),
+                        'MEI': round(dkpi.get('mei_avg', 0), 1),
+                        'Burnout (%)': round(dkpi.get('burnout_pct', 0), 1),
+                        '% Muốn nghỉ': round(dkpi['intent_pct_low'], 1),
+                    }
+                    for p, plabel in PILLAR_LABELS.items():
+                        pcol = f'{p}_pct'
+                        if pcol in dg.columns:
+                            drow[plabel] = round(dg[pcol].mean(), 1)
+                            if plabel not in dept_pillars_seen:
+                                dept_pillars_seen.append(plabel)
+                    dept_rows.append(drow)
+                if dept_rows:
+                    df_dept_tbl = pd.DataFrame(dept_rows).sort_values('EI (%)', ascending=False)
+                    _grad = ['EI (%)', 'MEI'] + dept_pillars_seen
+                    _red  = ['Burnout (%)', '% Muốn nghỉ']
+                    styled = df_dept_tbl.style \
+                        .background_gradient(cmap='RdYlGn', subset=[c for c in _grad if c in df_dept_tbl.columns], vmin=50, vmax=90) \
+                        .background_gradient(cmap='RdYlGn_r', subset=[c for c in _red if c in df_dept_tbl.columns], vmin=0, vmax=20) \
+                        .format(precision=1)
+                    col_cfg = {
+                        _ROW_LBL: st.column_config.TextColumn(_ROW_LBL, width='medium'),
+                        'N': st.column_config.NumberColumn('Mẫu (N)', format='%d', width='small'),
+                        'EI (%)': st.column_config.NumberColumn('EI (%)', format='%.1f%%', width='small'),
+                        'eNPS': st.column_config.NumberColumn('eNPS', format='%+.0f', width='small'),
+                        'MEI': st.column_config.NumberColumn('MEI', format='%.1f', width='small'),
+                        'Burnout (%)': st.column_config.NumberColumn('Burnout (%)', format='%.1f%%', width='small'),
+                        '% Muốn nghỉ': st.column_config.NumberColumn('% Muốn nghỉ', format='%.1f%%', width='small'),
+                    }
+                    for pl in dept_pillars_seen:
+                        col_cfg[pl] = st.column_config.NumberColumn(pl, format='%.1f%%', width='small')
+                    st.dataframe(styled, use_container_width=True, hide_index=True, column_config=col_cfg)
+                else:
+                    st.caption("  ↳ Chưa đủ dữ liệu để phân rã.")
             else:
-                # Không có dept_col: hiển thị tổng hợp của division luôn
-                st.caption(f"  ↳ Không có trường {dept_name} trong dữ liệu nhóm này.")
+                st.caption("  ↳ Không có dữ liệu phòng ban cho nhóm này.")
 
     elif dept_col:
         # Fallback: không có division, hiển thị bảng department phẳng
