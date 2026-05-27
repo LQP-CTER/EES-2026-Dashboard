@@ -123,10 +123,29 @@ def load_group(group_id: str):
     for c in df_clean.columns:
         if 'Vùng' in str(c) or 'vùng' in str(c):
             vung_col = c; break
+    # Pre-mapping: dịch tên địa điểm tiếng Anh của 1B → tiếng Việt
+    # trước khi workforce mapper lookup (Mapping sheet chỉ có tên tiếng Việt)
+    _1B_EN_VN = {
+        'xuyen a sorting centers':   'Cụm Kho Trung Chuyển Xuyên Á',
+        'hung yen sorting centers':  'Cụm Kho Trung Chuyển Hưng Yên',
+        'm12 sorting centers':       'Cụm Kho Trung Chuyển M12',
+        'dai tu sorting centers':    'Cụm Kho Trung Chuyển Đài Tư',
+        'freight operations - hcm':  'Bộ Phận Vận Hành HCM',
+        'freight operations - hn':   'Bộ Phận Vận Hành HN',
+        'xbg region':                'Vùng XBG',
+        'ttb region':                'Vùng TTB',
+        'nno region':                'Vùng HNO',
+    }
+    if group_id == '1B' and vung_col in df_clean.columns:
+        df_clean[vung_col] = df_clean[vung_col].apply(
+            lambda x: _1B_EN_VN.get(str(x).strip().lower(), x) if pd.notna(x) else x
+        )
+
     try:
         raw_clean_df = df_raw.loc[df_clean.index].copy()
         df_clean = map_survey_to_org(df_clean, group=group_id, vung_col=vung_col,
                                      id_col=df_clean.columns[1], raw_df=raw_clean_df)
+
                                      
         if group_id == '3A':
             EXCLUDE_DIVS = [

@@ -348,8 +348,16 @@ _VUNG_EXTENDED_MAP = {
     "b2b operations department - north 3": ("Phòng Vận Hành B2B Miền Bắc 3", "Giao Hàng Nặng (Vận hành B2B)"),
     "b2b operations department - hcm": ("Phòng Vận Hành B2B HCM", "Giao Hàng Nặng (Vận hành B2B)"),
     "b2b operations department - hn": ("Phòng Vận Hành B2B HN", "Giao Hàng Nặng (Vận hành B2B)"),
+    # KTC Sorting Centers (tên tiếng Anh trong survey 1B)
+    "xuyen a sorting centers":  ("Cụm Kho Trung Chuyển Xuyên Á",  "Kho Trung Chuyển"),
+    "hung yen sorting centers": ("Cụm Kho Trung Chuyển Hưng Yên", "Kho Trung Chuyển"),
+    "m12 sorting centers":      ("Cụm Kho Trung Chuyển M12",       "Kho Trung Chuyển"),
+    "dai tu sorting centers":   ("Cụm Kho Trung Chuyển Đài Tư",   "Kho Trung Chuyển"),
+    # Vùng codes (English region names in 1B)
+    "xbg region": ("Vùng XBG", "Vùng"),
     "project 2x": ("Chưa xác định", "Chưa xác định"),
 }
+
 
 def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
     """
@@ -534,16 +542,15 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
         df_result[col] = df_result[col].replace({v: None for v in _BAD_MAP})
         df_result[col] = df_result[col].where(df_result[col].notna(), None)
 
-    # ── Nhóm 1A / 1B: loại bỏ các department không thuộc scope Shipper/Tài xế ──
-    # Nguyên nhân: employee lookup WF trả về HR classification thực tế của người đó
-    # nhưng họ điền form khảo sát nhầm nhóm (1A = Shipper, 1B = Tài xế).
-    # Department "Kho Trung Chuyển" không thuộc nhóm Shipper/Tài xế → set về None.
-    if group in ('1A', '1B'):
-        _WRONG_DEPTS_1AB = {'Kho Trung Chuyển'}
-        mask_wrong = df_result['department'].isin(_WRONG_DEPTS_1AB)
+    # ── Nhóm 1A: loại bỏ KTC nếu xuất hiện nhầm (KTC không thuộc scope NVGN 1A) ──
+    # 1B (Tài xế xe tải) CÓ KTC — không filter 1B vì tài xế KTC thuộc survey 1B.
+    if group == '1A':
+        _WRONG_DEPTS_1A = {'Kho Trung Chuyển'}
+        mask_wrong = df_result['department'].isin(_WRONG_DEPTS_1A)
         if mask_wrong.any():
             df_result.loc[mask_wrong, 'department'] = None
             df_result.loc[mask_wrong, 'section'] = None
+
 
     return df_result
 
