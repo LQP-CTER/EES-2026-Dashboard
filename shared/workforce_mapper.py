@@ -535,6 +535,16 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
             return sec
         df_result['section'] = df_result.apply(_clean_2ab_section, axis=1)
 
+    # ── Nhóm 1A / 1B: loại bỏ các department không thuộc scope Shipper/Tài xế ──
+    # Nguyên nhân: employee lookup WF trả về HR classification thực tế của người đó
+    # nhưng họ điền form khảo sát nhầm nhóm (1A = Shipper, 1B = Tài xế).
+    # Department "Kho Trung Chuyển" không thuộc nhóm Shipper/Tài xế → set về None.
+    if group in ('1A', '1B'):
+        _WRONG_DEPTS_1AB = {'Kho Trung Chuyển'}
+        mask_wrong = df_result['department'].isin(_WRONG_DEPTS_1AB)
+        if mask_wrong.any():
+            df_result.loc[mask_wrong, 'department'] = None
+            df_result.loc[mask_wrong, 'section'] = None
 
     return df_result
 
