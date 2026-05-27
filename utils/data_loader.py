@@ -106,11 +106,8 @@ def load_group(group_id: str):
         df_clean = df[~df['flag_straightline_and_empty']].copy()
         _filter_method = 'straight_and_empty'
         _filter_desc   = 'Loại phiếu: đánh cùng 1 điểm cho tất cả câu (straight-line) VÀ không có câu trả lời mở ý nghĩa'
-    elif group_id == '3B':
-        df_clean = df.copy()
-        _filter_method = 'none'
-        _filter_desc   = 'Giữ nguyên toàn bộ mẫu — không áp dụng bộ lọc chất lượng'
     else:
+        # Đối với 2A, 2B, 3A, 3B
         df_clean = df[~(df['flag_too_missing'] | df['flag_straightline'])].copy()
         _filter_method = 'standard'
         _filter_desc   = 'Loại phiếu: bỏ trống >80% câu hỏi hoặc đánh cùng 1 điểm cho tất cả câu (straight-line)'
