@@ -86,8 +86,8 @@ GROQ_MODELS = [
     "llama-3.3-70b-versatile",
     "qwen-2.5-32b",
     "llama-3.1-8b-instant",
-    "mixtral-8x7b-32768",
-    "llama-3.2-3b-preview",
+    "gemma2-9b-it",
+    "llama3-8b-8192",
 ]
 
 def _build_insight_system_prompt(data_json, context_prompt, lang='VN'):
@@ -225,7 +225,7 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
         return output
 
     # Thử tất cả Groq keys × models
-    validator_models = ["llama-3.3-70b-versatile", "qwen-2.5-32b", "llama-3.1-8b-instant", "llama-3.2-3b-preview"]
+    validator_models = ["llama-3.3-70b-versatile", "qwen-2.5-32b", "llama-3.1-8b-instant", "gemma2-9b-it", "llama3-8b-8192"]
     for client in get_groq_clients_all():
         for model in validator_models:
             try:
