@@ -440,89 +440,126 @@ def render(df_clean, cfg, sel_group):
                     heat_data['_phat_ord'] = heat_data['phat_label'].map(phat_order_map).fillna(99)
                     heat_data = heat_data.sort_values(['_inc_ord', '_phat_ord'])
                     
-                    # Bubble Chart
-                    fig = go.Figure()
-                    
-                    # Tạo color scale từ Risk %
-                    max_risk = heat_data['Risk'].max()
-                    
-                    for _, row in heat_data.iterrows():
-                        risk_val = row['Risk']
-                        n_val = int(row['N'])
-                        inc_label = str(row[income_col])
-                        phat_label = str(row['phat_label'])
-                        
-                        # Màu sắc theo risk %
-                        normalized = risk_val / max_risk if max_risk > 0 else 0
-                        if normalized < 0.33:
-                            color = f'rgba(16, 185, 129, {0.5 + normalized})'  # xanh lá
-                        elif normalized < 0.66:
-                            color = f'rgba(245, 158, 11, {0.6 + normalized * 0.4})'  # cam
-                        else:
-                            color = f'rgba(220, 38, 38, {0.6 + normalized * 0.4})'  # đỏ
-                        
-                        bubble_size = max(20, min(80, n_val * 1.5))
-                        
-                        fig.add_trace(go.Scatter(
-                            x=[phat_label],
-                            y=[inc_label],
-                            mode='markers+text',
-                            marker=dict(
-                                size=bubble_size,
-                                color=color,
-                                line=dict(color='rgba(255,255,255,0.8)', width=2)
-                            ),
-                            text=[f"<b>{risk_val:.1f}%</b><br><span style='font-size:10px'>N={n_val}</span>"],
-                            textposition='middle center',
-                            name=f"{inc_label} × {phat_label}",
-                            hovertemplate=(
-                                f"<b>Thu nhập:</b> {inc_label}<br>"
-                                f"<b>Mức phạt:</b> {phat_label}<br>"
-                                f"<b>% Muốn nghỉ:</b> {risk_val:.1f}%<br>"
-                                f"<b>Số mẫu:</b> {n_val} người<br>"
-                                "<extra></extra>"
-                            ),
-                            showlegend=False
-                        ))
-                    
-                    # Thêm legend màu sắc chú giải
-                    for label, clr, desc in [
-                        ('Rủi ro thấp (<3%)', 'rgba(16,185,129,0.7)', '< 3%'),
-                        ('Rủi ro trung bình (3-7%)', 'rgba(245,158,11,0.7)', '3-7%'),
-                        ('Rủi ro cao (>7%)', 'rgba(220,38,38,0.8)', '> 7%'),
-                    ]:
-                        fig.add_trace(go.Scatter(
-                            x=[None], y=[None],
-                            mode='markers',
-                            marker=dict(size=14, color=clr),
-                            name=label,
-                            showlegend=True
-                        ))
-                    
-                    # Sắp xếp trục Y theo thứ tự thu nhập tăng dần
-                    y_order = [r for r in ['< 5 triệu', '5 - 7 triệu', '7 - 10 triệu', '10 - 15 triệu', '15 - 20 triệu', '20 - 30 triệu', '> 30 triệu']
-                               if r in heat_data[income_col].values]
+                    # ── Bubble Chart (single trace, numeric grid) ──
+                    import numpy as np
+
                     x_order = [c for c in ['Không phạt', '<500k', '500-1tr', '1 - 3tr', '3 - 5tr', '> 5tr']
                                if c in heat_data['phat_label'].values]
-                    
-                    fig.update_layout(
-                        height=420,
-                        title='BẢN ĐỒ RỦI RO NGHỈ VIỆC: THU NHẬP × MỨC PHẠT',
-                        xaxis=dict(
-                            title='Mức Phạt / Truy thu',
-                            categoryorder='array',
-                            categoryarray=x_order
-                        ),
-                        yaxis=dict(
-                            title='Mức Thu Nhập',
-                            categoryorder='array',
-                            categoryarray=y_order
-                        ),
-                        margin=dict(t=60, b=60, l=120, r=40),
-                        legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
-                        plot_bgcolor='#F8FAFC',
-                        paper_bgcolor='#FFFFFF'
-                    )
+                    y_order = [r for r in ['< 5 triệu', '5 - 7 triệu', '7 - 10 triệu', '10 - 15 triệu', '15 - 20 triệu', '20 - 30 triệu', '> 30 triệu']
+                               if r in heat_data[income_col].values]
+
+                    x_map = {v: i for i, v in enumerate(x_order)}
+                    y_map = {v: i for i, v in enumerate(y_order)}
+
+                    heat_data['_x'] = heat_data['phat_label'].map(x_map)
+                    heat_data['_y'] = heat_data[income_col].map(y_map)
+                    heat_plot = heat_data.dropna(subset=['_x', '_y']).copy()
+
+                    if not heat_plot.empty:
+                        # Scale bubble size: sqrt of N, mapped to [18, 55]
+                        n_arr = heat_plot['N'].values.astype(float)
+                        sq = np.sqrt(n_arr)
+                        sq_min, sq_max = sq.min(), sq.max()
+                        if sq_max > sq_min:
+                            sizes = 18 + (sq - sq_min) / (sq_max - sq_min) * 37
+                        else:
+                            sizes = np.full_like(sq, 32.0)
+                        heat_plot['_size'] = sizes
+
+                        fig = go.Figure()
+
+                        fig.add_trace(go.Scatter(
+                            x=heat_plot['_x'],
+                            y=heat_plot['_y'],
+                            mode='markers',
+                            marker=dict(
+                                size=heat_plot['_size'],
+                                color=heat_plot['Risk'],
+                                colorscale='RdYlGn_r',
+                                cmin=0,
+                                cmax=max(heat_plot['Risk'].max(), 15),
+                                colorbar=dict(
+                                    title=dict(text='% Muốn nghỉ', font=dict(size=11)),
+                                    thickness=14,
+                                    len=0.75,
+                                    ticksuffix='%',
+                                    tickfont=dict(size=10),
+                                ),
+                                line=dict(color='rgba(255,255,255,0.9)', width=1.5),
+                                opacity=0.88,
+                            ),
+                            text=[
+                                f"Thu nhập: {row[income_col]}<br>"
+                                f"Mức phạt: {row['phat_label']}<br>"
+                                f"<b>% Muốn nghỉ: {row['Risk']:.1f}%</b><br>"
+                                f"Số mẫu: {int(row['N'])} người"
+                                for _, row in heat_plot.iterrows()
+                            ],
+                            hoverinfo='text',
+                            showlegend=False,
+                        ))
+
+                        # Annotations: risk% + N inside each bubble
+                        for _, row in heat_plot.iterrows():
+                            risk_v = row['Risk']
+                            font_color = '#FFFFFF' if risk_v > 8 else ('#7F1D1D' if risk_v > 4 else '#065F46')
+                            fig.add_annotation(
+                                x=row['_x'], y=row['_y'],
+                                text=f"<b>{risk_v:.1f}%</b><br><span style='font-size:9px'>N={int(row['N'])}</span>",
+                                showarrow=False,
+                                font=dict(size=11, color=font_color),
+                            )
+
+                        # Size legend (3 reference bubbles)
+                        n_vals_sorted = sorted(n_arr)
+                        ref_sizes = [int(n_vals_sorted[0]), int(np.median(n_vals_sorted)), int(n_vals_sorted[-1])]
+                        ref_sizes = sorted(set(ref_sizes))
+                        for rn in ref_sizes:
+                            sq_r = np.sqrt(rn)
+                            sz = 18 + (sq_r - sq_min) / (sq_max - sq_min) * 37 if sq_max > sq_min else 32
+                            fig.add_trace(go.Scatter(
+                                x=[None], y=[None], mode='markers',
+                                marker=dict(size=sz, color='rgba(148,163,184,0.35)',
+                                            line=dict(color='#94A3B8', width=1)),
+                                name=f'N = {rn}',
+                                showlegend=True,
+                            ))
+
+                        fig.update_layout(
+                            height=max(420, len(y_order) * 65 + 120),
+                            title=dict(
+                                text='<b>BẢN ĐỒ RỦI RO NGHỈ VIỆC</b>: Thu Nhập × Mức Phạt',
+                                font=dict(size=14, color='#0A1F44'),
+                            ),
+                            xaxis=dict(
+                                title='Mức Phạt / Truy thu',
+                                tickvals=list(range(len(x_order))),
+                                ticktext=x_order,
+                                showgrid=True,
+                                gridcolor='rgba(226,232,240,0.6)',
+                                gridwidth=1,
+                                zeroline=False,
+                                range=[-0.5, len(x_order) - 0.5],
+                            ),
+                            yaxis=dict(
+                                title='Mức Thu Nhập',
+                                tickvals=list(range(len(y_order))),
+                                ticktext=y_order,
+                                showgrid=True,
+                                gridcolor='rgba(226,232,240,0.6)',
+                                gridwidth=1,
+                                zeroline=False,
+                                range=[-0.5, len(y_order) - 0.5],
+                            ),
+                            margin=dict(t=60, b=60, l=130, r=80),
+                            legend=dict(
+                                title=dict(text='Cỡ mẫu', font=dict(size=11)),
+                                orientation='h', yanchor='top', y=-0.15, xanchor='center', x=0.5,
+                                font=dict(size=10),
+                            ),
+                            plot_bgcolor='#FAFBFD',
+                            paper_bgcolor='#FFFFFF',
+                        )
                     
                     st.plotly_chart(fig, use_container_width=True)
                     
