@@ -164,19 +164,22 @@ if not is_admin:
     # 2. Kiểm tra đã login chưa (qua session_state hoặc cookie)
     user_email = st.session_state.get("user_email")
     if not user_email:
-        # Thử lấy từ cookie nếu bị reset session (như khi F5)
         c_email = cookie_controller.get("user_email")
         if c_email and _is_allowed_email(c_email):
             st.session_state.user_email = c_email
             st.session_state.user_name = cookie_controller.get("user_name") or "User"
             st.session_state.user_picture = cookie_controller.get("user_picture") or ""
-            # Chạy lại app ngay để load dashboard thay vì trang đăng nhập
             st.rerun()
-            
+        elif not st.session_state.get("_cookie_retry"):
+            st.session_state._cookie_retry = True
+            st.rerun()
+
     user_email = st.session_state.get("user_email")
     if not user_email or not _is_allowed_email(user_email):
+        st.session_state.pop("_cookie_retry", None)
         _render_login_page()
         st.stop()
+    st.session_state.pop("_cookie_retry", None)
 
 if is_admin and not st.session_state.preview_mode:
     # Render admin panel
