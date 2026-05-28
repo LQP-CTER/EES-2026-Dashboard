@@ -114,6 +114,12 @@ def render(df, cfg, pillar_filter=None):
         f"(2) Tại sao đây lại là điều họ muốn nói nhất? "
         f"(3) Lãnh đạo cần chú ý điều gì từ tín hiệu này?"
     )
+    if pillar_filter:
+        from shared.codebook import PILLAR_META
+        p_name = PILLAR_META.get(pillar_filter, {}).get('name', pillar_filter)
+        ai_data['Focus_Pillar'] = p_name
+        prompt += f" Đặc biệt liên hệ tín hiệu này ảnh hưởng đến Trụ cột '{p_name}' như thế nào."
+        
     render_ai_insight_card("AI Topic Insight", ai_data, prompt, custom_style="margin-top: 16px; margin-bottom: 24px;")
 
     df_plot = df_topic.sort_values('Total', ascending=True)
@@ -270,9 +276,20 @@ def render(df, cfg, pillar_filter=None):
                     st.plotly_chart(fig_detractor, width='stretch')
 
         ai_data_diff = {"Survey_Question": sel_q}
-        prompt_diff = f"Chỉ dựa vào sự khác biệt tự nhiên trong hành vi: Phân tích ngắn gọn về sự khác nhau cơ bản trong cách Promoter (người gắn bó) và Detractor (người bất mãn) phản hồi về vấn đề này. Tại sao lãnh đạo cần quan tâm cả 2 luồng ý kiến?"
+        prompt_diff = (
+            f"Phân tích sự khác biệt về chủ đề quan tâm giữa nhóm Promoter (trung thành) và Detractor (bất mãn): "
+            f"Nhóm Promoter quan tâm nhất tới {', '.join(p_topics) if p_topics else 'không rõ'}. "
+            f"Nhóm Detractor kêu ca nhiều nhất về {', '.join(d_topics) if d_topics else 'không rõ'}. "
+            f"Hãy đưa ra kết luận cốt lõi: Làm sao để chuyển hóa Detractor thành Promoter dựa trên sự khác biệt này?"
+        )
+        if pillar_filter:
+            from shared.codebook import PILLAR_META
+            p_name = PILLAR_META.get(pillar_filter, {}).get('name', pillar_filter)
+            ai_data_diff['Focus_Pillar'] = p_name
+            prompt_diff += f" Hãy liên hệ lời khuyên này vào bối cảnh cải thiện Trụ cột '{p_name}'."
+            
         render_ai_insight_card("AI Sentiment Comparison", ai_data_diff, prompt_diff,
-                               custom_style="margin-top: 16px; margin-bottom: 24px;")
+                               custom_style="margin-top: 20px; margin-bottom: 24px;")
 
     # ══════════════════════════════════════════════════════════════
     # PHẦN 4: TRÍCH DẪN TIÊU BIỂU

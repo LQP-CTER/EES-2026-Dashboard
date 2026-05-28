@@ -30,15 +30,25 @@ def render(df, cfg, pillar_filter=None):
     for name, g in df.groupby(grp_col):
         kpi = compute_kpis(g)
         kpi['name'] = name
+        if pillar_filter and f"{pillar_filter}_pct" in g.columns:
+            kpi[f'{pillar_filter} (%)'] = g[f"{pillar_filter}_pct"].mean()
         metrics.append(kpi)
     df_met = pd.DataFrame(metrics).sort_values('ei_mean', ascending=False)
 
     tab1, tab2 = st.tabs(["Bảng tổng hợp", "Heatmap"])
 
     with tab1:
-        metric = st.selectbox("Chỉ số", ['EI (%)', 'eNPS', 'MEI (%)', '% Muốn nghỉ', '% Burnout'])
+        metric_opts = ['EI (%)', 'eNPS', 'MEI (%)', '% Muốn nghỉ', '% Burnout']
         metric_map = {'EI (%)': 'ei_mean', 'eNPS': 'enps_score', 'MEI (%)': 'mei_avg',
                       '% Muốn nghỉ': 'intent_pct_low', '% Burnout': 'burnout_pct'}
+                      
+        default_index = 0
+        if pillar_filter and f'{pillar_filter} (%)' in df_met.columns:
+            pillar_met_name = f'Điểm {pillar_filter} (%)'
+            metric_opts.insert(0, pillar_met_name)
+            metric_map[pillar_met_name] = f'{pillar_filter} (%)'
+
+        metric = st.selectbox("Chỉ số", metric_opts, index=default_index)
         m_col = metric_map[metric]
         
         # Sort based on selected metric for correct insight
@@ -72,9 +82,14 @@ def render(df, cfg, pillar_filter=None):
         fig.update_layout(height=500, xaxis_tickangle=-45, xaxis_title=level, yaxis_title=metric, showlegend=False, coloraxis_showscale=False)
         st.plotly_chart(fig, width='stretch')
 
-        df_display = df_met[['name', 'n', 'ei_mean', 'enps_score', 'mei_avg', 'intent_pct_low', 'burnout_pct']].rename(
-            columns={'name': level, 'n': 'N', 'ei_mean': 'EI (%)', 'enps_score': 'eNPS',
-                     'mei_avg': 'MEI (%)', 'intent_pct_low': '% Muốn nghỉ', 'burnout_pct': '% Burnout'})
+        df_display_cols = ['name', 'n', 'ei_mean', 'enps_score', 'mei_avg', 'intent_pct_low', 'burnout_pct']
+        rename_dict = {'name': level, 'n': 'N', 'ei_mean': 'EI (%)', 'enps_score': 'eNPS',
+                     'mei_avg': 'MEI (%)', 'intent_pct_low': '% Muốn nghỉ', 'burnout_pct': '% Burnout'}
+        
+        if pillar_filter and f'{pillar_filter} (%)' in df_met.columns:
+            df_display_cols.insert(2, f'{pillar_filter} (%)')
+
+        df_display = df_met[df_display_cols].rename(columns=rename_dict)
         
         styled_met = df_display.style.background_gradient(
             cmap='RdYlGn', subset=['EI (%)', 'eNPS', 'MEI (%)'], vmin=50, vmax=90
@@ -89,6 +104,9 @@ def render(df, cfg, pillar_filter=None):
             '% Muốn nghỉ': st.column_config.NumberColumn('% Muốn nghỉ', format="%.1f%%", width="small"),
             '% Burnout': st.column_config.NumberColumn('% Burnout', format="%.1f%%", width="small")
         }
+        
+        if pillar_filter:
+            col_config[f'{pillar_filter} (%)'] = st.column_config.NumberColumn(f'Điểm {pillar_filter}', format="%.1f%%", width="small")
 
         st.dataframe(styled_met, width='stretch', hide_index=True, column_config=col_config)
 
