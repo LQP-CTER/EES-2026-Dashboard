@@ -1,23 +1,52 @@
 """
-PILLAR RENDERER – EES 2026 Dashboard
-Renders a unified multi-tab view for each of the 5 Experience Pillars.
+PILLAR RENDERER — EES 2026 Dashboard  (v2 — Restructured)
+Renders unified multi-tab view for each of the 5 Experience Pillars.
 
-Each pillar renders:
-  Tab 1: Tổng quan     — KPI cards + phân bố điểm (from view_a)
-  Tab 2: Chi tiết      — Deep-dive từng câu hỏi (from view_c)
-  Tab 3: Nhóm rủi ro   — Thâm niên/thế hệ/vùng (from view_b)
-  Tab 4: Nguyên nhân   — Root cause + action (from view_d + view_f)
-  Tab 5: HRIS (TC3/TC4) — Thu nhập, năng suất (from hris_linkage)
+Tab 1: Chẩn đoán Nhanh  — Câu yếu nhất + Breakdown thâm niên + AI insight theo form báo cáo
+Tab 2: Chi tiết từng câu  — Phân bố phản hồi + NLP open-text
+Tab 3: Nhóm rủi ro       — Breakdown Division/Dept/Section + cross-pillar pattern at unit level
+Tab 4: Nguyên nhân & Hành động — Root cause + action priority
+Tab 5: Bất thường        — Anomaly detection per pillar + cross-pillar + AI synthesis
+Tab 6: HRIS (TC3/TC4/TC5 only)
 """
 
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
 
 from shared.codebook import (
     PILLAR_META, PILLAR_ORDER,
     get_codebook, get_pillar_questions, get_question_label, PILLAR_WEIGHTS,
 )
+from shared.plotly_theme import fig_card, COLORS
+from utils.anomaly_detector import detect_pillar_anomalies, detect_cross_pillar
+from views.anomaly_cards import render_anomaly_tab
+from utils.ai_generator import render_ai_insight_card
+
+
+# ─────────────────────────────────────────────────────────────
+# TENURE HELPERS
+# ─────────────────────────────────────────────────────────────
+
+TENURE_ORDER = [
+    'Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng',
+    'Trên 6 đến 9 tháng', 'Trên 9 đến 12 tháng', 'Trên 1 đến 2 năm',
+    'Trên 2 đến 3 năm', 'Trên 3 đến 5 năm', 'Trên 5 năm',
+]
+TENURE_MONTHS = {
+    'Dưới 1 tháng': 0.5, 'Trên 1 đến 3 tháng': 2, 'Trên 3 đến 6 tháng': 4.5,
+    'Trên 6 đến 9 tháng': 7.5, 'Trên 9 đến 12 tháng': 10.5, 'Trên 1 đến 2 năm': 18,
+    'Trên 2 đến 3 năm': 30, 'Trên 3 đến 5 năm': 48, 'Trên 5 năm': 72,
+}
+
+
+def _qmean(df, col):
+    if col not in df.columns:
+        return None
+    vals = df[col].dropna()
+    return vals.mean() if len(vals) >= 5 else None
 
 
 # ─────────────────────────────────────────────────────────────
@@ -25,55 +54,58 @@ from shared.codebook import (
 # ─────────────────────────────────────────────────────────────
 
 def _render_pillar_header(pillar_id, df, cfg, group_id):
-    """Render the pillar header with KPI summary."""
     meta = PILLAR_META[pillar_id]
     qs = get_pillar_questions(group_id, pillar_id)
     q_cols = [q for q in qs if q in df.columns]
 
     if q_cols:
         pillar_mean = df[q_cols].mean(numeric_only=True).mean()
-        pillar_fav = 0
-        total_valid = 0
+        total_valid, pillar_fav = 0, 0
         for c in q_cols:
             vals = df[c].dropna()
-            fav = (vals >= 4).sum()
-            pillar_fav += fav
+            pillar_fav += (vals >= 4).sum()
             total_valid += len(vals)
         fav_pct = (pillar_fav / total_valid * 100) if total_valid > 0 else 0
     else:
-        pillar_mean = None
-        fav_pct = 0
+        pillar_mean, fav_pct = None, 0
 
     color = meta['color']
     score_str = f"{pillar_mean:.2f}" if pillar_mean else "N/A"
     fav_str = f"{fav_pct:.1f}%"
     weight_str = f"{PILLAR_WEIGHTS.get(pillar_id, 0)*100:.0f}%"
 
+    # Pillar score color
+    if pillar_mean:
+        score_color = '#10B981' if pillar_mean >= 4.0 else '#F59E0B' if pillar_mean >= 3.7 else '#EF4444'
+    else:
+        score_color = color
+
     st.markdown(f"""
-    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid {color}; 
-                border-radius: 12px; padding: 24px 28px; margin-bottom: 24px;">
-        <div style="margin-bottom: 16px;">
-            <span style="font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; 
-                         color: {color}; display: block; margin-bottom: 4px;">{pillar_id} · Trọng số {weight_str}</span>
-            <span style="font-size: 1.25rem; font-weight: 800; color: #0A1F44; display: block; letter-spacing: -0.02em;">
-                {meta['name']}</span>
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-left:4px solid {color};
+                border-radius:12px;padding:24px 28px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <span style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+                             color:{color};display:block;margin-bottom:4px;">{pillar_id} · Trọng số {weight_str}</span>
+                <span style="font-size:1.2rem;font-weight:800;color:#0A1F44;letter-spacing:-0.02em;">{meta['name']}</span>
+            </div>
         </div>
-        <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 20px; line-height: 1.6;">{meta['description']}</p>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-            <div style="background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #F1F5F9;">
-                <span style="font-size: 0.68rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Điểm trung bình</span>
-                <div style="font-size: 1.8rem; font-weight: 900; color: {color}; line-height: 1; letter-spacing: -0.03em;">{score_str}</div>
-                <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">trên thang 5.0</div>
+        <p style="font-size:0.83rem;color:#64748B;margin:0 0 18px;line-height:1.65;">{meta['description']}</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+            <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
+                <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Điểm trung bình</span>
+                <div style="font-size:1.8rem;font-weight:900;color:{score_color};line-height:1;">{score_str}</div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">trên thang 5.0</div>
             </div>
-            <div style="background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #F1F5F9;">
-                <span style="font-size: 0.68rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Tỷ lệ tích cực</span>
-                <div style="font-size: 1.8rem; font-weight: 900; color: #0A1F44; line-height: 1; letter-spacing: -0.03em;">{fav_str}</div>
-                <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">đồng ý hoặc hoàn toàn đồng ý</div>
+            <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
+                <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Tỷ lệ tích cực</span>
+                <div style="font-size:1.8rem;font-weight:900;color:#0A1F44;line-height:1;">{fav_str}</div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">đồng ý hoặc rất đồng ý</div>
             </div>
-            <div style="background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #F1F5F9;">
-                <span style="font-size: 0.68rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Số câu hỏi</span>
-                <div style="font-size: 1.8rem; font-weight: 900; color: #0A1F44; line-height: 1; letter-spacing: -0.03em;">{len(q_cols)}</div>
-                <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">câu hỏi trong trụ cột</div>
+            <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
+                <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Số câu hỏi</span>
+                <div style="font-size:1.8rem;font-weight:900;color:#0A1F44;line-height:1;">{len(q_cols)}</div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">câu hỏi trong trụ cột</div>
             </div>
         </div>
     </div>
@@ -81,116 +113,257 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
 
 
 # ─────────────────────────────────────────────────────────────
-# TAB 1: TỔNG QUAN
+# TAB 1: CHẨN ĐOÁN NHANH (replaced old "Tổng quan")
 # ─────────────────────────────────────────────────────────────
 
-def _render_tab_overview(df, cfg, group_id, pillar_id):
-    """Tab Tổng quan: KPI + phân bố điểm cho câu hỏi trong trụ cột."""
-    from views import view_a_current_state
+def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
+    """Chẩn đoán nhanh: câu yếu nhất, breakdown thâm niên, AI insight."""
+    meta = PILLAR_META[pillar_id]
     qs = get_pillar_questions(group_id, pillar_id)
-    cb = get_codebook(group_id)
+    q_cols = [q for q in qs if q in df.columns]
+    color = meta['color']
 
-    if not qs:
+    if not q_cols:
         st.info("Không có câu hỏi nào trong trụ cột này.")
         return
 
-    # Render overview using existing view_a function
-    # But filter to only show pillar-relevant content
-    try:
-        view_a_current_state.render(df, cfg, pillar_filter=pillar_id)
-    except TypeError:
-        # Fallback: render manual summary if view_a doesn't support pillar_filter yet
-        _render_manual_overview(df, cfg, group_id, pillar_id, qs, cb)
+    cb = get_codebook(group_id)
 
-
-def _render_manual_overview(df, cfg, group_id, pillar_id, qs, cb):
-    """Manual overview rendering when view_a doesn't support pillar_filter."""
-    import plotly.graph_objects as go
-
-    st.markdown("##### Điểm trung bình từng câu hỏi")
-
+    # ── Khối 1: Xếp hạng câu hỏi theo điểm ──────────────────
+    st.markdown("#### 1️⃣ Câu hỏi nào đang kéo trụ cột xuống?")
     q_data = []
-    for q in qs:
-        if q not in df.columns:
-            continue
+    for q in q_cols:
         vals = df[q].dropna()
-        if len(vals) == 0:
+        if len(vals) < 5:
             continue
         mean_val = vals.mean()
         fav = (vals >= 4).sum() / len(vals) * 100
         neg = (vals <= 2).sum() / len(vals) * 100
         label = get_question_label(group_id, q)
         q_data.append({
-            'Q': q,
-            'Label': f"{q}: {label}",
-            'Mean': round(mean_val, 2),
-            'Favorable': round(fav, 1),
-            'Negative': round(neg, 1),
-            'N': len(vals),
+            'Q': q, 'Label': f"{q}: {label}",
+            'Mean': round(mean_val, 2), 'Favorable': round(fav, 1),
+            'Negative': round(neg, 1), 'N': len(vals),
         })
 
     if not q_data:
-        st.warning("Không đủ dữ liệu cho trụ cột này.")
+        st.warning("Không đủ dữ liệu.")
         return
 
     q_df = pd.DataFrame(q_data).sort_values('Mean', ascending=True)
 
-    meta = PILLAR_META[pillar_id]
-    color = meta['color']
+    # Color by threshold
+    bar_colors = []
+    for m in q_df['Mean']:
+        if m >= 4.0:   bar_colors.append('#10B981')
+        elif m >= 3.7: bar_colors.append('#F59E0B')
+        elif m >= 3.5: bar_colors.append('#F97316')
+        else:          bar_colors.append('#EF4444')
 
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        y=q_df['Label'],
-        x=q_df['Mean'],
+    fig = go.Figure(go.Bar(
+        y=q_df['Label'], x=q_df['Mean'],
         orientation='h',
-        marker=dict(
-            color=[color if m >= 4.0 else '#F59E0B' if m >= 3.8 else '#EF4444' for m in q_df['Mean']],
-            line=dict(width=0),
-            cornerradius=4,
-        ),
+        marker=dict(color=bar_colors, cornerradius=4),
         text=[f"{m:.2f}" for m in q_df['Mean']],
         textposition='outside',
         textfont=dict(size=12, color='#0A1F44', family='Inter'),
         hovertemplate='%{y}<br>Điểm TB: %{x:.2f}<br>N=%{customdata}<extra></extra>',
         customdata=q_df['N'],
     ))
-
+    fig.add_vline(x=4.0, line_dash="dot", line_color="#10B981", line_width=1.5,
+                  annotation_text="Ngưỡng Tốt (4.0)", annotation_position="top right",
+                  annotation_font=dict(size=10, color="#10B981"))
+    fig.add_vline(x=3.5, line_dash="dot", line_color="#F59E0B", line_width=1,
+                  annotation_text="Cảnh báo (3.5)", annotation_position="bottom right",
+                  annotation_font=dict(size=9, color="#F59E0B"))
     fig.update_layout(
         height=max(250, len(q_df) * 55 + 80),
         margin=dict(l=10, r=60, t=10, b=10),
-        xaxis=dict(range=[1, 5], dtick=0.5, gridcolor='rgba(226,232,240,0.6)', zeroline=False),
+        xaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)', zeroline=False),
         yaxis=dict(automargin=True),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    # Add benchmark line at 4.0
-    fig.add_vline(x=4.0, line_dash="dot", line_color="#10B981", line_width=1,
-                  annotation_text="Ngưỡng Tốt (4.0)", annotation_position="top right",
-                  annotation_font=dict(size=10, color="#10B981"))
+    st.plotly_chart(fig, use_container_width=True, key=f"diag_bar_{pillar_id}")
 
-    st.plotly_chart(fig, width='stretch', key=f"pillar_overview_{pillar_id}")
+    # Highlight câu yếu nhất & câu có tiềm năng cải thiện cao nhất
+    weakest = q_df.iloc[0]
+    strongest = q_df.iloc[-1]
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"""
+        <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:0.7rem;font-weight:700;color:#DC2626;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">⚡ Câu yếu nhất — Ưu tiên cải thiện</div>
+            <div style="font-size:0.9rem;font-weight:700;color:#111827;">{weakest['Label']}</div>
+            <div style="font-size:1.3rem;font-weight:900;color:#DC2626;">{weakest['Mean']:.2f}/5</div>
+            <div style="font-size:0.78rem;color:#6B7280;">{weakest['Negative']:.1f}% phản hồi tiêu cực</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"""
+        <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:0.7rem;font-weight:700;color:#16A34A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">✅ Điểm mạnh nhất — Nhân rộng</div>
+            <div style="font-size:0.9rem;font-weight:700;color:#111827;">{strongest['Label']}</div>
+            <div style="font-size:1.3rem;font-weight:900;color:#16A34A;">{strongest['Mean']:.2f}/5</div>
+            <div style="font-size:0.78rem;color:#6B7280;">{strongest['Favorable']:.1f}% phản hồi tích cực</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Summary table
-    st.markdown("##### Bảng tổng hợp")
-    display_df = pd.DataFrame(q_data)[['Q', 'Label', 'Mean', 'Favorable', 'Negative', 'N']]
-    display_df.columns = ['Mã', 'Câu hỏi', 'Điểm TB', '% Tích cực', '% Tiêu cực', 'N']
-    display_df = display_df.sort_values('Điểm TB', ascending=True)
-    st.dataframe(display_df, width='stretch', hide_index=True, key=f"pillar_table_{pillar_id}")
+    # ── Khối 2: Breakdown theo thâm niên ─────────────────────
+    if 'Q5' in df.columns:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### 2️⃣ Ai đang bị ảnh hưởng nhất? (Phân tích theo Thâm niên)")
+
+        df_work = df.copy()
+        df_work['_pillar_score'] = df_work[q_cols].mean(axis=1)
+
+        tenure_data = []
+        for t in TENURE_ORDER:
+            mask = df_work['Q5'] == t
+            subset = df_work.loc[mask, '_pillar_score'].dropna()
+            if len(subset) >= 10:
+                tenure_data.append({'Thâm niên': t, 'Điểm TB': round(subset.mean(), 2), 'N': len(subset)})
+
+        if len(tenure_data) >= 2:
+            t_df = pd.DataFrame(tenure_data)
+
+            # Tìm "cliff" — điểm giảm đột ngột
+            diffs = t_df['Điểm TB'].diff()
+            cliff_idx = diffs.abs().idxmax()
+            cliff_drop = diffs.loc[cliff_idx]
+
+            fig2 = go.Figure()
+            # Color points by score
+            point_colors = ['#10B981' if v >= 4.0 else '#F59E0B' if v >= 3.7 else '#EF4444' for v in t_df['Điểm TB']]
+            fig2.add_trace(go.Scatter(
+                x=t_df['Thâm niên'], y=t_df['Điểm TB'],
+                mode='lines+markers+text',
+                marker=dict(size=12, color=point_colors, line=dict(width=2, color='white')),
+                line=dict(color=color, width=3),
+                text=[f"{v:.2f}" for v in t_df['Điểm TB']],
+                textposition='top center',
+                textfont=dict(size=11, color='#0A1F44', family='Inter'),
+                hovertemplate='%{x}<br>Điểm: %{y:.2f}<br>N=%{customdata}<extra></extra>',
+                customdata=t_df['N'],
+            ))
+            fig2.add_hline(y=4.0, line_dash="dot", line_color="#10B981", line_width=1.5)
+            fig2.add_hline(y=3.5, line_dash="dot", line_color="#F59E0B", line_width=1)
+            fig2.update_layout(
+                height=320,
+                margin=dict(l=10, r=10, t=20, b=80),
+                xaxis=dict(tickangle=-25, gridcolor='rgba(226,232,240,0.3)'),
+                yaxis=dict(range=[max(1, t_df['Điểm TB'].min()-0.3), min(5, t_df['Điểm TB'].max()+0.3)],
+                           dtick=0.2, gridcolor='rgba(226,232,240,0.6)'),
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(family='Inter'),
+            )
+            st.plotly_chart(fig2, use_container_width=True, key=f"tenure_{pillar_id}")
+
+            # Cliff alert
+            if cliff_drop is not None and cliff_drop < -0.4:
+                cliff_tenure = t_df.loc[cliff_idx, 'Thâm niên']
+                st.markdown(f"""
+                <div style="background:#FFFBEB;border-left:4px solid #D97706;border-radius:8px;padding:10px 16px;margin-top:8px;">
+                    <span style="font-size:0.78rem;font-weight:700;color:#D97706;">⚠️ TENURE CLIFF phát hiện tại mốc "{cliff_tenure}"</span>
+                    <div style="font-size:0.8rem;color:#374151;margin-top:4px;">
+                        Điểm giảm {abs(cliff_drop):.2f} điểm — kỳ vọng ban đầu đang gặp thực tế.
+                        Cần "milestone intervention" ngay tại mốc này.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # ── Khối 3: AI Insight ────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("#### 3️⃣ AI Phân tích")
+
+    p_mean = q_df['Mean'].mean()
+    weakest_label = weakest['Label']
+    p_name = meta['name']
+    group_name = cfg.get('label', 'nhóm này')
+
+    prompt = (
+        f"Bạn là Chuyên gia People Analytics EES 2026, phân tích trụ cột '{p_name}' của {group_name}. "
+        f"DỮ LIỆU: Điểm TB trụ cột = {p_mean:.2f}/5. "
+        f"Câu yếu nhất: {weakest_label} ({weakest['Mean']:.2f}/5, {weakest['Negative']:.1f}% tiêu cực). "
+        f"Câu mạnh nhất: {strongest['Label']} ({strongest['Mean']:.2f}/5). "
+        f"HÃY PHÂN TÍCH: "
+        f"(1) Tại sao '{weakest['Label']}' lại yếu nhất? Nguyên nhân gốc rễ là gì? "
+        f"(2) Nếu không can thiệp, điều gì sẽ xảy ra với nhóm này trong 3-6 tháng tới? "
+        f"(3) 1 hành động CỤ THỂ, KHẢ THI trong 30 ngày để cải thiện. "
+        f"Viết cho Giám đốc HR đọc — không dùng thuật ngữ kỹ thuật."
+    )
+    ai_data = {
+        'Pillar': p_name, 'Group': group_name,
+        'Pillar_Mean': round(p_mean, 2),
+        'Weakest_Q': weakest['Label'], 'Weakest_Score': weakest['Mean'],
+        'Strongest_Q': strongest['Label'], 'Strongest_Score': strongest['Mean'],
+    }
+    render_ai_insight_card("AI Chẩn đoán Trụ cột", ai_data, prompt)
 
 
 # ─────────────────────────────────────────────────────────────
-# TAB 2: CHI TIẾT
+# TAB 2: CHI TIẾT TỪNG CÂU + NLP
 # ─────────────────────────────────────────────────────────────
 
 def _render_tab_detail(df, cfg, group_id, pillar_id):
-    """Tab Chi tiết: Deep-dive analysis for each question in the pillar."""
-    # First, render the pillar-specific distribution
-    _render_manual_detail(df, cfg, group_id, pillar_id)
-    
+    """Chi tiết phân bố từng câu + phân tích pillar-specific."""
+    qs = get_pillar_questions(group_id, pillar_id)
+    q_cols = [q for q in qs if q in df.columns]
+
+    if not q_cols:
+        st.info("Không có câu hỏi nào trong trụ cột này.")
+        return
+
+    meta = PILLAR_META[pillar_id]
+    color = meta['color']
+
+    st.markdown("##### Phân bố phản hồi từng câu hỏi")
+
+    for q in q_cols:
+        if q not in df.columns:
+            continue
+        vals = df[q].dropna()
+        if len(vals) == 0:
+            continue
+        label = get_question_label(group_id, q)
+        mean_val = vals.mean()
+        dist_pct = vals.value_counts().reindex([1, 2, 3, 4, 5], fill_value=0) / len(vals) * 100
+
+        delta_color = "#10B981" if mean_val >= 4.0 else "#F59E0B" if mean_val >= 3.7 else "#EF4444"
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            st.markdown(f"""
+            <div style="background:white;border:1px solid #E2E8F0;border-radius:10px;padding:16px;text-align:center;">
+                <div style="font-size:0.72rem;color:#94A3B8;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">{q}</div>
+                <div style="font-size:2rem;font-weight:900;color:{delta_color};margin:4px 0;">{mean_val:.2f}</div>
+                <div style="font-size:0.76rem;color:#64748B;">{label}</div>
+                <div style="font-size:0.72rem;color:#94A3B8;margin-top:6px;">N={len(vals):,}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col2:
+            c_map = ['#EF4444', '#F97316', '#94A3B8', '#22C55E', '#10B981']
+            labels_map = ['1-Rất không ĐY', '2-Không ĐY', '3-Trung lập', '4-Đồng ý', '5-Rất đồng ý']
+            fig = go.Figure(go.Bar(
+                y=labels_map,
+                x=[dist_pct.get(i, 0) for i in range(1, 6)],
+                orientation='h',
+                marker_color=c_map,
+                text=[f"{dist_pct.get(i, 0):.1f}%" for i in range(1, 6)],
+                textposition='outside',
+            ))
+            fig.update_layout(
+                height=155, margin=dict(l=0, r=40, t=0, b=0),
+                xaxis=dict(range=[0, 100], title=None, showgrid=False),
+                yaxis=dict(title=None, automargin=True),
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                showlegend=False, font=dict(family='Inter', size=11),
+            )
+            st.plotly_chart(fig, use_container_width=True, key=f"dist_{pillar_id}_{q}")
+
+        st.markdown("<hr style='margin:6px 0;border:none;border-top:1px solid #F1F5F9;'>", unsafe_allow_html=True)
+
+    # NLP open-text
     st.markdown("---")
-    
-    # Then append the full NLP open-ended analysis from view_c
     from views import view_c_key_issues
     try:
         view_c_key_issues.render(df, cfg, pillar_filter=pillar_id)
@@ -198,149 +371,21 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
         view_c_key_issues.render(df, cfg)
 
 
-def _render_manual_detail(df, cfg, group_id, pillar_id):
-    """Manual detail rendering — distribution of each question."""
-    import plotly.express as px
-
-    qs = get_pillar_questions(group_id, pillar_id)
-    if not qs:
-        st.info("Không có câu hỏi nào trong trụ cột này.")
-        return
-
-    st.markdown("##### Phân bố phản hồi từng câu hỏi")
-
-    for q in qs:
-        if q not in df.columns:
-            continue
-        vals = df[q].dropna()
-        if len(vals) == 0:
-            continue
-
-        label = get_question_label(group_id, q)
-        mean_val = vals.mean()
-
-        dist = vals.value_counts().reindex([1, 2, 3, 4, 5], fill_value=0)
-        dist_pct = dist / dist.sum() * 100
-
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            delta_color = "#10B981" if mean_val >= 4.0 else "#F59E0B" if mean_val >= 3.8 else "#EF4444"
-            st.markdown(f"""
-            <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; text-align: center;">
-                <div style="font-size: 0.72rem; color: #94A3B8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">{q}</div>
-                <div style="font-size: 2rem; font-weight: 900; color: {delta_color}; margin: 4px 0;">{mean_val:.2f}</div>
-                <div style="font-size: 0.78rem; color: #64748B;">{label}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col2:
-            colors = ['#EF4444', '#F97316', '#94A3B8', '#22C55E', '#10B981']
-            labels = ['1-Rất không ĐY', '2-Không ĐY', '3-Trung lập', '4-Đồng ý', '5-Rất đồng ý']
-            fig = px.bar(
-                x=[dist_pct.get(i, 0) for i in range(1, 6)],
-                y=labels,
-                orientation='h',
-                color_discrete_sequence=[colors[0]],
-            )
-            fig.update_traces(
-                marker_color=colors,
-                text=[f"{dist_pct.get(i, 0):.1f}%" for i in range(1, 6)],
-                textposition='outside',
-            )
-            fig.update_layout(
-                height=160, margin=dict(l=0, r=40, t=0, b=0),
-                xaxis=dict(range=[0, 100], title=None, showgrid=False),
-                yaxis=dict(title=None, automargin=True),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                showlegend=False,
-                font=dict(family='Inter', size=11),
-            )
-            st.plotly_chart(fig, width='stretch', key=f"dist_{pillar_id}_{q}")
-
-        st.markdown("<hr style='margin: 8px 0; border: none; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
-
-
 # ─────────────────────────────────────────────────────────────
 # TAB 3: NHÓM RỦI RO
 # ─────────────────────────────────────────────────────────────
 
 def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
-    """Tab Nhóm rủi ro: breakdown by tenure/generation/region for this pillar."""
-    # First, render the pillar-specific manual breakdown
-    _render_manual_risk_groups(df, cfg, group_id, pillar_id)
-    
-    st.markdown("---")
-    
-    # Then append the full division/department heatmap from view_b
-    from views import view_b_problem_groups
-    try:
-        view_b_problem_groups.render(df, cfg, pillar_filter=pillar_id)
-    except TypeError:
-        view_b_problem_groups.render(df, cfg)
-
-
-def _render_manual_risk_groups(df, cfg, group_id, pillar_id):
-    """Manual risk groups rendering — score by tenure/generation."""
-    import plotly.graph_objects as go
-
+    meta = PILLAR_META[pillar_id]
     qs = get_pillar_questions(group_id, pillar_id)
     q_cols = [q for q in qs if q in df.columns]
 
-    if not q_cols or 'Q5' not in df.columns:
+    if not q_cols:
         st.info("Không đủ dữ liệu phân nhóm.")
         return
 
-    # Calculate pillar score per row
     df_work = df.copy()
     df_work['_pillar_score'] = df_work[q_cols].mean(axis=1)
-
-    st.markdown("##### Điểm trụ cột theo Thâm niên")
-
-    tenure_order = [
-        'Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng',
-        'Trên 6 đến 9 tháng', 'Trên 9 đến 12 tháng', 'Trên 1 đến 2 năm',
-        'Trên 2 đến 3 năm', 'Trên 3 đến 5 năm', 'Trên 5 năm'
-    ]
-
-    tenure_data = []
-    for t in tenure_order:
-        mask = df_work['Q5'] == t
-        subset = df_work.loc[mask, '_pillar_score'].dropna()
-        if len(subset) >= 10:
-            tenure_data.append({
-                'Thâm niên': t,
-                'Điểm TB': round(subset.mean(), 2),
-                'N': len(subset),
-            })
-
-    if tenure_data:
-        t_df = pd.DataFrame(tenure_data)
-        meta = PILLAR_META[pillar_id]
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=t_df['Thâm niên'], y=t_df['Điểm TB'],
-            mode='lines+markers+text',
-            marker=dict(size=10, color=meta['color'], line=dict(width=2, color='white')),
-            line=dict(color=meta['color'], width=3),
-            text=[f"{v:.2f}" for v in t_df['Điểm TB']],
-            textposition='top center',
-            textfont=dict(size=11, color='#0A1F44', family='Inter'),
-            hovertemplate='%{x}<br>Điểm: %{y:.2f}<br>N=%{customdata}<extra></extra>',
-            customdata=t_df['N'],
-        ))
-        fig.add_hline(y=4.0, line_dash="dot", line_color="#10B981", line_width=1)
-        fig.update_layout(
-            height=350,
-            margin=dict(l=10, r=10, t=20, b=80),
-            xaxis=dict(tickangle=-30, gridcolor='rgba(226,232,240,0.3)'),
-            yaxis=dict(range=[3.5, 4.5], dtick=0.1, gridcolor='rgba(226,232,240,0.6)'),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter'),
-        )
-        st.plotly_chart(fig, width='stretch', key=f"tenure_{pillar_id}")
 
     # By Region
     if 'region' in df_work.columns:
@@ -348,31 +393,38 @@ def _render_manual_risk_groups(df, cfg, group_id, pillar_id):
         region_agg = df_work.groupby('region')['_pillar_score'].agg(['mean', 'count']).reset_index()
         region_agg = region_agg[region_agg['count'] >= 10].sort_values('mean', ascending=True)
         region_agg.columns = ['Vùng', 'Điểm TB', 'N']
-
         if not region_agg.empty:
-            fig2 = go.Figure()
-            fig2.add_trace(go.Bar(
+            fig = go.Figure(go.Bar(
                 y=region_agg['Vùng'], x=region_agg['Điểm TB'],
                 orientation='h',
                 marker=dict(
-                    color=[PILLAR_META[pillar_id]['color'] if m >= 4.0 else '#F59E0B' if m >= 3.8 else '#EF4444'
+                    color=[meta['color'] if m >= 4.0 else '#F59E0B' if m >= 3.7 else '#EF4444'
                            for m in region_agg['Điểm TB']],
                     cornerradius=4,
                 ),
                 text=[f"{m:.2f}" for m in region_agg['Điểm TB']],
                 textposition='outside',
             ))
-            fig2.add_vline(x=4.0, line_dash="dot", line_color="#10B981", line_width=1)
-            fig2.update_layout(
+            fig.add_vline(x=4.0, line_dash="dot", line_color="#10B981", line_width=1.5)
+            fig.add_vline(x=3.5, line_dash="dot", line_color="#F59E0B", line_width=1)
+            fig.update_layout(
                 height=max(300, len(region_agg) * 30 + 80),
                 margin=dict(l=10, r=60, t=10, b=10),
-                xaxis=dict(range=[3.0, 4.5], gridcolor='rgba(226,232,240,0.6)'),
+                xaxis=dict(range=[max(1, region_agg['Điểm TB'].min()-0.3), 5], gridcolor='rgba(226,232,240,0.6)'),
                 yaxis=dict(automargin=True),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig2, width='stretch', key=f"region_{pillar_id}")
+            st.plotly_chart(fig, use_container_width=True, key=f"region_{pillar_id}")
+
+    st.markdown("---")
+
+    # Division/Dept/Section breakdown
+    from views import view_b_problem_groups
+    try:
+        view_b_problem_groups.render(df, cfg, pillar_filter=pillar_id)
+    except TypeError:
+        view_b_problem_groups.render(df, cfg)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -380,20 +432,15 @@ def _render_manual_risk_groups(df, cfg, group_id, pillar_id):
 # ─────────────────────────────────────────────────────────────
 
 def _render_tab_root_cause(df, cfg, group_id, pillar_id):
-    """Tab Nguyên nhân: root cause analysis + action priority."""
     from views import view_d_root_cause, view_f_action_priority
 
-    # Root cause — only render for matching pillar
     st.markdown("####  Phân tích nguyên nhân gốc rễ")
     try:
         view_d_root_cause.render(df, cfg, group_id, pillar_filter=pillar_id)
     except TypeError:
-        # Fallback: render full root cause (backward compat)
         view_d_root_cause.render(df, cfg, group_id)
 
     st.markdown("---")
-
-    # Action priority
     st.markdown("####  Ưu tiên hành động")
     try:
         view_f_action_priority.render(df, cfg, pillar_filter=pillar_id)
@@ -402,11 +449,22 @@ def _render_tab_root_cause(df, cfg, group_id, pillar_id):
 
 
 # ─────────────────────────────────────────────────────────────
-# TAB 5: HRIS LINKAGE (TC3 & TC4 only)
+# TAB 5: BẤT THƯỜNG (Anomaly Detection)
+# ─────────────────────────────────────────────────────────────
+
+def _render_tab_anomaly(df, cfg, group_id, pillar_id):
+    """Tab Bất thường — per-pillar anomalies + cross-pillar patterns."""
+    pillar_anomalies = detect_pillar_anomalies(df, group_id, pillar_id)
+    cross_anomalies  = detect_cross_pillar(df, group_id)
+    all_anomalies    = pillar_anomalies + cross_anomalies
+    render_anomaly_tab(all_anomalies, pillar_id=pillar_id, show_cross=True)
+
+
+# ─────────────────────────────────────────────────────────────
+# TAB 6: HRIS (TC3/TC4/TC5 only)
 # ─────────────────────────────────────────────────────────────
 
 def _render_tab_hris(df, cfg, group_id, pillar_id):
-    """Tab HRIS: only for TC3 (productivity) and TC4 (income)."""
     from views import hris_linkage, view_e_impact_risk
 
     if pillar_id == 'TC4':
@@ -436,36 +494,32 @@ def _render_tab_hris(df, cfg, group_id, pillar_id):
 # ─────────────────────────────────────────────────────────────
 
 def render(df, cfg, group_id, pillar_id):
-    """Main entry point: render pillar with tabs."""
+    """Main entry: render pillar with 5–6 tabs."""
     if df is None or df.empty:
         st.warning("Không có dữ liệu để hiển thị.")
         return
 
-    meta = PILLAR_META[pillar_id]
-
-    # Render pillar header
     _render_pillar_header(pillar_id, df, cfg, group_id)
 
-    # Anomaly detection & deep dive (compact alerts after header)
-    from shared.pillar_anomaly import render_pillar_anomalies
-    render_pillar_anomalies(df, group_id, pillar_id)
-
-    # Build tab list based on pillar
-    tab_names = [" Tổng quan", " Chi tiết", " Nhóm rủi ro", " Nguyên nhân & Hành động"]
-
-    # Add HRIS tab for TC3, TC4, TC5
-    if pillar_id in ('TC3', 'TC4', 'TC5'):
-        if pillar_id == 'TC4':
-            tab_names.append("HRIS & Rủi ro")
-        elif pillar_id == 'TC3':
-            tab_names.append("HRIS & Năng suất")
-        elif pillar_id == 'TC5':
-            tab_names.append(" Rủi ro Gắn kết")
+    # Build tabs
+    tab_names = [
+        "🩺 Chẩn đoán Nhanh",
+        "🔍 Chi tiết Từng câu",
+        "🏢 Nhóm Rủi ro",
+        "🎯 Nguyên nhân & Hành động",
+        "⚠️ Bất thường",
+    ]
+    if pillar_id == 'TC4':
+        tab_names.append("💰 HRIS & Rủi ro")
+    elif pillar_id == 'TC3':
+        tab_names.append("⚙️ HRIS & Năng suất")
+    elif pillar_id == 'TC5':
+        tab_names.append("🔥 Rủi ro Gắn kết")
 
     tabs = st.tabs(tab_names)
 
     with tabs[0]:
-        _render_tab_overview(df, cfg, group_id, pillar_id)
+        _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id)
 
     with tabs[1]:
         _render_tab_detail(df, cfg, group_id, pillar_id)
@@ -476,6 +530,9 @@ def render(df, cfg, group_id, pillar_id):
     with tabs[3]:
         _render_tab_root_cause(df, cfg, group_id, pillar_id)
 
-    if len(tabs) > 4:
-        with tabs[4]:
+    with tabs[4]:
+        _render_tab_anomaly(df, cfg, group_id, pillar_id)
+
+    if len(tabs) > 5:
+        with tabs[5]:
             _render_tab_hris(df, cfg, group_id, pillar_id)

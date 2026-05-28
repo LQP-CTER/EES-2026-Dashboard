@@ -416,3 +416,28 @@ def render(all_data, available_groups):
             render_ai_insight_card("AI NLP Insight: Định Vị Thương Hiệu (EVP)", nlp_ai_data, prompt, badge="NLP Engine", custom_style="height: 100%; margin-bottom: 0; padding: 24px;")
     else:
         st.info("Chưa có dữ liệu câu hỏi mở (NLP) để phân tích EVP.")
+
+    # ══════════════════════════════════════════════════════════════
+    # SECTION 5: CROSS-PILLAR ANOMALY PATTERNS
+    # ══════════════════════════════════════════════════════════════
+    from shared.plotly_theme import section_header as _sh
+    st.markdown(_sh("⚠️ Phát Hiện Bất Thường Liên Trụ Cột",
+                    "Những pattern nguy hiểm chỉ nhìn thấy khi phân tích tất cả 5 trụ cột cùng lúc"), unsafe_allow_html=True)
+
+    try:
+        from utils.anomaly_detector import detect_all_anomalies
+        from views.anomaly_cards import render_anomaly_tab
+
+        # Determine group_id — use most common group in the dataset
+        group_id_for_anomaly = '1A'
+        if 'group_id' in df_total.columns:
+            group_id_for_anomaly = df_total['group_id'].mode().iloc[0] if not df_total['group_id'].empty else '1A'
+
+        all_anomalies = detect_all_anomalies(df_total, group_id_for_anomaly)
+        cross_only = [a for a in all_anomalies if a.get('pillar') == 'CROSS']
+
+        render_anomaly_tab(cross_only, pillar_id=None, show_cross=True)
+
+    except Exception as e:
+        st.warning(f"Không thể chạy phân tích bất thường: {e}")
+
