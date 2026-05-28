@@ -642,7 +642,7 @@ def render_anomaly_alert(anomaly, deep_dive_data, group_id):
             for key, value in deep_dive_data['breakdown'].items():
                 if isinstance(value, pd.DataFrame):
                     st.markdown(f"**{key.replace('_', ' ').title()}:**")
-                    st.dataframe(value, use_container_width=True, hide_index=True)
+                    st.dataframe(value, width='stretch', hide_index=True)
                 elif isinstance(value, dict):
                     st.markdown(f"**{key.replace('_', ' ').title()}:**")
                     for k, v in value.items():

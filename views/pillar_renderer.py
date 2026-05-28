@@ -184,7 +184,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, use_container_width=True, key=f"diag_bar_{pillar_id}")
+    st.plotly_chart(fig, width='stretch', key=f"diag_bar_{pillar_id}")
 
     # Highlight câu yếu nhất & câu có tiềm năng cải thiện cao nhất
     weakest = q_df.iloc[0]
@@ -257,7 +257,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig2, use_container_width=True, key=f"tenure_{pillar_id}")
+            st.plotly_chart(fig2, width='stretch', key=f"tenure_{pillar_id}")
 
             # Cliff alert
             if cliff_drop is not None and cliff_drop < -0.4:
@@ -358,7 +358,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 showlegend=False, font=dict(family='Inter', size=11),
             )
-            st.plotly_chart(fig, use_container_width=True, key=f"dist_{pillar_id}_{q}")
+            st.plotly_chart(fig, width='stretch', key=f"dist_{pillar_id}_{q}")
 
         st.markdown("<hr style='margin:6px 0;border:none;border-top:1px solid #F1F5F9;'>", unsafe_allow_html=True)
 
@@ -415,7 +415,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig, use_container_width=True, key=f"region_{pillar_id}")
+            st.plotly_chart(fig, width='stretch', key=f"region_{pillar_id}")
 
     st.markdown("---")
 
