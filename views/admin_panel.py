@@ -71,7 +71,7 @@ def render():
             new_ann_text = st.text_area("Nội dung thông báo", value=announcement.get("text", ""), height=100)
             new_ann_active = st.toggle("Hiển thị Thông báo", value=announcement.get("active", False))
             
-            if st.button("Lưu Thông báo", use_container_width=True):
+            if st.button("Lưu Thông báo", width='stretch'):
                 state["announcement"] = {"text": new_ann_text, "active": new_ann_active}
                 save_state(state)
                 st.toast("Đã cập nhật thông báo!", icon="")
@@ -90,17 +90,17 @@ def render():
             st.markdown("<br>", unsafe_allow_html=True)
             c41, c42 = st.columns(2)
             with c41:
-                if st.button("Lưu Cấu hình AI", use_container_width=True):
+                if st.button("Lưu Cấu hình AI", width='stretch'):
                     state["ai_config"] = {"temperature": new_temp}
                     save_state(state)
                     st.toast("Đã lưu cấu hình AI!", icon="")
             with c42:
-                if st.button("Làm mới Bộ nhớ đệm", use_container_width=True):
+                if st.button("Làm mới Bộ nhớ đệm", width='stretch'):
                     st.cache_data.clear()
                     st.toast("Đã xóa bộ nhớ đệm thành công!", icon="")
 
     st.markdown("---")
-    if st.button("Giả lập Truy cập User", use_container_width=True, type="primary"):
+    if st.button("Giả lập Truy cập User", width='stretch', type="primary"):
         st.session_state.preview_mode = True
         st.rerun()
 

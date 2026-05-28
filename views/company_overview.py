@@ -248,7 +248,7 @@ def render(all_data, available_groups):
             ))
             fig_bar = fig_card(fig_bar, 'EI theo Khối / Division', 'Mức độ gắn kết trung bình')
             fig_bar.update_layout(xaxis=dict(range=[0, 100], showgrid=True))
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, width='stretch')
             
         with c2:
             # Heatmap of pillars by division
@@ -274,7 +274,7 @@ def render(all_data, available_groups):
                 showscale=False
             ))
             fig_hm = fig_card(fig_hm, 'Heatmap 5 Trụ Cột theo Khối', 'Phân bổ sức khỏe tổ chức')
-            st.plotly_chart(fig_hm, use_container_width=True)
+            st.plotly_chart(fig_hm, width='stretch')
             
         # --- AI Insight for Division ---
         if len(df_div_stats) > 1:
@@ -344,7 +344,7 @@ def render(all_data, available_groups):
                 )
                 fig_demo = fig_card(fig_demo, f'EI & eNPS theo {title}', 'Phân mảnh sự gắn kết')
                 
-                st.plotly_chart(fig_demo, use_container_width=True)
+                st.plotly_chart(fig_demo, width='stretch')
                 
                 # --- AI Insight for Demographics ---
                 if len(df_demo) > 1:
@@ -404,7 +404,7 @@ def render(all_data, available_groups):
                 text=df_evp['Mentions'], textposition='inside'
             ))
             fig_evp = fig_card(fig_evp, 'Từ khóa EVP nổi bật', 'Tần suất được nhắc đến trong câu hỏi mở')
-            st.plotly_chart(fig_evp, use_container_width=True)
+            st.plotly_chart(fig_evp, width='stretch')
             
         with c_evp2:
             nlp_ai_data = {

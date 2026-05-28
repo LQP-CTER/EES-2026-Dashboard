@@ -4,7 +4,7 @@ import pandas as pd
 from shared.nlp_utils import detect_warning_signals
 from utils.ai_generator import render_ai_insight_card, validate_warning_signals_with_ai
 
-def render(df, cfg):
+def render(df, cfg, pillar_filter=None):
     codebook = cfg.get('codebook', {})
     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
 
@@ -399,14 +399,14 @@ def render(df, cfg):
         fig1 = fig_card(fig1, 'PHÂN LOẠI TÍN HIỆU', 'Nhóm rủi ro phát hiện qua NLP')
         fig1.update_traces(textposition='outside')
         fig1.update_layout(height=400, showlegend=False, xaxis_title="", yaxis_title="")
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, width='stretch')
     with c2:
         fig2 = px.bar(x=sig_sec.values, y=sig_sec.index, orientation='h',
                      color=sig_sec.values, color_continuous_scale='OrRd', text=sig_sec.values)
         fig2 = fig_card(fig2, 'TOP 10 SECTION RỦI RO', 'Số lượng tín hiệu báo động theo bộ phận')
         fig2.update_traces(textposition='outside')
         fig2.update_layout(height=400, showlegend=False, xaxis_title="", yaxis_title="")
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
 
     st.markdown("#### Bảng Chi tiết")
     type_filter = st.multiselect("Lọc loại tín hiệu", df_sig['Loại'].unique(), default=list(df_sig['Loại'].unique()))

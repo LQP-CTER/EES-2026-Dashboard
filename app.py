@@ -9,8 +9,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 # Force reload shared modules to prevent caching issues in Streamlit
-import shared.plotly_theme
-importlib.reload(shared.plotly_theme)
+try:
+    import shared.plotly_theme
+    importlib.reload(shared.plotly_theme)
+except Exception:
+    pass
 try:
     import shared.nlp_utils
     importlib.reload(shared.nlp_utils)
@@ -660,7 +663,7 @@ COMPANY_LABEL = "Toàn bộ Giao Hàng Nhanh"
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     if st.session_state.get("is_admin", False):
-        if st.button("Trở về Admin Panel", use_container_width=True):
+        if st.button("Trở về Admin Panel", width='stretch'):
             st.session_state.preview_mode = False
             st.rerun()
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)

@@ -138,7 +138,7 @@ _DEFAULT_FACTORS = {
 }
 
 
-def render(df, cfg):
+def render(df, cfg, pillar_filter=None):
     apply_theme()
     st.markdown('<div class="sec-h3"><div class="sec-accent"></div>MÔ PHỎNG TÁC ĐỘNG (KPI SIMULATOR)</div>', unsafe_allow_html=True)
 
@@ -278,4 +278,4 @@ def render(df, cfg):
             yaxis_title="", showlegend=False,
             xaxis=dict(range=[0, max(df_weights['Trọng số (%)']) * 1.3])
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')

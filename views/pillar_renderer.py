@@ -172,7 +172,7 @@ def _render_manual_overview(df, cfg, group_id, pillar_id, qs, cb):
                   annotation_text="Ngưỡng Tốt (4.0)", annotation_position="top right",
                   annotation_font=dict(size=10, color="#10B981"))
 
-    st.plotly_chart(fig, use_container_width=True, key=f"pillar_overview_{pillar_id}")
+    st.plotly_chart(fig, width='stretch', key=f"pillar_overview_{pillar_id}")
 
     # Summary table
     st.markdown("##### Bảng tổng hợp")
@@ -259,7 +259,7 @@ def _render_manual_detail(df, cfg, group_id, pillar_id):
                 showlegend=False,
                 font=dict(family='Inter', size=11),
             )
-            st.plotly_chart(fig, use_container_width=True, key=f"dist_{pillar_id}_{q}")
+            st.plotly_chart(fig, width='stretch', key=f"dist_{pillar_id}_{q}")
 
         st.markdown("<hr style='margin: 8px 0; border: none; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
 
@@ -343,7 +343,7 @@ def _render_manual_risk_groups(df, cfg, group_id, pillar_id):
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(family='Inter'),
         )
-        st.plotly_chart(fig, use_container_width=True, key=f"tenure_{pillar_id}")
+        st.plotly_chart(fig, width='stretch', key=f"tenure_{pillar_id}")
 
     # By Region
     if 'region' in df_work.columns:
@@ -375,7 +375,7 @@ def _render_manual_risk_groups(df, cfg, group_id, pillar_id):
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig2, use_container_width=True, key=f"region_{pillar_id}")
+            st.plotly_chart(fig2, width='stretch', key=f"region_{pillar_id}")
 
 
 # ─────────────────────────────────────────────────────────────

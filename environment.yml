@@ -1,0 +1,19 @@
+name: ees_2026_dashboard
+channels:
+  - snowflake
+dependencies:
+  - python=3.10
+  - streamlit>=1.30.0
+  - pandas>=2.0.0
+  - plotly>=5.18.0
+  - numpy
+  - openpyxl
+  - scipy
+  - matplotlib
+  - xlsxwriter
+  - pyarrow>=14.0.0
+  - requests
+  - sqlalchemy
+  - psycopg2
+  - pip:
+      - groq
