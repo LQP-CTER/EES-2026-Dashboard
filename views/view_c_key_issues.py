@@ -276,6 +276,9 @@ def render(df, cfg, pillar_filter=None):
                     st.plotly_chart(fig_detractor, width='stretch')
 
         ai_data_diff = {"Survey_Question": sel_q}
+        # Safely extract top topic names from each group
+        p_topics = [r[0] for r in rows_promoter[:3]] if 'rows_promoter' in dir() and rows_promoter else []
+        d_topics = [r[0] for r in rows_detractor[:3]] if 'rows_detractor' in dir() and rows_detractor else []
         prompt_diff = (
             f"Phân tích sự khác biệt về chủ đề quan tâm giữa nhóm Promoter (trung thành) và Detractor (bất mãn): "
             f"Nhóm Promoter quan tâm nhất tới {', '.join(p_topics) if p_topics else 'không rõ'}. "
