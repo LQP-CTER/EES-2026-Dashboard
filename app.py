@@ -305,39 +305,39 @@ button[title="Thu nhỏ thanh bên"] {
     font-weight: 500;
 }
 
-/* ═══════ SIDEBAR NAV LABELS ═══════ */
+/* ═══════ SIDEBAR NAV LABELS — Executive Style ═══════ */
 .sb-section {
-    font-size: 0.62rem;
+    font-size: 0.64rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #94A3B8;
-    padding: 14px 20px 5px;
+    color: #64748B;
+    padding: 16px 20px 6px;
     display: block;
 }
 .sb-divider {
     height: 1px;
-    background: #F1F5F9;
-    margin: 10px 0;
+    background: #E2E8F0;
+    margin: 12px 0;
 }
 
-/* ═══════ SIDEBAR RADIO (NAV ITEMS) ═══════ */
+/* ═══════ SIDEBAR RADIO (NAV ITEMS) — Executive Style ═══════ */
 [data-testid="stSidebar"] div[role="radiogroup"] {
-    gap: 1px !important;
+    gap: 2px !important;
     display: flex !important;
     flex-direction: column !important;
-    padding: 0 10px !important;
+    padding: 0 12px !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label {
-    padding: 9px 12px !important;
-    border-radius: 7px !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
     background: transparent !important;
     border: none !important;
-    transition: background 0.12s ease !important;
+    transition: all 0.15s ease !important;
     cursor: pointer !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label p {
-    font-size: 0.84rem !important;
+    font-size: 0.85rem !important;
     font-weight: 500 !important;
     color: #475569 !important;
     margin: 0 !important;
@@ -347,14 +347,15 @@ button[title="Thu nhỏ thanh bên"] {
     background: #F8FAFC !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:hover p {
-    color: #1E293B !important;
+    color: #0A1F44 !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) {
-    background: #FFF3EE !important;
+    background: #0A1F44 !important;
+    box-shadow: 0 2px 6px rgba(10,31,68,0.12) !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:has(input:checked) p {
     font-weight: 600 !important;
-    color: #FF5200 !important;
+    color: #FFFFFF !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child {
     display: none !important;
@@ -376,57 +377,63 @@ button[title="Thu nhỏ thanh bên"] {
     letter-spacing: 0.07em !important;
 }
 
-/* ═══════ PAGE HEADER ═══════ */
+/* ═══════ PAGE HEADER — Executive Style ═══════ */
 .pg-header {
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #E2E8F0;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #F1F5F9;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
 }
 .pg-eyebrow {
-    font-size: 0.63rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #94A3B8;
-    margin: 0 0 4px;
+    color: #64748B;
+    margin: 0 0 6px;
 }
 .pg-title {
-    font-size: 1.45rem;
+    font-size: 1.6rem;
     font-weight: 800;
     color: #0A1F44;
     margin: 0;
-    letter-spacing: -0.025em;
-    line-height: 1.25;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
 }
 .pg-subtitle {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     color: #64748B;
-    margin: 5px 0 0;
+    margin: 8px 0 0;
     font-weight: 500;
 }
 .pg-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     background: #F0FDF4;
     color: #15803D;
     border: 1px solid #BBF7D0;
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(21,128,61,0.08);
 }
 .pg-badge-dot {
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     background: #22C55E;
     border-radius: 50%;
     display: inline-block;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 /* ═══════ SECTION HEADERS ═══════ */
@@ -456,34 +463,35 @@ button[title="Thu nhỏ thanh bên"] {
     font-weight: 500;
 }
 
-/* ═══════ TABS ═══════ */
+/* ═══════ TABS — Executive Style ═══════ */
 .stTabs [data-baseweb="tab-list"] {
-    background: #F8FAFC !important;
+    background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
-    border-radius: 10px !important;
-    padding: 4px !important;
-    gap: 4px !important;
-    box-shadow: none !important;
+    border-radius: 12px !important;
+    padding: 6px !important;
+    gap: 2px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 7px !important;
-    padding: 8px 20px !important;
-    font-size: 0.84rem !important;
+    border-radius: 8px !important;
+    padding: 10px 24px !important;
+    font-size: 0.85rem !important;
     font-weight: 500 !important;
     color: #64748B !important;
     background: transparent !important;
     border: none !important;
-    transition: all 0.12s ease !important;
+    transition: all 0.15s ease !important;
+    letter-spacing: -0.01em !important;
 }
 .stTabs [data-baseweb="tab"]:hover {
-    color: #1E293B !important;
-    background: rgba(0,0,0,0.03) !important;
+    color: #0A1F44 !important;
+    background: #F8FAFC !important;
 }
 .stTabs [aria-selected="true"] {
-    background: #FFFFFF !important;
-    color: #0A1F44 !important;
+    background: #0A1F44 !important;
+    color: #FFFFFF !important;
     font-weight: 600 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 2px 8px rgba(10,31,68,0.15) !important;
 }
 .stTabs [data-baseweb="tab-highlight-bar"] {
     display: none !important;
@@ -743,8 +751,76 @@ div[data-baseweb="select"] > div:hover {
 .hero-metric-label { font-size: 0.72rem; color: #94A3B8 !important; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
 .hero-metric-value { font-size: 2.5rem; font-weight: 900; color: #FFF !important; line-height: 1; letter-spacing: -0.03em; }
 
-/* ═══════ DATAFRAME ═══════ */
-[data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden !important; }
+/* ═══════ DATAFRAME — Executive Style ═══════ */
+[data-testid="stDataFrame"] { 
+    border-radius: 12px !important; 
+    overflow: hidden !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
+/* ═══════ EXPANDER — Clean Style ═══════ */
+.streamlit-expanderHeader {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: #0A1F44 !important;
+    padding: 12px 16px !important;
+    background: #F8FAFC !important;
+    border-radius: 8px !important;
+    border: 1px solid #E2E8F0 !important;
+}
+.streamlit-expanderContent {
+    padding: 16px !important;
+    border: 1px solid #E2E8F0 !important;
+    border-top: none !important;
+    border-radius: 0 0 8px 8px !important;
+    background: #FFFFFF !important;
+}
+
+/* ═══════ BUTTONS — Professional ═══════ */
+.stButton > button {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 20px !important;
+    transition: all 0.15s ease !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
+    color: #0A1F44 !important;
+}
+.stButton > button:hover {
+    border-color: #0A1F44 !important;
+    box-shadow: 0 2px 6px rgba(10,31,68,0.1) !important;
+}
+.stButton > button[kind="primary"] {
+    background: #0A1F44 !important;
+    color: #FFFFFF !important;
+    border-color: #0A1F44 !important;
+}
+.stButton > button[kind="primary"]:hover {
+    background: #1B2559 !important;
+}
+
+/* ═══════ METRICS — Clean ═══════ */
+[data-testid="stMetric"] {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: #64748B !important;
+}
+[data-testid="stMetricValue"] {
+    font-size: 1.8rem !important;
+    font-weight: 800 !important;
+    color: #0A1F44 !important;
+    letter-spacing: -0.02em !important;
+}
 </style>
 """, unsafe_allow_html=True)
 

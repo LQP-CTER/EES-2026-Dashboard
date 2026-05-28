@@ -20,13 +20,13 @@ PILLAR_PATTERNS = {
     # TC1 - Niềm tin & Định hướng
     'TC1_info_gap': {
         'label': 'Đứt gãy thông tin',
-        'icon': '📢',
+        'icon': '',
         'color': '#F59E0B',
         'desc': 'Nhân viên TIN lãnh đạo nhưng KHÔNG được thông báo kịp thời về thay đổi',
     },
     'TC1_trust_paradox': {
         'label': 'Nghịch lý niềm tin',
-        'icon': '🤔',
+        'icon': '',
         'color': '#8B5CF6',
         'desc': 'Tin BLĐ nhưng vẫn muốn nghỉ → vấn đề nằm ở trụ cột khác',
     },
@@ -34,13 +34,13 @@ PILLAR_PATTERNS = {
     # TC2 - Quản lý Trực tiếp
     'TC2_fairness_gap': {
         'label': 'Hỗ trợ tốt nhưng phân bổ không công bằng',
-        'icon': '⚖️',
+        'icon': '',
         'color': '#EF4444',
         'desc': 'QL hỗ trợ tốt nhưng phân đơn/lịch chạy thiên vị → tử huyệt cảm xúc',
     },
     'TC2_manager_island': {
         'label': 'Quản lý tốt — Tổ chức yếu',
-        'icon': '🏝️',
+        'icon': '',
         'color': '#B45309',
         'desc': 'Nhân viên thích QL trực tiếp nhưng ghét công ty → rủi ro khi QL rời đi',
     },
@@ -48,13 +48,13 @@ PILLAR_PATTERNS = {
     # TC3 - Công việc & Điều kiện
     'TC3_glass_ceiling': {
         'label': 'Trần thủy tinh',
-        'icon': '🔝',
+        'icon': '',
         'color': '#7C3AED',
         'desc': 'Nhân viên thâm niên KHÔNG thấy lộ trình thăng tiến → Quiet Quitting',
     },
     'TC3_tool_barrier': {
         'label': 'Công cụ cản trở',
-        'icon': '🔧',
+        'icon': '',
         'color': '#DC2626',
         'desc': 'App/thiết bị kém → năng suất thấp → thu nhập thấp → vòng lặp tiêu cực',
     },
@@ -62,13 +62,13 @@ PILLAR_PATTERNS = {
     # TC4 - Thu nhập & Minh bạch
     'TC4_transparency_issue': {
         'label': 'Thu nhập tốt nhưng CẢM THẤY bất công',
-        'icon': '💰',
+        'icon': '',
         'color': '#EA580C',
         'desc': 'Lương thực tế OK nhưng nhân viên không hiểu cách tính → vấn đề MINH BẠCH',
     },
     'TC4_income_paradox': {
         'label': 'Lương cao nhưng vẫn muốn nghỉ',
-        'icon': '💸',
+        'icon': '',
         'color': '#0891B2',
         'desc': 'TC4 cao nhưng % Muốn nghỉ vẫn cao → vấn đề ở TC2 hoặc TC5',
     },
@@ -76,19 +76,19 @@ PILLAR_PATTERNS = {
     # TC5 - Môi trường & Gắn kết
     'TC5_pride_paradox': {
         'label': 'Tự hào nhưng vẫn muốn nghỉ',
-        'icon': '💔',
+        'icon': '',
         'color': '#BE185D',
         'desc': 'Yêu công ty nhưng không chịu nổi điều kiện → nghỉ trong tiếc nuối',
     },
     'TC5_burnout_blind': {
         'label': 'Kiệt sức không nhận ra',
-        'icon': '😵',
+        'icon': '',
         'color': '#9333EA',
         'desc': 'Burnout cao nhưng nhân viên nói "không áp lực" → dangerous blind spot',
     },
     'TC5_social_glue': {
         'label': 'Gắn bó vì đồng nghiệp, không vì tổ chức',
-        'icon': '👥',
+        'icon': '',
         'color': '#0D9488',
         'desc': 'Ở lại vì bạn bè → khi bạn thân nghỉ sẽ có domino effect',
     },
@@ -96,13 +96,13 @@ PILLAR_PATTERNS = {
     # Cross-pillar
     'XP_silent_disengaged': {
         'label': 'Buông xuôi thầm lặng (Quiet Quitting)',
-        'icon': '👻',
+        'icon': '',
         'color': '#64748B',
         'desc': 'EI thấp nhưng không muốn nghỉ → đã buông xuôi, không còn nỗ lực',
     },
     'XP_onboarding_shock': {
         'label': 'Sốc Onboarding',
-        'icon': '🆘',
+        'icon': '',
         'color': '#DC2626',
         'desc': 'Nhân viên mới (<3 tháng) có điểm thấp ở nhiều trụ cột → cần can thiệp gấp',
     },
@@ -623,7 +623,6 @@ def render_anomaly_alert(anomaly, deep_dive_data, group_id):
     <div style="background: {bg_color}; border: 1px solid {border_color}40; border-left: 4px solid {border_color}; 
                 border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="font-size: 1.1rem;">{pattern.get('icon', '⚠️')}</span>
             <strong style="color: {border_color}; font-size: 0.88rem;">{pattern.get('label', 'Cảnh báo')}</strong>
             <span style="background: {border_color}20; color: {border_color}; font-size: 0.68rem; 
                          padding: 2px 8px; border-radius: 10px; margin-left: auto;">
@@ -638,7 +637,7 @@ def render_anomaly_alert(anomaly, deep_dive_data, group_id):
     
     # Deep dive data (compact)
     if deep_dive_data.get('breakdown'):
-        with st.expander(f"📊 Chi tiết phân tích", expanded=False):
+        with st.expander("Chi tiết phân tích", expanded=False):
             for key, value in deep_dive_data['breakdown'].items():
                 if isinstance(value, pd.DataFrame):
                     st.markdown(f"**{key.replace('_', ' ').title()}:**")
@@ -692,7 +691,7 @@ def render_pillar_anomalies(df, group_id, pillar_id):
     # Render cross-pillar anomalies (only once, in TC1 tab)
     if pillar_id == 'TC1' and cross_anomalies:
         st.markdown("---")
-        st.markdown("**🔍 Phát hiện liên trụ cột:**")
+        st.markdown("**Phát hiện liên trụ cột:**")
         for anomaly in cross_anomalies[:1]:  # Max 1 cross-pillar
             deep_dive = deep_dive_anomaly(df, group_id, pillar_id, anomaly)
             render_anomaly_alert(anomaly, deep_dive, group_id)

@@ -421,7 +421,7 @@ def render(all_data, available_groups):
     # SECTION 5: CROSS-PILLAR ANOMALY PATTERNS
     # ══════════════════════════════════════════════════════════════
     from shared.plotly_theme import section_header as _sh
-    st.markdown(_sh("⚠️ Phát Hiện Bất Thường Liên Trụ Cột",
+    st.markdown(_sh("Phát Hiện Bất Thường Liên Trụ Cột",
                     "Những pattern nguy hiểm chỉ nhìn thấy khi phân tích tất cả 5 trụ cột cùng lúc"), unsafe_allow_html=True)
 
     try:

@@ -51,7 +51,7 @@ def _pillar_pct(df, pillar_id):
 
 
 def _severity_badge(s):
-    return {'critical': '🔴 Khẩn cấp', 'warning': '🟠 Cảnh báo', 'watch': '🟡 Theo dõi'}.get(s, s)
+    return {'critical': 'Khẩn cấp', 'warning': 'Cảnh báo', 'watch': 'Theo dõi'}.get(s, s)
 
 
 # ─────────────────────────────────────────────────────────────

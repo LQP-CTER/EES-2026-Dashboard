@@ -130,7 +130,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     cb = get_codebook(group_id)
 
     # ── Khối 1: Xếp hạng câu hỏi theo điểm ──────────────────
-    st.markdown("#### 1️⃣ Câu hỏi nào đang kéo trụ cột xuống?")
+    st.markdown("#### Câu hỏi nào đang kéo trụ cột xuống?")
     q_data = []
     for q in q_cols:
         vals = df[q].dropna()
@@ -193,7 +193,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     with col1:
         st.markdown(f"""
         <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:12px 16px;">
-            <div style="font-size:0.7rem;font-weight:700;color:#DC2626;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">⚡ Câu yếu nhất — Ưu tiên cải thiện</div>
+            <div style="font-size:0.7rem;font-weight:700;color:#DC2626;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Câu yếu nhất — Ưu tiên cải thiện</div>
             <div style="font-size:0.9rem;font-weight:700;color:#111827;">{weakest['Label']}</div>
             <div style="font-size:1.3rem;font-weight:900;color:#DC2626;">{weakest['Mean']:.2f}/5</div>
             <div style="font-size:0.78rem;color:#6B7280;">{weakest['Negative']:.1f}% phản hồi tiêu cực</div>
@@ -202,7 +202,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     with col2:
         st.markdown(f"""
         <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:12px 16px;">
-            <div style="font-size:0.7rem;font-weight:700;color:#16A34A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">✅ Điểm mạnh nhất — Nhân rộng</div>
+            <div style="font-size:0.7rem;font-weight:700;color:#16A34A;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Điểm mạnh nhất — Nhân rộng</div>
             <div style="font-size:0.9rem;font-weight:700;color:#111827;">{strongest['Label']}</div>
             <div style="font-size:1.3rem;font-weight:900;color:#16A34A;">{strongest['Mean']:.2f}/5</div>
             <div style="font-size:0.78rem;color:#6B7280;">{strongest['Favorable']:.1f}% phản hồi tích cực</div>
@@ -212,7 +212,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     # ── Khối 2: Breakdown theo thâm niên ─────────────────────
     if 'Q5' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("#### 2️⃣ Ai đang bị ảnh hưởng nhất? (Phân tích theo Thâm niên)")
+        st.markdown("#### Ai đang bị ảnh hưởng nhất? (Phân tích theo Thâm niên)")
 
         df_work = df.copy()
         df_work['_pillar_score'] = df_work[q_cols].mean(axis=1)
@@ -264,7 +264,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
                 cliff_tenure = t_df.loc[cliff_idx, 'Thâm niên']
                 st.markdown(f"""
                 <div style="background:#FFFBEB;border-left:4px solid #D97706;border-radius:8px;padding:10px 16px;margin-top:8px;">
-                    <span style="font-size:0.78rem;font-weight:700;color:#D97706;">⚠️ TENURE CLIFF phát hiện tại mốc "{cliff_tenure}"</span>
+                    <span style="font-size:0.78rem;font-weight:700;color:#D97706;">TENURE CLIFF phát hiện tại mốc "{cliff_tenure}"</span>
                     <div style="font-size:0.8rem;color:#374151;margin-top:4px;">
                         Điểm giảm {abs(cliff_drop):.2f} điểm — kỳ vọng ban đầu đang gặp thực tế.
                         Cần "milestone intervention" ngay tại mốc này.
@@ -274,7 +274,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
 
     # ── Khối 3: AI Insight ────────────────────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("#### 3️⃣ AI Phân tích")
+    st.markdown("#### AI Phân tích")
 
     p_mean = q_df['Mean'].mean()
     weakest_label = weakest['Label']
@@ -503,18 +503,18 @@ def render(df, cfg, group_id, pillar_id):
 
     # Build tabs
     tab_names = [
-        "🩺 Chẩn đoán Nhanh",
-        "🔍 Chi tiết Từng câu",
-        "🏢 Nhóm Rủi ro",
-        "🎯 Nguyên nhân & Hành động",
-        "⚠️ Bất thường",
+        "Chẩn đoán Nhanh",
+        "Chi tiết Từng câu",
+        "Nhóm Rủi ro",
+        "Nguyên nhân & Hành động",
+        "Bất thường",
     ]
     if pillar_id == 'TC4':
-        tab_names.append("💰 HRIS & Rủi ro")
+        tab_names.append("HRIS & Rủi ro")
     elif pillar_id == 'TC3':
-        tab_names.append("⚙️ HRIS & Năng suất")
+        tab_names.append("HRIS & Năng suất")
     elif pillar_id == 'TC5':
-        tab_names.append("🔥 Rủi ro Gắn kết")
+        tab_names.append("Rủi ro Gắn kết")
 
     tabs = st.tabs(tab_names)
 

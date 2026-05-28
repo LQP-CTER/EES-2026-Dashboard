@@ -8,15 +8,15 @@ import streamlit as st
 
 SEVERITY_CONFIG = {
     'critical': {
-        'bg': '#FEF2F2', 'border': '#DC2626', 'icon': '🔴',
+        'bg': '#FEF2F2', 'border': '#DC2626', 'icon': '',
         'badge_bg': '#DC2626', 'badge_text': '#FFFFFF', 'label': 'Khẩn cấp',
     },
     'warning': {
-        'bg': '#FFFBEB', 'border': '#D97706', 'icon': '🟠',
+        'bg': '#FFFBEB', 'border': '#D97706', 'icon': '',
         'badge_bg': '#D97706', 'badge_text': '#FFFFFF', 'label': 'Cảnh báo',
     },
     'watch': {
-        'bg': '#FFFFF0', 'border': '#CA8A04', 'icon': '🟡',
+        'bg': '#FFFFF0', 'border': '#CA8A04', 'icon': '',
         'badge_bg': '#CA8A04', 'badge_text': '#FFFFFF', 'label': 'Theo dõi',
     },
 }
@@ -30,36 +30,38 @@ def render_anomaly_card(anomaly: dict, show_action: bool = True):
     action_html = ''
     if show_action and anomaly.get('action'):
         action_html = f"""
-        <div style="margin-top: 10px; padding: 8px 12px; background: rgba(255,255,255,0.6);
-                    border-radius: 6px; border-left: 3px solid {cfg['border']};">
+        <div style="margin-top: 12px; padding: 12px 16px; background: rgba(255,255,255,0.8);
+                    border-radius: 8px; border-left: 3px solid {cfg['border']};">
             <span style="font-size: 0.72rem; font-weight: 700; color: {cfg['border']};
-                         text-transform: uppercase; letter-spacing: 0.06em;">
-                ⚡ Hành động 30 ngày
+                          text-transform: uppercase; letter-spacing: 0.08em;">
+                Hành động 30 ngày
             </span>
-            <div style="font-size: 0.82rem; color: #374151; margin-top: 4px; line-height: 1.55;">
+            <div style="font-size: 0.85rem; color: #374151; margin-top: 6px; line-height: 1.65;">
                 {anomaly['action']}
             </div>
         </div>
         """
 
     st.markdown(f"""
-    <div style="background: {cfg['bg']}; border: 1px solid {cfg['border']}20;
-                border-left: 4px solid {cfg['border']}; border-radius: 10px;
-                padding: 16px 20px; margin-bottom: 12px;">
-        <div style="display: flex; align-items: flex-start; gap: 12px;">
+    <div style="background: {cfg['bg']}; border: 1px solid {cfg['border']}30;
+                border-left: 4px solid {cfg['border']}; border-radius: 12px;
+                padding: 18px 22px; margin-bottom: 14px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: flex-start; gap: 14px;">
             <div style="flex-shrink: 0;">
                 <span style="background: {cfg['badge_bg']}; color: {cfg['badge_text']};
-                             font-size: 0.65rem; font-weight: 800; padding: 2px 8px;
-                             border-radius: 20px; text-transform: uppercase;
+                             font-size: 0.68rem; font-weight: 700; padding: 4px 12px;
+                             border-radius: 6px; text-transform: uppercase;
                              letter-spacing: 0.08em;">
                     {cfg['label']}
                 </span>
             </div>
             <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 0.9rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
-                    {cfg['icon']} {anomaly.get('title', '')}
+                <div style="font-size: 0.92rem; font-weight: 700; color: #0A1F44; margin-bottom: 8px;
+                            letter-spacing: -0.01em;">
+                    {anomaly.get('title', '')}
                 </div>
-                <div style="font-size: 0.82rem; color: #4B5563; line-height: 1.6;">
+                <div style="font-size: 0.85rem; color: #475569; line-height: 1.7;">
                     {anomaly.get('message', '')}
                 </div>
                 {action_html}
@@ -75,7 +77,6 @@ def render_anomaly_summary_banner(anomalies: list):
         st.markdown("""
         <div style="background: #F0FDF4; border: 1px solid #22C55E30; border-radius: 10px;
                     padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.2rem;">✅</span>
             <span style="font-size: 0.85rem; color: #166534; font-weight: 600;">
                 Không phát hiện bất thường đáng lo ngại. Tiếp tục theo dõi.
             </span>
@@ -88,9 +89,9 @@ def render_anomaly_summary_banner(anomalies: list):
     n_watch    = sum(1 for a in anomalies if a.get('severity') == 'watch')
 
     parts = []
-    if n_critical: parts.append(f"<span style='color:#DC2626;font-weight:800;'>🔴 {n_critical} Khẩn cấp</span>")
-    if n_warning:  parts.append(f"<span style='color:#D97706;font-weight:800;'>🟠 {n_warning} Cảnh báo</span>")
-    if n_watch:    parts.append(f"<span style='color:#CA8A04;font-weight:700;'>🟡 {n_watch} Theo dõi</span>")
+    if n_critical: parts.append(f"<span style='color:#DC2626;font-weight:800;'>{n_critical} Khẩn cấp</span>")
+    if n_warning:  parts.append(f"<span style='color:#D97706;font-weight:800;'>{n_warning} Cảnh báo</span>")
+    if n_watch:    parts.append(f"<span style='color:#CA8A04;font-weight:700;'>{n_watch} Theo dõi</span>")
     summary = " &nbsp;·&nbsp; ".join(parts)
 
     bg = '#FEF2F2' if n_critical else '#FFFBEB' if n_warning else '#FFFFF0'
@@ -98,11 +99,13 @@ def render_anomaly_summary_banner(anomalies: list):
 
     st.markdown(f"""
     <div style="background: {bg}; border: 1px solid {border}30; border-left: 4px solid {border};
-                border-radius: 10px; padding: 12px 18px; margin-bottom: 20px;">
-        <div style="font-size: 0.82rem; color: #374151; margin-bottom: 4px; font-weight: 600;">
-            ⚠️ Phát hiện {len(anomalies)} bất thường cần chú ý:
+                border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="font-size: 0.85rem; color: #0A1F44; margin-bottom: 6px; font-weight: 700;
+                    letter-spacing: -0.01em;">
+            Phát hiện {len(anomalies)} bất thường cần chú ý:
         </div>
-        <div style="font-size: 0.9rem;">{summary}</div>
+        <div style="font-size: 0.9rem; color: #475569;">{summary}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -129,7 +132,7 @@ def render_anomaly_tab(anomalies: list, pillar_id: str = None, show_cross: bool 
     if pillar_anomalies:
         if pillar_id:
             meta = PILLAR_META.get(pillar_id, {})
-            st.markdown(f"#### {meta.get('icon','⚠️')} Bất thường trong {meta.get('name', pillar_id)}")
+            st.markdown(f"#### Bất thường trong {meta.get('name', pillar_id)}")
         else:
             st.markdown("#### Bất thường theo Trụ cột")
         for a in pillar_anomalies:
@@ -137,7 +140,7 @@ def render_anomaly_tab(anomalies: list, pillar_id: str = None, show_cross: bool 
 
     if cross_anomalies and show_cross:
         st.markdown("---")
-        st.markdown("#### 🔗 Pattern Liên Trụ cột")
+        st.markdown("#### Pattern Liên Trụ cột")
         st.caption("Những nguy hiểm này chỉ nhìn thấy được khi phân tích tất cả trụ cột cùng lúc.")
         for a in cross_anomalies:
             render_anomaly_card(a, show_action=True)
