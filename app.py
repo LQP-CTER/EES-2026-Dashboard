@@ -53,6 +53,9 @@ if os.path.exists(APP_STATE_FILE):
 
 # --- AUTHENTICATION FLOW ---
 from utils.auth import get_google_auth_url, get_user_info
+from streamlit_cookies_controller import CookieController
+
+cookie_controller = CookieController()
 
 # Load client secrets
 GOOGLE_CLIENT_ID     = st.secrets.get("GOOGLE_CLIENT_ID", "")
@@ -133,13 +136,20 @@ if not is_admin:
         if user_info and "email" in user_info:
             email = user_info["email"]
             if _is_allowed_email(email):
+                # Lưu vào session state
                 st.session_state.user_email   = email
                 st.session_state.user_name    = user_info.get("name", "User")
                 st.session_state.user_picture = user_info.get("picture", "")
+                # Lưu vào cookie (thời hạn 30 ngày)
+                cookie_controller.set("user_email", st.session_state.user_email, max_age=30*24*60*60)
+                cookie_controller.set("user_name", st.session_state.user_name, max_age=30*24*60*60)
+                cookie_controller.set("user_picture", st.session_state.user_picture, max_age=30*24*60*60)
+                
                 st.rerun()
             else:
                 # Email không thuộc domain cho phép
                 st.session_state.pop("user_email", None)
+                cookie_controller.remove("user_email")
                 st.error(
                     f"Email **{email}** không được phép truy cập.\n\n"
                     "Chỉ email `@ghn.vn` hoặc `@scommerce.asia` mới có quyền vào hệ thống."
@@ -151,7 +161,18 @@ if not is_admin:
             _render_login_page()
             st.stop()
 
-    # 2. Kiểm tra đã login chưa
+    # 2. Kiểm tra đã login chưa (qua session_state hoặc cookie)
+    user_email = st.session_state.get("user_email")
+    if not user_email:
+        # Thử lấy từ cookie nếu bị reset session (như khi F5)
+        c_email = cookie_controller.get("user_email")
+        if c_email and _is_allowed_email(c_email):
+            st.session_state.user_email = c_email
+            st.session_state.user_name = cookie_controller.get("user_name") or "User"
+            st.session_state.user_picture = cookie_controller.get("user_picture") or ""
+            # Chạy lại app ngay để load dashboard thay vì trang đăng nhập
+            st.rerun()
+            
     user_email = st.session_state.get("user_email")
     if not user_email or not _is_allowed_email(user_email):
         _render_login_page()
@@ -865,6 +886,7 @@ with st.sidebar:
             if st.button("Đăng xuất"):
                 for _k in ["user_email", "user_name", "user_picture"]:
                     st.session_state.pop(_k, None)
+                    cookie_controller.remove(_k)
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
