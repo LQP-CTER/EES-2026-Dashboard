@@ -822,6 +822,10 @@ with st.sidebar:
             if available[g]['label'] == sel_dashboard:
                 sel_group = g
                 break
+        
+        if sel_group is None:
+            st.error(f"Không tìm thấy nhóm khảo sát: {sel_dashboard}")
+            st.stop()
 
         # Sub-navigation
         st.markdown('<span class="sb-section">Trụ cột trải nghiệm</span>', unsafe_allow_html=True)
@@ -835,7 +839,13 @@ with st.sidebar:
         st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
 
         # Load raw data (for building filter options)
-        df_raw, n_before = load_group(sel_group)
+        try:
+            df_raw, n_before = load_group(sel_group)
+        except Exception as e:
+            st.error(f"Không thể tải dữ liệu cho nhóm {sel_group}: {e}")
+            import traceback
+            st.code(traceback.format_exc())
+            st.stop()
 
         sel_tenure_sb = st.selectbox(
             "Thâm niên", tenure_opts,
