@@ -380,8 +380,8 @@ def merge_survey_hris(df_clean, df_hris):
 
     if 'Lương thực nhận' in df_m.columns:
         df_m['income_m'] = df_m['Lương thực nhận'] / 1_000_000
-        df_m['income_group'] = pd.cut(df_m['income_m'], bins=[0, 5, 7, 10, 15, 200],
-                                       labels=['< 5 triệu', '5-7 triệu', '7-10 triệu', '10-15 triệu', '> 15 triệu'])
+        df_m['income_group'] = pd.cut(df_m['income_m'], bins=[0, 5, 7, 10, 15, 20, 30, 9999],
+                                       labels=['< 5 triệu', '5 - 7 triệu', '7 - 10 triệu', '10 - 15 triệu', '15 - 20 triệu', '20 - 30 triệu', '> 30 triệu'])
     if 'Phạt' in df_m.columns:
         df_m['phat_m'] = df_m['Phạt'].fillna(0) / 1_000_000
         

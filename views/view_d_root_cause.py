@@ -157,9 +157,15 @@ def render(df_clean, cfg, sel_group):
     st.markdown("Biểu đồ thể hiện **tỷ lệ nhân sự Muốn nghỉ** phân bổ theo mức Thu nhập, mức Phạt và Thâm niên, giúp nhận diện rõ nhóm đang gặp rủi ro cao nhất.")
     
     if 'tong_phat' in df_m.columns and df_m['tong_phat'].notna().any():
-        df_m['phat_label'] = df_m['tong_phat'].apply(
-            lambda x: 'Không phạt' if pd.notna(x) and x <= 0 else (
-                '< 1tr' if pd.notna(x) and x < 1 else '≥ 1tr') if pd.notna(x) else 'Chưa rõ')
+        def _phat_label(x):
+            if pd.isna(x): return 'Chưa rõ'
+            if x <= 0:   return 'Không phạt'
+            if x < 0.5:  return '<500k'
+            if x < 1.0:  return '500-1tr'
+            if x < 3.0:  return '1 - 3tr'
+            if x < 5.0:  return '3 - 5tr'
+            return '> 5tr'
+        df_m['phat_label'] = df_m['tong_phat'].apply(_phat_label)
     else:
         df_m['phat_label'] = 'Chưa rõ'
 
@@ -425,10 +431,10 @@ def render(df_clean, cfg, sel_group):
                 if not heat_data.empty:
                     # Sắp xếp đúng thứ tự thu nhập
                     income_order_map = {
-                        '< 5 triệu': 1, '5-7 triệu': 2, '7-10 triệu': 3,
-                        '10-15 triệu': 4, '> 15 triệu': 5
+                        '< 5 triệu': 1, '5 - 7 triệu': 2, '7 - 10 triệu': 3,
+                        '10 - 15 triệu': 4, '15 - 20 triệu': 5, '20 - 30 triệu': 6, '> 30 triệu': 7
                     }
-                    phat_order_map = {'Không phạt': 1, '< 1tr': 2, '≥ 1tr': 3}
+                    phat_order_map = {'Không phạt': 1, '<500k': 2, '500-1tr': 3, '1 - 3tr': 4, '3 - 5tr': 5, '> 5tr': 6}
                     
                     heat_data['_inc_ord'] = heat_data[income_col].map(income_order_map).fillna(99)
                     heat_data['_phat_ord'] = heat_data['phat_label'].map(phat_order_map).fillna(99)
@@ -494,9 +500,9 @@ def render(df_clean, cfg, sel_group):
                         ))
                     
                     # Sắp xếp trục Y theo thứ tự thu nhập tăng dần
-                    y_order = [r for r in ['< 5 triệu', '5-7 triệu', '7-10 triệu', '10-15 triệu', '> 15 triệu']
+                    y_order = [r for r in ['< 5 triệu', '5 - 7 triệu', '7 - 10 triệu', '10 - 15 triệu', '15 - 20 triệu', '20 - 30 triệu', '> 30 triệu']
                                if r in heat_data[income_col].values]
-                    x_order = [c for c in ['Không phạt', '< 1tr', '≥ 1tr']
+                    x_order = [c for c in ['Không phạt', '<500k', '500-1tr', '1 - 3tr', '3 - 5tr', '> 5tr']
                                if c in heat_data['phat_label'].values]
                     
                     fig.update_layout(
