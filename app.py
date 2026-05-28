@@ -74,28 +74,37 @@ def _is_allowed_email(email: str) -> bool:
 
 def _render_login_page():
     """Hiển thị trang đăng nhập đẹp với nút Google."""
-    st.markdown("""
+    auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
+    
+    st.markdown(f"""
     <style>
-        [data-testid="stSidebar"] { display: none !important; }
-        header[data-testid="stHeader"] { display: none !important; }
-        .login-wrap {
+        [data-testid="stSidebar"] {{ display: none !important; }}
+        header[data-testid="stHeader"] {{ display: none !important; }}
+        .login-wrap {{
             display: flex; flex-direction: column; align-items: center;
             justify-content: center; min-height: 80vh; gap: 24px;
-        }
-        .login-card {
+        }}
+        .login-card {{
             background: white; border-radius: 20px; padding: 48px 56px;
             box-shadow: 0 8px 40px rgba(0,0,0,0.12);
             text-align: center; max-width: 480px; width: 100%;
-        }
-        .login-title { font-size: 1.6rem; font-weight: 800; color: #0A1F44; margin: 16px 0 8px; }
-        .login-subtitle { font-size: 0.9rem; color: #64748B; margin-bottom: 28px; line-height: 1.5; }
-        .login-note { font-size: 0.8rem; color: #94A3B8; margin-top: 20px; }
-        .login-divider { border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }
-        .domain-badge {
+        }}
+        .login-title {{ font-size: 1.6rem; font-weight: 800; color: #0A1F44; margin: 16px 0 8px; }}
+        .login-subtitle {{ font-size: 0.9rem; color: #64748B; margin-bottom: 28px; line-height: 1.5; }}
+        .login-note {{ font-size: 0.8rem; color: #94A3B8; margin-top: 24px; }}
+        .login-divider {{ border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }}
+        .domain-badge {{
             display: inline-block; background: #FFF3EE; color: #FF5200;
             border: 1px solid #FFD4B8; border-radius: 20px;
             padding: 3px 12px; font-size: 0.78rem; font-weight: 600; margin: 2px;
-        }
+        }}
+        .google-btn {{
+            display: inline-block; background-color: #FF5200; color: white !important;
+            text-decoration: none; padding: 12px 24px; border-radius: 8px;
+            font-weight: 600; font-size: 1rem; width: 100%; text-align: center;
+            box-sizing: border-box; transition: background-color 0.2s; margin-top: 10px;
+        }}
+        .google-btn:hover {{ background-color: #E64A00; text-decoration: none; }}
     </style>
     <div class="login-wrap">
         <div class="login-card">
@@ -105,23 +114,17 @@ def _render_login_page():
                 Hệ thống phân tích Trải nghiệm Nhân viên<br>dành riêng cho nội bộ GHN & Scommerce
             </div>
             <hr class="login-divider">
-            <div style="margin-bottom:16px; font-size:0.82rem; color:#475569;">
+            <div style="margin-bottom:24px; font-size:0.82rem; color:#475569;">
                 Chỉ email thuộc domain:
                 <span class="domain-badge">@ghn.vn</span>
                 <span class="domain-badge">@scommerce.asia</span>
                 mới được truy cập.
             </div>
-    """, unsafe_allow_html=True)
-
-    auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
-    st.link_button(
-        "Đăng nhập bằng Google",
-        auth_url,
-        use_container_width=True,
-        type="primary",
-    )
-
-    st.markdown("""
+            
+            <a href="{auth_url}" class="google-btn">
+                Đăng nhập bằng Google
+            </a>
+            
             <div class="login-note">Bảo mật bởi Google OAuth 2.0</div>
         </div>
     </div>
