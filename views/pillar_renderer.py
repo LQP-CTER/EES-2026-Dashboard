@@ -188,12 +188,17 @@ def _render_manual_overview(df, cfg, group_id, pillar_id, qs, cb):
 
 def _render_tab_detail(df, cfg, group_id, pillar_id):
     """Tab Chi tiết: Deep-dive analysis for each question in the pillar."""
+    # First, render the pillar-specific distribution
+    _render_manual_detail(df, cfg, group_id, pillar_id)
+    
+    st.markdown("---")
+    
+    # Then append the full NLP open-ended analysis from view_c
     from views import view_c_key_issues
     try:
         view_c_key_issues.render(df, cfg, pillar_filter=pillar_id)
     except TypeError:
-        # Fallback: basic deep-dive
-        _render_manual_detail(df, cfg, group_id, pillar_id)
+        view_c_key_issues.render(df, cfg)
 
 
 def _render_manual_detail(df, cfg, group_id, pillar_id):
@@ -265,12 +270,17 @@ def _render_manual_detail(df, cfg, group_id, pillar_id):
 
 def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
     """Tab Nhóm rủi ro: breakdown by tenure/generation/region for this pillar."""
+    # First, render the pillar-specific manual breakdown
+    _render_manual_risk_groups(df, cfg, group_id, pillar_id)
+    
+    st.markdown("---")
+    
+    # Then append the full division/department heatmap from view_b
     from views import view_b_problem_groups
     try:
         view_b_problem_groups.render(df, cfg, pillar_filter=pillar_id)
     except TypeError:
-        # Fallback: basic group analysis
-        _render_manual_risk_groups(df, cfg, group_id, pillar_id)
+        view_b_problem_groups.render(df, cfg)
 
 
 def _render_manual_risk_groups(df, cfg, group_id, pillar_id):

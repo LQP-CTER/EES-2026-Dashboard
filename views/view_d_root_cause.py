@@ -65,6 +65,10 @@ def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
     codebook = cfg.get('codebook', {})
     likert_cols = [q for q, info in codebook.items() if info['loại'] == 'likert' and q in df.columns]
     
+    # Filter by pillar if requested
+    if pillar_filter and pillar_filter in getattr(cfg.get('module', object()), 'PILLAR_ORDER', ['TC1', 'TC2', 'TC3', 'TC4', 'TC5']):
+        likert_cols = [q for q in likert_cols if codebook.get(q, {}).get('trụ_cột') == pillar_filter]
+    
     gaps = []
     for q in likert_cols:
         mean_risk = df_risk[q].mean()
