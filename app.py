@@ -907,6 +907,7 @@ with st.sidebar:
         st.markdown('<span class="sb-section">Trụ cột trải nghiệm</span>', unsafe_allow_html=True)
         SUB_NAV = ["Tổng quan Tổ chức"] + [f"{PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
         SUB_NAV.append("Đo lường Impact")
+        SUB_NAV.append("Xem Báo Cáo")
         sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
 
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
@@ -1034,6 +1035,9 @@ else:
 
         if sel_nav == "Tổng quan Tổ chức":
             view_a_current_state.render(df_filtered, cfg)
+        elif sel_nav == "Xem Báo Cáo":
+            from views import narrative_flow
+            narrative_flow.render_narrative(df_filtered, cfg, sel_group)
         elif sel_pillar:
             from views import pillar_renderer
             pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
