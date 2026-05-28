@@ -128,7 +128,7 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
         pass
 
     if not all_clients:
-        yield "⚠️ Cảnh báo: Không có Groq API key hợp lệ. Vui lòng kiểm tra secrets.toml"
+        yield "Cảnh báo: Không có Groq API key hợp lệ. Vui lòng kiểm tra secrets.toml"
         return
 
     last_error = ""
@@ -154,7 +154,7 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
                     time.sleep(0.5)  # Nghỉ xíu rồi thử model khác
                 continue
 
-    yield f"⚠️ Không thể kết nối AI sau khi thử {len(all_clients)} key và tất cả các model: {last_error[:120]}"
+    yield f"Không thể kết nối AI sau khi thử {len(all_clients)} key và tất cả các model: {last_error[:120]}"
 
 
 # ============================================================

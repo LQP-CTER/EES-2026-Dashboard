@@ -6,7 +6,7 @@ from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from utils.ai_generator import render_ai_insight_card
 
-def render(df, cfg):
+def render(df, cfg, pillar_filter=None, **kwargs):
     apply_theme()
     kpis = compute_kpis(df)
     from shared.plotly_theme import make_html_kpi, section_header
@@ -209,19 +209,19 @@ def render(df, cfg):
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 14px;">
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🔄 Vòng Lặp Hụt Hẫng Onboarding (Cú Sốc Năng Suất)</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Vòng Lặp Hụt Hẫng Onboarding (Cú Sốc Năng Suất)</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Phân tích Cohort vạch trần thực tế: Nhân viên mới <strong>(&lt;2 tháng)</strong> có eNPS chạm đáy. Nguyên nhân gốc rễ là sự <strong>hụt hẫng năng suất</strong>: Shipper mới chưa thuộc tuyến đường, tốc độ giao trung bình chỉ đạt <strong>41.4 đơn/ngày</strong> (so với <strong>64.2 đơn/ngày</strong> của nhóm thâm niên &gt;2 năm), khiến thu nhập lương đơn hàng không đủ bù đắp chi phí xăng xe sinh hoạt, kết hợp với các lỗi đền bù COD tạo nên "vòng lặp hụt hẫng" khiến họ nộp đơn nghỉ việc sớm.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🎯 Tử Huyệt Cảm Xúc Q4 — Tuyến Đường Công Bằng</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Tử Huyệt Cảm Xúc Q4 — Tuyến Đường Công Bằng</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Lấy lăng kính <strong>Gallup Q12</strong> và <strong>Gartner Human Deal 2.0 (Autonomy & Respect)</strong>, câu hỏi <strong>Q4 (Phân chia tuyến công bằng)</strong> là tử huyệt cảm xúc lớn nhất. Sự thiên vị ngầm hoặc thiếu minh bạch từ Station Leader/TBC trong việc phân bổ đơn hàng, khu vực giao tốt (tuyến có mật độ đơn dày, đường bằng phẳng) là ngòi nổ số 1 kích hoạt tỷ lệ từ bỏ tổ chức.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🛡️ Tấm Khiên Quản Lý (Buffer MEI &gt; 4.2)</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Tấm Khiên Quản Lý (Buffer MEI &gt; 4.2)</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Mô hình học máy <strong>XGBoost / SHAP</strong> chỉ ra mối tương quan phi tuyến: Khi điểm <strong>MEI (Manager Effectiveness Index)</strong> của bưu cục vượt mức <strong>4.2 / 5.0</strong>, xác suất rời đi của nhân viên mới giảm mạnh từ <strong>88% xuống dưới 25%</strong> mặc dù mức lương thực nhận giữ nguyên. Cấp quản lý trực tiếp đóng vai trò là "tấm khiên bảo vệ" giúp giữ chân nhân sự qua những tháng đầu đầy biến động.
                     </p>
@@ -238,13 +238,13 @@ def render(df, cfg):
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 14px;">
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🛣️ Nút Thắt Phân Tuyến Xe Đường Dài (TC2 - Q4)</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Nút Thắt Phân Tuyến Xe Đường Dài (TC2 - Q4)</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Tài xế đặc biệt nhạy cảm với sự công bằng trong việc điều động tuyến chạy đường dài (mang lại phụ cấp và chế độ cao) so với các tuyến chạy nội tỉnh/ngắn ngày. Sự minh bạch của Điều phối viên đội xe trong cơ chế sắp tài là yếu tố sống còn quyết định sự ở lại (STAY) của tài xế.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🛠️ Hỗ Trợ Dọc Tuyến & An Toàn Lao Động (TC3 - Q15)</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Hỗ Trợ Dọc Tuyến & An Toàn Lao Động (TC3 - Q15)</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Đo lường từ lăng kính <strong>Job Demands-Resources (JD-R)</strong>, áp lực thời gian giao hàng và sự cố hỏng hóc dọc tuyến là "Yêu cầu công việc" (Demands) rất lớn. Sự sẵn sàng hỗ trợ kỹ thuật, cứu hộ 24/7 và cơ chế đền bù tai nạn rõ ràng từ phía Đội xe là nguồn lực hỗ trợ thiết yếu (Resources) giúp hạ nhiệt rủi ro Burnout.
                     </p>
@@ -261,19 +261,19 @@ def render(df, cfg):
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 14px;">
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🌙 Ca Đêm — Vòng Lặp Kiệt Sức & Thu Nhập Bào Mòn</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Ca Đêm — Vòng Lặp Kiệt Sức & Thu Nhập Bào Mòn</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Phân tích cohort chỉ ra nhân viên kho làm ca đêm có EI thấp hơn trung bình <strong>12–15 điểm</strong> so với ca ngày. Phụ cấp ca đêm <strong>(200,000–300,000 VND/đêm)</strong> không đủ bù đắp chi phí sức khỏe và mất thời gian cá nhân. Sau 6–9 tháng liên tục làm đêm, tỷ lệ muốn nghỉ tăng vọt gấp hơn <strong>3 lần</strong> so với nhóm ca ngày.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">⚙️ Điểm Nghẽn Thiết Bị & Mất KPI Năng Suất</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Điểm Nghẽn Thiết Bị & Mất KPI Năng Suất</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Máy quét, băng tải và hệ thống phân loại hỏng hóc không chỉ gây mất năng suất mà còn tạo ra "gánh nặng giải trình" — nhân viên bị trừ KPI vì sự cố ngoài tầm kiểm soát. Sự thiếu công bằng này là <strong>tử huyệt cảm xúc lớn nhất</strong> của nhóm 2A: các câu về <em>hỗ trợ sự cố</em> và <em>phân đơn hợp lý</em> thường là 2 câu có điểm thấp nhất trong toàn khảo sát.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">📈 Trần Thủy Tinh — Lộ Trình Thăng Tiến Mờ Nhạt</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Trần Thủy Tinh — Lộ Trình Thăng Tiến Mờ Nhạt</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Đa phần NV kho không nhìn thấy con đường thăng tiến rõ ràng. Sau <strong>12–18 tháng</strong> đạt năng suất ổn định, nhóm này chuyển từ "gắn bó tích cực" sang <strong>"Quiet Quitting" (nghỉ việc âm thầm)</strong> — vẫn làm việc nhưng không còn tự nguyện đóng góp. Tín hiệu này sẽ biến thành nghỉ thực khi có cơ hội bên ngoài tốt hơn xuất hiện.
                     </p>
@@ -291,19 +291,19 @@ def render(df, cfg):
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 14px;">
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">😤 Bẫy Cảm Xúc — Hứng Chịu Sự Giận Dữ Từ Giao Hàng Thất Bại</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Bẫy Cảm Xúc — Hứng Chịu Sự Giận Dữ Từ Giao Hàng Thất Bại</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Nhân viên bưu cục là <strong>"điểm thu hút"</strong> toàn bộ sự bực bội của khách hàng từ các đơn thất bại — kể cả lỗi do shipper hay hệ thống gây ra — nhưng lại không có quyền hạn để giải quyết. Sự bất lực kết hợp với tốc độ xử lý khiếu nại chậm tạo nên <em>bẫy cảm xúc</em> gây kiệt sức và mất niềm tin vào tổ chức, là ngòi nổ số 1 cho ý định nghỉ việc của nhóm 2B.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🔁 Nút Thắt Phối Hợp Giao-Nhận (Handover Friction)</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Nút Thắt Phối Hợp Giao-Nhận (Handover Friction)</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Quy trình bàn giao ca và đơn hàng giữa NV bưu cục với shipper thiếu tiêu chuẩn (SOP). Khi xảy ra sự cố mất đơn hoặc COD chênh lệch, <strong>không ai chịu trách nhiệm cuối cùng</strong>. Vòng lặp "đổ lỗi qua lại" bào mòn tinh thần đồng đội và đẩy toàn bộ áp lực xử lý ngoại lệ lên nhân viên bưu cục khi đối mặt với khách hàng.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🏬 Điều Kiện Cơ Sở Vật Chất & Tải Trọng Thể Chất</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Điều Kiện Cơ Sở Vật Chất & Tải Trọng Thể Chất</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Nhiều bưu cục vận hành trong không gian chật hẹp, thiếu điều hòa/thông gió và chiếu sáng đủ tiêu chuẩn. Bốc vác thủ công trong giờ cao điểm gây <strong>tổn thương thể chất tích lũy</strong> — một "chi phí ẩn" về sức khỏe không được phản ánh trong bất kỳ chỉ số KPI nào nhưng âm thầm ăn mòn chỉ số Burnout.
                     </p>
@@ -321,19 +321,19 @@ def render(df, cfg):
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 14px;">
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🏢 Khoảng Trống Thực Thi – Chiến Lược (Strategy-Execution Gap)</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Khoảng Trống Thực Thi – Chiến Lược (Strategy-Execution Gap)</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         NV Back Office thường xuyên thực hiện các quyết định chính sách mà họ <strong>không có tiếng nói</strong> trong quá trình xây dựng. Khi chính sách thay đổi đột ngột thiếu giải thích thuyết phục, nhóm này trải qua cảm giác "vô lý" — giảm niềm tin vào lãnh đạo và tăng kiệt sức cảm xúc. Đây là lý do cốt lõi khiến điểm <em>Niềm tin & Định hướng (TC1)</em> của 3A thường thấp hơn nhóm frontline.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">⚙️ Nợ Quy Trình (Process Debt) — Vòng Lặp Phụ Thuộc Liên Phòng</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Nợ Quy Trình (Process Debt) — Vòng Lặp Phụ Thuộc Liên Phòng</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Phê duyệt đa tầng, thiếu SLA rõ ràng giữa các phòng ban, và hệ thống chưa tích hợp tạo ra "nợ quy trình" khổng lồ. NV BO dành đến <strong>30–40% thời gian</strong> cho hoạt động không tạo giá trị (chờ đợi, theo dõi tiến độ, xử lý ngoại lệ thủ công). Sự <em>vô hiệu hóa năng suất</em> này là yếu tố dự đoán mạnh nhất cho Burnout của nhóm.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">👓 Vô Hình Nội Bộ — Khoảng Trống Ghi Nhận</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Vô Hình Nội Bộ — Khoảng Trống Ghi Nhận</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Đóng góp của BO thường <strong>"vô hình"</strong> trong bảng tin thành tích và chương trình khen thưởng công ty. Khi các câu về ghi nhận có điểm thấp, đây không chỉ là vấn đề lương — mà là <em>cảm giác bị phủ nhận giá trị</em>. Nghiên cứu Gartner 2024 chỉ ra rằng thiếu ghi nhận tức thời là yếu tố số 1 thúc đẩy <strong>Quiet Quitting</strong> ở nhóm support function.
                     </p>
@@ -351,19 +351,19 @@ def render(df, cfg):
             </h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 14px;">
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">⚡ Bẫy Quản Lý Kép — Trách Nhiệm Đôi, Quyền Hạn Đơn</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Bẫy Quản Lý Kép — Trách Nhiệm Đôi, Quyền Hạn Đơn</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Quản lý cấp trung chịu áp lực từ hai phía: HQ giao KPI và chỉ tiêu, nhân viên yêu cầu hỗ trợ và giải quyết vấn đề — nhưng thường thiếu quyền hạn tương ứng (tuyển dụng, ngân sách, điều chỉnh lương). Khi không thể thực hiện cam kết với nhân viên, <strong>uy tín bị tổn thương</strong> và Burnout tích lũy nhanh. Đây là lý do điểm MEI biến thiên rất lớn giữa các đơn vị trong nhóm 3B.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">🎯 Mơ Hồ Chiến Lược & Bẫy Quyết Định (Decision Paralysis)</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Mơ Hồ Chiến Lược & Bẫy Quyết Định (Decision Paralysis)</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Khi ưu tiên chiến lược thay đổi thường xuyên không kèm thông tin đủ, người quản lý rơi vào <em>"bẫy chờ đợi"</em> — tránh ra quyết định độc lập vì sợ sai. Điều này làm chậm toàn bộ tổ chức và tạo cảm giác <strong>bất lực ở chính những người được kỳ vọng là đầu tàu</strong>. Câu hỏi về "Tin GHN đúng hướng" và "Thông báo kịp thời" là 2 tiên lượng mạnh nhất cho ý định nghỉ của nhóm 3B.
                     </p>
                 </div>
                 <div style="background: white; padding: 18px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <strong style="color: #2B3674; font-size: 0.95rem;">👥 Cô Đơn Ở Tầng Giữa — Thiếu Cộng Đồng Quản Lý</strong>
+                    <strong style="color: #2B3674; font-size: 0.95rem;">Cô Đơn Ở Tầng Giữa — Thiếu Cộng Đồng Quản Lý</strong>
                     <p style="font-size: 0.88rem; color: #A3AED0; margin-top: 6px; margin-bottom: 0; line-height: 1.6;">
                         Quản lý phải "mạnh mẽ" trước nhân viên và không có không gian bày tỏ áp lực, băn khoăn hay yếu điểm. Sự thiếu vắng <strong>peer forums, mentoring từ lãnh đạo cấp cao</strong> và tài nguyên phát triển năng lực khiến họ cảm thấy cô đơn. Nghiên cứu Gallup 2024: <strong>69% burnout của quản lý cấp trung không được nhận diện</strong> — đây là "rủi ro im lặng" có hiệu ứng domino cao nhất trong tổ chức.
                     </p>
@@ -497,7 +497,7 @@ def render(df, cfg):
                             # Thêm hàng tổng hợp cho department (Kho Trung Chuyển / Vùng) trước khi mở rộng
                             dkpi_parent = compute_kpis(dg)
                             parent_row = {
-                                _ROW_LBL: f'📦 {dname}' if 'kho' in dname_norm else f'🗺️ {dname}',
+                                _ROW_LBL: dname,
                                 'N': dkpi_parent['n'],
                                 'EI (%)': round(dkpi_parent['ei_mean'], 1),
                                 'eNPS': round(dkpi_parent['enps_score'], 0),

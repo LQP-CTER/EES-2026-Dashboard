@@ -559,7 +559,7 @@ PILLAR_META = {
     'TC1': {
         'name': 'Niềm tin & Định hướng',
         'short': 'Niềm tin BLĐ',
-        'icon': '🏛️',
+        'icon': '',
         'color': '#6366F1',
         'description': 'Niềm tin vào Ban Lãnh đạo và định hướng chiến lược của tổ chức',
     },
@@ -573,14 +573,14 @@ PILLAR_META = {
     'TC3': {
         'name': 'Công việc & Điều kiện Vận hành',
         'short': 'Công việc & VH',
-        'icon': '⚙️',
+        'icon': '',
         'color': '#F59E0B',
         'description': 'Công cụ, quy trình, lộ trình thăng tiến và điều kiện làm việc hàng ngày',
     },
     'TC4': {
         'name': 'Thu nhập & Tính Minh bạch',
         'short': 'Thu nhập & MB',
-        'icon': '💰',
+        'icon': '',
         'color': '#10B981',
         'description': 'Mức thu nhập, cách tính lương, minh bạch phạt/truy thu và hỗ trợ sự cố tài chính',
     },

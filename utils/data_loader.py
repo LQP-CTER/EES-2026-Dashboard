@@ -41,7 +41,7 @@ def load_group(group_id: str):
         print(f"✅ Đã tải {len(df_raw)} dòng dữ liệu {group_id} từ Supabase siêu tốc!")
     except Exception as e:
         # Fallback to CSV if DB is not reachable
-        print(f"⚠️ Lỗi kết nối Supabase ({e}). Đang dùng file dự phòng (Google Sheets)...")
+        print(f"Lỗi kết nối Supabase ({e}). Đang dùng file dự phòng (Google Sheets)...")
         df_raw = pd.read_csv(cfg['url'])
     n_before = len(df_raw)
 
@@ -246,7 +246,7 @@ def load_all_available():
         try:
             results[gid] = load_group(gid)
         except Exception as e:
-            st.warning(f"⚠️ Không load được nhóm {gid}: {e}")
+            st.warning(f"Không load được nhóm {gid}: {e}")
     return results
 
 
@@ -393,7 +393,7 @@ def merge_survey_hris(df_clean, df_hris):
         df_m['tong_phat'] = df_m['phat_m'] + truy_thu
     if 'intent' in df_m.columns:
         df_m['intent_risk'] = df_m['intent'].apply(
-            lambda x: '🔴 Muốn nghỉ (1-2)' if pd.notna(x) and x <= 2
+            lambda x: 'Muốn nghỉ (1-2)' if pd.notna(x) and x <= 2
             else ('🟡 Phân vân (3)' if pd.notna(x) and x == 3
-                  else ('🟢 Gắn bó (4-5)' if pd.notna(x) else None)))
+                  else ('Gắn bó (4-5)' if pd.notna(x) else None)))
     return df_m

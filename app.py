@@ -660,7 +660,7 @@ COMPANY_LABEL = "Toàn bộ Giao Hàng Nhanh"
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     if st.session_state.get("is_admin", False):
-        if st.button("⬅️ Trở về Admin Panel", use_container_width=True):
+        if st.button("Trở về Admin Panel", use_container_width=True):
             st.session_state.preview_mode = False
             st.rerun()
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
@@ -714,7 +714,7 @@ with st.sidebar:
 
         # Sub-navigation
         st.markdown('<span class="sb-section">Trụ cột trải nghiệm</span>', unsafe_allow_html=True)
-        SUB_NAV = [f"{PILLAR_META[p]['icon']} {PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
+        SUB_NAV = ["🏢 Tổng quan Tổ chức"] + [f"{PILLAR_META[p]['icon']} {PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
         SUB_NAV.append("📊 Đo lường Impact")
         sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
 
@@ -809,7 +809,9 @@ else:
                 sel_pillar = p_id
                 break
 
-        if sel_pillar:
+        if sel_nav == "🏢 Tổng quan Tổ chức":
+            view_a_current_state.render(df_filtered, cfg)
+        elif sel_pillar:
             from views import pillar_renderer
             pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
         elif sel_nav and "Đo lường Impact" in sel_nav:

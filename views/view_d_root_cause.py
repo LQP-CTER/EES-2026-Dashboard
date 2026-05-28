@@ -6,7 +6,7 @@ from utils.data_loader import load_hris, merge_survey_hris
 from shared.plotly_theme import COLORS
 from utils.ai_generator import render_ai_insight_card
 
-def _render_non_1a(df_clean, cfg, sel_group):
+def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
     import streamlit as st
     import pandas as pd
     import plotly.graph_objects as go
@@ -18,9 +18,9 @@ def _render_non_1a(df_clean, cfg, sel_group):
         
     df = df_clean.copy()
     df['intent_risk'] = df['intent'].apply(
-        lambda x: '🔴 Muốn nghỉ (1-2)' if pd.notna(x) and x <= 2
+        lambda x: 'Muốn nghỉ (1-2)' if pd.notna(x) and x <= 2
         else ('🟡 Phân vân (3)' if pd.notna(x) and x == 3
-              else ('🟢 Gắn bó (4-5)' if pd.notna(x) else None)))
+              else ('Gắn bó (4-5)' if pd.notna(x) else None)))
               
     # Non-DA user context
     st.markdown("""
@@ -55,8 +55,8 @@ def _render_non_1a(df_clean, cfg, sel_group):
     Ưu tiên giải quyết những câu có khoảng cách lớn nhất.
     """, unsafe_allow_html=True)
     
-    df_risk = df[df['intent_risk'] == '🔴 Muốn nghỉ (1-2)']
-    df_ok = df[df['intent_risk'] == '🟢 Gắn bó (4-5)']
+    df_risk = df[df['intent_risk'] == 'Muốn nghỉ (1-2)']
+    df_ok = df[df['intent_risk'] == 'Gắn bó (4-5)']
     
     if len(df_risk) < 5 or len(df_ok) < 5:
         st.info("Không đủ mẫu ở nhóm Muốn nghỉ / Gắn bó để phân tích so sánh.")
@@ -114,11 +114,11 @@ def _render_non_1a(df_clean, cfg, sel_group):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-def render(df_clean, cfg, sel_group):
+def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
     from shared.plotly_theme import section_header
 
     if sel_group != '1A':
-        _render_non_1a(df_clean, cfg, sel_group)
+        _render_non_1a(df_clean, cfg, sel_group, pillar_filter=pillar_filter)
         return
 
     df_hris, _ = load_hris()
@@ -147,7 +147,7 @@ def render(df_clean, cfg, sel_group):
     cols = st.columns(len(risk_ov))
     for (idx, row), col in zip(risk_ov.iterrows(), cols):
         pct = row['N'] / risk_ov['N'].sum() * 100
-        clean_idx = str(idx)[2:] if str(idx).startswith(('🔴','🟡','🟢')) else str(idx)
+        clean_idx = str(idx)[2:] if str(idx)[0:2] in ('🔴','🟡','🟢') else str(idx)
         color_theme = "red" if "nghỉ" in clean_idx.lower() else ("green" if "gắn" in clean_idx.lower() else "orange")
         with col:
             st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="👤", progress_val=pct), unsafe_allow_html=True)
@@ -239,11 +239,11 @@ def render(df_clean, cfg, sel_group):
                     <span class="metric-title">Thu nhập thực nhận (triệu)</span>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
                         <div>
-                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
+                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">MUỐN NGHỈ</p>
                             <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{income_risk:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
                         </div>
                         <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
-                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
+                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">GẮN BÓ</p>
                             <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{income_ok:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
                         </div>
                     </div>
@@ -260,11 +260,11 @@ def render(df_clean, cfg, sel_group):
                     <span class="metric-title">Phạt &amp; Truy thu COD (triệu)</span>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
                         <div>
-                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
+                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">MUỐN NGHỈ</p>
                             <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{phat_risk:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
                         </div>
                         <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
-                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
+                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">GẮN BÓ</p>
                             <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{phat_ok:.2f} <span style="font-size: 0.95rem; font-weight: 500;">tr</span></p>
                         </div>
                     </div>
@@ -281,11 +281,11 @@ def render(df_clean, cfg, sel_group):
                     <span class="metric-title">Năng suất giao hàng ({don_unit})</span>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 12px;">
                         <div>
-                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">🔴 MUỐN NGHỈ</p>
+                            <p style="margin: 0; font-size: 0.78rem; color: #DC2626; font-weight: 700; opacity: 0.85;">MUỐN NGHỈ</p>
                             <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #DC2626; letter-spacing: -0.03em;">{don_risk:.1f} <span style="font-size: 0.85rem; font-weight: 500;">đơn</span></p>
                         </div>
                         <div style="border-left: 1px solid rgba(0,0,0,0.08); padding-left: 20px; min-width: 110px;">
-                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">🟢 GẮN BÓ</p>
+                            <p style="margin: 0; font-size: 0.78rem; color: #059669; font-weight: 700; opacity: 0.85;">GẮN BÓ</p>
                             <p style="margin: 4px 0 0 0; font-size: 1.8rem; font-weight: 900; color: #059669; letter-spacing: -0.03em;">{don_ok:.1f} <span style="font-size: 0.85rem; font-weight: 500;">đơn</span></p>
                         </div>
                     </div>
@@ -355,7 +355,7 @@ def render(df_clean, cfg, sel_group):
                     <br>
                     • <strong>Job Resources (Nguồn lực &amp; Hỗ trợ):</strong> Sự hỗ trợ từ Trưởng bưu cục (Station Leader/TBC) thể hiện qua chỉ số <strong>MEI (Manager Effectiveness Index)</strong>, sự công bằng trong phân chia tuyến đường (câu hỏi Q4), và tinh thần đồng đội bưu cục.
                     <br>
-                    <span style="color: #0A1F44; font-weight: 700;">🛡️ Tấm Khiên Hấp Thụ Xung Lực:</span> Khi nguồn lực hỗ trợ từ quản lý trực tiếp được nâng cao (<strong>MEI &gt; 4.2 / 5.0</strong>), nó đóng vai trò như một tấm khiên bảo vệ, giúp trung hòa mọi áp lực (Demands) và <strong>giảm xác suất rời bỏ của Shipper mới xuống dưới 25% (so với 88% ở bưu cục có MEI thấp)</strong>. Điều này chứng minh rằng văn hóa nâng đỡ và chất lượng của Trưởng bưu cục quan trọng hơn việc chỉ dùng đãi ngộ tài chính đơn thuần.
+                    <span style="color: #0A1F44; font-weight: 700;">Tấm Khiên Hấp Thụ Xung Lực:</span> Khi nguồn lực hỗ trợ từ quản lý trực tiếp được nâng cao (<strong>MEI &gt; 4.2 / 5.0</strong>), nó đóng vai trò như một tấm khiên bảo vệ, giúp trung hòa mọi áp lực (Demands) và <strong>giảm xác suất rời bỏ của Shipper mới xuống dưới 25% (so với 88% ở bưu cục có MEI thấp)</strong>. Điều này chứng minh rằng văn hóa nâng đỡ và chất lượng của Trưởng bưu cục quan trọng hơn việc chỉ dùng đãi ngộ tài chính đơn thuần.
                 </p>
             </div>
             """, unsafe_allow_html=True)
@@ -392,7 +392,7 @@ def render(df_clean, cfg, sel_group):
                     <br><br>
                     <strong>🌱 Nguồn lực hỗ trợ cần có:</strong> {resources_text}
                     <br><br>
-                    <span style="color:#0A1F44;font-weight:700;">🛡️ Điều tạo ra sự khác biệt:</span> {shield_text}
+                    <span style="color:#0A1F44;font-weight:700;">Điều tạo ra sự khác biệt:</span> {shield_text}
                 </p>
             </div>
             """, unsafe_allow_html=True)
@@ -586,7 +586,7 @@ def render(df_clean, cfg, sel_group):
                     
                     st.plotly_chart(fig, use_container_width=True)
                     
-                    st.caption("ℹ️ Chỉ hiển thị các nhóm có ≥ 30 người. Lương gộp = lương thực nhận + phạt + truy thu, giúp 2 trục phân tích độc lập.")
+                    st.caption("Chỉ hiển thị các nhóm có ≥ 30 người. Lương gộp = lương thực nhận + phạt + truy thu, giúp 2 trục phân tích độc lập.")
                     
                     max_risk_row = heat_data.loc[heat_data['Risk'].idxmax()]
                     st.markdown(f"""

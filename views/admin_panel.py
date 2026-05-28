@@ -56,9 +56,9 @@ def render():
             st.markdown("#### 📊 Trạng thái Hệ thống")
             st.caption("Tình trạng kết nối và phục vụ báo cáo cho người dùng ngoài.")
             if is_locked:
-                st.error("🔴 **ĐANG BẢO TRÌ (MAINTENANCE)** - Hệ thống đang chặn truy cập ngoài.")
+                st.error("**ĐANG BẢO TRÌ (MAINTENANCE)** - Hệ thống đang chặn truy cập ngoài.")
             else:
-                st.success("🟢 **HOẠT ĐỘNG BÌNH THƯỜNG (ONLINE)** - Đang phục vụ toàn bộ user.")
+                st.success("**HOẠT ĐỘNG BÌNH THƯỜNG (ONLINE)** - Đang phục vụ toàn bộ user.")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -100,7 +100,7 @@ def render():
                     st.toast("Đã xóa bộ nhớ đệm thành công!", icon="✅")
 
     st.markdown("---")
-    if st.button("👁️ Giả lập Truy cập User", use_container_width=True, type="primary"):
+    if st.button("Giả lập Truy cập User", use_container_width=True, type="primary"):
         st.session_state.preview_mode = True
         st.rerun()
 

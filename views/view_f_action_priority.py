@@ -2,19 +2,24 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from shared.plotly_theme import COLORS, apply_theme, fig_card
+from shared.codebook import PILLAR_ORDER
 from utils.ai_generator import render_ai_insight_card
 
-def render(df, cfg):
+def render(df, cfg, pillar_filter=None, **kwargs):
     apply_theme()
     codebook = cfg.get('codebook', {})
     likert_cols = [q for q, info in codebook.items() if info['loại'] == 'likert']
+
+    # Filter by pillar if requested
+    if pillar_filter and pillar_filter in PILLAR_ORDER:
+        likert_cols = [q for q in likert_cols if codebook.get(q, {}).get('trụ_cột') == pillar_filter]
 
     from shared.plotly_theme import section_header
 
     # Non-DA user context banner
     st.markdown("""
     <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
-        <div style="font-size:1.4rem;flex-shrink:0;">🗺️</div>
+        <div style="font-size:1.4rem;flex-shrink:0;"></div>
         <div>
             <div style="font-size:0.82rem;font-weight:700;color:#1D4ED8;margin-bottom:4px;">Ma trận Ưu tiên Hành động — Nên làm gì trước?</div>
             <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
@@ -96,14 +101,14 @@ def render(df, cfg):
             <div style="margin-bottom: 14px; padding: 10px 12px; background: #FEF2F2; border-radius: 10px; border-left: 3px solid #C0392B;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #C0392B; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #C0392B; display: inline-block; flex-shrink:0;"></span>
-                    🔴 Ưu tiên cao — Hành động ngay
+                    Ưu tiên cao — Hành động ngay
                 </div>
                 <div style="font-size: 0.78rem; color: #7F1D1D;">Điểm thấp <em>VÀ</em> ảnh hưởng lớn đến gắn kết. Đây là những điểm đau thực sự của nhân viên — nếu không cải thiện, rủi ro nghỉ việc tăng cao.</div>
             </div>
             <div style="margin-bottom: 14px; padding: 10px 12px; background: #F0FDF4; border-radius: 10px; border-left: 3px solid #0D6E3A;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #0D6E3A; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #0D6E3A; display: inline-block; flex-shrink:0;"></span>
-                    🟢 Duy trì — Thế mạnh hiện tại
+                    Duy trì — Thế mạnh hiện tại
                 </div>
                 <div style="font-size: 0.78rem; color: #14532D;">Điểm cao <em>VÀ</em> ảnh hưởng lớn. Đây là lý do nhân viên chọn ở lại — cần bảo vệ và không để xuống cấp.</div>
             </div>

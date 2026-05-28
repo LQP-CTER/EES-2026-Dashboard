@@ -427,7 +427,7 @@ def extract_action_suggestions(texts):
                 seen.add(key)
                 
                 topics = classify_topics(text)
-                topic_str = topics[0] if topics else '❓ Khác'
+                topic_str = topics[0] if topics else 'Khác'
                 
                 _, tone_label = compute_sentiment_intensity(text)
                 
@@ -446,71 +446,71 @@ def extract_action_suggestions(texts):
 # ============================================================
 
 TOPIC_KEYWORDS = {
-    '💰 Thu nhập & Đơn giá': [
+    'Thu nhập & Đơn giá': [
         'thu_nhập', 'lương', 'tiền', 'đơn giá', 'gtc', 'ltc', 'đơn giao',
         'thu nhập', 'income', 'giá đơn', 'chiết khấu', 'hoa hồng',
         'lương thấp', 'thu nhập thấp', 'tăng lương', 'tăng thu nhập',
         'kiếm tiền', 'kiếm thu_nhập', 'thu nhập ổn', 'thu_nhập ổn',
         'đơn hàng', 'số đơn', 'đơn nhiều', 'đơn ít', 'ít đơn',
     ],
-    '⚖️ Phạt & Chính sách': [
+    'Phạt & Chính sách': [
         'phạt', 'trừ tiền', 'truy thu', 'phạt cod', 'bị trừ',
         'chính sách phạt', 'quy định phạt', 'phạt nhiều', 'phạt nặng',
         'cod', 'tiền phạt', 'trừ lương', 'phạt vô lý', 'bất hợp lý',
         'chính sách', 'quy định', 'luật', 'nội quy',
     ],
-    '👨‍💼 Quản lý trực tiếp': [
+    'Quản lý trực tiếp': [
         'quản_lý', 'sếp', 'am', 'tbc', 'trưởng nhóm', 'leader',
         'quản lý', 'anh quản lý', 'chị quản lý', 'cấp trên',
         'hỗ trợ', 'lắng nghe', 'quan tâm', 'công bằng',
         'thiên vị', 'không công bằng', 'phân đơn',
     ],
-    '🤝 Đồng nghiệp & Văn hóa': [
+    'Đồng nghiệp & Văn hóa': [
         'đồng_nghiệp', 'anh em', 'team', 'đồng nghiệp',
         'hoà đồng', 'hòa đồng', 'vui vẻ', 'thân thiện',
         'đoàn kết', 'gắn kết', 'hỗ trợ nhau', 'giúp đỡ',
         'tập thể', 'đồng đội', 'ae', 'mọi người',
     ],
-    '🏢 Môi trường làm việc': [
+    'Môi trường làm việc': [
         'môi trường', 'bưu_cục', 'trạm', 'kho', 'điểm giao',
         'nơi làm việc', 'bc', 'bưu cục', 'ktc',
         'thoải mái', 'tự do', 'linh hoạt', 'thoải mai',
         'thời gian', 'ca làm', 'giờ giấc', 'tự chủ',
     ],
-    '📱 Công cụ & App': [
+    'Công cụ & App': [
         'ứng_dụng', 'app', 'phần mềm', 'hệ thống', 'tool',
         'driver app', 'ứng dụng', 'lỗi app', 'app lỗi',
         'app driver', 'phần mềm lỗi', 'hệ thống lỗi',
     ],
-    '🚀 Phát triển & Thăng tiến': [
+    'Phát triển & Thăng tiến': [
         'phát triển', 'thăng tiến', 'lộ trình', 'học hỏi',
         'cơ hội', 'đào tạo', 'kỹ năng', 'kinh nghiệm',
         'học tập', 'nâng cao', 'tiến bộ', 'sự nghiệp',
     ],
-    '🎁 Phúc lợi & Chế độ': [
+    'Phúc lợi & Chế độ': [
         'phúc_lợi', 'bảo hiểm', 'thưởng', 'phụ cấp', 'chế độ',
         'phúc lợi', 'quyền lợi', 'nghỉ phép', 'ngày nghỉ',
         'bảo hiểm xã hội', 'bhxh', 'xăng', 'xăng xe',
         'hỗ trợ xăng', 'bảo hộ', 'đồng phục', 'quà',
     ],
-    '😰 Áp lực & Cường độ': [
+    'Áp lực & Cường độ': [
         'áp lực', 'mệt', 'mệt mỏi', 'kiệt sức', 'quá tải',
         'stress', 'căng thẳng', 'vất vả', 'cực', 'nặng',
         'nhiều hàng', 'hàng nặng', 'cồng kềnh', 'xa',
         'giao xa', 'đường xa', 'nắng', 'mưa', 'thời tiết',
     ],
-    '🔄 Quy trình & Vận hành': [
+    'Quy trình & Vận hành': [
         'quy trình', 'thay đổi', 'cải thiện', 'sắp xếp',
         'phân tuyến', 'lộ trình giao', 'routing', 'chuyến',
         'lấy hàng', 'giao_hàng', 'trả hàng', 'hoàn hàng',
         'call log', 'add chuyến', 'xử lý', 'sự cố',
     ],
-    '🏆 Tự hào & Gắn bó': [
+    'Tự hào & Gắn bó': [
         'tự hào', 'yêu', 'gắn bó', 'ở lại', 'trung thành',
         'tốt', 'ổn', 'ổn định', 'lâu dài', 'hài lòng',
         'thương hiệu', 'ghn', 'giao hàng nhanh',
     ],
-    '⚠️ Muốn nghỉ / Bất mãn': [
+    'Muốn nghỉ / Bất mãn': [
         'nghỉ việc', 'nghỉ', 'muốn nghỉ', 'sắp nghỉ',
         'tìm việc khác', 'chuyển công ty', 'không gắn bó',
         'thất vọng', 'chán', 'chán nản', 'bất công',
@@ -520,18 +520,18 @@ TOPIC_KEYWORDS = {
 
 # Nhãn ngắn gọn cho chart
 TOPIC_SHORT_LABELS = {
-    '💰 Thu nhập & Đơn giá': 'Thu nhập',
-    '⚖️ Phạt & Chính sách': 'Phạt/CS',
-    '👨‍💼 Quản lý trực tiếp': 'Quản lý',
-    '🤝 Đồng nghiệp & Văn hóa': 'Đồng nghiệp',
-    '🏢 Môi trường làm việc': 'Môi trường',
-    '📱 Công cụ & App': 'App/Tool',
-    '🚀 Phát triển & Thăng tiến': 'Phát triển',
-    '🎁 Phúc lợi & Chế độ': 'Phúc lợi',
-    '😰 Áp lực & Cường độ': 'Áp lực',
-    '🔄 Quy trình & Vận hành': 'Quy trình',
-    '🏆 Tự hào & Gắn bó': 'Tự hào',
-    '⚠️ Muốn nghỉ / Bất mãn': 'Bất mãn',
+    'Thu nhập & Đơn giá': 'Thu nhập',
+    'Phạt & Chính sách': 'Phạt/CS',
+    'Quản lý trực tiếp': 'Quản lý',
+    'Đồng nghiệp & Văn hóa': 'Đồng nghiệp',
+    'Môi trường làm việc': 'Môi trường',
+    'Công cụ & App': 'App/Tool',
+    'Phát triển & Thăng tiến': 'Phát triển',
+    'Phúc lợi & Chế độ': 'Phúc lợi',
+    'Áp lực & Cường độ': 'Áp lực',
+    'Quy trình & Vận hành': 'Quy trình',
+    'Tự hào & Gắn bó': 'Tự hào',
+    'Muốn nghỉ / Bất mãn': 'Bất mãn',
 }
 
 # ============================================================
@@ -540,7 +540,7 @@ TOPIC_SHORT_LABELS = {
 # ============================================================
 
 TOPIC_SUB_LABELS = {
-    '😰 Áp lực & Cường độ': {
+    'Áp lực & Cường độ': {
         'Do Quản lý': [
             'sếp giao nhiều', 'quản lý giao việc', 'am giao nhiều', 'sếp tạo áp lực',
             'chỉ tiêu cao', 'kpi cao', 'kpi', 'chỉ tiêu', 'target',
@@ -558,7 +558,7 @@ TOPIC_SUB_LABELS = {
             'giờ giấc', 'ca kéo dài', 'làm thêm giờ', 'không ngày nghỉ',
         ],
     },
-    '👨‍💼 Quản lý trực tiếp': {
+    'Quản lý trực tiếp': {
         'Thiên vị & Không công bằng': [
             'thiên vị', 'ưu tiên người quen', 'không công bằng', 'ko công bằng',
             'phân biệt', 'bất công', 'phân đơn không công bằng', 'phân đơn',
@@ -576,7 +576,7 @@ TOPIC_SUB_LABELS = {
             'không tôn trọng', 'thái độ xấu', 'nói nặng',
         ],
     },
-    '💰 Thu nhập & Đơn giá': {
+    'Thu nhập & Đơn giá': {
         'Lương thấp': [
             'lương thấp', 'thu nhập thấp', 'lương ít', 'lương không đủ',
             'lương thấp quá', 'lương không xứng', 'tiền lương',
@@ -594,7 +594,7 @@ TOPIC_SUB_LABELS = {
             'không hiểu sao bị trừ', 'bảng lương không rõ',
         ],
     },
-    '⚖️ Phạt & Chính sách': {
+    'Phạt & Chính sách': {
         'Phạt vô lý': [
             'phạt vô lý', 'phạt không hợp lý', 'phạt oan', 'bị phạt oan',
             'phạt không đúng', 'phạt quá nặng', 'phạt nặng',
@@ -608,7 +608,7 @@ TOPIC_SUB_LABELS = {
             'không báo trước', 'thay đổi bất ngờ', 'thay đổi liên tục',
         ],
     },
-    '🤝 Đồng nghiệp & Văn hóa': {
+    'Đồng nghiệp & Văn hóa': {
         'Đoàn kết yếu': [
             'không đoàn kết', 'ít hỗ trợ nhau', 'không hỗ trợ nhau', 'chia rẽ',
             'ganh đua không lành mạnh', 'cạnh tranh xấu',
@@ -622,7 +622,7 @@ TOPIC_SUB_LABELS = {
             'hỗ trợ nhau', 'anh em tốt', 'team tốt',
         ],
     },
-    '🏢 Môi trường làm việc': {
+    'Môi trường làm việc': {
         'Cơ sở vật chất': [
             'chật hẹp', 'không có chỗ', 'thiếu chỗ', 'bưu cục chật',
             'không điều hòa', 'nóng', 'không quạt', 'thiếu tiện nghi',
@@ -636,7 +636,7 @@ TOPIC_SUB_LABELS = {
             'đường xá', 'đường xấu',
         ],
     },
-    '🚀 Phát triển & Thăng tiến': {
+    'Phát triển & Thăng tiến': {
         'Thiếu đào tạo': [
             'không được đào tạo', 'thiếu đào tạo', 'không học', 'không có training',
             'không được học', 'training', 'đào tạo ít',
@@ -650,7 +650,7 @@ TOPIC_SUB_LABELS = {
             'cơ hội ít', 'không được lên chức',
         ],
     },
-    '🎁 Phúc lợi & Chế độ': {
+    'Phúc lợi & Chế độ': {
         'Bảo hiểm': [
             'bảo hiểm', 'bhxh', 'bảo hiểm xã hội', 'bảo hiểm y tế',
             'không có bảo hiểm', 'đóng bảo hiểm', 'bảo hiểm thấp',
@@ -739,22 +739,22 @@ def classify_topics(text):
                 topics_found.append(topic)
                 break  # 1 match đủ để gán topic
                 
-    return topics_found if topics_found else ['❓ Khác']
+    return topics_found if topics_found else ['Khác']
 
 
 def classify_topics_with_tone(text):
     """
     Phân loại chủ đề kèm giọng điệu (tone) của từng chủ đề.
     Returns: list of (topic_name, tone_label, intensity_score)
-    VD: [('💰 Thu nhập & Đơn giá', 'tiêu_cực', -0.7)]
+    VD: [('Thu nhập & Đơn giá', 'tiêu_cực', -0.7)]
     """
     if not isinstance(text, str):
         return []
     
     topics = classify_topics(text)
-    if not topics or topics == ['❓ Khác']:
+    if not topics or topics == ['Khác']:
         intensity, tone = compute_sentiment_intensity(text)
-        return [('❓ Khác', tone, intensity)]
+        return [('Khác', tone, intensity)]
     
     # Tách câu để gán tone chính xác hơn cho từng topic
     sentences = split_sentences(text)

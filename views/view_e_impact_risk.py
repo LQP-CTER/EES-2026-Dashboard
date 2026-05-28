@@ -76,7 +76,7 @@ def render(df, cfg):
                 else:
                     bullets.append("<li style='color:#10B981;margin-bottom:4px;'>✅ <strong>Ít phạt/sự cố (+0%):</strong> Không bị áp lực tài chính và tâm lý không đáng có.</li>")
                 if mei_shield > 0:
-                    bullets.append(f"<li style='color:#10B981;margin-bottom:4px;'>🛡️ <strong>Quản lý tốt (−{mei_shield}%):</strong> Tấm khiên hấp thụ áp lực, giúp nhân viên vượt qua giai đoạn đầu khó khăn.</li>")
+                    bullets.append(f"<li style='color:#10B981;margin-bottom:4px;'><strong>Quản lý tốt (−{mei_shield}%):</strong> Tấm khiên hấp thụ áp lực, giúp nhân viên vượt qua giai đoạn đầu khó khăn.</li>")
                 else:
                     bullets.append("<li style='color:#EF4444;margin-bottom:4px;'>⚡ <strong>Quản lý yếu (+0%):</strong> Không có hỗ trợ → nhân viên mới dễ bỏ cuộc.</li>")
                 risk_pct = max(10, min(95, base_risk + tenure_penalty + salary_penalty + cod_penalty - mei_shield))
@@ -131,7 +131,7 @@ def render(df, cfg):
                 else: bullets.append("<li style='color:#10B981;margin-bottom:4px;'>✅ <strong>Thiết bị đủ dùng (+0%):</strong> Không bị cản trở bởi điều kiện vật chất.</li>")
                 if career_penalty: bullets.append(f"<li style='color:#EF4444;margin-bottom:4px;'>⚡ <strong>Thăng tiến mờ nhạt (+{career_penalty}%):</strong> Không thấy tương lai → âm thầm tìm việc khác.</li>")
                 else: bullets.append("<li style='color:#10B981;margin-bottom:4px;'>✅ <strong>Lộ trình rõ ràng (+0%):</strong> Có động lực phấn đấu và gắn bó dài hạn.</li>")
-                if mei_shield: bullets.append(f"<li style='color:#10B981;margin-bottom:4px;'>🛡️ <strong>Quản lý tốt (−{mei_shield}%):</strong> Hỗ trợ kịp thời và tạo môi trường làm việc tích cực.</li>")
+                if mei_shield: bullets.append(f"<li style='color:#10B981;margin-bottom:4px;'><strong>Quản lý tốt (−{mei_shield}%):</strong> Hỗ trợ kịp thời và tạo môi trường làm việc tích cực.</li>")
                 else: bullets.append("<li style='color:#EF4444;margin-bottom:4px;'>⚡ <strong>Quản lý thiếu sót (+0%):</strong> Nhân viên thiếu định hướng và dễ cảm thấy bị bỏ mặc.</li>")
                 risk_pct = max(8, min(95, base_risk + tenure_penalty + shift_penalty + equip_penalty + career_penalty - mei_shield))
 
@@ -181,7 +181,7 @@ def render(df, cfg):
                 else: bullets.append("<li style='color:#10B981;margin-bottom:4px;'>✅ <strong>Định hướng rõ ràng (+0%):</strong> Hiểu vai trò của mình trong bức tranh lớn.</li>")
                 if career_penalty: bullets.append(f"<li style='color:#EF4444;margin-bottom:4px;'>⚡ <strong>Ít cơ hội phát triển (+{career_penalty}%):</strong> Cảm thấy bị tran thuy tinh → tìm nơi khác có nhiều cơ hội hơn.</li>")
                 else: bullets.append("<li style='color:#10B981;margin-bottom:4px;'>✅ <strong>Có cơ hội phát triển (+0%):</strong> Thấy tương lai rõ ràng và có động lực phấn đấu.</li>")
-                if recog_shield: bullets.append(f"<li style='color:#10B981;margin-bottom:4px;'>🛡️ <strong>Được ghi nhận (−{recog_shield}%):</strong> Cảm thấy công sức được trân trọng → tiếp tục cống hiến.</li>")
+                if recog_shield: bullets.append(f"<li style='color:#10B981;margin-bottom:4px;'><strong>Được ghi nhận (−{recog_shield}%):</strong> Cảm thấy công sức được trân trọng → tiếp tục cống hiến.</li>")
                 else: bullets.append("<li style='color:#EF4444;margin-bottom:4px;'>⚡ <strong>Thiếu ghi nhận (+0%):</strong> Lam nhieu ma khong ai biet → dần mất động lực.</li>")
                 risk_pct = max(5, min(92, base_risk + tenure_penalty + wl_penalty + strategy_penalty + career_penalty - recog_shield))
 
@@ -234,9 +234,9 @@ def render(df, cfg):
         m_col1, m_col2 = st.columns([1, 1.1])
         with m_col1:
             st.markdown("<p style='font-weight: 700; color: #0A1F44; margin-bottom: 8px;'>📋 Kịch bản điều chỉnh (So với hiện tại):</p>", unsafe_allow_html=True)
-            macro_salary = st.slider("💰 Tăng quỹ lương / thu nhập trung bình (%)", -10, 20, 0, step=1, key='macro_sal',
+            macro_salary = st.slider("Tăng quỹ lương / thu nhập trung bình (%)", -10, 20, 0, step=1, key='macro_sal',
                                      help="10% = tăng lương trung bình 10% cho toàn nhóm")
-            macro_mei    = st.slider("🛡️ Cải thiện chất lượng Quản lý MEI (%)", 0, 20, 0, step=1, key='macro_mei',
+            macro_mei    = st.slider("Cải thiện chất lượng Quản lý MEI (%)", 0, 20, 0, step=1, key='macro_mei',
                                      help="Đầu tư đào tạo quản lý → điểm MEI tăng lên")
             macro_cod    = st.slider("📉 Giảm áp lực phạt / sự cố / xung đột (%)", 0, 50, 0, step=5, key='macro_cod',
                                      help="Cải thiện quy trình, giảm lỗi hệ thống → nhân viên ít bị ảnh hưởng tiêu cực hơn")

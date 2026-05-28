@@ -403,17 +403,17 @@ def _render_tab_hris(df, cfg, group_id, pillar_id):
     from views import hris_linkage, view_e_impact_risk
 
     if pillar_id == 'TC4':
-        st.markdown("#### 💰 Phân tích HRIS: Thu nhập & Rủi ro nghỉ việc")
+        st.markdown("#### Phân tích HRIS: Thu nhập & Rủi ro nghỉ việc")
         try:
             hris_linkage.render(df, cfg, group_id, pillar_filter=pillar_id)
         except TypeError:
             hris_linkage.render(df, cfg, group_id)
         st.markdown("---")
-        st.markdown("#### ⚠️ Mô phỏng rủi ro & chi phí thay thế")
+        st.markdown("#### Mô phỏng rủi ro & chi phí thay thế")
         view_e_impact_risk.render(df, cfg)
 
     elif pillar_id == 'TC3':
-        st.markdown("#### ⚙️ Phân tích HRIS: Năng suất & Vận hành")
+        st.markdown("#### Phân tích HRIS: Năng suất & Vận hành")
         try:
             hris_linkage.render(df, cfg, group_id, pillar_filter=pillar_id)
         except TypeError:
@@ -445,9 +445,9 @@ def render(df, cfg, group_id, pillar_id):
     # Add HRIS tab for TC3, TC4, TC5
     if pillar_id in ('TC3', 'TC4', 'TC5'):
         if pillar_id == 'TC4':
-            tab_names.append("💰 HRIS & Rủi ro")
+            tab_names.append("HRIS & Rủi ro")
         elif pillar_id == 'TC3':
-            tab_names.append("⚙️ HRIS & Năng suất")
+            tab_names.append("HRIS & Năng suất")
         elif pillar_id == 'TC5':
             tab_names.append("🌟 Rủi ro Gắn kết")
 
