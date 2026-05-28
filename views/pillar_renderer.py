@@ -446,6 +446,10 @@ def render(df, cfg, group_id, pillar_id):
     # Render pillar header
     _render_pillar_header(pillar_id, df, cfg, group_id)
 
+    # Anomaly detection & deep dive (compact alerts after header)
+    from shared.pillar_anomaly import render_pillar_anomalies
+    render_pillar_anomalies(df, group_id, pillar_id)
+
     # Build tab list based on pillar
     tab_names = [" Tổng quan", " Chi tiết", " Nhóm rủi ro", " Nguyên nhân & Hành động"]
 
