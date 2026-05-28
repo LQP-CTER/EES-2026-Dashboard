@@ -58,7 +58,10 @@ from utils.auth import get_google_auth_url, get_user_info
 GOOGLE_CLIENT_ID     = st.secrets.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET", "")
 REDIRECT_URI         = st.secrets.get("REDIRECT_URI", "http://localhost:8501/")
-ALLOWED_DOMAINS      = st.secrets.get("ALLOWED_DOMAINS", ["ghn.vn", "scommerce.asia"])
+# Hỗ trợ cả string "ghn.vn,scommerce.asia" lẫn list ["ghn.vn", "scommerce.asia"]
+_domains_raw = st.secrets.get("ALLOWED_DOMAINS", "ghn.vn,scommerce.asia")
+ALLOWED_DOMAINS = [d.strip().lower() for d in _domains_raw.split(",")] if isinstance(_domains_raw, str) else [d.lower() for d in _domains_raw]
+
 
 is_admin = st.session_state.get("is_admin", False)
 
