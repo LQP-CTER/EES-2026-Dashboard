@@ -114,7 +114,7 @@ def _render_login_page():
                 Hệ thống phân tích Trải nghiệm Nhân viên<br>dành riêng cho nội bộ GHN & Scommerce
             </div>
             <hr class="login-divider">
-            <a href="{auth_url}" target="_self" class="google-btn">
+            <a href="{auth_url}" target="_top" class="google-btn">
                 Đăng nhập bằng Google
             </a>
             <div class="login-note">Bảo mật bởi Google OAuth 2.0</div>
