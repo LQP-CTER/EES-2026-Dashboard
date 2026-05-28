@@ -91,9 +91,13 @@ def render(df, cfg, pillar_filter=None):
 
         df_display = df_met[df_display_cols].rename(columns=rename_dict)
         
-        styled_met = df_display.style.background_gradient(
-            cmap='RdYlGn', subset=['EI (%)', 'eNPS', 'MEI (%)'], vmin=50, vmax=90
-        ).format(precision=1)
+        styled_met = (
+            df_display.style
+            .background_gradient(cmap='RdYlGn', subset=['EI (%)', 'MEI (%)'], vmin=50, vmax=90)
+            .background_gradient(cmap='RdYlGn', subset=['eNPS'], vmin=-50, vmax=50)
+            .background_gradient(cmap='RdYlGn_r', subset=['% Muốn nghỉ', '% Burnout'], vmin=0, vmax=30)
+            .format(precision=1)
+        )
 
         col_config = {
             level: st.column_config.TextColumn(level, help=f"Tên {level}", width="medium"),
