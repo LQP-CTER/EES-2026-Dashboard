@@ -44,39 +44,36 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
         pillar_mean = None
         fav_pct = 0
 
-    # Render header card
     color = meta['color']
     score_str = f"{pillar_mean:.2f}" if pillar_mean else "N/A"
     fav_str = f"{fav_pct:.1f}%"
     weight_str = f"{PILLAR_WEIGHTS.get(pillar_id, 0)*100:.0f}%"
 
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, {color}08 0%, {color}15 100%); 
-                border: 1px solid {color}30; border-radius: 14px; padding: 24px 28px; margin-bottom: 24px;
-                position: relative; overflow: hidden;">
-        <div style="position: absolute; right: -20px; top: -20px; font-size: 4rem; opacity: 0.08;">{meta['icon']}</div>
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-            <span style="font-size: 1.5rem;">{meta['icon']}</span>
-            <div>
-                <span style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; 
-                             color: {color}; display: block;">{pillar_id} · Trọng số {weight_str}</span>
-                <span style="font-size: 1.1rem; font-weight: 800; color: #0A1F44; display: block; margin-top: 2px;">
-                    {meta['name']}</span>
-            </div>
+    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid {color}; 
+                border-radius: 12px; padding: 24px 28px; margin-bottom: 24px;">
+        <div style="margin-bottom: 16px;">
+            <span style="font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; 
+                         color: {color}; display: block; margin-bottom: 4px;">{pillar_id} · Trọng số {weight_str}</span>
+            <span style="font-size: 1.25rem; font-weight: 800; color: #0A1F44; display: block; letter-spacing: -0.02em;">
+                {meta['name']}</span>
         </div>
-        <p style="font-size: 0.84rem; color: #64748B; margin: 0 0 16px; line-height: 1.5;">{meta['description']}</p>
-        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
-            <div style="background: white; padding: 12px 18px; border-radius: 10px; border: 1px solid #E2E8F0; min-width: 120px;">
-                <span style="font-size: 0.65rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Điểm TB</span>
-                <div style="font-size: 1.6rem; font-weight: 900; color: {color}; margin-top: 2px;">{score_str}</div>
+        <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 20px; line-height: 1.6;">{meta['description']}</p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+            <div style="background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #F1F5F9;">
+                <span style="font-size: 0.68rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Điểm trung bình</span>
+                <div style="font-size: 1.8rem; font-weight: 900; color: {color}; line-height: 1; letter-spacing: -0.03em;">{score_str}</div>
+                <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">trên thang 5.0</div>
             </div>
-            <div style="background: white; padding: 12px 18px; border-radius: 10px; border: 1px solid #E2E8F0; min-width: 120px;">
-                <span style="font-size: 0.65rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">% Tích cực</span>
-                <div style="font-size: 1.6rem; font-weight: 900; color: #0A1F44; margin-top: 2px;">{fav_str}</div>
+            <div style="background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #F1F5F9;">
+                <span style="font-size: 0.68rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Tỷ lệ tích cực</span>
+                <div style="font-size: 1.8rem; font-weight: 900; color: #0A1F44; line-height: 1; letter-spacing: -0.03em;">{fav_str}</div>
+                <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">đồng ý hoặc hoàn toàn đồng ý</div>
             </div>
-            <div style="background: white; padding: 12px 18px; border-radius: 10px; border: 1px solid #E2E8F0; min-width: 120px;">
-                <span style="font-size: 0.65rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Số câu hỏi</span>
-                <div style="font-size: 1.6rem; font-weight: 900; color: #0A1F44; margin-top: 2px;">{len(q_cols)}</div>
+            <div style="background: #F8FAFC; padding: 16px; border-radius: 8px; border: 1px solid #F1F5F9;">
+                <span style="font-size: 0.68rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Số câu hỏi</span>
+                <div style="font-size: 1.8rem; font-weight: 900; color: #0A1F44; line-height: 1; letter-spacing: -0.03em;">{len(q_cols)}</div>
+                <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">câu hỏi trong trụ cột</div>
             </div>
         </div>
     </div>
