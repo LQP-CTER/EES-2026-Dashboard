@@ -118,6 +118,7 @@ from views import (
     view_c_key_issues, view_d_root_cause,
     view_e_impact_risk, view_f_action_priority, view_g_kpi_impact, view_h_appendix
 )
+from shared.codebook import PILLAR_META, PILLAR_ORDER
 
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""<style>
@@ -712,16 +713,9 @@ with st.sidebar:
                 break
 
         # Sub-navigation
-        st.markdown('<span class="sb-section">Góc nhìn phân tích</span>', unsafe_allow_html=True)
-        SUB_NAV = [
-            "A. Trạng thái Tổ chức",
-            "B. Nhóm gặp vấn đề",
-            "C. Vấn đề nghiêm trọng",
-            "D. Nguyên nhân gốc rễ",
-            "E. Rủi ro & Hệ lụy",
-            "F. Ưu tiên hành động",
-            "G. Đo lường Impact",
-        ]
+        st.markdown('<span class="sb-section">Trụ cột trải nghiệm</span>', unsafe_allow_html=True)
+        SUB_NAV = [f"{PILLAR_META[p]['icon']} {PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
+        SUB_NAV.append("📊 Đo lường Impact")
         sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
 
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
@@ -808,24 +802,20 @@ else:
     """, unsafe_allow_html=True)
 
     try:
-        if sel_nav == "A. Trạng thái Tổ chức":
-            view_a_current_state.render(df_filtered, cfg)
-        elif sel_nav == "B. Nhóm gặp vấn đề":
-            view_b_problem_groups.render(df_filtered, cfg)
-        elif sel_nav == "C. Vấn đề nghiêm trọng":
-            view_c_key_issues.render(df_filtered, cfg)
-        elif sel_nav == "D. Nguyên nhân gốc rễ":
-            view_d_root_cause.render(df_filtered, cfg, sel_group)
-            st.markdown("---")
-            hris_linkage.render(df_filtered, cfg, sel_group)
-        elif sel_nav == "E. Rủi ro & Hệ lụy":
-            view_e_impact_risk.render(df_filtered, cfg)
-        elif sel_nav == "F. Ưu tiên hành động":
-            view_f_action_priority.render(df_filtered, cfg)
-        elif sel_nav == "G. Đo lường Impact":
+        # Detect which pillar is selected
+        sel_pillar = None
+        for p_id in PILLAR_ORDER:
+            if sel_nav and PILLAR_META[p_id]['name'] in sel_nav:
+                sel_pillar = p_id
+                break
+
+        if sel_pillar:
+            from views import pillar_renderer
+            pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
+        elif sel_nav and "Đo lường Impact" in sel_nav:
             view_g_kpi_impact.render(df_filtered, cfg)
         else:
-            st.info("Chọn một góc nhìn từ sidebar bên trái.")
+            st.info("Chọn một trụ cột từ sidebar bên trái.")
     except Exception as e:
         st.error(f"Lỗi khi tải phân tích: {e}")
         import traceback

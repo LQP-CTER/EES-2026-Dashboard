@@ -550,3 +550,81 @@ CODEBOOK_3B = {
     'Q34': {'col_idx': 40, 'tên': 'Cần cải thiện', 'loại': 'open', 'trụ_cột': None},
 }
 
+
+# ============================================================
+# 9. PILLAR METADATA & HELPERS
+# ============================================================
+
+PILLAR_META = {
+    'TC1': {
+        'name': 'Niềm tin & Định hướng',
+        'short': 'Niềm tin BLĐ',
+        'icon': '🏛️',
+        'color': '#6366F1',
+        'description': 'Niềm tin vào Ban Lãnh đạo và định hướng chiến lược của tổ chức',
+    },
+    'TC2': {
+        'name': 'Năng lực Quản lý Trực tiếp',
+        'short': 'Quản lý TT',
+        'icon': '👥',
+        'color': '#0EA5E9',
+        'description': 'Năng lực hỗ trợ, công bằng và phản hồi của quản lý trực tiếp (AM/TBC/Leader)',
+    },
+    'TC3': {
+        'name': 'Công việc & Điều kiện Vận hành',
+        'short': 'Công việc & VH',
+        'icon': '⚙️',
+        'color': '#F59E0B',
+        'description': 'Công cụ, quy trình, lộ trình thăng tiến và điều kiện làm việc hàng ngày',
+    },
+    'TC4': {
+        'name': 'Thu nhập & Tính Minh bạch',
+        'short': 'Thu nhập & MB',
+        'icon': '💰',
+        'color': '#10B981',
+        'description': 'Mức thu nhập, cách tính lương, minh bạch phạt/truy thu và hỗ trợ sự cố tài chính',
+    },
+    'TC5': {
+        'name': 'Môi trường & Sự Gắn kết',
+        'short': 'Môi trường & GK',
+        'icon': '🌟',
+        'color': '#EF4444',
+        'description': 'An toàn, đồng nghiệp, niềm tự hào và sức khỏe tinh thần',
+    },
+}
+
+PILLAR_ORDER = ['TC1', 'TC2', 'TC3', 'TC4', 'TC5']
+
+_CODEBOOK_REGISTRY = {
+    '1A': CODEBOOK_1A,
+    '1B': CODEBOOK_1B,
+    '2A': CODEBOOK_2A,
+    '2B': CODEBOOK_2B,
+    '3A': CODEBOOK_3A,
+    '3B': CODEBOOK_3B,
+}
+
+
+def get_codebook(group_id):
+    """Return codebook dict for a survey group."""
+    return _CODEBOOK_REGISTRY.get(group_id, CODEBOOK_1A)
+
+
+def get_pillar_questions(group_id, pillar_id):
+    """Return list of question codes (Q9, Q10, ...) belonging to a pillar."""
+    cb = get_codebook(group_id)
+    return [q for q, meta in cb.items() if meta.get('trụ_cột') == pillar_id]
+
+
+def get_all_likert_questions(group_id):
+    """Return all likert question codes (Q9-Q29)."""
+    cb = get_codebook(group_id)
+    return [q for q, meta in cb.items() if meta.get('loại') == 'likert']
+
+
+def get_question_label(group_id, question_id):
+    """Return short label for a question."""
+    cb = get_codebook(group_id)
+    if question_id in cb:
+        return cb[question_id].get('tên', question_id)
+    return question_id
