@@ -55,31 +55,109 @@ if os.path.exists(APP_STATE_FILE):
 from utils.auth import get_google_auth_url, get_user_info
 
 # Load client secrets
-GOOGLE_CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_ID     = st.secrets.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET", "")
-REDIRECT_URI = st.secrets.get("REDIRECT_URI", "http://localhost:8501/")
+REDIRECT_URI         = st.secrets.get("REDIRECT_URI", "http://localhost:8501/")
+ALLOWED_DOMAINS      = st.secrets.get("ALLOWED_DOMAINS", ["ghn.vn", "scommerce.asia"])
 
 is_admin = st.session_state.get("is_admin", False)
 
+def _is_allowed_email(email: str) -> bool:
+    """Chỉ cho phép email thuộc domain GHN hoặc Scommerce."""
+    if not email:
+        return False
+    domain = email.split("@")[-1].lower()
+    return domain in [d.lower() for d in ALLOWED_DOMAINS]
+
+def _render_login_page():
+    """Hiển thị trang đăng nhập đẹp với nút Google."""
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        header[data-testid="stHeader"] { display: none !important; }
+        .login-wrap {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 80vh; gap: 24px;
+        }
+        .login-card {
+            background: white; border-radius: 20px; padding: 48px 56px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            text-align: center; max-width: 480px; width: 100%;
+        }
+        .login-title { font-size: 1.6rem; font-weight: 800; color: #0A1F44; margin: 16px 0 8px; }
+        .login-subtitle { font-size: 0.9rem; color: #64748B; margin-bottom: 28px; line-height: 1.5; }
+        .login-note { font-size: 0.8rem; color: #94A3B8; margin-top: 20px; }
+        .login-divider { border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }
+        .domain-badge {
+            display: inline-block; background: #FFF3EE; color: #FF5200;
+            border: 1px solid #FFD4B8; border-radius: 20px;
+            padding: 3px 12px; font-size: 0.78rem; font-weight: 600; margin: 2px;
+        }
+    </style>
+    <div class="login-wrap">
+        <div class="login-card">
+            <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" width="140">
+            <div class="login-title">GHN EES 2026 Dashboard</div>
+            <div class="login-subtitle">
+                Hệ thống phân tích Trải nghiệm Nhân viên<br>dành riêng cho nội bộ GHN & Scommerce
+            </div>
+            <hr class="login-divider">
+            <div style="margin-bottom:16px; font-size:0.82rem; color:#475569;">
+                Chỉ email thuộc domain:
+                <span class="domain-badge">@ghn.vn</span>
+                <span class="domain-badge">@scommerce.asia</span>
+                mới được truy cập.
+            </div>
+    """, unsafe_allow_html=True)
+
+    auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
+    st.link_button(
+        "Đăng nhập bằng Google",
+        auth_url,
+        use_container_width=True,
+        type="primary",
+    )
+
+    st.markdown("""
+            <div class="login-note">Bảo mật bởi Google OAuth 2.0</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 if not is_admin:
-    # Check if redirect contains auth code
+    # 1. Xử lý callback OAuth (có ?code= trên URL)
     if "code" in st.query_params:
         code = st.query_params.get("code")
-        user_info = get_user_info(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI)
+        with st.spinner("Đang xác thực..."):
+            user_info = get_user_info(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI)
+        st.query_params.clear()
+
         if user_info and "email" in user_info:
-            st.session_state.user_email = user_info["email"]
-            st.session_state.user_name = user_info.get("name", "User")
-            st.session_state.user_picture = user_info.get("picture", "")
+            email = user_info["email"]
+            if _is_allowed_email(email):
+                st.session_state.user_email   = email
+                st.session_state.user_name    = user_info.get("name", "User")
+                st.session_state.user_picture = user_info.get("picture", "")
+                st.rerun()
+            else:
+                # Email không thuộc domain cho phép
+                st.session_state.pop("user_email", None)
+                st.error(
+                    f"Email **{email}** không được phép truy cập.\n\n"
+                    "Chỉ email `@ghn.vn` hoặc `@scommerce.asia` mới có quyền vào hệ thống."
+                )
+                _render_login_page()
+                st.stop()
         else:
             st.error("Xác thực Google thất bại. Vui lòng thử lại.")
-        st.query_params.clear()
-        st.rerun()
+            _render_login_page()
+            st.stop()
 
-    # Tạm thời vô hiệu hóa Đăng nhập Google (Bypass 403 Error)
+    # 2. Kiểm tra đã login chưa
     user_email = st.session_state.get("user_email")
-    if not user_email:
-        user_email = "tester@ghn.vn"
-        st.session_state.user_email = user_email
+    if not user_email or not _is_allowed_email(user_email):
+        _render_login_page()
+        st.stop()
 
 if is_admin and not st.session_state.preview_mode:
     # Render admin panel
@@ -668,7 +746,26 @@ with st.sidebar:
             st.rerun()
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
-    # [Đã ẩn Avatar và Nút Đăng xuất do đang dùng chế độ Bypass]
+    # User info + logout
+    _u_email   = st.session_state.get("user_email", "")
+    _u_name    = st.session_state.get("user_name", _u_email)
+    _u_picture = st.session_state.get("user_picture", "")
+    if _u_email:
+        _avatar_html = f'<img src="{_u_picture}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #FF5200;">' if _u_picture else f'<div style="width:32px;height:32px;border-radius:50%;background:#FF5200;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.9rem;">{_u_name[0].upper()}</div>'
+        st.markdown(f"""
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0 4px;margin-bottom:4px;">
+            {_avatar_html}
+            <div>
+                <div style="font-size:0.82rem;font-weight:700;color:#0F172A;line-height:1.2;">{_u_name}</div>
+                <div style="font-size:0.72rem;color:#64748B;">{_u_email}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Đăng xuất", width="stretch"):
+            for _k in ["user_email", "user_name", "user_picture"]:
+                st.session_state.pop(_k, None)
+            st.rerun()
+        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
     # Brand block
     st.markdown("""
