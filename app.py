@@ -749,27 +749,6 @@ with st.sidebar:
             st.rerun()
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
-    # User info + logout
-    _u_email   = st.session_state.get("user_email", "")
-    _u_name    = st.session_state.get("user_name", _u_email)
-    _u_picture = st.session_state.get("user_picture", "")
-    if _u_email:
-        _avatar_html = f'<img src="{_u_picture}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #FF5200;">' if _u_picture else f'<div style="width:32px;height:32px;border-radius:50%;background:#FF5200;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.9rem;">{_u_name[0].upper()}</div>'
-        st.markdown(f"""
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 0 4px;margin-bottom:4px;">
-            {_avatar_html}
-            <div>
-                <div style="font-size:0.82rem;font-weight:700;color:#0F172A;line-height:1.2;">{_u_name}</div>
-                <div style="font-size:0.72rem;color:#64748B;">{_u_email}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Đăng xuất", width="stretch"):
-            for _k in ["user_email", "user_name", "user_picture"]:
-                st.session_state.pop(_k, None)
-            st.rerun()
-        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
-
     # Brand block
     st.markdown("""
     <div class="sb-brand">
@@ -867,6 +846,31 @@ with st.sidebar:
         if sel_div  != 'Tất cả Khối':      df_filtered = df_filtered[df_filtered['division']    == sel_div]
         if sel_dept != 'Tất cả Phòng ban': df_filtered = df_filtered[df_filtered['department']  == sel_dept]
         if sel_sec  != 'Tất cả Section':   df_filtered = df_filtered[df_filtered['section']     == sel_sec]
+
+    # Spacer
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
+    
+    # User info + logout (Moved to bottom)
+    _u_email   = st.session_state.get("user_email", "")
+    _u_name    = st.session_state.get("user_name", _u_email)
+    _u_picture = st.session_state.get("user_picture", "")
+    if _u_email:
+        _avatar_html = f'<img src="{_u_picture}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #FF5200;">' if _u_picture else f'<div style="width:32px;height:32px;border-radius:50%;background:#FF5200;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.9rem;">{_u_name[0].upper()}</div>'
+        st.markdown(f"""
+        <div style="display:flex;align-items:center;gap:10px;padding:15px 0 10px;margin-top:auto;border-top:1px solid #E2E8F0;">
+            {_avatar_html}
+            <div>
+                <div style="font-size:0.82rem;font-weight:700;color:#0F172A;line-height:1.2;">{_u_name}</div>
+                <div style="font-size:0.72rem;color:#64748B;">{_u_email}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("Đăng xuất"):
+                for _k in ["user_email", "user_name", "user_picture"]:
+                    st.session_state.pop(_k, None)
+                st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
 if is_appendix:
