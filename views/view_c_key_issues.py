@@ -12,7 +12,7 @@ from shared.nlp_utils import (
 from utils.ai_generator import render_ai_insight_card
 
 
-def render(df, cfg):
+def render(df, cfg, pillar_filter=None):
     codebook = cfg.get('codebook', {})
     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
 
@@ -197,7 +197,7 @@ def render(df, cfg):
                         'Nhãn con': f"  └ {sub_label}",
                         'Số lượng': sub_count,
                         '% trên tổng': sub_pct,
-                        '% Tiêu cực': '',
+                        '% Tiêu cực': None,
                         'parent_full': parent_full,
                     })
 

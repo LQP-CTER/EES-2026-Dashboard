@@ -5,7 +5,7 @@ from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from utils.ai_generator import render_ai_insight_card
 
-def render(df, cfg):
+def render(df, cfg, pillar_filter=None):
     apply_theme()
 
     st.markdown("""
