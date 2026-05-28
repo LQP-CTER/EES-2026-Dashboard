@@ -868,3 +868,173 @@ def extract_representative_quotes(df, text_col, topic, n=5):
     quotes.sort(key=lambda q: abs(len(q) - 50))
     return quotes[:n]
 
+
+# ============================================================
+# 8. AI-BASED TOPIC CLASSIFICATION (GROQ LLM)
+# ============================================================
+
+def classify_topics_ai(texts, batch_size=20):
+    """
+    Phân loại chủ đề bằng AI (Groq LLM) thay vì rule-based.
+    Xử lý theo batch để giảm API calls.
+    
+    Args:
+        texts: list of str - danh sách các câu phản hồi
+        batch_size: int - số lượng texts xử lý mỗi batch (default 20)
+    
+    Returns:
+        list of list[str] - mỗi phần tử là list các topics được gán cho text tương ứng
+    """
+    from utils.ai_generator import get_groq_client
+    import json
+    
+    if not texts:
+        return []
+    
+    client = get_groq_client()
+    if not client:
+        # Fallback về rule-based nếu không có AI
+        return [classify_topics(text) for text in texts]
+    
+    results = []
+    
+    # Xử lý theo batch
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i+batch_size]
+        
+        # Tạo prompt cho batch
+        texts_numbered = "\n".join([f"{j+1}. {text[:200]}" for j, text in enumerate(batch)])
+        
+        prompt = f"""Bạn là chuyên gia phân tích khảo sát nhân viên tiếng Việt. Hãy phân loại MỖI câu phản hồi dưới đây vào 1-2 chủ đề phù hợp nhất.
+
+DANH SÁCH CHỦ ĐỀ (chọn từ danh sách này):
+- Thu nhập & Đơn giá
+- Phạt & Chính sách
+- Quản lý trực tiếp
+- Đồng nghiệp & Văn hóa
+- Môi trường làm việc
+- Công cụ & App
+- Phát triển & Thăng tiến
+- Phúc lợi & Chế độ
+- Áp lực & Cường độ
+- Quy trình & Vận hành
+- Tự hào & Gắn bó
+- Muốn nghỉ / Bất mãn
+- Khác
+
+CÁC CÂU PHẢN HỒI CẦN PHÂN LOẠI:
+{texts_numbered}
+
+HƯỚNG DẪN:
+- Phân tích ngữ cảnh và ý nghĩa, không chỉ dựa vào từ khóa
+- Mỗi câu có thể thuộc 1-2 chủ đề
+- Nếu không rõ chủ đề, ghi "Khác"
+- Trả về JSON array với format: [{{"id": 1, "topics": ["Chủ đề 1", "Chủ đề 2"]}}, ...]
+
+TRẢ LỜI (chỉ JSON, không giải thích):"""
+        
+        try:
+            response = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama-3.3-70b-versatile",
+                temperature=0.1,
+                max_tokens=2000,
+            )
+            
+            result_text = response.choices[0].message.content.strip()
+            
+            # Parse JSON từ response
+            try:
+                # Tìm JSON array trong response
+                json_match = re.search(r'\[.*\]', result_text, re.DOTALL)
+                if json_match:
+                    parsed = json.loads(json_match.group())
+                    
+                    # Map results về đúng thứ tự
+                    batch_results = {item['id']: item['topics'] for item in parsed}
+                    
+                    for j in range(len(batch)):
+                        topics = batch_results.get(j+1, ['Khác'])
+                        results.append(topics if topics else ['Khác'])
+                else:
+                    # Không parse được JSON, fallback về rule-based cho batch này
+                    results.extend([classify_topics(text) for text in batch])
+                    
+            except (json.JSONDecodeError, KeyError, TypeError):
+                # Parse lỗi, fallback về rule-based cho batch này
+                results.extend([classify_topics(text) for text in batch])
+                
+        except Exception as e:
+            # AI lỗi, fallback về rule-based cho batch này
+            results.extend([classify_topics(text) for text in batch])
+    
+    return results
+
+
+def extract_topic_stats_ai(texts, batch_size=20):
+    """
+    Tính thống kê topic bằng AI classification.
+    
+    Args:
+        texts: list of str
+        batch_size: int
+    
+    Returns:
+        dict {topic: count}
+    """
+    from collections import Counter
+    
+    topic_lists = classify_topics_ai(texts, batch_size)
+    
+    topic_counts = Counter()
+    for topics in topic_lists:
+        for topic in topics:
+            topic_counts[topic] += 1
+    
+    return dict(topic_counts)
+
+
+def extract_topic_stats_with_tone_ai(texts, batch_size=20):
+    """
+    Tính thống kê topic kèm tone bằng AI.
+    
+    Args:
+        texts: list of str
+        batch_size: int
+    
+    Returns:
+        dict {topic: {'positive': count, 'negative': count, 'neutral': count, 'total': count}}
+    """
+    from utils.ai_generator import get_groq_client
+    import json
+    
+    if not texts:
+        return {}
+    
+    client = get_groq_client()
+    if not client:
+        # Fallback về rule-based
+        return extract_topic_stats_with_tone(texts)
+    
+    # Phân loại topics trước
+    topic_lists = classify_topics_ai(texts, batch_size)
+    
+    # Tính sentiment cho từng text (dùng rule-based cho nhanh)
+    sentiments = [compute_sentiment_intensity(text) for text in texts]
+    
+    # Aggregate
+    topic_tone = {}
+    for topics, (intensity, tone) in zip(topic_lists, sentiments):
+        for topic in topics:
+            if topic not in topic_tone:
+                topic_tone[topic] = {'positive': 0, 'negative': 0, 'neutral': 0, 'total': 0}
+            topic_tone[topic]['total'] += 1
+            if tone == 'tích_cực':
+                topic_tone[topic]['positive'] += 1
+            elif tone == 'tiêu_cực':
+                topic_tone[topic]['negative'] += 1
+            else:
+                topic_tone[topic]['neutral'] += 1
+    
+    return topic_tone
+

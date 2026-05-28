@@ -7,7 +7,8 @@ from shared.nlp_utils import (
     extract_topic_stats, extract_topic_stats_with_tone,
     extract_representative_quotes, TOPIC_SHORT_LABELS, TOPIC_SUB_LABELS,
     extract_sub_topic_stats, classify_topics, classify_sub_topics,
-    compute_sentiment_intensity
+    compute_sentiment_intensity, classify_topics_ai,
+    extract_topic_stats_ai, extract_topic_stats_with_tone_ai
 )
 from utils.ai_generator import render_ai_insight_card
 
@@ -34,6 +35,13 @@ def render(df, cfg, pillar_filter=None):
     </div>
     """, unsafe_allow_html=True)
 
+    # Toggle AI vs Rule-based classification
+    use_ai = st.checkbox(
+        "Sử dụng AI để phân loại chủ đề (chính xác hơn, chậm hơn)",
+        value=True,
+        help="AI phân tích ngữ cảnh và ý nghĩa thay vì chỉ dựa vào từ khóa. Chính xác hơn nhưng có thể chậm hơn."
+    )
+
     sel_q = st.selectbox("Chọn câu hỏi mở để phân tích:", list(q_options.keys()),
                          format_func=lambda q: f"{q}: {q_options[q]}")
     cc = f'{sel_q}_clean'
@@ -54,7 +62,12 @@ def render(df, cfg, pillar_filter=None):
     st.markdown("### 1. Tổng quan Chủ đề & Giọng điệu")
     st.markdown("Phân bổ các chủ đề được nhắc đến và giọng điệu (tích cực/trung lập/tiêu cực) của từng chủ đề.")
 
-    topic_tone_data = extract_topic_stats_with_tone(texts)
+    # Dùng AI hoặc rule-based tùy theo lựa chọn người dùng
+    if use_ai:
+        with st.spinner("🤖 Đang phân tích bằng AI... (có thể mất 10-30s)"):
+            topic_tone_data = extract_topic_stats_with_tone_ai(texts, batch_size=20)
+    else:
+        topic_tone_data = extract_topic_stats_with_tone(texts)
 
     if not topic_tone_data:
         st.info("Không đủ dữ liệu để phân tích chủ đề.")
@@ -242,7 +255,7 @@ def render(df, cfg, pillar_filter=None):
         with col1:
             promoter_texts = df[df['eNPS_group'] == 'Promoter'][cc].dropna().tolist()
             if len(promoter_texts) > 20:
-                promoter_topics = extract_topic_stats(promoter_texts)
+                promoter_topics = extract_topic_stats_ai(promoter_texts) if use_ai else extract_topic_stats(promoter_texts)
                 n_promoter = len(promoter_texts)
                 rows_promoter = [(TOPIC_SHORT_LABELS.get(t, t).replace('', '').strip(), c / n_promoter * 100)
                                  for t, c in sorted(promoter_topics.items(), key=lambda x: -x[1])]
@@ -260,7 +273,7 @@ def render(df, cfg, pillar_filter=None):
         with col2:
             detractor_texts = df[df['eNPS_group'] == 'Detractor'][cc].dropna().tolist()
             if len(detractor_texts) > 20:
-                detractor_topics = extract_topic_stats(detractor_texts)
+                detractor_topics = extract_topic_stats_ai(detractor_texts) if use_ai else extract_topic_stats(detractor_texts)
                 n_detractor = len(detractor_texts)
                 rows_detractor = [(TOPIC_SHORT_LABELS.get(t, t).replace('', '').strip(), c / n_detractor * 100)
                                   for t, c in sorted(detractor_topics.items(), key=lambda x: -x[1])]
