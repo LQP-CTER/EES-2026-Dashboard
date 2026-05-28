@@ -82,12 +82,14 @@ def get_cache_key(data_json, context_prompt):
 # Thử Key 1 → nếu 429 chuyển Key 2 → thử từng model
 # ============================================================
 
+# Danh sách model đã kiểm tra thực tế qua API Groq (2026-05-28)
+# Chỉ giữ các model đã PASS test - các model khác đã bị decommissioned
 GROQ_MODELS = [
-    "llama-3.3-70b-versatile",
-    "qwen-2.5-32b",
-    "llama-3.1-8b-instant",
-    "gemma2-9b-it",
-    "llama3-8b-8192",
+    "llama-3.3-70b-versatile",              # Mạnh nhất, ưu tiên 1
+    "meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Scout - nhanh
+    "llama-3.1-8b-instant",                # Nhẹ, fallback nhanh
+    "qwen/qwen3-32b",                      # Qwen3 - trong active list
+    "compound-beta",                       # Groq compound model
 ]
 
 def _build_insight_system_prompt(data_json, context_prompt, lang='VN'):
@@ -225,7 +227,7 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
         return output
 
     # Thử tất cả Groq keys × models
-    validator_models = ["llama-3.3-70b-versatile", "qwen-2.5-32b", "llama-3.1-8b-instant", "gemma2-9b-it", "llama3-8b-8192"]
+    validator_models = ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.1-8b-instant", "qwen/qwen3-32b", "compound-beta"]
     for client in get_groq_clients_all():
         for model in validator_models:
             try:
