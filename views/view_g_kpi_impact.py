@@ -212,7 +212,7 @@ def render(df, cfg):
         # Display weight context
         st.markdown(f"""
         <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:#475569;">
-            📌 Nhân tố <strong style="color:#0A1F44;">"{selected_factor}"</strong> chiếm <strong style="color:#FF5200;">{weight*100:.0f}%</strong> trọng số trong mô hình dự báo nghỉ việc của nhóm <strong>{cfg.get('label','')}</strong>.
+             Nhân tố <strong style="color:#0A1F44;">"{selected_factor}"</strong> chiếm <strong style="color:#FF5200;">{weight*100:.0f}%</strong> trọng số trong mô hình dự báo nghỉ việc của nhóm <strong>{cfg.get('label','')}</strong>.
             Cải thiện nhân tố này <strong>{improvement} điểm</strong> ước tính nâng eNPS lên <strong>+{enps_increase:.1f} điểm</strong>.
         </div>
         """, unsafe_allow_html=True)

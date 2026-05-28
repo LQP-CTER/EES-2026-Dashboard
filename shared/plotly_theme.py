@@ -118,7 +118,7 @@ def make_kpi_indicator(value, title, reference=None, suffix='', number_format='.
 def annotate_insight(fig, text, x=0.5, y=-0.15, xref='paper', yref='paper'):
     """Add narrative insight annotation below chart."""
     fig.add_annotation(
-        text=f'💡 <i>{text}</i>',
+        text=f' <i>{text}</i>',
         x=x, y=y, xref=xref, yref=yref,
         showarrow=False, font=dict(size=11, color=COLORS['navy2']),
         bgcolor='#FFF8E1', bordercolor=COLORS['gold'], borderwidth=1,

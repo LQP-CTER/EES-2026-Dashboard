@@ -179,7 +179,7 @@ def _render_manual_overview(df, cfg, group_id, pillar_id, qs, cb):
     display_df = pd.DataFrame(q_data)[['Q', 'Label', 'Mean', 'Favorable', 'Negative', 'N']]
     display_df.columns = ['Mã', 'Câu hỏi', 'Điểm TB', '% Tích cực', '% Tiêu cực', 'N']
     display_df = display_df.sort_values('Điểm TB', ascending=True)
-    st.dataframe(display_df, use_container_width=True, hide_index=True, key=f"pillar_table_{pillar_id}")
+    st.dataframe(display_df, width='stretch', hide_index=True, key=f"pillar_table_{pillar_id}")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -387,7 +387,7 @@ def _render_tab_root_cause(df, cfg, group_id, pillar_id):
     from views import view_d_root_cause, view_f_action_priority
 
     # Root cause — only render for matching pillar
-    st.markdown("#### 🔍 Phân tích nguyên nhân gốc rễ")
+    st.markdown("####  Phân tích nguyên nhân gốc rễ")
     try:
         view_d_root_cause.render(df, cfg, group_id, pillar_filter=pillar_id)
     except TypeError:
@@ -397,7 +397,7 @@ def _render_tab_root_cause(df, cfg, group_id, pillar_id):
     st.markdown("---")
 
     # Action priority
-    st.markdown("#### 🎯 Ưu tiên hành động")
+    st.markdown("####  Ưu tiên hành động")
     try:
         view_f_action_priority.render(df, cfg, pillar_filter=pillar_id)
     except TypeError:
@@ -430,7 +430,7 @@ def _render_tab_hris(df, cfg, group_id, pillar_id):
             hris_linkage.render(df, cfg, group_id)
 
     elif pillar_id == 'TC5':
-        st.markdown("#### 🌟 Phân tích Rủi ro Gắn kết")
+        st.markdown("####  Phân tích Rủi ro Gắn kết")
         view_e_impact_risk.render(df, cfg)
 
 
@@ -450,7 +450,7 @@ def render(df, cfg, group_id, pillar_id):
     _render_pillar_header(pillar_id, df, cfg, group_id)
 
     # Build tab list based on pillar
-    tab_names = ["📊 Tổng quan", "🔬 Chi tiết", "🎯 Nhóm rủi ro", "🔍 Nguyên nhân & Hành động"]
+    tab_names = [" Tổng quan", " Chi tiết", " Nhóm rủi ro", " Nguyên nhân & Hành động"]
 
     # Add HRIS tab for TC3, TC4, TC5
     if pillar_id in ('TC3', 'TC4', 'TC5'):
@@ -459,7 +459,7 @@ def render(df, cfg, group_id, pillar_id):
         elif pillar_id == 'TC3':
             tab_names.append("HRIS & Năng suất")
         elif pillar_id == 'TC5':
-            tab_names.append("🌟 Rủi ro Gắn kết")
+            tab_names.append(" Rủi ro Gắn kết")
 
     tabs = st.tabs(tab_names)
 

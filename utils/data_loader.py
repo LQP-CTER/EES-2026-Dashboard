@@ -27,7 +27,7 @@ PILLAR_LABELS = {
 }
 
 
-@st.cache_data(ttl=3600, show_spinner="📂 Đang tải dữ liệu...")
+@st.cache_data(ttl=3600, show_spinner=" Đang tải dữ liệu...")
 def load_group(group_id: str):
     """Load & clean a single survey group. Returns (df_clean, n_before)."""
     from config.groups import GROUP_REGISTRY
@@ -38,7 +38,7 @@ def load_group(group_id: str):
         conn = st.connection("supabase", type="sql")
         table_name = f"survey_{group_id.lower()}"
         df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
-        print(f"✅ Đã tải {len(df_raw)} dòng dữ liệu {group_id} từ Supabase siêu tốc!")
+        print(f" Đã tải {len(df_raw)} dòng dữ liệu {group_id} từ Supabase siêu tốc!")
     except Exception as e:
         # Fallback to CSV if DB is not reachable
         print(f"Lỗi kết nối Supabase ({e}). Đang dùng file dự phòng (Google Sheets)...")
@@ -394,6 +394,6 @@ def merge_survey_hris(df_clean, df_hris):
     if 'intent' in df_m.columns:
         df_m['intent_risk'] = df_m['intent'].apply(
             lambda x: 'Muốn nghỉ (1-2)' if pd.notna(x) and x <= 2
-            else ('🟡 Phân vân (3)' if pd.notna(x) and x == 3
+            else (' Phân vân (3)' if pd.notna(x) and x == 3
                   else ('Gắn bó (4-5)' if pd.notna(x) else None)))
     return df_m

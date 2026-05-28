@@ -566,7 +566,7 @@ PILLAR_META = {
     'TC2': {
         'name': 'Năng lực Quản lý Trực tiếp',
         'short': 'Quản lý TT',
-        'icon': '👥',
+        'icon': '',
         'color': '#0EA5E9',
         'description': 'Năng lực hỗ trợ, công bằng và phản hồi của quản lý trực tiếp (AM/TBC/Leader)',
     },
@@ -587,7 +587,7 @@ PILLAR_META = {
     'TC5': {
         'name': 'Môi trường & Sự Gắn kết',
         'short': 'Môi trường & GK',
-        'icon': '🌟',
+        'icon': '',
         'color': '#EF4444',
         'description': 'An toàn, đồng nghiệp, niềm tự hào và sức khỏe tinh thần',
     },

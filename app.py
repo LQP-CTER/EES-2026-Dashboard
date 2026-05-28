@@ -103,7 +103,7 @@ if announcement.get("active") and announcement.get("text"):
     st.markdown(f"""
     <div style="background-color: #FFF3EE; border-left: 4px solid #FF5200; padding: 12px 20px; border-radius: 4px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
         <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.2rem;">📢</span>
+            <span style="font-size: 1.2rem;"></span>
             <span style="color: #0F172A; font-weight: 500; font-size: 0.95rem;">{announcement['text']}</span>
         </div>
     </div>
@@ -714,8 +714,8 @@ with st.sidebar:
 
         # Sub-navigation
         st.markdown('<span class="sb-section">Trụ cột trải nghiệm</span>', unsafe_allow_html=True)
-        SUB_NAV = ["🏢 Tổng quan Tổ chức"] + [f"{PILLAR_META[p]['icon']} {PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
-        SUB_NAV.append("📊 Đo lường Impact")
+        SUB_NAV = ["Tổng quan Tổ chức"] + [f"{PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
+        SUB_NAV.append("Đo lường Impact")
         sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
 
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
@@ -809,7 +809,7 @@ else:
                 sel_pillar = p_id
                 break
 
-        if sel_nav == "🏢 Tổng quan Tổ chức":
+        if sel_nav == "Tổng quan Tổ chức":
             view_a_current_state.render(df_filtered, cfg)
         elif sel_pillar:
             from views import pillar_renderer

@@ -19,13 +19,13 @@ def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
     df = df_clean.copy()
     df['intent_risk'] = df['intent'].apply(
         lambda x: 'Muốn nghỉ (1-2)' if pd.notna(x) and x <= 2
-        else ('🟡 Phân vân (3)' if pd.notna(x) and x == 3
+        else (' Phân vân (3)' if pd.notna(x) and x == 3
               else ('Gắn bó (4-5)' if pd.notna(x) else None)))
               
     # Non-DA user context
     st.markdown("""
     <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
-        <div style="font-size:1.4rem;flex-shrink:0;">🔍</div>
+        <div style="font-size:1.4rem;flex-shrink:0;"></div>
         <div>
             <div style="font-size:0.82rem;font-weight:700;color:#15803D;margin-bottom:4px;">Phân tích Nguyên nhân Gốc rễ — Tại sao nhân viên muốn nghỉ?</div>
             <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
@@ -46,7 +46,7 @@ def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
         clean_idx = str(row['intent_risk'])[2:]
         color_theme = "red" if "nghỉ" in clean_idx.lower() else ("green" if "gắn" in clean_idx.lower() else "orange")
         with col:
-            st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="👤", progress_val=pct), unsafe_allow_html=True)
+            st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="", progress_val=pct), unsafe_allow_html=True)
 
     st.markdown("#### Bước 2: Câu hỏi nào có khoảng cách điểm lớn nhất?")
     st.markdown("""
@@ -151,10 +151,10 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
     cols = st.columns(len(risk_ov))
     for (idx, row), col in zip(risk_ov.iterrows(), cols):
         pct = row['N'] / risk_ov['N'].sum() * 100
-        clean_idx = str(idx)[2:] if str(idx)[0:2] in ('🔴','🟡','🟢') else str(idx)
+        clean_idx = str(idx)[2:] if str(idx)[0:2] in ('','','') else str(idx)
         color_theme = "red" if "nghỉ" in clean_idx.lower() else ("green" if "gắn" in clean_idx.lower() else "orange")
         with col:
-            st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="👤", progress_val=pct), unsafe_allow_html=True)
+            st.markdown(make_html_kpi(clean_idx, f"{int(row['N']):,} NV", delta=f"{pct:.0f}% tổng số", color=color_theme, icon="", progress_val=pct), unsafe_allow_html=True)
 
 
     st.markdown("#### Bước 2: Đặc điểm của nhóm có rủi ro nghỉ việc cao")
@@ -392,9 +392,9 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
                 <p style="font-size: 0.88rem; color: #475569; line-height: 1.65; margin: 0;">
                     Nghiên cứu khoa học về hành vi tổ chức chỉ ra: nhân viên không nghỉ việc vì áp lực cao — họ nghỉ vì <strong>áp lực quá cao mà thiếu hỗ trợ</strong>.
                     <br><br>
-                    <strong>⚡ Áp lực thực tế của nhóm {cfg.get('label','')}:</strong> {demands_text}
+                    <strong> Áp lực thực tế của nhóm {cfg.get('label','')}:</strong> {demands_text}
                     <br><br>
-                    <strong>🌱 Nguồn lực hỗ trợ cần có:</strong> {resources_text}
+                    <strong> Nguồn lực hỗ trợ cần có:</strong> {resources_text}
                     <br><br>
                     <span style="color:#0A1F44;font-weight:700;">Điều tạo ra sự khác biệt:</span> {shield_text}
                 </p>
@@ -410,7 +410,7 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
         Mỗi **bong bóng** đại diện cho một nhóm nhân sự. **Màu sắc** = tỷ lệ % muốn nghỉ (đỏ càng đậm = rủi ro càng cao).
         **Kích thước bong bóng** = số lượng nhân sự trong nhóm đó. Chỉ hiển thị nhóm có **≥ 30 người** để đảm bảo độ tin cậy thống kê.
         """)
-        st.caption("💡 *Thu nhập = Lương gộp (trước trừ phạt) để đảm bảo 2 trục phân tích độc lập. Phạt = tổng phạt kỷ luật + truy thu COD.*")
+        st.caption(" *Thu nhập = Lương gộp (trước trừ phạt) để đảm bảo 2 trục phân tích độc lập. Phạt = tổng phạt kỷ luật + truy thu COD.*")
 
         # Tính lương gộp (trước trừ phạt) để 2 trục độc lập
         has_income = 'income_m' in df_m.columns and df_m['income_m'].notna().sum() > 100
@@ -595,7 +595,7 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
                     max_risk_row = heat_data.loc[heat_data['Risk'].idxmax()]
                     st.markdown(f"""
 <div style="background-color: #FEF2F2; border-left: 4px solid #DC2626; padding: 12px 16px; border-radius: 4px; margin-top: 10px;">
-<span style="color: #DC2626; font-weight: 700;">🚨 Kịch bản rủi ro cao nhất:</span> Nhân sự có thu nhập <strong>{max_risk_row[income_col]}</strong> và mức phạt <strong>{max_risk_row[phat_col]}</strong> có xác suất muốn nghỉ <strong>{max_risk_row['Risk']:.1f}%</strong> (N={int(max_risk_row['N'])} người).
+<span style="color: #DC2626; font-weight: 700;"> Kịch bản rủi ro cao nhất:</span> Nhân sự có thu nhập <strong>{max_risk_row[income_col]}</strong> và mức phạt <strong>{max_risk_row[phat_col]}</strong> có xác suất muốn nghỉ <strong>{max_risk_row['Risk']:.1f}%</strong> (N={int(max_risk_row['N'])} người).
 </div>""", unsafe_allow_html=True)
                     
                     ai_data_hm = {

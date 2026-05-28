@@ -90,7 +90,7 @@ def render(df, cfg):
             '% Burnout': st.column_config.NumberColumn('% Burnout', format="%.1f%%", width="small")
         }
 
-        st.dataframe(styled_met, use_container_width=True, hide_index=True, column_config=col_config)
+        st.dataframe(styled_met, width='stretch', hide_index=True, column_config=col_config)
 
 
 

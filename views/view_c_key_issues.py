@@ -62,7 +62,7 @@ def render(df, cfg):
 
     rows = []
     for topic, counts in sorted(topic_tone_data.items(), key=lambda x: -x[1]['total']):
-        short = TOPIC_SHORT_LABELS.get(topic, topic).replace('❓', '').strip()
+        short = TOPIC_SHORT_LABELS.get(topic, topic).replace('', '').strip()
         if not short:
             continue
         total = counts['total']
@@ -212,7 +212,7 @@ def render(df, cfg):
     styled_df = df_hierarchical[['Cấp', 'Chủ đề', 'Nhãn con', 'Số lượng', '% trên tổng', '% Tiêu cực']].copy()
     styled_df = styled_df.style.apply(lambda row: [style_hierarchical(row['Cấp'])] * len(row), axis=1)
 
-    st.dataframe(styled_df, use_container_width=True, hide_index=True, height=600)
+    st.dataframe(styled_df, width='stretch', hide_index=True, height=600)
 
     st.markdown("""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;margin-top:12px;">
@@ -238,7 +238,7 @@ def render(df, cfg):
             if len(promoter_texts) > 20:
                 promoter_topics = extract_topic_stats(promoter_texts)
                 n_promoter = len(promoter_texts)
-                rows_promoter = [(TOPIC_SHORT_LABELS.get(t, t).replace('❓', '').strip(), c / n_promoter * 100)
+                rows_promoter = [(TOPIC_SHORT_LABELS.get(t, t).replace('', '').strip(), c / n_promoter * 100)
                                  for t, c in sorted(promoter_topics.items(), key=lambda x: -x[1])]
                 rows_promoter = [r for r in rows_promoter if r[0]]
                 if rows_promoter:
@@ -256,7 +256,7 @@ def render(df, cfg):
             if len(detractor_texts) > 20:
                 detractor_topics = extract_topic_stats(detractor_texts)
                 n_detractor = len(detractor_texts)
-                rows_detractor = [(TOPIC_SHORT_LABELS.get(t, t).replace('❓', '').strip(), c / n_detractor * 100)
+                rows_detractor = [(TOPIC_SHORT_LABELS.get(t, t).replace('', '').strip(), c / n_detractor * 100)
                                   for t, c in sorted(detractor_topics.items(), key=lambda x: -x[1])]
                 rows_detractor = [r for r in rows_detractor if r[0]]
                 if rows_detractor:
@@ -286,7 +286,7 @@ def render(df, cfg):
 
     full_name = next(
         (k for k, v in TOPIC_SHORT_LABELS.items()
-         if v.replace('❓', '').strip() == sel_topic_short),
+         if v.replace('', '').strip() == sel_topic_short),
         sel_topic_short
     )
 

@@ -42,7 +42,7 @@ def render():
     
     with col1:
         with st.container(border=True):
-            st.markdown("#### 🔒 Quản lý Truy cập")
+            st.markdown("####  Quản lý Truy cập")
             st.caption("Kích hoạt chế độ bảo trì sẽ lập tức chặn quyền truy cập đối với tất cả tài khoản thông thường.")
             
             new_status = st.toggle("Kích hoạt Chế độ Bảo trì", value=is_locked)
@@ -53,7 +53,7 @@ def render():
 
     with col2:
         with st.container(border=True):
-            st.markdown("#### 📊 Trạng thái Hệ thống")
+            st.markdown("####  Trạng thái Hệ thống")
             st.caption("Tình trạng kết nối và phục vụ báo cáo cho người dùng ngoài.")
             if is_locked:
                 st.error("**ĐANG BẢO TRÌ (MAINTENANCE)** - Hệ thống đang chặn truy cập ngoài.")
@@ -66,7 +66,7 @@ def render():
     
     with col3:
         with st.container(border=True):
-            st.markdown("#### 📢 Thông báo Toàn cục (Banner)")
+            st.markdown("####  Thông báo Toàn cục (Banner)")
             st.caption("Cài đặt thông báo nổi bật ở đầu trang của tất cả người dùng.")
             new_ann_text = st.text_area("Nội dung thông báo", value=announcement.get("text", ""), height=100)
             new_ann_active = st.toggle("Hiển thị Thông báo", value=announcement.get("active", False))
@@ -74,12 +74,12 @@ def render():
             if st.button("Lưu Thông báo", use_container_width=True):
                 state["announcement"] = {"text": new_ann_text, "active": new_ann_active}
                 save_state(state)
-                st.toast("Đã cập nhật thông báo!", icon="✅")
+                st.toast("Đã cập nhật thông báo!", icon="")
                 st.rerun()
 
     with col4:
         with st.container(border=True):
-            st.markdown("#### 🧠 Cấu hình & Dữ liệu")
+            st.markdown("####  Cấu hình & Dữ liệu")
             
             groq_keys = _get_groq_keys()
             n_keys = len(groq_keys)
@@ -93,11 +93,11 @@ def render():
                 if st.button("Lưu Cấu hình AI", use_container_width=True):
                     state["ai_config"] = {"temperature": new_temp}
                     save_state(state)
-                    st.toast("Đã lưu cấu hình AI!", icon="✅")
+                    st.toast("Đã lưu cấu hình AI!", icon="")
             with c42:
                 if st.button("Làm mới Bộ nhớ đệm", use_container_width=True):
                     st.cache_data.clear()
-                    st.toast("Đã xóa bộ nhớ đệm thành công!", icon="✅")
+                    st.toast("Đã xóa bộ nhớ đệm thành công!", icon="")
 
     st.markdown("---")
     if st.button("Giả lập Truy cập User", use_container_width=True, type="primary"):

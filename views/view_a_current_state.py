@@ -62,7 +62,7 @@ def render(df, cfg):
     st.markdown(f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 18px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-            <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94A3B8;">📊 Xử lý dữ liệu</span>
+            <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94A3B8;"> Xử lý dữ liệu</span>
             <span style="background:{_meth_color}18;color:{_meth_color};font-size:0.68rem;font-weight:700;padding:2px 10px;border-radius:20px;">{_meth_label}</span>
             <span style="font-size:0.72rem;color:#64748B;margin-left:auto;">{_filter_desc}</span>
         </div>
@@ -450,7 +450,7 @@ def render(df, cfg):
                 margin-top:18px; margin-bottom:6px;
             ">
                 <span style="font-size:0.95rem;font-weight:700;color:#1E293B;flex:1;">
-                    📍 {div_name}
+                     {div_name}
                 </span>
                 <span style="background:{ei_bg};color:{ei_color};font-size:0.72rem;font-weight:700;
                       padding:3px 10px;border-radius:20px;">
@@ -606,7 +606,7 @@ def render(df, cfg):
                     for pl in dept_pillars_seen:
                         col_cfg[pl] = st.column_config.NumberColumn(pl, format='%.1f%%', width='small')
 
-                    st.dataframe(styled, use_container_width=True, hide_index=True, column_config=col_cfg)
+                    st.dataframe(styled, width='stretch', hide_index=True, column_config=col_cfg)
                 else:
                     st.caption("  ↳ Chưa đủ dữ liệu để phân rã.")
             elif dept_col and dept_col in df_div.columns:
@@ -653,7 +653,7 @@ def render(df, cfg):
                     }
                     for pl in dept_pillars_seen:
                         col_cfg[pl] = st.column_config.NumberColumn(pl, format='%.1f%%', width='small')
-                    st.dataframe(styled, use_container_width=True, hide_index=True, column_config=col_cfg)
+                    st.dataframe(styled, width='stretch', hide_index=True, column_config=col_cfg)
                 else:
                     st.caption("  ↳ Chưa đủ dữ liệu để phân rã.")
             else:
@@ -698,7 +698,7 @@ def render(df, cfg):
             }
             for p in valid_pillars:
                 col_config[p] = st.column_config.NumberColumn(p, format="%.1f%%", width="small")
-            st.dataframe(styled_df, use_container_width=True, hide_index=True, column_config=col_config)
+            st.dataframe(styled_df, width='stretch', hide_index=True, column_config=col_config)
     else:
         st.info("Không tìm thấy trường dữ liệu để phân rã tổ chức (Khối/Phòng/Vùng).")
 

@@ -91,7 +91,7 @@ def render(df, cfg, pillar_filter=None, **kwargs):
         st.markdown(textwrap.dedent("""
         <div style="background: white; padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); height: 100%; box-shadow: 0 4px 12px rgba(10,31,68,0.02);">
             <h4 style="color: #0A1F44; font-size: 0.95rem; margin-top: 0; font-weight: 700; border-bottom: 2px solid #E8EAF0; padding-bottom: 10px; margin-bottom: 14px;">
-                📋 Cách đọc biểu đồ này
+                 Cách đọc biểu đồ này
             </h4>
             <p style="font-size: 0.78rem; color: #64748B; line-height: 1.55; margin-bottom: 14px; padding: 8px 10px; background: #F8FAFC; border-radius: 8px;">
                 Mỗi chấm = một câu hỏi khảo sát.<br>
@@ -115,14 +115,14 @@ def render(df, cfg, pillar_filter=None, **kwargs):
             <div style="margin-bottom: 14px; padding: 10px 12px; background: #FFFBEB; border-radius: 10px; border-left: 3px solid #FFA726;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #92400E; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #FFA726; display: inline-block; flex-shrink:0;"></span>
-                    🟡 Theo dõi — Chưa cấp bách
+                     Theo dõi — Chưa cấp bách
                 </div>
                 <div style="font-size: 0.78rem; color: #78350F;">Điểm thấp nhưng ảnh hưởng chưa nhiều. Xếp sau khi đã giải quyết nhóm đỏ.</div>
             </div>
             <div style="padding: 10px 12px; background: #F8FAFC; border-radius: 10px; border-left: 3px solid #78909C;">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #475569; font-size: 0.85rem; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: #78909C; display: inline-block; flex-shrink:0;"></span>
-                    ⚪ Không ưu tiên — Ổn định
+                     Không ưu tiên — Ổn định
                 </div>
                 <div style="font-size: 0.78rem; color: #64748B;">Điểm đã cao và ít tác động trực tiếp. Không cần đầu tư thêm ở thời điểm này.</div>
             </div>
@@ -148,6 +148,6 @@ def render(df, cfg, pillar_filter=None, **kwargs):
         'Tương quan': st.column_config.NumberColumn('Hệ số tương quan', format="%.3f", width="small"),
     }
 
-    st.dataframe(styled_priorities, use_container_width=True, hide_index=True, column_config=col_config)
+    st.dataframe(styled_priorities, width='stretch', hide_index=True, column_config=col_config)
 
 
