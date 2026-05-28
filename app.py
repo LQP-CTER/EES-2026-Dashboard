@@ -3,6 +3,7 @@ import pandas as pd
 import sys, os
 import importlib
 import base64
+import hashlib
 
 # Setup paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -53,30 +54,48 @@ if os.path.exists(APP_STATE_FILE):
 
 # --- AUTHENTICATION FLOW ---
 from utils.auth import get_google_auth_url, get_user_info
-from streamlit_cookies_controller import CookieController
-
-cookie_controller = CookieController()
 
 # Load client secrets
 GOOGLE_CLIENT_ID     = st.secrets.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET", "")
 REDIRECT_URI         = st.secrets.get("REDIRECT_URI", "http://localhost:8501/")
-# Hỗ trợ cả string "ghn.vn,scommerce.asia" lẫn list ["ghn.vn", "scommerce.asia"]
 _domains_raw = st.secrets.get("ALLOWED_DOMAINS", "ghn.vn,scommerce.asia")
 ALLOWED_DOMAINS = [d.strip().lower() for d in _domains_raw.split(",")] if isinstance(_domains_raw, str) else [d.lower() for d in _domains_raw]
+
+# Auth token secret (for persisting login across F5 via query_params)
+_AUTH_SECRET = st.secrets.get("ADMIN_TOKEN", GOOGLE_CLIENT_SECRET or "ees2026-fallback-secret")
+
+
+def _make_auth_token(email: str, name: str, picture: str) -> str:
+    payload = base64.urlsafe_b64encode(f"{email}|{name}|{picture}".encode()).decode()
+    sig = hashlib.sha256(f"{email}{_AUTH_SECRET}".encode()).hexdigest()[:16]
+    return f"{payload}.{sig}"
+
+
+def _verify_auth_token(token: str):
+    if not token or "." not in token:
+        return None
+    try:
+        payload, sig = token.rsplit(".", 1)
+        decoded = base64.urlsafe_b64decode(payload.encode()).decode()
+        email, name, picture = decoded.split("|", 2)
+        expected_sig = hashlib.sha256(f"{email}{_AUTH_SECRET}".encode()).hexdigest()[:16]
+        if sig != expected_sig:
+            return None
+        return {"email": email, "name": name, "picture": picture}
+    except Exception:
+        return None
 
 
 is_admin = st.session_state.get("is_admin", False)
 
 def _is_allowed_email(email: str) -> bool:
-    """Chỉ cho phép email thuộc domain GHN hoặc Scommerce."""
     if not email:
         return False
     domain = email.split("@")[-1].lower()
     return domain in [d.lower() for d in ALLOWED_DOMAINS]
 
 def _render_login_page():
-    """Hiển thị trang đăng nhập đẹp với nút Google."""
     auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
     
     st.markdown(f"""
@@ -96,11 +115,6 @@ def _render_login_page():
         .login-subtitle {{ font-size: 0.9rem; color: #64748B; margin-bottom: 28px; line-height: 1.5; }}
         .login-note {{ font-size: 0.8rem; color: #94A3B8; margin-top: 24px; }}
         .login-divider {{ border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }}
-        .domain-badge {{
-            display: inline-block; background: #FFF3EE; color: #FF5200;
-            border: 1px solid #FFD4B8; border-radius: 20px;
-            padding: 3px 12px; font-size: 0.78rem; font-weight: 600; margin: 2px;
-        }}
         .google-btn {{
             display: inline-block; background-color: #FF5200; color: white !important;
             text-decoration: none; padding: 12px 24px; border-radius: 8px;
@@ -125,31 +139,29 @@ def _render_login_page():
     </div>
     """, unsafe_allow_html=True)
 
+
 if not is_admin:
     # 1. Xử lý callback OAuth (có ?code= trên URL)
     if "code" in st.query_params:
         code = st.query_params.get("code")
         with st.spinner("Đang xác thực..."):
             user_info = get_user_info(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI)
-        st.query_params.clear()
 
         if user_info and "email" in user_info:
             email = user_info["email"]
             if _is_allowed_email(email):
-                # Lưu vào session state
-                st.session_state.user_email   = email
-                st.session_state.user_name    = user_info.get("name", "User")
-                st.session_state.user_picture = user_info.get("picture", "")
-                # Lưu vào cookie (thời hạn 30 ngày)
-                cookie_controller.set("user_email", st.session_state.user_email, max_age=30*24*60*60)
-                cookie_controller.set("user_name", st.session_state.user_name, max_age=30*24*60*60)
-                cookie_controller.set("user_picture", st.session_state.user_picture, max_age=30*24*60*60)
-                
+                name = user_info.get("name", "User")
+                picture = user_info.get("picture", "")
+                st.session_state.user_email = email
+                st.session_state.user_name = name
+                st.session_state.user_picture = picture
+                token = _make_auth_token(email, name, picture)
+                st.query_params.clear()
+                st.query_params["s"] = token
                 st.rerun()
             else:
-                # Email không thuộc domain cho phép
+                st.query_params.clear()
                 st.session_state.pop("user_email", None)
-                cookie_controller.remove("user_email")
                 st.error(
                     f"Email **{email}** không được phép truy cập.\n\n"
                     "Chỉ email `@ghn.vn` hoặc `@scommerce.asia` mới có quyền vào hệ thống."
@@ -157,32 +169,27 @@ if not is_admin:
                 _render_login_page()
                 st.stop()
         else:
+            st.query_params.clear()
             st.error("Xác thực Google thất bại. Vui lòng thử lại.")
             _render_login_page()
             st.stop()
 
-    # 2. Kiểm tra đã login chưa (qua session_state hoặc cookie)
+    # 2. Restore session từ auth token trên URL (khi F5)
     user_email = st.session_state.get("user_email")
     if not user_email:
-        try:
-            c_email = cookie_controller.get("user_email")
-        except (TypeError, KeyError, AttributeError):
-            c_email = None
-        if c_email and _is_allowed_email(c_email):
-            st.session_state.user_email = c_email
-            st.session_state.user_name = cookie_controller.get("user_name") or "User"
-            st.session_state.user_picture = cookie_controller.get("user_picture") or ""
-            st.rerun()
-        elif not st.session_state.get("_cookie_retry"):
-            st.session_state._cookie_retry = True
-            st.rerun()
+        auth_token = st.query_params.get("s")
+        if auth_token:
+            token_data = _verify_auth_token(auth_token)
+            if token_data and _is_allowed_email(token_data["email"]):
+                st.session_state.user_email = token_data["email"]
+                st.session_state.user_name = token_data["name"]
+                st.session_state.user_picture = token_data["picture"]
 
+    # 3. Nếu vẫn chưa có user → hiện trang login
     user_email = st.session_state.get("user_email")
     if not user_email or not _is_allowed_email(user_email):
-        st.session_state.pop("_cookie_retry", None)
         _render_login_page()
         st.stop()
-    st.session_state.pop("_cookie_retry", None)
 
 if is_admin and not st.session_state.preview_mode:
     # Render admin panel
@@ -892,7 +899,7 @@ with st.sidebar:
             if st.button("Đăng xuất"):
                 for _k in ["user_email", "user_name", "user_picture"]:
                     st.session_state.pop(_k, None)
-                    cookie_controller.remove(_k)
+                st.query_params.clear()
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
