@@ -364,7 +364,11 @@ def merge_survey_hris(df_clean, df_hris):
                   'Phân loại Chiến Binh', 'Thâm niên (Đơn vị tính là tháng)',
                   'Nhóm Thâm Niên', 'Range lương thực nhận', 'Ngày nghỉ việc',
                   'Lương đơn hàng', 'Thưởng/ Phạt GTC và LTC', 'Phụ cấp',
-                  'Thưởng Doanh Thu', 'Truy thu mất hàng COD']
+                  'Thưởng Doanh Thu', 'Truy thu mất hàng COD',
+                  # Productivity columns
+                  'Tổng Đơn lấy', 'Năng suất Lấy', 'Phân loại Nhóm Năng Suất Lấy',
+                  'Số đơn GL', 'Lương đơn giao', 'Lương đơn lấy', 'Tổng Đơn trả',
+                  '% Lương giao', '% Lương lấy']
     merge_cols = [c for c in merge_cols if c in df_hris.columns]
 
     df_m = df_clean.merge(df_hris[merge_cols], on='_nv_hash', how='left', suffixes=('', '_hris'))
