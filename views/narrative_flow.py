@@ -70,6 +70,13 @@ def render_narrative(df, cfg, group_id):
 
     _render_action_priorities(df, group_id, contradictions)
 
+    # ── ACT 5: MONG MUỐN CỦA NHÂN VIÊN THEO ĐƠN VỊ ──
+    st.markdown(section_header(
+        "Act 5 — Tiếng nói nhân viên",
+        "Mong muốn thay đổi theo từng đƠn vị — phân tích định tính bằng AI"
+    ), unsafe_allow_html=True)
+    _render_employee_voice(df, group_id, cfg)
+
 
 def _render_kpi_row(kpis):
     """Render hàng KPI cards."""
@@ -511,3 +518,291 @@ def _render_action_priorities(df, group_id, contradictions):
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════
+# ACT 5: EMPLOYEE VOICE — MONG MUỐN THEO ĐƠN VỊ
+# ═══════════════════════════════════════════════════════════════
+
+def _render_employee_voice(df, group_id, cfg):
+    """
+    Phần "Tiếng nói nhân viên" — chọn đƠn vị rồi AI phân tích
+    các câu hỏi mở (Q34: Điều cần thay đổi/cải thiện) theo từng đƠn vị.
+    """
+    _BAD_VALS = {None, 'nan', 'none', '', 'n/a', 'na'}
+
+    # Tìm cột open-text cần cải thiện (Q34 ưu tiên, fallback Q33/Q32)
+    open_col = None
+    for cand in ['Q34', 'Q33', 'Q32']:
+        if cand in df.columns:
+            open_col = cand
+            break
+
+    if open_col is None:
+        st.info("Không tìm thấy cột câu hỏi mở trong dữ liệu.")
+        return
+
+    # Kiểm tra có cột tổ chức không
+    has_division   = 'division'   in df.columns
+    has_department = 'department' in df.columns
+    has_section    = 'section'    in df.columns
+
+    if not (has_division or has_department or has_section):
+        st.info("Đây là nhóm không có phân cấp đƠn vị (phóng ban/vùng). Phân tích đang dùng toàn bộ nhóm.")
+        _run_voice_analysis(df, open_col, group_id, "Đồng bộ toàn nhóm", cfg)
+        return
+
+    # ── BUILD DROPDOWN OPTIONS ──
+    st.markdown("""
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;
+                padding:16px 20px;margin-bottom:16px;">
+        <div style="font-size:0.82rem;color:#64748B;margin-bottom:4px;">Chọn đƠn vị cần phân tích</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_sel1, col_sel2, col_sel3 = st.columns([1, 1, 1])
+
+    # Level 1: Division
+    sel_div = None
+    if has_division:
+        divs = sorted([v for v in df['division'].dropna().unique()
+                       if str(v).strip().lower() not in _BAD_VALS])
+        divs_opts = ['— Tất cả (toàn nhóm) —'] + divs
+        with col_sel1:
+            sel_div = st.selectbox('🏢 Khối / Division',
+                                   divs_opts, key=f'ev_div_{group_id}')
+        if sel_div == '— Tất cả (toàn nhóm) —':
+            sel_div = None
+
+    # Filter theo division
+    df_filt = df.copy()
+    if sel_div and has_division:
+        df_filt = df_filt[df_filt['division'] == sel_div]
+
+    # Level 2: Department
+    sel_dept = None
+    if has_department and sel_div is not None:
+        depts = sorted([v for v in df_filt['department'].dropna().unique()
+                        if str(v).strip().lower() not in _BAD_VALS])
+        if depts:
+            depts_opts = ['— Tất cả —'] + depts
+            with col_sel2:
+                sel_dept = st.selectbox('🏗️ Phòng ban / Department',
+                                        depts_opts, key=f'ev_dept_{group_id}')
+            if sel_dept == '— Tất cả —':
+                sel_dept = None
+
+    if sel_dept and has_department:
+        df_filt = df_filt[df_filt['department'] == sel_dept]
+
+    # Level 3: Section
+    sel_sec = None
+    if has_section and sel_dept is not None:
+        secs = sorted([v for v in df_filt['section'].dropna().unique()
+                       if str(v).strip().lower() not in _BAD_VALS])
+        if secs:
+            secs_opts = ['— Tất cả —'] + secs
+            with col_sel3:
+                sel_sec = st.selectbox('📌 Vùng / Section',
+                                       secs_opts, key=f'ev_sec_{group_id}')
+            if sel_sec == '— Tất cả —':
+                sel_sec = None
+
+    if sel_sec and has_section:
+        df_filt = df_filt[df_filt['section'] == sel_sec]
+
+    # Determine unit label for display
+    unit_label = sel_sec or sel_dept or sel_div or 'Đồng bộ toàn nhóm'
+
+    # ── SUMMARY ROW ──
+    n_total   = len(df_filt)
+    valid_responses = df_filt[open_col].dropna().apply(
+        lambda x: str(x).strip()
+    ).loc[lambda s: (s.str.len() > 5) & (~s.str.lower().isin(_BAD_VALS))]
+    n_responses = len(valid_responses)
+
+    st.markdown(f"""
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;
+                    padding:10px 18px;font-size:0.82rem;color:#475569;">
+            👥 <strong>{n_total:,}</strong> nhân viên tại <em>{unit_label}</em>
+        </div>
+        <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;
+                    padding:10px 18px;font-size:0.82rem;color:#1D4ED8;">
+            💬 <strong>{n_responses:,}</strong> phản hồi có nội dung về cải thiện
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if n_responses < 3:
+        st.info(f"Không đủ dữ liệu (≥ 3 phản hồi) tại đƠn vị này để phân tích.")
+        return
+
+    _run_voice_analysis(df_filt, open_col, group_id, unit_label, cfg)
+
+
+def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
+    """
+    Gọi Groq AI (llama-3.3-70b-versatile) phân tích các câu trả lời mở
+    và trích xuất top mong muốn thay đổi của nhân viên tại đƠn vị.
+    """
+    import json, hashlib
+    from utils.ai_generator import get_groq_clients_all, format_ai_html
+
+    _BAD_VALS = {None, 'nan', 'none', '', 'n/a', 'na'}
+
+    responses = df_unit[open_col].dropna().apply(str).apply(str.strip)
+    responses = responses[responses.str.len() > 5]
+    responses = responses[~responses.str.lower().isin(_BAD_VALS)]
+
+    if len(responses) == 0:
+        st.info("Không có phản hồi đủ ý nghĩa.")
+        return
+
+    # Lấy tối đa 120 responses (giới hạn token)
+    sample = responses.sample(min(120, len(responses)), random_state=42).tolist()
+    responses_text = "\n".join([f"- {r}" for r in sample])
+
+    group_name = cfg.get('label', group_id)
+    prompt_key = hashlib.md5((unit_label + responses_text[:200]).encode()).hexdigest()
+    cache_key  = f"ev_voice_{group_id}_{prompt_key}"
+
+    # Các button phân tích theo loại
+    col_b1, col_b2, col_b3 = st.columns(3)
+    with col_b1:
+        run_desires = st.button(f"🔍 Phân tích Mong muốn",
+                                key=f"btn_desires_{group_id}_{unit_label[:20]}")
+    with col_b2:
+        run_sentiment = st.button(f"📣 Phân tích Cảm xúc",
+                                  key=f"btn_sentiment_{group_id}_{unit_label[:20]}")
+    with col_b3:
+        if cache_key in st.session_state:
+            if st.button("🔄 Phân tích lại", key=f"btn_rerun_{group_id}_{unit_label[:20]}"):
+                del st.session_state[cache_key]
+                st.rerun()
+
+    # Xác định loại phân tích
+    if run_desires:
+        st.session_state[f'ev_mode_{group_id}'] = 'desires'
+        if cache_key in st.session_state:
+            del st.session_state[cache_key]
+    elif run_sentiment:
+        st.session_state[f'ev_mode_{group_id}'] = 'sentiment'
+        if cache_key in st.session_state:
+            del st.session_state[cache_key]
+
+    mode = st.session_state.get(f'ev_mode_{group_id}', 'desires')
+
+    if mode == 'desires':
+        ai_prompt = f"""Bạn là chuyên gia phân tích trải nghiệm nhân viên. Dưới đây là {len(sample)} phản hồi thực tế của nhân viên nhóm «{group_name}», đƠn vị «{unit_label}», về câu hỏi "Bạn mong muốn điều gì cần thay đổi hoặc cải thiện tại GHN?":
+
+{responses_text}
+
+Nhiệm vụ của bạn:
+1. Xác định TOP 5 chủ đề mong muốn/khiếu nại thường xuât hiện nhất, sắp xếp từ nhiều đến ít.
+2. Với mỗi chủ đề: gọi tên ngắn gọn, ước lượng % người đề cập, trích dẫn 1 câu điển hình từ dữ liệu.
+3. Đề xuất 1 hành động cụ thể ngắn hạn cho từng chủ đề.
+
+YEU CẦU FORMAT output theo dạng sau (bằng tiếng Việt):
+Chủ đề 1: [Tên] (~XX% người dùng) | Dẫn chứng: "..." | Hành động: ...
+Chủ đề 2: [Tên] (~XX% người dùng) | Dẫn chứng: "..." | Hành động: ...
+... (tương tự đến Chủ đề 5)
+TUYỆT ĐỐI KHÔNG viết giới thiệu, kết luận hay giải thích thêm."""
+    else:
+        ai_prompt = f"""Bạn là chuyên gia phân tích cảm xúc (Sentiment Analysis) trong HR. Dưới đây là {len(sample)} phản hồi của nhân viên nhóm «{group_name}», đƠn vị «{unit_label}»:
+
+{responses_text}
+
+Nhiệm vụ:
+1. Phân tích cảm xúc tổng thể: %Tích cực / %Trung lập / %Tiêu cực.
+2. Xác định tâm lý chi phối: nhân viên đang cảm thấy gì nhất?
+3. Tìm 3 tín hiệu cảnh báo định tính (nếu có): mệt mỏi, bất mãn với quản lý, lo ngại về thu nhập...
+4. Tóm tắt trong 3-4 câu cho CEO đọc: trạng thái tâm lý tổng quát của đƠn vị này là gì?
+TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
+
+    # SHOW RAW RESPONSES collapsible
+    with st.expander(f"📝 Xem {len(sample)} phản hồi thực tế", expanded=False):
+        for i, r in enumerate(sample[:50], 1):
+            st.markdown(f"""
+            <div style="background:#F8FAFC;border-left:3px solid #E2E8F0;padding:8px 12px;
+                        margin-bottom:6px;border-radius:0 6px 6px 0;font-size:0.83rem;color:#475569;">
+                <span style="color:#94A3B8;font-size:0.72rem;">{i}.</span> {r}
+            </div>
+            """, unsafe_allow_html=True)
+        if len(sample) > 50:
+            st.caption(f"(Chỉ hiển 50/{len(sample)} phản hồi)")
+
+    # AI ANALYSIS
+    st.markdown("")
+    ai_container = st.empty()
+
+    if cache_key in st.session_state:
+        cached = st.session_state[cache_key]
+        ai_container.markdown(f"""
+        <div class="ai-insight-container">
+            <div class="ai-header">
+                <div class="ai-icon">🤖</div>
+                <h4 class="ai-title">AI Phân tích Tiếng nói Nhân viên — {unit_label}</h4>
+                <div class="ai-badge">{'Mong muốn' if mode == 'desires' else 'Cảm xúc'}</div>
+            </div>
+            <div class="ai-content">{format_ai_html(cached)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    elif run_desires or run_sentiment:
+        # Gọi Groq streaming với llama-3.3-70b-versatile (tốt nhất cho phân tích định tính)
+        VOICE_MODELS = ["llama-3.3-70b-versatile",
+                        "meta-llama/llama-4-scout-17b-16e-instruct",
+                        "qwen/qwen3-32b", "llama-3.1-8b-instant"]
+        all_clients = get_groq_clients_all()
+        full_text = ""
+        success = False
+
+        def _build_voice_html(content, typing=False):
+            cursor = "<span style='border-right:2px solid #FF5200;margin-left:2px'></span>" if typing else ""
+            return f"""
+            <div class="ai-insight-container">
+                <div class="ai-header">
+                    <div class="ai-icon">🤖</div>
+                    <h4 class="ai-title">AI Phân tích Tiếng nói Nhân viên — {unit_label}</h4>
+                    <div class="ai-badge">{'Mong muốn' if mode == 'desires' else 'Cảm xúc'}</div>
+                </div>
+                <div class="ai-content">{format_ai_html(content)}{cursor}</div>
+            </div>"""
+
+        with st.spinner("AI đang phân tích phản hồi..."):
+            for client in all_clients:
+                for model in VOICE_MODELS:
+                    try:
+                        stream = client.chat.completions.create(
+                            messages=[
+                                {"role": "system", "content": "Bạn là chuyên gia phân tích định tính và cảm xúc trong lĩnh vực Quản trị Nhân lực. Phân tích súc tích, chính xác, luôn bằng tiếng Việt."},
+                                {"role": "user", "content": ai_prompt}
+                            ],
+                            model=model,
+                            temperature=0.2,
+                            max_tokens=1200,
+                            stream=True
+                        )
+                        for chunk in stream:
+                            if chunk.choices[0].delta.content:
+                                full_text += chunk.choices[0].delta.content
+                                ai_container.markdown(
+                                    _build_voice_html(full_text, typing=True),
+                                    unsafe_allow_html=True
+                                )
+                        success = True
+                        break
+                    except Exception as e:
+                        if "rate_limit" in str(e).lower() or "429" in str(e):
+                            break
+                        continue
+                if success:
+                    break
+
+        if success:
+            st.session_state[cache_key] = full_text
+            ai_container.markdown(_build_voice_html(full_text), unsafe_allow_html=True)
+        else:
+            ai_container.error("Không thể kết nối AI. Vui lòng thử lại.")
+    else:
+        st.info("👆 Chọn đƠn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")
