@@ -117,6 +117,43 @@ def detect_contradictions(df, group_id, cfg):
             'pillar': 'TC5',
         })
 
+    # 4b. Burnout Trap: Burnout rất cao nhưng không muốn nghỉ
+    if burnout and intent_low and burnout > 18 and intent_low < 5:
+        contradictions.append({
+            'id': 'BURNOUT_TRAP',
+            'title': f'Cạm bẫy trung thành: Kiệt sức ({burnout:.0f}%) nhưng tỷ lệ muốn nghỉ cực thấp ({intent_low:.1f}%)',
+            'narrative': (
+                f"Tỷ lệ Burnout lên tới {burnout:.1f}% nhưng chỉ {intent_low:.1f}% nhân viên có ý định rời đi. "
+                f"Nhân viên kiệt sức nhưng vẫn bám trụ (có thể do thị trường việc làm khó khăn hoặc do thu nhập). "
+                f"Điều này rất nguy hiểm vì dẫn đến năng suất kém, sai sót vận hành, làm hỏng văn hóa tổ chức "
+                f"từ bên trong thay vì chảy máu chất xám."
+            ),
+            'type': 'paradox',
+            'severity': 'critical',
+            'impact_score': min(100, burnout * 2.5 + (5 - intent_low) * 10),
+            'metrics': {'burnout_pct': burnout, 'intent_low_pct': intent_low},
+            'pillar': 'CROSS',
+        })
+
+    # 4c. Leadership Halo: Tin lãnh đạo cao nhưng eNPS thấp
+    q9 = _qmean('Q9')
+    if q9 and enps is not None and q9 > 3.4 and enps < 20:
+        contradictions.append({
+            'id': 'LEADERSHIP_HALO',
+            'title': f'Hào quang lãnh đạo: Niềm tin cao (Q9={q9:.2f}) nhưng eNPS thấp ({enps:+.0f})',
+            'narrative': (
+                f"Nhân viên tin tưởng vào tầm nhìn và định hướng của Ban lãnh đạo cấp cao (Q9={q9:.2f}/5) "
+                f"nhưng lại không sẵn lòng giới thiệu công ty làm nơi làm việc (eNPS chỉ {enps:+.0f}). "
+                f"Lỗ hổng không nằm ở chiến lược cấp cao, mà nằm ở trải nghiệm thực tế hàng ngày, "
+                f"cách thực thi ở cấp cơ sở hoặc thu nhập/môi trường."
+            ),
+            'type': 'paradox',
+            'severity': 'warning',
+            'impact_score': min(100, (q9 - 3.0) * 20 + max(0, 30 - enps)),
+            'metrics': {'Q9_tin_BLD': q9, 'eNPS': enps},
+            'pillar': 'CROSS',
+        })
+
     # ── PER-PILLAR CONTRADICTIONS ──
 
     # 5. Info Gap (TC1): Tin BLĐ nhưng không được thông báo
