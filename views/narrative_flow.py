@@ -872,12 +872,12 @@ TUYỆT ĐỐI:
         html_str = '<div style="max-height: 400px; overflow-y: auto; padding-right: 8px;">'
         for i, r in enumerate(responses.iloc[:current_limit], 1):
             safe_r = html.escape(str(r))
-            html_str += f"""
-            <div style="background:#F8FAFC;border-left:3px solid #E2E8F0;padding:8px 12px;
-                        margin-bottom:6px;border-radius:0 6px 6px 0;font-size:0.83rem;color:#475569;">
-                <span style="color:#94A3B8;font-size:0.72rem;">{i}.</span> {safe_r}
-            </div>
-            """
+            html_str += (
+                f'<div style="background:#F8FAFC;border-left:3px solid #E2E8F0;padding:8px 12px;'
+                f'margin-bottom:6px;border-radius:0 6px 6px 0;font-size:0.83rem;color:#475569;">'
+                f'<span style="color:#94A3B8;font-size:0.72rem;">{i}.</span> {safe_r}'
+                f'</div>'
+            )
         html_str += "</div>"
         st.markdown(html_str, unsafe_allow_html=True)
         
