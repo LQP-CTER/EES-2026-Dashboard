@@ -111,26 +111,15 @@ def render_narrative(df, cfg, group_id):
     """, unsafe_allow_html=True)
 
     # ── Tabs for each Act ───────────────────────────────────────────
-    if contradictions:
-        tab_names = [
-            "Act 1 · Tổng thể",
-            "Act 2 · Nghịch lý",
-            "Act 3 · Đi sâu",
-            "Act 4 · Hành động",
-            "Act 5 · Tiếng nói NV",
-        ]
-        tabs = st.tabs(tab_names)
-        tab_act1, tab_act2, tab_act3, tab_act4, tab_act5 = tabs
-    else:
-        tab_names = [
-            "Act 1 · Tổng thể",
-            "Act 2 · Hành động",
-            "Act 3 · Tiếng nói NV",
-        ]
-        tabs = st.tabs(tab_names)
-        tab_act1, tab_act4, tab_act5 = tabs
-        tab_act2 = None
-        tab_act3 = None
+    tab_names = [
+        "Act 1 · Tổng thể",
+        "Act 2 · Nghịch lý",
+        "Act 3 · Đi sâu",
+        "Act 4 · Hành động",
+        "Act 5 · Tiếng nói NV",
+    ]
+    tabs = st.tabs(tab_names)
+    tab_act1, tab_act2, tab_act3, tab_act4, tab_act5 = tabs
 
     # ── ACT 1 ──────────────────────────────────────────────────────
     with tab_act1:
@@ -162,34 +151,34 @@ def render_narrative(df, cfg, group_id):
                 render_ai_insight_card("CHRO Strategic Summary", {"kpis": kpis, "pillars": pdf.to_dict('records')}, ai_prompt, badge="Act 1 Insight")
 
     # ── ACT 2 ──────────────────────────────────────────────────────
-    if tab_act2 is not None:
-        with tab_act2:
-            st.markdown(_act_header(
-                "Act 2", "Những nghịch lý dữ liệu",
-                "Mâu thuẫn đáng chú ý cần lãnh đạo quan tâm",
-                color="#DC2626"
-            ), unsafe_allow_html=True)
+    with tab_act2:
+        st.markdown(_act_header(
+            "Act 2", "Những nghịch lý & Điểm mù",
+            "Phân tích mâu thuẫn dữ liệu hoặc rủi ro tiềm ẩn",
+            color="#DC2626"
+        ), unsafe_allow_html=True)
+        if not contradictions:
+            _render_hidden_risks(df, group_id)
+        else:
             _render_contradiction_cards(contradictions)
 
     # ── ACT 3 ──────────────────────────────────────────────────────
-    if tab_act3 is not None:
-        with tab_act3:
-            st.markdown(_act_header(
-                "Act 3", "Đi sâu vào nghịch lý",
-                "Phân tích chi tiết các mâu thuẫn có impact cao nhất",
-                color="#8B5CF6"
-            ), unsafe_allow_html=True)
-            if not top_contradictions:
-                st.info("Không có mâu thuẫn nào đủ impact để phân tích sâu.")
-            else:
-                for i, contradiction in enumerate(top_contradictions, 1):
-                    _render_deep_dive(df, contradiction, group_id, i)
+    with tab_act3:
+        st.markdown(_act_header(
+            "Act 3", "Đi sâu vào vấn đề cốt lõi",
+            "Phân tích chi tiết nguyên nhân sâu xa (Root Cause)",
+            color="#8B5CF6"
+        ), unsafe_allow_html=True)
+        if not top_contradictions:
+            _render_weakness_deep_dive(df, group_id)
+        else:
+            for i, contradiction in enumerate(top_contradictions, 1):
+                _render_deep_dive(df, contradiction, group_id, i)
 
     # ── ACT 4 ──────────────────────────────────────────────────────
     with tab_act4:
-        act_num_4 = "Act 4" if contradictions else "Act 2"
         st.markdown(_act_header(
-            act_num_4, "Hành động ưu tiên",
+            "Act 4", "Hành động ưu tiên",
             "Ma trận ưu tiên dựa trên tương quan với Engagement Index",
             color="#F59E0B"
         ), unsafe_allow_html=True)
@@ -197,9 +186,8 @@ def render_narrative(df, cfg, group_id):
 
     # ── ACT 5 ──────────────────────────────────────────────────────
     with tab_act5:
-        act_num_5 = "Act 5" if contradictions else "Act 3"
         st.markdown(_act_header(
-            act_num_5, "Tiếng nói nhân viên",
+            "Act 5", "Tiếng nói nhân viên",
             "Mong muốn thay đổi theo từng đơn vị — phân tích định tính bằng AI",
             color="#10B981"
         ), unsafe_allow_html=True)
@@ -681,6 +669,111 @@ def _render_action_priorities(df, group_id, contradictions):
             f"Chỉ viết 2 đoạn văn ngắn, tập trung vào giải pháp thực chiến."
         )
         render_ai_insight_card("Kế hoạch Hành động 90 ngày (90-Day Action Plan)", {"top_priority": top_priority.to_dict('records')}, prompt, badge="Act 4 Insight")
+
+
+def _render_hidden_risks(df, group_id):
+    """Render phân tích rủi ro tiềm ẩn (khi không có mâu thuẫn)."""
+    from shared.codebook import get_codebook, get_question_label
+    codebook = get_codebook(group_id)
+    likert_qs = [q for q, info in codebook.items() if info['loại'] == 'likert' and q in df.columns]
+    
+    if not likert_qs:
+        st.info("Không có dữ liệu câu hỏi Likert để phân tích rủi ro.")
+        return
+        
+    scores = []
+    for q in likert_qs:
+        mean_score = df[q].mean()
+        if pd.notna(mean_score):
+            scores.append({'Q': q, 'Label': get_question_label(group_id, q), 'Score': mean_score})
+            
+    if not scores:
+        return
+        
+    sdf = pd.DataFrame(scores).sort_values('Score', ascending=True).head(5)
+    
+    st.markdown("""
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
+        <div style="font-size:0.82rem;color:#64748B;margin-bottom:8px;">
+            Không phát hiện mâu thuẫn dữ liệu lớn, nhưng đây là <strong>Top 5 rủi ro tiềm ẩn (Hidden Risks)</strong> dựa trên các yếu tố có điểm thấp nhất:
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Render Bar chart
+    fig = go.Figure(go.Bar(
+        x=sdf['Score'], y=sdf['Label'], orientation='h',
+        marker=dict(color='#EF4444', cornerradius=4),
+        text=[f"{v:.2f}" for v in sdf['Score']],
+        textposition='outside',
+        textfont=dict(size=12, color='#0A1F44', family='Inter')
+    ))
+    fig.update_layout(
+        height=300, margin=dict(l=10, r=40, t=10, b=10),
+        xaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)'),
+        yaxis=dict(automargin=True, autorange="reversed"),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter')
+    )
+    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_hidden_risks")
+    
+    # AI Insight
+    prompt = (
+        f"Bạn là Senior Data Analyst. Đơn vị này không có mâu thuẫn dữ liệu nghiêm trọng, "
+        f"nhưng đây là 5 câu hỏi có điểm thấp nhất (thang 5):\n"
+        f"{sdf.to_dict('records')}\n\n"
+        f"Hãy phân tích:\n"
+        f"1. Những điểm yếu này đang phản ánh vấn đề gì về môi trường làm việc hay chính sách?\n"
+        f"2. Nếu không cải thiện, rủi ro ngầm (Hidden Risk) lớn nhất là gì?\n"
+        f"Viết 2 đoạn văn ngắn gọn, phân tích sâu."
+    )
+    render_ai_insight_card("Phân tích Rủi ro Tiềm ẩn (Hidden Risks)", {"bottom_scores": sdf.to_dict('records')}, prompt, badge="Act 2 Insight")
+
+
+def _render_weakness_deep_dive(df, group_id):
+    """Render deep dive vào điểm yếu lớn nhất (khi không có mâu thuẫn)."""
+    from shared.codebook import get_codebook, get_question_label
+    codebook = get_codebook(group_id)
+    likert_qs = [q for q, info in codebook.items() if info['loại'] == 'likert' and q in df.columns]
+    
+    if not likert_qs:
+        return
+        
+    # Lấy câu hỏi thấp nhất
+    scores = [(q, df[q].mean()) for q in likert_qs if pd.notna(df[q].mean())]
+    if not scores:
+        return
+        
+    scores.sort(key=lambda x: x[1])
+    worst_q, worst_score = scores[0]
+    worst_label = get_question_label(group_id, worst_q)
+    
+    # Phân bố điểm của worst_q
+    dist = df[worst_q].value_counts(normalize=True).sort_index() * 100
+    dist_dict = {f"Điểm {k}": f"{v:.1f}%" for k, v in dist.items()}
+    
+    st.markdown(f"""
+    <div style="background:white;border:1px solid #E2E8F0;border-radius:12px;padding:20px 24px;margin-bottom:20px;">
+        <div style="font-size:0.72rem;color:#64748B;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">
+            Vấn đề cốt lõi (Bottom #1)
+        </div>
+        <div style="font-size:1.05rem;font-weight:700;color:#0A1F44;margin-bottom:12px;">
+            {worst_q}: {worst_label} (Điểm: {worst_score:.2f}/5)
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # AI Deep Dive
+    prompt = (
+        f"Bạn là Senior Data Analyst. Đơn vị này đang gặp vấn đề nghiêm trọng nhất ở yếu tố:\n"
+        f"'{worst_q}: {worst_label}' với điểm trung bình rất thấp là {worst_score:.2f}/5.\n"
+        f"Tỷ lệ phân bố điểm đánh giá của nhân viên: {dist_dict}\n\n"
+        f"Áp dụng framework 5 Whys (5 Câu hỏi Tại sao), hãy phân tích:\n"
+        f"1. Nguyên nhân gốc rễ sâu xa nhất (Root Cause) khiến nhân viên đánh giá thấp yếu tố này là gì?\n"
+        f"2. Gợi ý 1 hành động can thiệp (Intervention) cụ thể và khả thi nhất trong ngắn hạn.\n"
+        f"Viết ngắn gọn, sắc bén."
+    )
+    render_ai_insight_card(f"AI Deep Dive: Root Cause của {worst_q}", {"metric": worst_q, "score": worst_score}, prompt, badge="Deep Dive")
 
 
 # ═══════════════════════════════════════════════════════════════
