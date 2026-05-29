@@ -286,7 +286,8 @@ from views import (
     company_overview, hris_linkage,
     view_a_current_state, view_b_problem_groups,
     view_c_key_issues, view_d_root_cause,
-    view_e_impact_risk, view_f_action_priority, view_g_kpi_impact, view_h_appendix
+    view_e_impact_risk, view_f_action_priority, view_g_kpi_impact,
+    view_h_appendix, view_i_data_trust
 )
 from shared.codebook import PILLAR_META, PILLAR_ORDER
 
@@ -922,13 +923,14 @@ with st.sidebar:
 
     # Main navigation
     st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
-    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["Phụ lục"]
+    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["Độ tin cậy dữ liệu", "Phụ lục"]
     sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
     is_company = (sel_dashboard == COMPANY_LABEL)
     is_appendix = (sel_dashboard == "Phụ lục")
+    is_data_trust = (sel_dashboard == "Độ tin cậy dữ liệu")
 
     # Initialize scope variables
     sel_group   = None
@@ -936,7 +938,7 @@ with st.sidebar:
     df_filtered = None
     n_before    = 0
 
-    if is_appendix:
+    if is_appendix or is_data_trust:
         pass
 
     elif is_company:
@@ -1048,7 +1050,15 @@ with st.sidebar:
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
-if is_appendix:
+if is_data_trust:
+    try:
+        view_i_data_trust.render()
+    except Exception as e:
+        st.error(f"Lỗi khi tải Độ tin cậy dữ liệu: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+
+elif is_appendix:
     try:
         view_h_appendix.render()
     except Exception as e:

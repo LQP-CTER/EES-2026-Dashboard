@@ -19,63 +19,181 @@ from utils.contradiction_engine import detect_contradictions, get_top_contradict
 from utils.ai_generator import render_ai_insight_card
 
 
+_AI_LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg=="
+
+
+def _act_header(number: str, title: str, subtitle: str, color: str = "#FF5200") -> str:
+    """Render a professional act/section header for the narrative report."""
+    return f"""
+    <div style="display:flex;align-items:flex-start;gap:16px;margin:32px 0 20px;
+                padding-bottom:16px;border-bottom:2px solid #F1F5F9;">
+        <div style="background:{color};color:white;border-radius:10px;padding:8px 14px;
+                    font-size:0.72rem;font-weight:800;letter-spacing:0.06em;
+                    text-transform:uppercase;white-space:nowrap;flex-shrink:0;margin-top:2px">
+            {number}
+        </div>
+        <div>
+            <div style="font-size:1.05rem;font-weight:800;color:#0A1F44;letter-spacing:-0.02em;line-height:1.25">
+                {title}
+            </div>
+            <div style="font-size:0.82rem;color:#64748B;margin-top:4px;font-weight:500">
+                {subtitle}
+            </div>
+        </div>
+    </div>"""
+
+
 def render_narrative(df, cfg, group_id):
     """Render toàn bộ narrative flow cho một nhóm."""
     group_name = cfg.get('label', group_id)
-    short_name = cfg.get('short', group_id)
 
     from utils.data_loader import compute_kpis
     kpis = compute_kpis(df)
 
-    # ── ACT 1: BỨC TRANH TỔNG THỂ ──
-    st.markdown(section_header(
-        "Act 1 — Bức tranh tổng thể",
-        f"Các chỉ số cốt lõi của {group_name}"
-    ), unsafe_allow_html=True)
-
-    _render_kpi_row(kpis)
-
-    # Pillar overview chart
-    _render_pillar_overview(df, group_id)
-
-    # ── ACT 2: PHÁT HIỆN MÂU THUẪN ──
-    st.markdown(section_header(
-        "Act 2 — Những nghịch lý dữ liệu",
-        "Các mâu thuẫn đáng chú ý cần lãnh đạo quan tâm"
-    ), unsafe_allow_html=True)
-
+    # Compute contradictions once — shared across tabs
     contradictions = detect_contradictions(df, group_id, cfg)
-
-    if not contradictions:
-        st.info("Không phát hiện mâu thuẫn dữ liệu đáng kể. Các chỉ số đều nhất quán.")
-    else:
-        _render_contradiction_cards(contradictions)
-
-    # ── ACT 3: DEEP DIVE VÀO MÂU THUẪN ──
     top_contradictions = get_top_contradictions(contradictions, n=3)
-    if top_contradictions:
-        st.markdown(section_header(
-            "Act 3 — Đi sâu vào nghịch lý",
-            "Phân tích chi tiết các mâu thuẫn có impact cao nhất"
+
+    # ── Report page header ──────────────────────────────────────────
+    n_contradictions = len(contradictions)
+    severity_label = "Có mâu thuẫn nghiêm trọng" if any(
+        c['severity'] == 'critical' for c in contradictions
+    ) else ("Có cảnh báo" if contradictions else "Dữ liệu nhất quán")
+    severity_color = "#DC2626" if any(c['severity'] == 'critical' for c in contradictions) \
+        else ("#D97706" if contradictions else "#15803D")
+    severity_bg = "#FEF2F2" if any(c['severity'] == 'critical' for c in contradictions) \
+        else ("#FFFBEB" if contradictions else "#F0FDF4")
+
+    st.markdown(f"""
+    <div style="background:#0A1F44;border-radius:16px;padding:28px 32px;
+                margin-bottom:28px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-40%;right:-5%;width:300px;height:300px;
+                    background:radial-gradient(circle,rgba(255,82,0,0.18) 0%,transparent 70%);
+                    filter:blur(40px);pointer-events:none"></div>
+        <div style="position:relative;z-index:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <img src="{_AI_LOGO_B64}" style="width:18px;height:18px">
+                <span style="font-size:0.68rem;font-weight:700;color:#94A3B8;
+                             text-transform:uppercase;letter-spacing:0.12em">
+                    EES 2026 · Báo cáo tự động
+                </span>
+            </div>
+            <div style="font-size:1.4rem;font-weight:900;color:#FFFFFF;
+                        letter-spacing:-0.025em;margin-bottom:6px">
+                Báo cáo Trải nghiệm Nhân viên — {group_name}
+            </div>
+            <div style="font-size:0.85rem;color:#94A3B8;margin-bottom:20px">
+                Mạch dữ liệu xuyên suốt từ bức tranh tổng thể đến hành động cụ thể
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                            border-radius:10px;padding:12px 18px;min-width:100px">
+                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
+                                letter-spacing:0.08em;margin-bottom:4px">EI Score</div>
+                    <div style="font-size:1.6rem;font-weight:900;color:#FF5200;line-height:1">
+                        {kpis['ei_mean']:.1f}%
+                    </div>
+                </div>
+                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                            border-radius:10px;padding:12px 18px;min-width:100px">
+                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
+                                letter-spacing:0.08em;margin-bottom:4px">eNPS</div>
+                    <div style="font-size:1.6rem;font-weight:900;color:#FFFFFF;line-height:1">
+                        {kpis['enps_score']:+.0f}
+                    </div>
+                </div>
+                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                            border-radius:10px;padding:12px 18px;min-width:100px">
+                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
+                                letter-spacing:0.08em;margin-bottom:4px">Rủi ro nghỉ</div>
+                    <div style="font-size:1.6rem;font-weight:900;color:#FFFFFF;line-height:1">
+                        {kpis['intent_pct_low']:.1f}%
+                    </div>
+                </div>
+                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                            border-radius:10px;padding:12px 18px">
+                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
+                                letter-spacing:0.08em;margin-bottom:4px">Nghịch lý</div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                        <span style="font-size:1.6rem;font-weight:900;color:#FFFFFF;line-height:1">
+                            {n_contradictions}
+                        </span>
+                        <span style="background:{severity_bg};color:{severity_color};padding:3px 10px;
+                                     border-radius:20px;font-size:0.7rem;font-weight:700">
+                            {severity_label}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Tabs for each Act ───────────────────────────────────────────
+    tab_act1, tab_act2, tab_act3, tab_act4, tab_act5 = st.tabs([
+        "Act 1 · Tổng thể",
+        "Act 2 · Nghịch lý",
+        "Act 3 · Đi sâu",
+        "Act 4 · Hành động",
+        "Act 5 · Tiếng nói NV",
+    ])
+
+    # ── ACT 1 ──────────────────────────────────────────────────────
+    with tab_act1:
+        st.markdown(_act_header(
+            "Act 1", "Bức tranh tổng thể",
+            f"Các chỉ số cốt lõi và hiệu suất trụ cột của {group_name}"
         ), unsafe_allow_html=True)
+        _render_kpi_row(kpis)
+        _render_pillar_overview(df, group_id)
 
-        for i, contradiction in enumerate(top_contradictions, 1):
-            _render_deep_dive(df, contradiction, group_id, i)
+    # ── ACT 2 ──────────────────────────────────────────────────────
+    with tab_act2:
+        st.markdown(_act_header(
+            "Act 2", "Những nghịch lý dữ liệu",
+            "Mâu thuẫn đáng chú ý cần lãnh đạo quan tâm",
+            color="#DC2626"
+        ), unsafe_allow_html=True)
+        if not contradictions:
+            st.markdown("""
+            <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;
+                        padding:20px 24px;text-align:center;color:#15803D;font-size:0.9rem;font-weight:600">
+                Không phát hiện mâu thuẫn dữ liệu đáng kể. Các chỉ số đều nhất quán.
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            _render_contradiction_cards(contradictions)
 
-    # ── ACT 4: HÀNH ĐỘNG ──
-    st.markdown(section_header(
-        "Act 4 — Hành động ưu tiên",
-        "Đề xuất hành động dựa trên dữ liệu"
-    ), unsafe_allow_html=True)
+    # ── ACT 3 ──────────────────────────────────────────────────────
+    with tab_act3:
+        st.markdown(_act_header(
+            "Act 3", "Đi sâu vào nghịch lý",
+            "Phân tích chi tiết các mâu thuẫn có impact cao nhất",
+            color="#8B5CF6"
+        ), unsafe_allow_html=True)
+        if not top_contradictions:
+            st.info("Không có mâu thuẫn nào đủ impact để phân tích sâu.")
+        else:
+            for i, contradiction in enumerate(top_contradictions, 1):
+                _render_deep_dive(df, contradiction, group_id, i)
 
-    _render_action_priorities(df, group_id, contradictions)
+    # ── ACT 4 ──────────────────────────────────────────────────────
+    with tab_act4:
+        st.markdown(_act_header(
+            "Act 4", "Hành động ưu tiên",
+            "Ma trận ưu tiên dựa trên tương quan với Engagement Index",
+            color="#F59E0B"
+        ), unsafe_allow_html=True)
+        _render_action_priorities(df, group_id, contradictions)
 
-    # ── ACT 5: MONG MUỐN CỦA NHÂN VIÊN THEO ĐƠN VỊ ──
-    st.markdown(section_header(
-        "Act 5 — Tiếng nói nhân viên",
-        "Mong muốn thay đổi theo từng đƠn vị — phân tích định tính bằng AI"
-    ), unsafe_allow_html=True)
-    _render_employee_voice(df, group_id, cfg)
+    # ── ACT 5 ──────────────────────────────────────────────────────
+    with tab_act5:
+        st.markdown(_act_header(
+            "Act 5", "Tiếng nói nhân viên",
+            "Mong muốn thay đổi theo từng đơn vị — phân tích định tính bằng AI",
+            color="#10B981"
+        ), unsafe_allow_html=True)
+        _render_employee_voice(df, group_id, cfg)
 
 
 def _render_kpi_row(kpis):
@@ -748,7 +866,7 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
         ai_container.markdown(f"""
         <div class="ai-insight-container">
             <div class="ai-header">
-                <div class="ai-icon">🤖</div>
+                <div class="ai-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f31PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg==" style="width:16px;height:16px" alt="AI"></div>
                 <h4 class="ai-title">AI Phân tích Tiếng nói Nhân viên — {unit_label}</h4>
                 <div class="ai-badge">{'Mong muốn' if mode == 'desires' else 'Cảm xúc'}</div>
             </div>
@@ -769,7 +887,7 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
             return f"""
             <div class="ai-insight-container">
                 <div class="ai-header">
-                    <div class="ai-icon">🤖</div>
+                    <div class="ai-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f31PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg==" style="width:16px;height:16px" alt="AI"></div>
                     <h4 class="ai-title">AI Phân tích Tiếng nói Nhân viên — {unit_label}</h4>
                     <div class="ai-badge">{'Mong muốn' if mode == 'desires' else 'Cảm xúc'}</div>
                 </div>
