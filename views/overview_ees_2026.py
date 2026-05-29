@@ -61,7 +61,7 @@ def render():
         }
         .ees-overview-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 14px;
         }
         .ees-overview-card {
@@ -145,6 +145,37 @@ def render():
             font-size: 0.84rem;
             line-height: 1.6;
         }
+        .ees-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .ees-mini-item {
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #E2E8F0;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+        }
+        .ees-mini-item .tag {
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748B;
+        }
+        .ees-mini-item .title {
+            font-size: 0.96rem;
+            font-weight: 800;
+            color: #0F172A;
+            margin-top: 6px;
+        }
+        .ees-mini-item .body {
+            color: #64748B;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            margin-top: 6px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -153,27 +184,32 @@ def render():
     st.markdown(
         """
         <div class="ees-overview-hero">
-            <div class="ees-overview-kicker">Overview EES 2026</div>
-            <div class="ees-overview-title">Bức tranh tổng quan về hành trình EES 2026 của team</div>
+            <div class="ees-overview-kicker">Overview EES 2026 · Executive Summary</div>
+            <div class="ees-overview-title">Bức tranh tổng quan EES 2026</div>
             <div class="ees-overview-subtitle">
-                Tab này được đặt trước <strong>Tổng quan GHN</strong> để làm trang mở đầu chiến lược: thể hiện team đã làm gì cho EES 2026,
-                các mảng đã hoàn thiện, các điểm cần theo dõi, và khung nội dung để bạn bổ sung thông tin sau này.
+                Tab này dành riêng cho phần tóm tắt điều hành: team đã làm gì cho EES 2026, những trục phân tích chéo cần đọc cùng nhau,
+                và các khoảng trống nội dung sẽ được bổ sung dần. Hiện tại đây là một sườn nền tảng sạch, sang, sẵn sàng để fill thông tin sau.
             </div>
             <div class="ees-overview-grid">
                 <div class="ees-overview-card">
-                    <div class="label">Mục tiêu</div>
-                    <div class="value">One-page executive intro</div>
-                    <div class="desc">Trình bày nhanh bối cảnh, định hướng, và giá trị mà dashboard mang lại cho lãnh đạo.</div>
+                    <div class="label">Nhân sự</div>
+                    <div class="value">21,353</div>
+                    <div class="desc">Quy mô toàn tổ chức</div>
                 </div>
                 <div class="ees-overview-card">
-                    <div class="label">Trạng thái</div>
-                    <div class="value">Background sẵn sàng</div>
-                    <div class="desc">Hiện ưu tiên phần nền trực quan, tạo khung chuẩn để chèn nội dung chiến dịch sau.</div>
+                    <div class="label">Phản hồi</div>
+                    <div class="value">20,005</div>
+                    <div class="desc">Mẫu khảo sát hợp lệ</div>
                 </div>
                 <div class="ees-overview-card">
-                    <div class="label">Vai trò tab</div>
-                    <div class="value">Team delivery snapshot</div>
-                    <div class="desc">Tóm lược những hạng mục team đã làm, các phân tích đã hoàn thiện và roadmap tiếp theo.</div>
+                    <div class="label">Tỷ lệ phản hồi</div>
+                    <div class="value">93.7%</div>
+                    <div class="desc">So với benchmark 2025: +17.8%</div>
+                </div>
+                <div class="ees-overview-card">
+                    <div class="label">Mức gắn kết</div>
+                    <div class="value">72.3</div>
+                    <div class="desc">EI tổng thể · -7.9 so với 2025</div>
                 </div>
             </div>
         </div>
@@ -186,33 +222,31 @@ def render():
         st.markdown(
             """
             <div class="ees-section-shell">
-                <div class="ees-section-title">Khung nội dung đề xuất</div>
+                <div class="ees-section-title">Team đã làm gì cho EES 2026</div>
                 <p class="ees-section-desc">
-                    Bạn có thể dùng tab này như trang landing tổng hợp của chiến dịch EES 2026: giới thiệu mục tiêu khảo sát,
-                    phạm vi triển khai, các mốc xử lý dữ liệu, các layer phân tích, và những gì team đã đóng góp.
+                    Đây là nơi gom các đầu việc chính của team: chuẩn hóa dữ liệu, xây dựng logic phân tích, tạo dashboard, thiết kế
+                    các lớp so sánh chéo, và đóng gói các insight để leadership đọc nhanh hơn.
                 </p>
-                <div style="height:14px"></div>
-                <div class="ees-placeholder-panel">
-                    <div class="ees-placeholder-item">
-                        <span class="ees-dot"></span>
-                        <div>
-                            <strong>Tổng quan chiến dịch EES 2026</strong>
-                            <p>Tóm tắt mục tiêu, phạm vi, đơn vị tham gia và tinh thần của chương trình.</p>
-                        </div>
+                <div class="ees-mini-grid">
+                    <div class="ees-mini-item">
+                        <div class="tag">01 · Data foundation</div>
+                        <div class="title">Chuẩn hóa & làm sạch dữ liệu</div>
+                        <div class="body">Tạo nền dữ liệu tin cậy để chạy các phân tích theo nhóm, trụ cột và nhân khẩu học.</div>
                     </div>
-                    <div class="ees-placeholder-item">
-                        <span class="ees-dot"></span>
-                        <div>
-                            <strong>Team đã làm gì</strong>
-                            <p>Mô tả các đầu việc: làm sạch dữ liệu, xây dựng dashboard, phân tích chéo, và phát hiện rủi ro.</p>
-                        </div>
+                    <div class="ees-mini-item">
+                        <div class="tag">02 · Cross analysis</div>
+                        <div class="title">Phân tích chéo đa lớp</div>
+                        <div class="body">Kết nối survey với division, department, section, tenure và các chỉ số phản hồi.</div>
                     </div>
-                    <div class="ees-placeholder-item">
-                        <span class="ees-dot"></span>
-                        <div>
-                            <strong>Kết quả nổi bật</strong>
-                            <p>Khi có dữ liệu, chèn các con số, insight, tác động và các nhóm cần ưu tiên hành động.</p>
-                        </div>
+                    <div class="ees-mini-item">
+                        <div class="tag">03 · Storytelling</div>
+                        <div class="title">Kể chuyện bằng insight</div>
+                        <div class="body">Biến dữ liệu thành narrative điều hành, giúp nhìn ra ưu tiên và rủi ro nhanh hơn.</div>
+                    </div>
+                    <div class="ees-mini-item">
+                        <div class="tag">04 · Actionability</div>
+                        <div class="title">Định hướng hành động</div>
+                        <div class="body">Chuyển insight thành các nhóm can thiệp và đề xuất hành động cụ thể.</div>
                     </div>
                 </div>
             </div>
@@ -223,21 +257,32 @@ def render():
         st.markdown(
             """
             <div class="ees-section-shell">
-                <div class="ees-section-title">Không gian cho nội dung sau này</div>
+                <div class="ees-section-title">Khung nội dung để fill sau</div>
                 <p class="ees-section-desc">
-                    Đây là layout nền tối giản nhưng cao cấp, phù hợp để bạn bổ sung timeline, ảnh, biểu đồ, quote từ lãnh đạo hoặc các mốc triển khai.
+                    Khi có nội dung chính thức, bạn chỉ cần thay phần placeholder này bằng timeline, KPI, ảnh chiến dịch hoặc thông điệp từ team.
                 </p>
                 <div style="height:14px"></div>
-                <div style="display:grid;gap:12px;">
-                    <div style="padding:16px;border-radius:16px;background:#0A1F44;color:#FFFFFF;box-shadow:0 10px 24px rgba(10,31,68,0.12);">
-                        <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#94A3B8;">Deliverables</div>
-                        <div style="font-size:1.05rem;font-weight:800;margin-top:6px;">Dashboard · Narrative · Action Plan</div>
-                        <div style="font-size:0.84rem;color:#CBD5E1;line-height:1.6;margin-top:8px;">Khung tổng hợp các đầu ra chính của team cho EES 2026.</div>
+                <div class="ees-placeholder-panel">
+                    <div class="ees-placeholder-item">
+                        <span class="ees-dot"></span>
+                        <div>
+                            <strong>Timeline triển khai</strong>
+                            <p>Giai đoạn khảo sát, xử lý dữ liệu, phân tích, và hoàn thiện dashboard.</p>
+                        </div>
                     </div>
-                    <div style="padding:16px;border-radius:16px;background:#FFF7ED;border:1px solid #FED7AA;">
-                        <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#9A3412;">Status</div>
-                        <div style="font-size:1.05rem;font-weight:800;margin-top:6px;color:#9A3412;">Sẵn sàng fill dữ liệu</div>
-                        <div style="font-size:0.84rem;color:#7C2D12;line-height:1.6;margin-top:8px;">Phần nền đã hoàn thiện, chỉ cần điền nội dung thực tế theo thời gian.</div>
+                    <div class="ees-placeholder-item">
+                        <span class="ees-dot"></span>
+                        <div>
+                            <strong>Deliverables chính</strong>
+                            <p>Dashboard, báo cáo narrative, phần giải thích chỉ số, và đề xuất hành động.</p>
+                        </div>
+                    </div>
+                    <div class="ees-placeholder-item">
+                        <span class="ees-dot"></span>
+                        <div>
+                            <strong>Điểm nhấn chiến lược</strong>
+                            <p>Những phát hiện cross-analysis nổi bật, các vùng rủi ro và cơ hội can thiệp.</p>
+                        </div>
                     </div>
                 </div>
             </div>

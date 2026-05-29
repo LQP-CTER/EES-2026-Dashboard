@@ -1028,7 +1028,7 @@ def apply_global_filters(df):
     return df
 
 OVERVIEW_LABEL = "Overview EES 2026"
-COMPANY_LABEL = "Tổng quan GHN"
+COMPANY_LABEL = "Toàn bộ GHN"
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -1049,7 +1049,7 @@ with st.sidebar:
 
     # Main navigation
     st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
-    main_nav_opts = [OVERVIEW_LABEL, COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["Độ tin cậy dữ liệu", "Phụ lục"]
+    main_nav_opts = [OVERVIEW_LABEL] + [available[g]['label'] for g in group_opts] + [COMPANY_LABEL, "Độ tin cậy dữ liệu", "Phụ lục"]
     sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
