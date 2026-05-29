@@ -259,6 +259,7 @@ if not is_admin:
                 st.rerun()
             else:
                 st.query_params.clear()
+                st.query_params["error"] = "1"  # Tránh tự động redirect loop
                 st.session_state.pop("user_email", None)
                 st.error(
                     f"Email **{email}** không được phép truy cập.\n\n"
@@ -268,6 +269,7 @@ if not is_admin:
                 st.stop()
         else:
             st.query_params.clear()
+            st.query_params["error"] = "1"  # Tránh tự động redirect loop
             st.error("Xác thực Google thất bại. Vui lòng thử lại.")
             _render_login_page()
             st.stop()
@@ -339,12 +341,31 @@ if not is_admin:
                 else:
                     # Token không hợp lệ hoặc đã hết hạn
                     st.query_params.clear()
+                    st.query_params["error"] = "1"
                     _render_login_page()
                     st.stop()
         else:
-            # Chưa đăng nhập và không có token trên URL -> Hiện trang Login
-            _render_login_page()
-            st.stop()
+            # Chưa đăng nhập và không có token trên URL:
+            # Nếu người dùng vừa nhấn Đăng xuất hoặc bị lỗi -> Hiện trang Login sạch
+            if st.query_params.get("logout") == "1" or st.query_params.get("error") == "1":
+                _render_login_page()
+                st.stop()
+            else:
+                # Trải nghiệm SSO Đẳng Cấp: Tự động kết nối/Đăng nhập qua Google (Silent Auto-Login)
+                auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
+                st.markdown(f"""
+                <div style='text-align: center; margin-top: 150px;'>
+                    <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='160'>
+                    <h2 style='color: #0A1F44; margin-top: 30px; font-family: "Inter", sans-serif;'>Đang kết nối phiên đăng nhập...</h2>
+                    <p style='color: #64748B; font-family: "Inter", sans-serif;'>Hệ thống đang tự động xác thực qua Google Workspace GHN.</p>
+                </div>
+                <meta http-equiv="refresh" content="0; url={auth_url}">
+                <style>
+                    [data-testid="stSidebar"] {{ display: none !important; }}
+                    header[data-testid="stHeader"] {{ display: none !important; }}
+                </style>
+                """, unsafe_allow_html=True)
+                st.stop()
 
 if is_admin and not st.session_state.preview_mode:
     # Render admin panel
@@ -1153,6 +1174,7 @@ with st.sidebar:
                 for _k in ["user_email", "user_name", "user_picture", "current_token"]:
                     st.session_state.pop(_k, None)
                 st.query_params.clear()
+                st.query_params["logout"] = "1"
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
