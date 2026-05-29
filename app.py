@@ -87,6 +87,54 @@ def _verify_auth_token(token: str):
         return None
 
 
+LOCALSTORAGE_KEY = "ees2026_auth_token"
+
+def _save_token_to_browser(token: str):
+    """Inject JS to save auth token to localStorage."""
+    st.markdown(f"""
+    <script>
+        (function() {{
+            try {{
+                localStorage.setItem('{LOCALSTORAGE_KEY}', '{token}');
+            }} catch(e) {{}}
+        }})();
+    </script>
+    """, unsafe_allow_html=True)
+
+
+def _inject_restore_from_localstorage():
+    """Inject JS to read token from localStorage and redirect with ?s= if missing from URL."""
+    st.markdown(f"""
+    <script>
+        (function() {{
+            try {{
+                var token = localStorage.getItem('{LOCALSTORAGE_KEY}');
+                if (token) {{
+                    var url = new URL(window.location.href);
+                    if (!url.searchParams.get('s')) {{
+                        url.searchParams.set('s', token);
+                        window.location.replace(url.toString());
+                    }}
+                }}
+            }} catch(e) {{}}
+        }})();
+    </script>
+    """, unsafe_allow_html=True)
+
+
+def _clear_token_from_browser():
+    """Inject JS to remove auth token from localStorage (logout)."""
+    st.markdown(f"""
+    <script>
+        (function() {{
+            try {{
+                localStorage.removeItem('{LOCALSTORAGE_KEY}');
+            }} catch(e) {{}}
+        }})();
+    </script>
+    """, unsafe_allow_html=True)
+
+
 is_admin = st.session_state.get("is_admin", False)
 
 def _is_allowed_email(email: str) -> bool:
@@ -158,6 +206,7 @@ if not is_admin:
                 token = _make_auth_token(email, name, picture)
                 st.query_params.clear()
                 st.query_params["s"] = token
+                _save_token_to_browser(token)  # Ghi nhớ đăng nhập trên browser
                 st.rerun()
             else:
                 st.query_params.clear()
@@ -174,10 +223,15 @@ if not is_admin:
             _render_login_page()
             st.stop()
 
-    # 2. Restore session từ auth token trên URL (khi F5)
+    # 2. Restore session từ auth token trên URL hoặc localStorage
     user_email = st.session_state.get("user_email")
     if not user_email:
         auth_token = st.query_params.get("s")
+        if not auth_token:
+            # Chưa có token trên URL → inject JS để đọc từ localStorage và redirect
+            _inject_restore_from_localstorage()
+            _render_login_page()
+            st.stop()
         if auth_token:
             token_data = _verify_auth_token(auth_token)
             if token_data and _is_allowed_email(token_data["email"]):
@@ -987,6 +1041,7 @@ with st.sidebar:
                 for _k in ["user_email", "user_name", "user_picture"]:
                     st.session_state.pop(_k, None)
                 st.query_params.clear()
+                _clear_token_from_browser()  # Xóa token khỏi localStorage
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
