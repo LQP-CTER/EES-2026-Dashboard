@@ -50,7 +50,7 @@ Tất cả 6 nhóm đều có **24 câu hỏi chính** theo cùng một sườn:
 
 - **Cơ chế:** Nhân viên hoàn thành bài quiz nội bộ — dữ liệu giao về server GHN
 - **Timestamp:** Là thời điểm giao bài (cửa sổ mở hàng chục giờ), **không phản ánh thời gian làm thực tế**
-- **Câu mở:** Không bắt buộc → có thể bỏ trống hợp lệ
+- **Câu mở:** Bắt buộc → không thể bỏ trống hợp lệ
 - **Straight-line:** Khả năng cao xuất hiện do quiz có thể được hoàn thành nhanh bằng cách nhấn cùng một phím
 
 ### 3.2 Google Form — Nhóm 2A, 2B, 3A, 3B
@@ -87,10 +87,10 @@ Một mình "đánh đồng đều" (straight-line) không đủ cơ sở để 
 
 | Trường hợp | Xử lý | Lý do |
 |-----------|-------|-------|
-| Straight-line **có** open-text ý nghĩa | ✅ **GIỮ** | Open-text là bằng chứng có phản hồi thực |
-| Straight-line **không có** open-text | ❌ **LOẠI** | Không có bất kỳ bằng chứng về phản hồi thực |
-| Không straight-line + có open-text | ✅ **GIỮ** | Phản hồi hoàn toàn bình thường |
-| Không straight-line + không open-text | ✅ **GIỮ** | Likert biến thiên là bằng chứng đủ |
+| Straight-line **có** open-text ý nghĩa | **GIỮ** | Open-text là bằng chứng có phản hồi thực |
+| Straight-line **không có** open-text | **LOẠI** | Không có bất kỳ bằng chứng về phản hồi thực |
+| Không straight-line + có open-text | **GIỮ** | Phản hồi hoàn toàn bình thường |
+| Không straight-line + không open-text | **GIỮ** | Likert biến thiên là bằng chứng đủ |
 
 ---
 
