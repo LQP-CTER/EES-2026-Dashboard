@@ -164,6 +164,10 @@ def _render_login_page():
 if not is_admin:
     # 0. Set cookie if needed (after successful login)
     if "needs_saving_token" in st.session_state:
+        # Fix streamlit-cookies-controller crash on first run
+        if getattr(cookie_controller, '_CookieController__cookies', None) is None:
+            setattr(cookie_controller, '_CookieController__cookies', {})
+            
         cookie_controller.set("ees2026_auth_token", st.session_state.needs_saving_token, max_age=43200, path="/")
         del st.session_state["needs_saving_token"]
 
@@ -212,6 +216,8 @@ if not is_admin:
                 st.session_state.user_picture = token_data["picture"]
                 st.rerun()
             else:
+                if getattr(cookie_controller, '_CookieController__cookies', None) is None:
+                    setattr(cookie_controller, '_CookieController__cookies', {})
                 cookie_controller.remove("ees2026_auth_token")
                 _render_login_page()
                 st.stop()
