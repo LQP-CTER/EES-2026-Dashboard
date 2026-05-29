@@ -67,8 +67,9 @@ _AUTH_SECRET = st.secrets.get("ADMIN_TOKEN", GOOGLE_CLIENT_SECRET or "ees2026-fa
 
 
 def _make_auth_token(email: str, name: str, picture: str) -> str:
-    payload = base64.urlsafe_b64encode(f"{email}|{name}|{picture}".encode()).decode()
-    sig = hashlib.sha256(f"{email}{_AUTH_SECRET}".encode()).hexdigest()[:16]
+    # Thêm 'v2' để vô hiệu hóa toàn bộ token cũ đã bị lộ
+    payload = base64.urlsafe_b64encode(f"{email}|{name}|{picture}|v2".encode()).decode()
+    sig = hashlib.sha256(f"{email}{_AUTH_SECRET}_v2".encode()).hexdigest()[:16]
     return f"{payload}.{sig}"
 
 
@@ -78,8 +79,11 @@ def _verify_auth_token(token: str):
     try:
         payload, sig = token.rsplit(".", 1)
         decoded = base64.urlsafe_b64decode(payload.encode()).decode()
-        email, name, picture = decoded.split("|", 2)
-        expected_sig = hashlib.sha256(f"{email}{_AUTH_SECRET}".encode()).hexdigest()[:16]
+        parts = decoded.split("|")
+        if len(parts) < 4 or parts[-1] != "v2":
+            return None # Reject old v1 tokens
+        email, name, picture = parts[0], parts[1], parts[2]
+        expected_sig = hashlib.sha256(f"{email}{_AUTH_SECRET}_v2".encode()).hexdigest()[:16]
         if sig != expected_sig:
             return None
         return {"email": email, "name": name, "picture": picture}
