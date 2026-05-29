@@ -402,6 +402,7 @@ if announcement.get("active") and announcement.get("text"):
 from utils.data_loader import load_group, load_all_available
 from config.groups import get_available_groups
 from views import (
+    overview_ees_2026,
     company_overview, hris_linkage,
     view_a_current_state, view_b_problem_groups,
     view_c_key_issues, view_d_root_cause,
@@ -426,7 +427,9 @@ footer {visibility: hidden !important;}
 
 html, body, .stApp {
     font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
-    background-color: #F8FAFC !important;
+    background:
+        radial-gradient(circle at top right, rgba(255, 82, 0, 0.06), transparent 22%),
+        linear-gradient(180deg, #F8FAFC 0%, #F8FAFC 100%) !important;
     color: #1E293B !important;
 }
 .block-container {
@@ -642,12 +645,13 @@ button[title="Thu nhỏ thanh bên"] {
 
 /* ═══════ TABS — Executive Style ═══════ */
 .stTabs [data-baseweb="tab-list"] {
-    background: #FFFFFF !important;
+    background: rgba(255,255,255,0.88) !important;
     border: 1px solid #E2E8F0 !important;
-    border-radius: 12px !important;
+    border-radius: 14px !important;
     padding: 6px !important;
     gap: 2px !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+    box-shadow: 0 10px 30px rgba(15,23,42,0.05) !important;
+    backdrop-filter: blur(10px);
 }
 .stTabs [data-baseweb="tab"] {
     border-radius: 8px !important;
@@ -848,12 +852,13 @@ div[data-baseweb="select"] > div:hover {
 .custom-metric-card, .premium-kpi-card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 20px 22px;
     height: 100%;
-    transition: border-color 0.15s ease;
+    transition: all 0.15s ease;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
 }
 .custom-metric-card:hover, .premium-kpi-card:hover { border-color: #CBD5E1; }
 .metric-title {
@@ -956,7 +961,7 @@ div[data-baseweb="select"] > div:hover {
 
 /* ═══════ BUTTONS — Professional ═══════ */
 .stButton > button {
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     font-weight: 600 !important;
     font-size: 0.85rem !important;
     padding: 8px 20px !important;
@@ -982,8 +987,9 @@ div[data-baseweb="select"] > div:hover {
 [data-testid="stMetric"] {
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
-    border-radius: 12px !important;
+    border-radius: 14px !important;
     padding: 16px 20px !important;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
 }
 [data-testid="stMetricLabel"] {
     font-size: 0.72rem !important;
@@ -1021,6 +1027,7 @@ def apply_global_filters(df):
             return df[df['Q5'] == st.session_state.global_tenure]
     return df
 
+OVERVIEW_LABEL = "Overview EES 2026"
 COMPANY_LABEL = "Tổng quan GHN"
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
@@ -1042,11 +1049,12 @@ with st.sidebar:
 
     # Main navigation
     st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
-    main_nav_opts = [COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["Độ tin cậy dữ liệu", "Phụ lục"]
+    main_nav_opts = [OVERVIEW_LABEL, COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["Độ tin cậy dữ liệu", "Phụ lục"]
     sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
+    is_overview = (sel_dashboard == OVERVIEW_LABEL)
     is_company = (sel_dashboard == COMPANY_LABEL)
     is_appendix = (sel_dashboard == "Phụ lục")
     is_data_trust = (sel_dashboard == "Độ tin cậy dữ liệu")
@@ -1178,7 +1186,15 @@ with st.sidebar:
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
-if is_data_trust:
+if is_overview:
+    try:
+        overview_ees_2026.render()
+    except Exception as e:
+        st.error(f"Lỗi khi tải Overview EES 2026: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+
+elif is_data_trust:
     try:
         view_i_data_trust.render()
     except Exception as e:

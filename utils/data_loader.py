@@ -353,6 +353,7 @@ def load_group(group_id: str):
     return df_clean, n_before
 
 
+@st.cache_data(ttl=3600, show_spinner="Đang tải toàn bộ dữ liệu...")
 def load_all_available():
     """Load all groups that have data. Returns dict {group_id: (df, n_before)}."""
     from config.groups import get_available_groups

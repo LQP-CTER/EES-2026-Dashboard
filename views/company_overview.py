@@ -14,23 +14,19 @@ def render(all_data, available_groups):
 
     apply_theme()
 
-    # ══════════════════════════════════════════════════════════════
-    # AGGREGATE DATA
-    # ══════════════════════════════════════════════════════════════
     all_dfs = []
     total_n_before = 0
     for df, n_before in all_data.values():
         all_dfs.append(df)
         total_n_before += n_before
-        
+
     df_total = pd.concat(all_dfs, ignore_index=True)
     total_kpis = compute_kpis(df_total)
     total_n = total_kpis['n']
     total_ei = total_kpis['ei_mean']
     total_enps = total_kpis['enps_score']
     total_intent = total_kpis['intent_pct_low']
-    
-    # Lấy tổng nhân sự từ Workforce data (Headcount)
+
     try:
         from shared.workforce_mapper import load_workforce_and_mapping
         df_wf, _, _ = load_workforce_and_mapping()
@@ -38,8 +34,6 @@ def render(all_data, available_groups):
     except Exception:
         total_headcount = 21353
 
-    # Tính tổng số form khảo sát đã tham gia dựa trên số lượng form thô từ các nhóm khảo sát,
-    # trừ đi các mẫu không xác định được bộ phận (94 mẫu Khác) tương tự như dự án ees-tracking.
     try:
         total_raw_forms = 0
         from config.groups import GROUP_REGISTRY
@@ -51,144 +45,139 @@ def render(all_data, available_groups):
                     total_raw_forms += len(df_raw)
                 except Exception:
                     pass
-        # ees-tracking loại bỏ 94 mẫu 'Khác' không thuộc danh sách nhân sự hợp lệ
         total_participants = (total_raw_forms - 94) if total_raw_forms >= 20099 else 20005
     except Exception:
         total_participants = 20005
 
-    # Tỷ lệ phản hồi = Tổng số form khảo sát nhận được / Tổng nhân sự
     total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 93.7
-
-    # Load 2025 Benchmark
     bm = get_company_benchmark_2025()
     ei_delta = total_ei - bm['ei_mean']
     enps_delta = total_enps - bm['enps_score']
     rr_delta = total_rr - bm['response_rate']
 
-    # ══════════════════════════════════════════════════════════════
-    # HERO CARD OVERVIEW — Survey Coverage
-    # ══════════════════════════════════════════════════════════════
-    st.markdown(f'''
+    st.markdown('''
     <style>
-    .cov-container {{
-        display: flex;
-        gap: 0;
+    .overview-hero {
+        background: linear-gradient(135deg, #0A1F44 0%, #14345E 55%, #1B4A7A 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 28px 30px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 18px 40px rgba(10,31,68,0.16);
+    }
+    .overview-hero::after {
+        content: '';
+        position: absolute;
+        inset: auto -120px -140px auto;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,82,0,0.3) 0%, transparent 70%);
+        filter: blur(18px);
+        pointer-events: none;
+    }
+    .overview-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+    }
+    .overview-kpi {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 14px;
+        padding: 16px 18px;
+        backdrop-filter: blur(8px);
+    }
+    .overview-kpi .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #BFDBFE; font-weight: 700; }
+    .overview-kpi .value { font-size: 2rem; font-weight: 900; line-height: 1; margin-top: 10px; }
+    .overview-kpi .sub { font-size: 0.8rem; color: #DBEAFE; margin-top: 8px; }
+    .overview-section { margin-top: 24px; }
+    .background-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+    }
+    .bg-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 14px;
+        border-radius: 16px;
+        padding: 18px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        margin-bottom: 28px;
-        overflow: hidden;
-    }}
-    .cov-card {{
-        flex: 1;
-        padding: 24px 28px;
-        position: relative;
-    }}
-    .cov-card + .cov-card {{
-        border-left: 1px solid #F1F5F9;
-    }}
-    .cov-label {{
-        font-size: 0.68rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #94A3B8;
-        margin-bottom: 10px;
-    }}
-    .cov-value {{
-        font-size: 2.4rem;
-        font-weight: 800;
-        line-height: 1;
-        letter-spacing: -0.03em;
-        margin-bottom: 8px;
-    }}
-    .cov-sub {{
-        font-size: 0.8rem;
-        color: #64748B;
-        font-weight: 500;
-        line-height: 1.5;
-    }}
-    .cov-progress-track {{
-        width: 100%;
-        height: 6px;
-        background: #F1F5F9;
-        border-radius: 3px;
-        margin-top: 12px;
-        overflow: hidden;
-    }}
-    .cov-progress-fill {{
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.5s ease;
-    }}
-    .cov-badge {{
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 0.72rem;
-        font-weight: 700;
-    }}
-    .cov-badge-dot {{
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        display: inline-block;
-    }}
+        min-height: 140px;
+    }
+    .bg-card h4 { margin: 0 0 8px; font-size: 0.92rem; color: #0A1F44; }
+    .bg-card p { margin: 0; color: #64748B; font-size: 0.84rem; line-height: 1.7; }
+    .bg-chip {
+        display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;
+        background:#FFF3EE;color:#FF5200;font-size:0.72rem;font-weight:700;margin-bottom:10px;
+    }
+    .cov-container { display:flex; gap:0; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:28px; overflow:hidden; }
+    .cov-card { flex:1; padding:24px 28px; position:relative; }
+    .cov-card + .cov-card { border-left:1px solid #F1F5F9; }
+    .cov-label { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#94A3B8; margin-bottom:10px; }
+    .cov-value { font-size:2.4rem; font-weight:800; line-height:1; letter-spacing:-0.03em; margin-bottom:8px; }
+    .cov-sub { font-size:0.8rem; color:#64748B; font-weight:500; line-height:1.5; }
+    .cov-progress-track { width:100%; height:6px; background:#F1F5F9; border-radius:3px; margin-top:12px; overflow:hidden; }
+    .cov-progress-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
+    .cov-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; }
+    .cov-badge-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
     </style>
-
-    <div class="cov-container">
-        <div class="cov-card">
-            <div class="cov-label">Tổng nhân sự</div>
-            <div class="cov-value" style="color: #0A1F44;">{total_headcount:,}</div>
-            <div class="cov-sub">Headcount toàn tổ chức GHN</div>
-        </div>
-        <div class="cov-card">
-            <div class="cov-label">Đã tham gia khảo sát</div>
-            <div class="cov-value" style="color: #006FAD;">{total_participants:,}</div>
-            <div class="cov-sub">
-                <span class="cov-badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
-                    <span class="cov-badge-dot" style="background: #3B82F6;"></span>
-                    {total_rr}% tỷ lệ phản hồi
-                </span>
-            </div>
-            <div class="cov-progress-track">
-                <div class="cov-progress-fill" style="width: {min(total_rr, 100):.1f}%; background: linear-gradient(90deg, #3B82F6, #006FAD);"></div>
-            </div>
-        </div>
-        <div class="cov-card">
-            <div class="cov-label">Chưa tham gia</div>
-            <div class="cov-value" style="color: #94A3B8;">{max(total_headcount - total_participants, 0):,}</div>
-            <div class="cov-sub">
-                <span class="cov-badge" style="background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0;">
-                    <span class="cov-badge-dot" style="background: #CBD5E1;"></span>
-                    {max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi
-                </span>
-            </div>
-            <div class="cov-progress-track">
-                <div class="cov-progress-fill" style="width: {min(max(round((1 - total_participants / total_headcount) * 100, 1), 0), 100):.1f}%; background: #E2E8F0;"></div>
-            </div>
-        </div>
-    </div>
     ''', unsafe_allow_html=True)
 
+    tab_overview, tab_company = st.tabs(["Overview EES 2026", "Toàn bộ GHN"])
 
-    # ══════════════════════════════════════════════════════════════
-    # SECTION 1: EXECUTIVE SUMMARY (Modern UI KPI Cards)
-    # ══════════════════════════════════════════════════════════════
-    from shared.plotly_theme import make_html_kpi
-    
-    kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
-    with kpi_c1:
-        st.markdown(make_html_kpi("Engagement Index", f"{total_ei:.1f}", delta=f"{ei_delta:+.1f}", color="blue", icon="", progress_val=total_ei), unsafe_allow_html=True)
-    with kpi_c2:
-        st.markdown(make_html_kpi("eNPS Score", f"{total_enps:+.0f}", delta=f"{enps_delta:+.0f}", color="orange", icon="", progress_val=(total_enps+100)/2), unsafe_allow_html=True)
-    with kpi_c3:
-        st.markdown(make_html_kpi("Attrition Risk", f"{total_intent:.1f}%", delta="N/A", color="red", icon="", progress_val=total_intent), unsafe_allow_html=True)
-    with kpi_c4:
-        st.markdown(make_html_kpi("Response Rate", f"{total_rr:.1f}%", delta=f"{rr_delta:+.1f}%", color="green", icon="", progress_val=total_rr), unsafe_allow_html=True)
+    with tab_overview:
+        st.markdown(f'''
+        <div class="overview-hero">
+            <div style="position:relative; z-index:2;">
+                <div style="font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:#BFDBFE; font-weight:800;">EES 2026 · Executive Overview</div>
+                <h2 style="margin:10px 0 8px; font-size:2rem; line-height:1.15; font-weight:900; color:white;">Bức tranh tổng quan EES 2026</h2>
+                <p style="margin:0; max-width:860px; color:#DBEAFE; line-height:1.75; font-size:0.92rem;">
+                    Tab này dành riêng cho phần tóm tắt điều hành: team đã làm gì cho EES 2026, những trục phân tích chéo cần đọc cùng nhau,
+                    và các khoảng trống nội dung sẽ được bổ sung dần. Hiện tại đây là một sườn nền tảng sạch, sang, sẵn sàng để fill thông tin sau.
+                </p>
+                <div class="overview-kpi-grid">
+                    <div class="overview-kpi"><div class="label">Nhân sự</div><div class="value">{total_headcount:,}</div><div class="sub">Quy mô toàn tổ chức</div></div>
+                    <div class="overview-kpi"><div class="label">Phản hồi</div><div class="value">{total_participants:,}</div><div class="sub">Mẫu khảo sát hợp lệ</div></div>
+                    <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">So với benchmark 2025: {rr_delta:+.1f}%</div></div>
+                    <div class="overview-kpi"><div class="label">Mức gắn kết</div><div class="value">{total_ei:.1f}</div><div class="sub">EI tổng thể · {ei_delta:+.1f} so với 2025</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="overview-section">
+            <div class="background-grid">
+                <div class="bg-card"><div class="bg-chip">Phân tích chéo</div><h4>Cross-check theo nhiều lớp</h4><p>Đọc đồng thời theo phòng ban, thâm niên, khối, và trụ cột để tránh kết luận từ một lát cắt đơn lẻ.</p></div>
+                <div class="bg-card"><div class="bg-chip">Chiến lược</div><h4>Executive narrative</h4><p>Không chỉ hiển thị số liệu, mà còn gom thành câu chuyện điều hành: tín hiệu chính, rủi ro và ưu tiên hành động.</p></div>
+                <div class="bg-card"><div class="bg-chip">Nội dung sắp fill</div><h4>Roadmap & team contributions</h4><p>Khu vực này sẽ dùng để ghi lại team đã làm gì cho EES 2026, ai phụ trách phần nào và các deliverable quan trọng.</p></div>
+                <div class="bg-card"><div class="bg-chip">Tốc độ</div><h4>Tối ưu truy cập</h4><p>Dữ liệu đang được cache theo nhóm để giảm thời gian tải và giúp dashboard phản hồi nhanh hơn.</p></div>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        st.markdown(f'''
+        <div class="cov-container">
+            <div class="cov-card"><div class="cov-label">Tổng nhân sự</div><div class="cov-value" style="color:#0A1F44;">{total_headcount:,}</div><div class="cov-sub">Headcount toàn tổ chức GHN</div></div>
+            <div class="cov-card"><div class="cov-label">Đã tham gia khảo sát</div><div class="cov-value" style="color:#006FAD;">{total_participants:,}</div><div class="cov-sub"><span class="cov-badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;"><span class="cov-badge-dot" style="background:#3B82F6;"></span>{total_rr}% tỷ lệ phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(total_rr, 100):.1f}%; background: linear-gradient(90deg, #3B82F6, #006FAD);"></div></div></div>
+            <div class="cov-card"><div class="cov-label">Chưa tham gia</div><div class="cov-value" style="color:#94A3B8;">{max(total_headcount - total_participants, 0):,}</div><div class="cov-sub"><span class="cov-badge" style="background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;"><span class="cov-badge-dot" style="background:#CBD5E1;"></span>{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(max(round((1 - total_participants / total_headcount) * 100, 1), 0), 100):.1f}%; background: #E2E8F0;"></div></div></div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+    with tab_company:
+        from shared.plotly_theme import make_html_kpi
+        kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
+        with kpi_c1:
+            st.markdown(make_html_kpi("Engagement Index", f"{total_ei:.1f}", delta=f"{ei_delta:+.1f}", color="blue", icon="", progress_val=total_ei), unsafe_allow_html=True)
+        with kpi_c2:
+            st.markdown(make_html_kpi("eNPS Score", f"{total_enps:+.0f}", delta=f"{enps_delta:+.0f}", color="orange", icon="", progress_val=(total_enps+100)/2), unsafe_allow_html=True)
+        with kpi_c3:
+            st.markdown(make_html_kpi("Attrition Risk", f"{total_intent:.1f}%", delta="N/A", color="red", icon="", progress_val=total_intent), unsafe_allow_html=True)
+        with kpi_c4:
+            st.markdown(make_html_kpi("Response Rate", f"{total_rr:.1f}%", delta=f"{rr_delta:+.1f}%", color="green", icon="", progress_val=total_rr), unsafe_allow_html=True)
 
     # Calculate dynamic insights across divisions
     div_stats = []
