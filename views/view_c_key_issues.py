@@ -229,7 +229,14 @@ def render(df, cfg, pillar_filter=None):
             return 'background-color: #FFFFFF; padding-left: 20px;'
 
     styled_df = df_hierarchical[['Cấp', 'Chủ đề', 'Nhãn con', 'Số lượng', '% trên tổng', '% Tiêu cực']].copy()
-    styled_df = styled_df.style.apply(lambda row: [style_hierarchical(row['Cấp'])] * len(row), axis=1)
+    styled_df = (
+        styled_df.style
+        .apply(lambda row: [style_hierarchical(row['Cấp'])] * len(row), axis=1)
+        .format({
+            '% trên tổng': "{:.1f}%",
+            '% Tiêu cực': lambda x: f"{x:.1f}%" if pd.notna(x) else ""
+        })
+    )
 
     st.dataframe(styled_df, width='stretch', hide_index=True, height=600)
 
