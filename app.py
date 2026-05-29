@@ -4,6 +4,9 @@ import sys, os
 import importlib
 import base64
 import hashlib
+import json
+import re
+import time
 
 # Setup paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -67,9 +70,11 @@ _AUTH_SECRET = st.secrets.get("ADMIN_TOKEN", GOOGLE_CLIENT_SECRET or "ees2026-fa
 
 
 def _make_auth_token(email: str, name: str, picture: str) -> str:
-    # Thêm 'v2' để vô hiệu hóa toàn bộ token cũ đã bị lộ
-    payload = base64.urlsafe_b64encode(f"{email}|{name}|{picture}|v2".encode()).decode()
-    sig = hashlib.sha256(f"{email}{_AUTH_SECRET}_v2".encode()).hexdigest()[:16]
+    # Thêm timestamp hết hạn (12 tiếng = 43200 giây)
+    exp = int(time.time()) + 43200
+    # Thêm 'v3' để vô hiệu hóa toàn bộ token cũ
+    payload = base64.urlsafe_b64encode(f"{email}|{name}|{picture}|{exp}|v3".encode()).decode()
+    sig = hashlib.sha256(f"{email}{exp}{_AUTH_SECRET}_v3".encode()).hexdigest()[:16]
     return f"{payload}.{sig}"
 
 
@@ -80,10 +85,15 @@ def _verify_auth_token(token: str):
         payload, sig = token.rsplit(".", 1)
         decoded = base64.urlsafe_b64decode(payload.encode()).decode()
         parts = decoded.split("|")
-        if len(parts) < 4 or parts[-1] != "v2":
-            return None # Reject old v1 tokens
-        email, name, picture = parts[0], parts[1], parts[2]
-        expected_sig = hashlib.sha256(f"{email}{_AUTH_SECRET}_v2".encode()).hexdigest()[:16]
+        if len(parts) < 5 or parts[-1] != "v3":
+            return None # Reject old v1/v2 tokens
+        email, name, picture, exp_str = parts[0], parts[1], parts[2], parts[3]
+        
+        # Kiểm tra token đã hết hạn chưa
+        if int(time.time()) > int(exp_str):
+            return None
+            
+        expected_sig = hashlib.sha256(f"{email}{exp_str}{_AUTH_SECRET}_v3".encode()).hexdigest()[:16]
         if sig != expected_sig:
             return None
         return {"email": email, "name": name, "picture": picture}
@@ -196,11 +206,6 @@ def _render_login_page():
 
 
 if not is_admin:
-    # 0. Check if we need to save token to browser (after successful login)
-    if "needs_saving_token" in st.session_state:
-        _save_token_to_browser(st.session_state.needs_saving_token)
-        del st.session_state["needs_saving_token"]
-
     # 1. Xử lý callback OAuth (có ?code= trên URL)
     if "code" in st.query_params:
         code = st.query_params.get("code")
@@ -216,8 +221,9 @@ if not is_admin:
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 token = _make_auth_token(email, name, picture)
-                st.session_state.needs_saving_token = token
                 st.query_params.clear()
+                st.query_params["s"] = token
+                _save_token_to_browser(token)
                 st.rerun()
             else:
                 st.query_params.clear()
@@ -249,9 +255,6 @@ if not is_admin:
                 st.session_state.user_email = token_data["email"]
                 st.session_state.user_name = token_data["name"]
                 st.session_state.user_picture = token_data["picture"]
-                # Xóa token khỏi URL để tránh rò rỉ khi copy link
-                st.query_params.clear()
-                st.rerun()
             else:
                 st.query_params.clear()
                 _clear_token_from_browser()
