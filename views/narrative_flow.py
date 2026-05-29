@@ -843,29 +843,29 @@ TUYỆT ĐỐI:
 - Trình bày dạng bullet points, câu chữ tư vấn chuyên nghiệp.
 - KHÔNG thêm lời chào, kết luận dài dòng hay bịa đặt dữ liệu."""
     else:
-        ai_prompt = f"""Bạn là Chuyên gia Tâm lý học Tổ chức (Organizational Psychologist) & Phân tích Trải nghiệm Nhân viên cấp cao. Dưới đây là {len(sample)} phản hồi ẩn danh thực tế của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}»:
+        ai_prompt = f"""Bạn là Chuyên gia Tâm lý học Tổ chức (Organizational Psychologist) & Phân tích Trải nghiệm Nhân viên cấp cao. Dưới đây là {len(sample)} phản hồi ẩn danh THỰC TẾ của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}»:
 
 {responses_text}
 
-Nhiệm vụ của bạn là đọc hiểu sâu sắc (deep reading) các phản hồi này để bóc tách những cảm xúc, trăn trở ngầm ẩn bên dưới. Hãy xuất báo cáo định tính (bằng tiếng Việt) theo đúng cấu trúc sau:
+Nhiệm vụ của bạn là ĐỌC KỸ TỪNG PHẢN HỒI THỰC TẾ NÀY, thấu hiểu ngữ cảnh và phân tích chuyên sâu những tầng lớp cảm xúc, nỗi niềm ẩn chứa bên trong. Báo cáo của bạn phải DỰA HOÀN TOÀN TRÊN DỮ LIỆU ĐƯỢC CUNG CẤP. Hãy xuất báo cáo định tính (bằng tiếng Việt) theo cấu trúc sau:
 
 1. Bức Tranh Cảm Xúc Tổng Thể:
 - Tỷ lệ ước lượng: XX% Tích cực / XX% Trung lập / XX% Tiêu cực.
-- Tâm lý chủ đạo: [Ghi rõ trạng thái tâm lý đang chi phối tập thể này: VD Lạc quan, Kiệt sức, Hoang mang, Gắn kết...]. Giải thích ngắn gọn (1 câu) lý do gốc rễ.
+- Tâm lý chủ đạo: [Trạng thái tâm lý đang chi phối tập thể này]. Giải thích sâu sắc nguyên nhân gốc rễ (dựa trên data).
 
-2. Phân Tích Sâu Các Trọng Tâm Cảm Xúc (Deep Dive):
-- [Vấn đề 1]: Phân tích sâu nguyên nhân gốc rễ (root cause) khiến nhân viên có cảm xúc này, dựa trên văn bản. Trích dẫn ngắn gọn 1-2 cụm từ điển hình từ dữ liệu để chứng minh.
-- [Vấn đề 2]: (Làm tương tự nếu có)
+2. Phân Tích Sâu Trọng Tâm Cảm Xúc (Deep Dive):
+- [Tên Vấn Đề 1]: Đi sâu vào bản chất vấn đề. Tại sao nhân viên lại cảm thấy như vậy? (Bắt buộc trích dẫn lại chính xác từ ngữ họ đã dùng trong dữ liệu để chứng minh).
+- [Tên Vấn Đề 2]: (Làm tương tự nếu có)
 
-3. Tín Hiệu Cảnh Báo Ngầm (Red Flags) (Nếu có):
-- Chỉ ra những rủi ro ngầm có thể gây tỷ lệ nghỉ việc cao (turnover) hoặc giảm sút hiệu suất (VD: mâu thuẫn nội bộ, mất niềm tin quản lý, kiệt sức thầm lặng).
+3. Tín Hiệu Cảnh Báo (Red Flags) (Nếu có):
+- Chỉ ra những rủi ro ngầm từ câu chữ của nhân viên có thể dẫn đến việc nghỉ việc hoặc đình trệ năng suất.
 
-4. Đề Xuất Dành Cho Lãnh Đạo (CEO Summary):
-- Đúc kết trong 2-3 câu sắc sảo nhất về tình trạng "sức khỏe tinh thần" của đơn vị này, và 1 định hướng ưu tiên cần giải quyết ngay.
+4. Đề xuất:
+- Từ những phân tích thực tế trên, đưa ra 1-2 hành động giải quyết ưu tiên cao nhất, đánh đúng vào gốc rễ vấn đề.
 
 TUYỆT ĐỐI: 
-- Dùng bullet points rõ ràng, trình bày chuyên nghiệp, câu chữ mang tính tư vấn chiến lược.
-- KHÔNG thêm lời chào, KHÔNG tự sáng tác ngoài dữ liệu."""
+- Mọi phân tích phải có bằng chứng từ dữ liệu (không tự suy diễn chung chung).
+- Dùng bullet points, giọng văn tư vấn sắc sảo, không có lời chào hỏi."""
 
     # SHOW RAW RESPONSES collapsible
     limit_key = f"ev_limit_{group_id}_{unit_label}"
