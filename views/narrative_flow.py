@@ -860,7 +860,7 @@ Nhiệm vụ của bạn là đọc hiểu sâu sắc (deep reading) các phản
 3. Tín Hiệu Cảnh Báo Ngầm (Red Flags) (Nếu có):
 - Chỉ ra những rủi ro ngầm có thể gây tỷ lệ nghỉ việc cao (turnover) hoặc giảm sút hiệu suất (VD: mâu thuẫn nội bộ, mất niềm tin quản lý, kiệt sức thầm lặng).
 
-4. Tóm Tắt Khuyến Nghị Dành Cho Lãnh Đạo (CEO Summary):
+4. Đề Xuất Dành Cho Lãnh Đạo (CEO Summary):
 - Đúc kết trong 2-3 câu sắc sảo nhất về tình trạng "sức khỏe tinh thần" của đơn vị này, và 1 định hướng ưu tiên cần giải quyết ngay.
 
 TUYỆT ĐỐI: 
