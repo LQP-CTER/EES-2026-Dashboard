@@ -9,8 +9,11 @@ import re
 import time
 from datetime import datetime
 
-from streamlit_cookies_controller import CookieController
-cookie_controller = CookieController()
+import secrets
+import threading
+
+ACTIVE_SESSIONS_FILE = os.path.join("config", "active_sessions.json")
+_sessions_lock = threading.Lock()
 
 # Setup paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -69,43 +72,54 @@ REDIRECT_URI         = st.secrets.get("REDIRECT_URI", "http://localhost:8501/")
 _domains_raw = st.secrets.get("ALLOWED_DOMAINS", "ghn.vn,scommerce.asia")
 ALLOWED_DOMAINS = [d.strip().lower() for d in _domains_raw.split(",")] if isinstance(_domains_raw, str) else [d.lower() for d in _domains_raw]
 
-# Auth token secret (for persisting login across F5 via query_params)
-_AUTH_SECRET = st.secrets.get("ADMIN_TOKEN", GOOGLE_CLIENT_SECRET or "ees2026-fallback-secret")
+# --- SERVER-SIDE SESSION REGISTRY ---
+def _load_active_sessions() -> dict:
+    if os.path.exists(ACTIVE_SESSIONS_FILE):
+        try:
+            with open(ACTIVE_SESSIONS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
 
-
-def _make_auth_token(email: str, name: str, picture: str) -> str:
-    # Thêm timestamp hết hạn (12 tiếng = 43200 giây)
-    exp = int(time.time()) + 43200
-    # Thêm 'v3' để vô hiệu hóa toàn bộ token cũ
-    payload = base64.urlsafe_b64encode(f"{email}|{name}|{picture}|{exp}|v3".encode()).decode()
-    sig = hashlib.sha256(f"{email}{exp}{_AUTH_SECRET}_v3".encode()).hexdigest()[:16]
-    return f"{payload}.{sig}"
-
-
-def _verify_auth_token(token: str):
-    if not token or "." not in token:
-        return None
+def _save_active_sessions(sessions: dict):
     try:
-        payload, sig = token.rsplit(".", 1)
-        decoded = base64.urlsafe_b64decode(payload.encode()).decode()
-        parts = decoded.split("|")
-        if len(parts) < 5 or parts[-1] != "v3":
-            return None # Reject old v1/v2 tokens
-        email, name, picture, exp_str = parts[0], parts[1], parts[2], parts[3]
-        
-        # Kiểm tra token đã hết hạn chưa
-        if int(time.time()) > int(exp_str):
-            return None
-            
-        expected_sig = hashlib.sha256(f"{email}{exp_str}{_AUTH_SECRET}_v3".encode()).hexdigest()[:16]
-        if sig != expected_sig:
-            return None
-        return {"email": email, "name": name, "picture": picture}
+        os.makedirs(os.path.dirname(ACTIVE_SESSIONS_FILE), exist_ok=True)
+        with open(ACTIVE_SESSIONS_FILE, "w", encoding="utf-8") as f:
+            json.dump(sessions, f, ensure_ascii=False, indent=4)
     except Exception:
-        return None
+        pass
 
+def _cleanup_expired_sessions(sessions: dict) -> dict:
+    now = time.time()
+    cleaned = {}
+    for token, data in sessions.items():
+        created_at = data.get("created_at", 0)
+        last_seen = data.get("last_seen", 0)
+        # Session expires after 12 hours (43200s) or after 1 hour of inactivity (3600s)
+        if now - created_at < 43200 and now - last_seen < 3600:
+            cleaned[token] = data
+    return cleaned
 
-# Removed localStorage inject functions
+def is_streamlit_session_active(session_id: str) -> bool:
+    if not session_id:
+        return False
+    try:
+        from streamlit.runtime import runtime
+        rt = runtime.get_instance()
+        if rt is not None:
+            return rt.is_active_session(session_id)
+    except Exception:
+        pass
+    return False
+
+def get_current_streamlit_session_id() -> str:
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    ctx = get_script_run_ctx()
+    return ctx.session_id if ctx else ""
+
+def get_sessions_lock():
+    return _sessions_lock
 
 
 is_admin = st.session_state.get("is_admin", False)
@@ -161,15 +175,51 @@ def _render_login_page():
     """, unsafe_allow_html=True)
 
 
+def _render_security_error_page():
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        header[data-testid="stHeader"] { display: none !important; }
+        .login-wrap {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 80vh; gap: 24px;
+        }
+        .login-card {
+            background: white; border-radius: 20px; padding: 48px 56px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            text-align: center; max-width: 480px; width: 100%;
+            border-top: 4px solid #DC2626;
+        }
+        .login-title { font-size: 1.5rem; font-weight: 800; color: #DC2626; margin: 16px 0 8px; }
+        .login-subtitle { font-size: 0.9rem; color: #475569; margin-bottom: 28px; line-height: 1.6; }
+        .login-divider { border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }
+        .google-btn {
+            display: inline-block; background-color: #FF5200; color: white !important;
+            text-decoration: none; padding: 12px 24px; border-radius: 8px;
+            font-weight: 600; font-size: 1rem; width: 100%; text-align: center;
+            box-sizing: border-box; transition: background-color 0.2s; margin-top: 10px;
+        }
+        .google-btn:hover { background-color: #E64A00; text-decoration: none; }
+    </style>
+    <div class="login-wrap">
+        <div class="login-card">
+            <div style="font-size: 3.5rem; margin-bottom: 10px;">🔒</div>
+            <div class="login-title">Liên Kết Đã Được Sử Dụng</div>
+            <div class="login-subtitle">
+                Đường dẫn đăng nhập này hiện đang được mở ở một trình duyệt hoặc thiết bị khác để bảo vệ an toàn thông tin.<br><br>
+                Vui lòng nhấp nút bên dưới để tự đăng nhập bằng tài khoản Google GHN của bạn.
+            </div>
+            <hr class="login-divider">
+            <a href="/" target="_self" class="google-btn">
+                Quay lại Trang Đăng Nhập
+            </a>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 if not is_admin:
-    # 0. Set cookie if needed (after successful login)
-    if "needs_saving_token" in st.session_state:
-        # Fix streamlit-cookies-controller crash on first run
-        if getattr(cookie_controller, '_CookieController__cookies', None) is None:
-            setattr(cookie_controller, '_CookieController__cookies', {})
-            
-        cookie_controller.set("ees2026_auth_token", st.session_state.needs_saving_token, max_age=43200, path="/")
-        del st.session_state["needs_saving_token"]
+    current_sid = get_current_streamlit_session_id()
 
     # 1. Xử lý callback OAuth (có ?code= trên URL)
     if "code" in st.query_params:
@@ -182,12 +232,30 @@ if not is_admin:
             if _is_allowed_email(email):
                 name = user_info.get("name", "User")
                 picture = user_info.get("picture", "")
+                
+                secure_token = secrets.token_urlsafe(32)
+                now = time.time()
+                
+                with _sessions_lock:
+                    sessions = _load_active_sessions()
+                    sessions = _cleanup_expired_sessions(sessions)
+                    sessions[secure_token] = {
+                        "email": email,
+                        "name": name,
+                        "picture": picture,
+                        "streamlit_session_id": current_sid,
+                        "last_seen": now,
+                        "created_at": now
+                    }
+                    _save_active_sessions(sessions)
+                
                 st.session_state.user_email = email
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
-                token = _make_auth_token(email, name, picture)
-                st.session_state.needs_saving_token = token
+                st.session_state.current_token = secure_token
+                
                 st.query_params.clear()
+                st.query_params["s"] = secure_token
                 st.rerun()
             else:
                 st.query_params.clear()
@@ -204,29 +272,79 @@ if not is_admin:
             _render_login_page()
             st.stop()
 
-    # 2. Restore session từ Cookie
+    # 2. Đồng bộ session từ URL hoặc Session State
     user_email = st.session_state.get("user_email")
-    if not user_email:
-        auth_token = cookie_controller.get("ees2026_auth_token")
-        if auth_token:
-            token_data = _verify_auth_token(auth_token)
-            if token_data and _is_allowed_email(token_data["email"]):
-                st.session_state.user_email = token_data["email"]
-                st.session_state.user_name = token_data["name"]
-                st.session_state.user_picture = token_data["picture"]
-                st.rerun()
-            else:
-                if getattr(cookie_controller, '_CookieController__cookies', None) is None:
-                    setattr(cookie_controller, '_CookieController__cookies', {})
-                cookie_controller.remove("ees2026_auth_token")
-                _render_login_page()
-                st.stop()
+    current_token = st.session_state.get("current_token")
 
-    # 3. Nếu vẫn chưa có user → hiện trang login
-    user_email = st.session_state.get("user_email")
-    if not user_email or not _is_allowed_email(user_email):
-        _render_login_page()
-        st.stop()
+    if user_email and current_token:
+        # User đã đăng nhập trong session này, cập nhật last_seen
+        with _sessions_lock:
+            sessions = _load_active_sessions()
+            if current_token in sessions:
+                sessions[current_token]["last_seen"] = time.time()
+                sessions[current_token]["streamlit_session_id"] = current_sid
+                _save_active_sessions(sessions)
+            else:
+                # Token không còn tồn tại trên server (hết hạn hoặc bị xóa)
+                for _k in ["user_email", "user_name", "user_picture", "current_token"]:
+                    st.session_state.pop(_k, None)
+                st.query_params.clear()
+                st.rerun()
+                
+        # Giữ tham số s= trên URL đồng bộ với token hiện tại
+        if st.query_params.get("s") != current_token:
+            st.query_params["s"] = current_token
+            
+    else:
+        # User chưa có thông tin trong session_state -> Đọc từ URL token ?s=
+        query_token = st.query_params.get("s")
+        if query_token:
+            with _sessions_lock:
+                sessions = _load_active_sessions()
+                sessions = _cleanup_expired_sessions(sessions)
+                
+                if query_token in sessions:
+                    data = sessions[query_token]
+                    old_sid = data.get("streamlit_session_id")
+                    
+                    # Kiểm tra xem session cũ có thực sự còn active (WebSocket kết nối) không
+                    if old_sid and old_sid != current_sid and is_streamlit_session_active(old_sid):
+                        # GUEST MODE / SAO CHÉP LINK TRÙNG LẶP: Chặn đứng!
+                        _render_security_error_page()
+                        st.stop()
+                    else:
+                        # Hợp lệ (F5 hoặc tab mới sau khi tắt tab cũ): khôi phục & xoay vòng token bảo mật
+                        new_token = secrets.token_urlsafe(32)
+                        now = time.time()
+                        
+                        sessions[new_token] = {
+                            "email": data["email"],
+                            "name": data["name"],
+                            "picture": data["picture"],
+                            "streamlit_session_id": current_sid,
+                            "last_seen": now,
+                            "created_at": now
+                        }
+                        sessions.pop(query_token, None)
+                        _save_active_sessions(sessions)
+                        
+                        st.session_state.user_email = data["email"]
+                        st.session_state.user_name = data["name"]
+                        st.session_state.user_picture = data["picture"]
+                        st.session_state.current_token = new_token
+                        
+                        st.query_params.clear()
+                        st.query_params["s"] = new_token
+                        st.rerun()
+                else:
+                    # Token không hợp lệ hoặc đã hết hạn
+                    st.query_params.clear()
+                    _render_login_page()
+                    st.stop()
+        else:
+            # Chưa đăng nhập và không có token trên URL -> Hiện trang Login
+            _render_login_page()
+            st.stop()
 
 if is_admin and not st.session_state.preview_mode:
     # Render admin panel
@@ -1023,10 +1141,18 @@ with st.sidebar:
         col1, col2 = st.columns([1, 1])
         with col1:
             if st.button("Đăng xuất"):
-                for _k in ["user_email", "user_name", "user_picture"]:
+                # Xóa token khỏi server-side registry
+                token = st.session_state.get("current_token")
+                if token:
+                    with _sessions_lock:
+                        sessions = _load_active_sessions()
+                        sessions.pop(token, None)
+                        _save_active_sessions(sessions)
+                
+                # Dọn sạch session state và query parameters
+                for _k in ["user_email", "user_name", "user_picture", "current_token"]:
                     st.session_state.pop(_k, None)
                 st.query_params.clear()
-                _clear_token_from_browser()  # Xóa token khỏi localStorage
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
