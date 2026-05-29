@@ -562,6 +562,14 @@ PILLAR_META = {
         'icon': '',
         'color': '#6366F1',
         'description': 'Niềm tin vào Ban Lãnh đạo và định hướng chiến lược của tổ chức',
+        'group_descriptions': {
+            '1A': 'Niềm tin vào Ban lãnh đạo cấp công ty và sự kịp thời của các thông báo thay đổi.',
+            '1B': 'Niềm tin vào định hướng bền vững của Ban lãnh đạo cấp công ty và thông báo kịp thời.',
+            '2A': 'Niềm tin vào Ban lãnh đạo cấp công ty và việc truyền thông thay đổi kịp thời.',
+            '2B': 'Niềm tin vào BOD/SMT, định hướng chiến lược và sự hỗ trợ kịp thời từ các phòng ban HO (HR, Tech...).',
+            '3A': 'Niềm tin vào Senior Leadership, lý do của các quyết định lớn và sự nhất quán trong hành động.',
+            '3B': 'Niềm tin vào C-Level/BOD, quyết định dựa trên dữ liệu và không gian chủ động điều hành.'
+        }
     },
     'TC2': {
         'name': 'Năng lực Quản lý Trực tiếp',
@@ -569,6 +577,14 @@ PILLAR_META = {
         'icon': '',
         'color': '#0EA5E9',
         'description': 'Năng lực hỗ trợ, công bằng và phản hồi của quản lý trực tiếp (AM/TBC/Leader)',
+        'group_descriptions': {
+            '1A': 'Đánh giá AM/TBC/Leader tại bưu cục: hỗ trợ sự cố, phân đơn công bằng, phản hồi thường xuyên.',
+            '1B': 'Đánh giá Điều phối viên/Giám sát: giải quyết nhanh vấn đề trên tuyến, phân lịch chạy công bằng.',
+            '2A': 'Đánh giá Quản lý Kho/Giám sát: phân ca công bằng, lắng nghe và ra quyết định vì lợi ích chung.',
+            '2B': 'Đánh giá Giám đốc Vùng/Khối: giao quyền hạn rõ ràng, tạo an toàn tâm lý (psychological safety).',
+            '3A': 'Đánh giá Manager/Trưởng phòng: quan tâm phát triển nghề nghiệp, trao quyền và phản hồi thường xuyên.',
+            '3B': 'Đánh giá C-Level & Đồng cấp: nhận phản hồi trung thực, đầu tư coaching và psychological safety upward.'
+        }
     },
     'TC3': {
         'name': 'Công việc & Điều kiện Vận hành',
@@ -576,6 +592,14 @@ PILLAR_META = {
         'icon': '',
         'color': '#F59E0B',
         'description': 'Công cụ, quy trình, lộ trình thăng tiến và điều kiện làm việc hàng ngày',
+        'group_descriptions': {
+            '1A': 'Đánh giá App Driver, phương tiện/đồng phục và khối lượng đơn hàng (workload bền vững).',
+            '1B': 'Đánh giá Xe, an toàn trên tuyến đường và lịch chạy hợp lý (thời gian nghỉ ngơi).',
+            '2A': 'Đánh giá PDA, thiết bị kho, quy trình phân loại và khối lượng công việc trong ca.',
+            '2B': 'Đánh giá Hệ thống quản lý, tính khả thi của KPI và lộ trình thăng tiến thực tế.',
+            '3A': 'Đánh giá Quy trình nội bộ, hệ thống thông tin và hiệu quả phối hợp liên phòng ban.',
+            '3B': 'Đánh giá Dữ liệu ra quyết định, cơ cấu tổ chức giảm rào cản và không gian thử nghiệm.'
+        }
     },
     'TC4': {
         'name': 'Thu nhập & Tính Minh bạch',
@@ -583,6 +607,14 @@ PILLAR_META = {
         'icon': '',
         'color': '#10B981',
         'description': 'Mức thu nhập, cách tính lương, minh bạch phạt/truy thu và hỗ trợ sự cố tài chính',
+        'group_descriptions': {
+            '1A': 'Sự công bằng của Pay theo đơn, tính minh bạch trên App (phạt/thu nhập) và phân đơn khu vực.',
+            '1B': 'Sự công bằng của Pay theo quãng đường, minh bạch phụ cấp (đường dài, ca đêm).',
+            '2A': 'Sự công bằng của Pay theo sức lao động, cơ hội tăng ca (OT) được phân bổ đều.',
+            '2B': 'Đãi ngộ phản ánh đúng trách nhiệm và cơ hội thăng tiến dựa trên năng lực (merit-based).',
+            '3A': 'Đãi ngộ tương xứng đóng góp và chính sách đánh giá hiệu suất minh bạch, rõ ràng.',
+            '3B': 'Phân bổ nguồn lực chiến lược (ngân sách, nhân sự) và đãi ngộ xứng đáng với thành tích lãnh đạo.'
+        }
     },
     'TC5': {
         'name': 'Môi trường & Sự Gắn kết',
@@ -590,6 +622,14 @@ PILLAR_META = {
         'icon': '',
         'color': '#EF4444',
         'description': 'An toàn, đồng nghiệp, niềm tự hào và sức khỏe tinh thần',
+        'group_descriptions': {
+            '1A': 'An toàn giao thông, tinh thần hỗ trợ tại bưu cục và sự Tôn trọng (Dignity) đối với Shipper.',
+            '1B': 'An toàn nghề nghiệp, tinh thần hỗ trợ đội xe và sự Tôn trọng đối với Tài xế.',
+            '2A': 'Điều kiện vật lý kho (nhiệt độ, bụi), an toàn lao động và sự Tôn trọng đối với NV Kho.',
+            '2B': 'Sự phối hợp đồng cấp giữa các QL, niềm tự hào tuyến đầu và Tôn trọng 2 chiều.',
+            '3A': 'Văn hóa hợp tác không cạnh tranh tiêu cực, áp lực kiểm soát được và cảm giác thuộc về (Belonging).',
+            '3B': 'Khối lượng công việc lãnh đạo (Workload sustainability) và sự phối hợp đồng cấp thực chất.'
+        }
     },
 }
 
@@ -603,6 +643,17 @@ _CODEBOOK_REGISTRY = {
     '3A': CODEBOOK_3A,
     '3B': CODEBOOK_3B,
 }
+
+def get_pillar_description(pillar_id, group_id=None):
+    """Return the context-specific pillar description based on the user group."""
+    meta = PILLAR_META.get(pillar_id)
+    if not meta:
+        return ""
+    
+    if group_id and group_id in meta.get('group_descriptions', {}):
+        return meta['group_descriptions'][group_id]
+    
+    return meta.get('description', '')
 
 
 def get_codebook(group_id):

@@ -17,7 +17,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 from shared.codebook import (
-    PILLAR_META, PILLAR_ORDER,
+    PILLAR_META, PILLAR_ORDER, get_pillar_description,
     get_codebook, get_pillar_questions, get_question_label, PILLAR_WEIGHTS,
 )
 from shared.plotly_theme import fig_card, COLORS
@@ -90,7 +90,7 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
                 <span style="font-size:1.2rem;font-weight:800;color:#0A1F44;letter-spacing:-0.02em;">{meta['name']}</span>
             </div>
         </div>
-        <p style="font-size:0.83rem;color:#64748B;margin:0 0 18px;line-height:1.65;">{meta['description']}</p>
+        <p style="font-size:0.83rem;color:#64748B;margin:0 0 18px;line-height:1.65;">{get_pillar_description(pillar_id, group_id)}</p>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
             <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
                 <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Điểm trung bình</span>
@@ -110,6 +110,12 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # Thêm Anomaly Banner ngay dưới header
+    pillar_anomalies = detect_pillar_anomalies(df, group_id, pillar_id)
+    if pillar_anomalies:
+        from views.anomaly_cards import render_anomaly_summary_banner
+        render_anomaly_summary_banner(pillar_anomalies)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -280,17 +286,19 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     weakest_label = weakest['Label']
     p_name = meta['name']
     group_name = cfg.get('label', 'nhóm này')
+    pillar_doc_desc = get_pillar_description(pillar_id, group_id)
 
     prompt = (
-        f"Bạn là Chuyên gia People Analytics EES 2026, phân tích trụ cột '{p_name}' của {group_name}. "
+        f"Bạn là Chuyên gia People Analytics cấp cao, phân tích sâu trụ cột '{p_name}' cho đơn vị {group_name}. "
+        f"ĐỊNH HƯỚNG PHÂN TÍCH THEO BÁO CÁO EES: {pillar_doc_desc} "
         f"DỮ LIỆU: Điểm TB trụ cột = {p_mean:.2f}/5. "
         f"Câu yếu nhất: {weakest_label} ({weakest['Mean']:.2f}/5, {weakest['Negative']:.1f}% tiêu cực). "
         f"Câu mạnh nhất: {strongest['Label']} ({strongest['Mean']:.2f}/5). "
-        f"HÃY PHÂN TÍCH: "
-        f"(1) Tại sao '{weakest['Label']}' lại yếu nhất? Nguyên nhân gốc rễ là gì? "
-        f"(2) Nếu không can thiệp, điều gì sẽ xảy ra với nhóm này trong 3-6 tháng tới? "
-        f"(3) 1 hành động CỤ THỂ, KHẢ THI trong 30 ngày để cải thiện. "
-        f"Viết cho Giám đốc HR đọc — không dùng thuật ngữ kỹ thuật."
+        f"YÊU CẦU: "
+        f"(1) Tại sao '{weakest['Label']}' lại yếu nhất? Hãy liên kết nguyên nhân gốc rễ với định hướng phân tích của nhóm này. "
+        f"(2) Điều gì sẽ xảy ra trong 3-6 tháng tới nếu không can thiệp? "
+        f"(3) Đề xuất 1 hành động CỤ THỂ, KHẢ THI trong 30 ngày. "
+        f"Đừng dùng ngôn ngữ chung chung. Phải thật sắc bén và bám sát đặc thù của {group_name}."
     )
     ai_data = {
         'Pillar': p_name, 'Group': group_name,
@@ -316,6 +324,61 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
 
     meta = PILLAR_META[pillar_id]
     color = meta['color']
+
+    # ── So sánh tương quan (Nghịch lý) ──
+    pairs = {
+        'TC1': [('Q9', 'Q10', 'Tin tưởng định hướng vs Nhận thông tin kịp thời')],
+        'TC2': [('Q11', 'Q12', 'Quản lý hỗ trợ vs Phân công công bằng')],
+        'TC3': [('Q20', 'Q10', 'Hướng dẫn thay đổi vs Thông báo thay đổi')],
+        'TC4': [('Q21', 'Q22', 'Thu nhập công bằng vs Minh bạch khấu trừ/phạt')],
+        'TC5': [('Q28', 'Q29', 'Tự hào về tổ chức vs Mức độ áp lực/Burnout')]
+    }
+    
+    if pillar_id in pairs:
+        for qA, qB, title in pairs[pillar_id]:
+            if qA in q_cols and qB in q_cols:
+                mA = _qmean(df, qA)
+                mB = _qmean(df, qB)
+                if mA and mB:
+                    st.markdown(f"##### Phân tích Tương quan: {title}")
+                    gap = abs(mA - mB)
+                    
+                    if gap >= 0.4:
+                        st.markdown(f"""
+                        <div style="background:#FFFBEB; border-left:4px solid #D97706; padding:12px; border-radius:6px; margin-bottom:12px;">
+                            <span style="color:#D97706; font-weight:700;">⚠️ Nghịch lý phát hiện:</span> 
+                            Khoảng cách <strong>{gap:.2f} điểm</strong> giữa hai yếu tố này. Dù nhân viên đánh giá cao một mặt ({qA if mA > mB else qB}), nhưng lại rất bất mãn ở mặt kia ({qB if mA > mB else qA}). Sự chênh lệch này là nguyên nhân chính gây ức chế tâm lý.
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                    labelA = get_question_label(group_id, qA)
+                    labelB = get_question_label(group_id, qB)
+                    
+                    fig_comp = go.Figure()
+                    fig_comp.add_trace(go.Bar(
+                        x=[mA, mB],
+                        y=[f"{qA} ", f"{qB} "],
+                        orientation='h',
+                        text=[f"{mA:.2f}", f"{mB:.2f}"],
+                        textposition='inside',
+                        marker_color=['#3B82F6', '#F59E0B'],
+                        hovertemplate='%{x:.2f}<extra></extra>'
+                    ))
+                    fig_comp.update_layout(
+                        height=160, margin=dict(l=10, r=20, t=10, b=10),
+                        xaxis=dict(range=[1, 5], visible=False),
+                        yaxis=dict(autorange="reversed"),
+                        showlegend=False,
+                        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)'
+                    )
+                    
+                    c1, c2 = st.columns([1, 2])
+                    with c1:
+                        st.markdown(f"<div style='font-size:0.8rem; color:#475569; margin-top:20px;'><strong>{qA}</strong>: {labelA}<br><br><strong>{qB}</strong>: {labelB}</div>", unsafe_allow_html=True)
+                    with c2:
+                        st.plotly_chart(fig_comp, width='stretch', key=f"comp_{pillar_id}_{qA}_{qB}")
+                        
+                    st.markdown("<hr style='margin:16px 0;border:none;border-top:1px dashed #E2E8F0;'>", unsafe_allow_html=True)
 
     st.markdown("##### Phân bố phản hồi từng câu hỏi")
 

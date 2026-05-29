@@ -118,6 +118,26 @@ def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
     )
     st.plotly_chart(fig, width='stretch')
 
+    # Thêm AI Insight theo định dạng báo cáo
+    top_3_gaps = df_gaps.head(3).to_dict('records')
+    ai_data = {
+        'Group': cfg.get('label', sel_group),
+        'Pillar_Filter': pillar_filter if pillar_filter else 'Tất cả trụ cột',
+        'Top_Gaps': top_3_gaps
+    }
+    
+    prompt = (
+        f"Bạn là Chuyên gia People Analytics cấp cao, đang phân tích EES cho nhóm {ai_data['Group']}. "
+        f"DỮ LIỆU CHÊNH LỆCH LỚN NHẤT (Muốn nghỉ vs Gắn bó): {top_3_gaps}. "
+        f"YÊU CẦU: "
+        f"1. Tại sao nhóm này lại có pattern chênh lệch này mà không phải nhóm khác? Hãy bám sát đặc thù công việc của họ. "
+        f"2. Nếu không can thiệp, điều gì sẽ xảy ra trong 3-6 tháng tới? "
+        f"3. Đề xuất 1 hành động CỤ THỂ, KHẢ THI trong 30 ngày để giải quyết câu hỏi có khoảng cách lớn nhất."
+    )
+    
+    from utils.ai_generator import render_ai_insight_card
+    render_ai_insight_card("AI Phân tích Nguyên nhân (Root Cause)", ai_data, prompt, custom_style="margin-top: 24px;")
+
 def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
     from shared.plotly_theme import section_header
 

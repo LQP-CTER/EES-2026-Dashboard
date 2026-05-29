@@ -251,6 +251,8 @@ def render(df, cfg, pillar_filter=None):
         st.markdown("Nhân viên gắn bó (Promoter) và bất mãn (Detractor) đang nói về điều gì khác nhau?")
 
         col1, col2 = st.columns(2)
+        rows_promoter = []
+        rows_detractor = []
 
         with col1:
             promoter_texts = df[df['eNPS_group'] == 'Promoter'][cc].dropna().tolist()
@@ -290,8 +292,8 @@ def render(df, cfg, pillar_filter=None):
 
         ai_data_diff = {"Survey_Question": sel_q}
         # Safely extract top topic names from each group
-        p_topics = [r[0] for r in rows_promoter[:3]] if 'rows_promoter' in dir() and rows_promoter else []
-        d_topics = [r[0] for r in rows_detractor[:3]] if 'rows_detractor' in dir() and rows_detractor else []
+        p_topics = [r[0] for r in rows_promoter[:3]] if rows_promoter else []
+        d_topics = [r[0] for r in rows_detractor[:3]] if rows_detractor else []
         prompt_diff = (
             f"Phân tích sự khác biệt về chủ đề quan tâm giữa nhóm Promoter (trung thành) và Detractor (bất mãn): "
             f"Nhóm Promoter quan tâm nhất tới {', '.join(p_topics) if p_topics else 'không rõ'}. "

@@ -8,6 +8,15 @@ from utils.ai_generator import render_ai_insight_card
 def render(df, cfg, pillar_filter=None):
     apply_theme()
 
+    from utils.anomaly_detector import detect_cross_pillar
+    from views.anomaly_cards import render_anomaly_tab
+    
+    cross_anomalies = detect_cross_pillar(df, cfg.get('short', ''))
+    if cross_anomalies:
+        st.markdown("<h4 style='color: #0A1F44; margin-top: 10px;'>Phân tích Mẫu Nguy hiểm (Cross-Pillar)</h4>", unsafe_allow_html=True)
+        render_anomaly_tab(cross_anomalies, pillar_id=None, show_cross=True)
+        st.markdown("<hr style='border: 1px dashed rgba(0,0,0,0.1); margin: 24px 0;'>", unsafe_allow_html=True)
+
     st.markdown("""
     <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:16px 20px;margin-bottom:18px;">
         <div>
