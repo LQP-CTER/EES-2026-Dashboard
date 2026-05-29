@@ -367,7 +367,7 @@ def _render_deep_dive(df, contradiction, group_id, index):
         _render_tenure_cliff_chart(df, metrics)
     elif c_id in ('INFO_GAP', 'FAIRNESS_GAP'):
         _render_gap_chart(df, metrics, c_id)
-    elif c_id in ('PRIDE_PARADOX', 'INCOME_PARADOX', 'SILENT_DISENGAGED', 'MEI_SHIELD_FAIL'):
+    elif c_id in ('PRIDE_PARADOX', 'INCOME_PARADOX', 'SILENT_DISENGAGED', 'MEI_SHIELD_FAIL', 'BURNOUT_TRAP', 'LEADERSHIP_HALO'):
         _render_paradox_chart(df, metrics, c_id)
     elif c_id == 'BURNOUT_BLIND':
         _render_burnout_blind_chart(df, metrics)
@@ -465,6 +465,14 @@ def _render_paradox_chart(df, metrics, c_id):
         labels = ['MEI: Hiệu quả QL', 'Ý định nghỉ (%)']
         values = [metrics.get('MEI', 0), metrics.get('intent_low_pct', 0)]
         y_ranges = [[0, 100], [0, 100]]
+    elif c_id == 'BURNOUT_TRAP':
+        labels = ['Burnout (%)', 'Ý định nghỉ (%)']
+        values = [metrics.get('burnout_pct', 0), metrics.get('intent_low_pct', 0)]
+        y_ranges = [[0, 100], [0, 100]]
+    elif c_id == 'LEADERSHIP_HALO':
+        labels = ['Q9: Niềm tin LĐ', 'eNPS']
+        values = [metrics.get('Q9_tin_BLD', 0), metrics.get('eNPS', 0)]
+        y_ranges = [[1, 5.3], [-100, 100]]
     else:
         labels = ['EI', 'Ý định nghỉ (%)']
         values = [metrics.get('EI', 0), metrics.get('intent_low_pct', 0)]
