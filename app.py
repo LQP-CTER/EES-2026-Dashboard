@@ -91,48 +91,51 @@ LOCALSTORAGE_KEY = "ees2026_auth_token"
 
 def _save_token_to_browser(token: str):
     """Inject JS to save auth token to localStorage."""
-    st.markdown(f"""
+    import streamlit.components.v1 as components
+    components.html(f"""
     <script>
         (function() {{
             try {{
-                localStorage.setItem('{LOCALSTORAGE_KEY}', '{token}');
+                window.parent.localStorage.setItem('{LOCALSTORAGE_KEY}', '{token}');
             }} catch(e) {{}}
         }})();
     </script>
-    """, unsafe_allow_html=True)
+    """, width=0, height=0)
 
 
 def _inject_restore_from_localstorage():
     """Inject JS to read token from localStorage and redirect with ?s= if missing from URL."""
-    st.markdown(f"""
+    import streamlit.components.v1 as components
+    components.html(f"""
     <script>
         (function() {{
             try {{
-                var token = localStorage.getItem('{LOCALSTORAGE_KEY}');
+                var token = window.parent.localStorage.getItem('{LOCALSTORAGE_KEY}');
                 if (token) {{
-                    var url = new URL(window.location.href);
+                    var url = new URL(window.parent.location.href);
                     if (!url.searchParams.get('s')) {{
                         url.searchParams.set('s', token);
-                        window.location.replace(url.toString());
+                        window.parent.location.replace(url.toString());
                     }}
                 }}
             }} catch(e) {{}}
         }})();
     </script>
-    """, unsafe_allow_html=True)
+    """, width=0, height=0)
 
 
 def _clear_token_from_browser():
     """Inject JS to remove auth token from localStorage (logout)."""
-    st.markdown(f"""
+    import streamlit.components.v1 as components
+    components.html(f"""
     <script>
         (function() {{
             try {{
-                localStorage.removeItem('{LOCALSTORAGE_KEY}');
+                window.parent.localStorage.removeItem('{LOCALSTORAGE_KEY}');
             }} catch(e) {{}}
         }})();
     </script>
-    """, unsafe_allow_html=True)
+    """, width=0, height=0)
 
 
 is_admin = st.session_state.get("is_admin", False)
