@@ -694,7 +694,7 @@ def _render_employee_voice(df, group_id, cfg):
                        if str(v).strip().lower() not in _BAD_VALS])
         divs_opts = ['— Tất cả (toàn nhóm) —'] + divs
         with col_sel1:
-            sel_div = st.selectbox('🏢 Khối / Division',
+            sel_div = st.selectbox('Khối / Division',
                                    divs_opts, key=f'ev_div_{group_id}')
         if sel_div == '— Tất cả (toàn nhóm) —':
             sel_div = None
@@ -712,7 +712,7 @@ def _render_employee_voice(df, group_id, cfg):
         if depts:
             depts_opts = ['— Tất cả —'] + depts
             with col_sel2:
-                sel_dept = st.selectbox('🏗️ Phòng ban / Department',
+                sel_dept = st.selectbox('Phòng ban / Department',
                                         depts_opts, key=f'ev_dept_{group_id}')
             if sel_dept == '— Tất cả —':
                 sel_dept = None
@@ -728,7 +728,7 @@ def _render_employee_voice(df, group_id, cfg):
         if secs:
             secs_opts = ['— Tất cả —'] + secs
             with col_sel3:
-                sel_sec = st.selectbox('📌 Vùng / Section',
+                sel_sec = st.selectbox('Vùng / Section',
                                        secs_opts, key=f'ev_sec_{group_id}')
             if sel_sec == '— Tất cả —':
                 sel_sec = None
@@ -750,11 +750,11 @@ def _render_employee_voice(df, group_id, cfg):
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
         <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;
                     padding:10px 18px;font-size:0.82rem;color:#475569;">
-            👥 <strong>{n_total:,}</strong> nhân viên tại <em>{unit_label}</em>
+            <strong>{n_total:,}</strong> nhân viên tại <em>{unit_label}</em>
         </div>
         <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;
                     padding:10px 18px;font-size:0.82rem;color:#1D4ED8;">
-            💬 <strong>{n_responses:,}</strong> phản hồi có nội dung về cải thiện
+            <strong>{n_responses:,}</strong> phản hồi có nội dung về cải thiện
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -795,14 +795,14 @@ def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
     # Các button phân tích theo loại
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
-        run_desires = st.button(f"🔍 Phân tích Mong muốn",
+        run_desires = st.button(f"Phân tích Mong muốn",
                                 key=f"btn_desires_{group_id}_{unit_label[:20]}")
     with col_b2:
-        run_sentiment = st.button(f"📣 Phân tích Cảm xúc",
+        run_sentiment = st.button(f"Phân tích Cảm xúc",
                                   key=f"btn_sentiment_{group_id}_{unit_label[:20]}")
     with col_b3:
         if cache_key in st.session_state:
-            if st.button("🔄 Phân tích lại", key=f"btn_rerun_{group_id}_{unit_label[:20]}"):
+            if st.button("Phân tích lại", key=f"btn_rerun_{group_id}_{unit_label[:20]}"):
                 del st.session_state[cache_key]
                 st.rerun()
 
@@ -846,7 +846,7 @@ Nhiệm vụ:
 TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
 
     # SHOW RAW RESPONSES collapsible
-    with st.expander(f"📝 Xem {len(sample)} phản hồi thực tế", expanded=False):
+    with st.expander(f"Xem {len(sample)} phản hồi thực tế", expanded=False):
         for i, r in enumerate(sample[:50], 1):
             st.markdown(f"""
             <div style="background:#F8FAFC;border-left:3px solid #E2E8F0;padding:8px 12px;
@@ -866,7 +866,7 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
         ai_container.markdown(f"""
         <div class="ai-insight-container">
             <div class="ai-header">
-                <div class="ai-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f31PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg==" style="width:16px;height:16px" alt="AI"></div>
+                <div class="ai-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg==" style="width: 16px; height: 16px;" alt="Ultramarines Logo" /></div>
                 <h4 class="ai-title">AI Phân tích Tiếng nói Nhân viên — {unit_label}</h4>
                 <div class="ai-badge">{'Mong muốn' if mode == 'desires' else 'Cảm xúc'}</div>
             </div>
@@ -887,7 +887,7 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
             return f"""
             <div class="ai-insight-container">
                 <div class="ai-header">
-                    <div class="ai-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f31PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg==" style="width:16px;height:16px" alt="AI"></div>
+                    <div class="ai-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg==" style="width: 16px; height: 16px;" alt="Ultramarines Logo" /></div>
                     <h4 class="ai-title">AI Phân tích Tiếng nói Nhân viên — {unit_label}</h4>
                     <div class="ai-badge">{'Mong muốn' if mode == 'desires' else 'Cảm xúc'}</div>
                 </div>
