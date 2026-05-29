@@ -930,4 +930,4 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
             err_msg = last_error if 'last_error' in locals() else 'Unknown error'
             ai_container.error(f"Không thể kết nối AI. Chi tiết lỗi: {err_msg}")
     else:
-        st.info("👆 Chọn đƠn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")
+        st.info("Chọn đƠn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")
