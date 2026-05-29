@@ -19,7 +19,7 @@ from utils.contradiction_engine import detect_contradictions, get_top_contradict
 from utils.ai_generator import render_ai_insight_card
 
 
-_AI_LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg=="
+_AI_LOGO_B64 = ""
 
 
 def _act_header(number: str, title: str, subtitle: str, color: str = "#FF5200") -> str:
@@ -64,66 +64,47 @@ def render_narrative(df, cfg, group_id):
     severity_bg = "#FEF2F2" if any(c['severity'] == 'critical' for c in contradictions) \
         else ("#FFFBEB" if contradictions else "#F0FDF4")
 
+    color = "#FF5200"
     st.markdown(f"""
-    <div style="background:#0A1F44;border-radius:16px;padding:28px 32px;
-                margin-bottom:28px;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-40%;right:-5%;width:300px;height:300px;
-                    background:radial-gradient(circle,rgba(255,82,0,0.18) 0%,transparent 70%);
-                    filter:blur(40px);pointer-events:none"></div>
-        <div style="position:relative;z-index:1">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-                <img src="{_AI_LOGO_B64}" style="width:18px;height:18px">
-                <span style="font-size:0.68rem;font-weight:700;color:#94A3B8;
-                             text-transform:uppercase;letter-spacing:0.12em">
-                    EES 2026 · Báo cáo tự động
-                </span>
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-left:4px solid {color};
+                border-radius:12px;padding:24px 28px;margin-bottom:28px;box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
+                    <span style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:{color};">
+                        BÁO CÁO TRẢI NGHIỆM TỔNG THỂ
+                    </span>
+                </div>
+                <span style="font-size:1.4rem;font-weight:800;color:#0A1F44;letter-spacing:-0.02em;">Nhóm {group_name}</span>
             </div>
-            <div style="font-size:1.4rem;font-weight:900;color:#FFFFFF;
-                        letter-spacing:-0.025em;margin-bottom:6px">
-                Báo cáo Trải nghiệm Nhân viên — {group_name}
+        </div>
+        <p style="font-size:0.83rem;color:#64748B;margin:0 0 18px;line-height:1.65;">
+            Mạch dữ liệu xuyên suốt từ bức tranh tổng thể (KPIs) đến những mâu thuẫn ngầm ẩn và định hướng hành động chiến lược.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+            <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
+                <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">EI Score</span>
+                <div style="font-size:1.8rem;font-weight:900;color:{color};line-height:1;">{kpis['ei_mean']:.1f}%</div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">Chỉ số Gắn kết</div>
             </div>
-            <div style="font-size:0.85rem;color:#94A3B8;margin-bottom:20px">
-                Mạch dữ liệu xuyên suốt từ bức tranh tổng thể đến hành động cụ thể
+            <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
+                <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">eNPS</span>
+                <div style="font-size:1.8rem;font-weight:900;color:#0A1F44;line-height:1;">{kpis['enps_score']:+.0f}</div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">Net Promoter Score</div>
             </div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap">
-                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-                            border-radius:10px;padding:12px 18px;min-width:100px">
-                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
-                                letter-spacing:0.08em;margin-bottom:4px">EI Score</div>
-                    <div style="font-size:1.6rem;font-weight:900;color:#FF5200;line-height:1">
-                        {kpis['ei_mean']:.1f}%
-                    </div>
+            <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
+                <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Rủi ro nghỉ</span>
+                <div style="font-size:1.8rem;font-weight:900;color:#EF4444;line-height:1;">{kpis['intent_pct_low']:.1f}%</div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">Tỷ lệ dự báo nghỉ việc</div>
+            </div>
+            <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
+                <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Mâu thuẫn (Nghịch lý)</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="font-size:1.8rem;font-weight:900;color:#0A1F44;line-height:1;">{n_contradictions}</div>
+                    <span style="background:{severity_bg};color:{severity_color};padding:3px 8px;border-radius:12px;font-size:0.65rem;font-weight:700;line-height:1.2;white-space:normal;">{severity_label}</span>
                 </div>
-                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-                            border-radius:10px;padding:12px 18px;min-width:100px">
-                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
-                                letter-spacing:0.08em;margin-bottom:4px">eNPS</div>
-                    <div style="font-size:1.6rem;font-weight:900;color:#FFFFFF;line-height:1">
-                        {kpis['enps_score']:+.0f}
-                    </div>
-                </div>
-                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-                            border-radius:10px;padding:12px 18px;min-width:100px">
-                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
-                                letter-spacing:0.08em;margin-bottom:4px">Rủi ro nghỉ</div>
-                    <div style="font-size:1.6rem;font-weight:900;color:#FFFFFF;line-height:1">
-                        {kpis['intent_pct_low']:.1f}%
-                    </div>
-                </div>
-                <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-                            border-radius:10px;padding:12px 18px">
-                    <div style="font-size:0.65rem;color:#94A3B8;text-transform:uppercase;
-                                letter-spacing:0.08em;margin-bottom:4px">Nghịch lý</div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-                        <span style="font-size:1.6rem;font-weight:900;color:#FFFFFF;line-height:1">
-                            {n_contradictions}
-                        </span>
-                        <span style="background:{severity_bg};color:{severity_color};padding:3px 10px;
-                                     border-radius:20px;font-size:0.7rem;font-weight:700">
-                            {severity_label}
-                        </span>
-                    </div>
-                </div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">Vấn đề ngầm phát hiện</div>
             </div>
         </div>
     </div>
