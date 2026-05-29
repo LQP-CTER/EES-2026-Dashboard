@@ -160,7 +160,7 @@ def render(df, cfg, pillar_filter=None):
         margin=dict(l=120),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="view_c_key_issues_chart_162")
 
     anno = df_topic.sort_values('Neg_Pct', ascending=False).head(3)
     anno_html = " · ".join([f"<strong>{r['Chủ đề']}</strong> ({r['Neg_Pct']:.0f}% tiêu cực)" for _, r in anno.iterrows()])
@@ -270,7 +270,7 @@ def render(df, cfg, pillar_filter=None):
                                           title='Promoter — Họ nói gì?')
                     fig_promoter.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
                     fig_promoter.update_layout(height=400, margin=dict(l=180))
-                    st.plotly_chart(fig_promoter, width='stretch')
+                    st.plotly_chart(fig_promoter, width='stretch', key="view_c_key_issues_chart_272")
 
         with col2:
             detractor_texts = df[df['eNPS_group'] == 'Detractor'][cc].dropna().tolist()
@@ -288,7 +288,7 @@ def render(df, cfg, pillar_filter=None):
                                            title='Detractor — Họ nói gì?')
                     fig_detractor.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
                     fig_detractor.update_layout(height=400, margin=dict(l=180))
-                    st.plotly_chart(fig_detractor, width='stretch')
+                    st.plotly_chart(fig_detractor, width='stretch', key="view_c_key_issues_chart_290")
 
         ai_data_diff = {"Survey_Question": sel_q}
         # Safely extract top topic names from each group
@@ -375,7 +375,7 @@ def render(df, cfg, pillar_filter=None):
                 coloraxis_showscale=False,
                 margin=dict(l=160)
             )
-            st.plotly_chart(fig_sub, width='stretch')
+            st.plotly_chart(fig_sub, width='stretch', key="view_c_key_issues_chart_377")
 
     st.markdown(f"**Trích dẫn tiêu biểu — {sel_topic_short}**")
     quotes = extract_representative_quotes(df, cc, full_name, n=10)

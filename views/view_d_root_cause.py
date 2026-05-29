@@ -116,7 +116,7 @@ def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
         margin=dict(l=300),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="view_d_root_cause_chart_118")
 
     # Thêm AI Insight theo định dạng báo cáo
     top_3_gaps = df_gaps.head(3).to_dict('records')
@@ -223,11 +223,11 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.plotly_chart(_plot_risk(df_m, 'income_label', "Theo Thu Nhập"), width='stretch')
+        st.plotly_chart(_plot_risk(df_m, 'income_label', "Theo Thu Nhập", key="view_d_root_cause_chart_225"), width='stretch')
     with c2:
-        st.plotly_chart(_plot_risk(df_m, 'phat_label', "Theo Mức Phạt"), width='stretch')
+        st.plotly_chart(_plot_risk(df_m, 'phat_label', "Theo Mức Phạt", key="view_d_root_cause_chart_227"), width='stretch')
     with c3:
-        st.plotly_chart(_plot_risk(df_m, 'tenure_label', "Theo Thâm Niên"), width='stretch')
+        st.plotly_chart(_plot_risk(df_m, 'tenure_label', "Theo Thâm Niên", key="view_d_root_cause_chart_229"), width='stretch')
 
     st.markdown("#### Bước 3: So sánh nhóm Muốn nghỉ vs Gắn bó")
     df_risk = df_m[df_m['intent_risk'].str.contains('Muốn nghỉ', na=False)]
@@ -353,7 +353,7 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
             margin=dict(t=50, b=40, l=40, r=40),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, width='stretch', key="view_d_root_cause_chart_355")
         
         # Thêm AI Insight cho biểu đồ chênh lệch
         ai_data_comp = {
@@ -608,7 +608,7 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
                             paper_bgcolor='#FFFFFF',
                         )
                     
-                    st.plotly_chart(fig, width='stretch')
+                    st.plotly_chart(fig, width='stretch', key="view_d_root_cause_chart_610")
                     
                     st.caption("Chỉ hiển thị các nhóm có ≥ 30 người. Lương gộp = lương thực nhận + phạt + truy thu, giúp 2 trục phân tích độc lập.")
                     

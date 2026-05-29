@@ -84,7 +84,7 @@ def render(df, cfg, pillar_filter=None, **kwargs):
         fig.update_layout(height=550, xaxis_title='Điểm trung bình (1-5)',
                           yaxis_title='Tương quan Spearman với EI',
                           xaxis=dict(tickformat='.1f', showgrid=True), yaxis=dict(tickformat='.2f', showgrid=True))
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, width='stretch', key="view_f_action_priority_chart_86")
     
     with c2:
         import textwrap

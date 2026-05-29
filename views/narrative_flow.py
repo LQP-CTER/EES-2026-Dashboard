@@ -144,7 +144,7 @@ def _render_pillar_overview(df, group_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_146")
 
 
 def _render_contradiction_cards(contradictions):
@@ -275,7 +275,7 @@ def _render_tenure_cliff_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter'),
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_277")
 
 
 def _render_gap_chart(df, metrics, c_id):
@@ -304,7 +304,7 @@ def _render_gap_chart(df, metrics, c_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_306")
 
 
 def _render_paradox_chart(df, metrics, c_id):
@@ -340,7 +340,7 @@ def _render_paradox_chart(df, metrics, c_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_342")
 
 
 def _render_burnout_blind_chart(df, metrics):
@@ -362,7 +362,7 @@ def _render_burnout_blind_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_364")
 
 
 def _render_glass_ceiling_chart(df, metrics):
@@ -386,7 +386,7 @@ def _render_glass_ceiling_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_388")
 
 
 def _render_ai_deep_dive(contradiction, group_id):

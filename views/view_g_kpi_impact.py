@@ -278,4 +278,4 @@ def render(df, cfg, pillar_filter=None):
             yaxis_title="", showlegend=False,
             xaxis=dict(range=[0, max(df_weights['Trọng số (%)']) * 1.3])
         )
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, width='stretch', key="view_g_kpi_impact_chart_280")

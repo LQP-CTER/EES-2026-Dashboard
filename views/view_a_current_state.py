@@ -147,7 +147,7 @@ def render(df, cfg, pillar_filter=None):
             pull=[0.04, 0, 0.04]))
         fig1 = fig_card(fig1, 'Phân bổ eNPS', f"eNPS Score: {kpis['enps_score']:+.0f}")
         fig1.update_layout(showlegend=False)
-        st.plotly_chart(fig1, width='stretch')
+        st.plotly_chart(fig1, width='stretch', key="view_a_current_state_chart_149")
 
     with col2:
         ei_vals = df['EI'].dropna()
@@ -161,7 +161,7 @@ def render(df, cfg, pillar_filter=None):
                       annotation_text=f'TB = {ei_mean:.1f}%', annotation_font_color=COLORS['red'])
         fig2 = fig_card(fig2, 'Phân bổ Điểm EI', 'Histogram điểm Gắn kết')
         fig2.update_layout(xaxis_title='Engagement Index (%)', yaxis_title='Số phản hồi', showlegend=False)
-        st.plotly_chart(fig2, width='stretch')
+        st.plotly_chart(fig2, width='stretch', key="view_a_current_state_chart_163")
 
     with col3:
         pillar_data = []
@@ -177,7 +177,7 @@ def render(df, cfg, pillar_filter=None):
             fig3 = fig_card(fig3, '5 Trụ cột Gắn kết', 'Điểm trung bình theo trụ cột')
             fig3.update_traces(textposition='outside', texttemplate='%{text:.1f}%')
             fig3.update_layout(showlegend=False, xaxis_tickangle=-45, coloraxis_showscale=False, yaxis=dict(range=[0, 105]))
-            st.plotly_chart(fig3, width='stretch')
+            st.plotly_chart(fig3, width='stretch', key="view_a_current_state_chart_179")
 
     # --- AI Insight for Group Detail ---
     group_ai_data = {
@@ -829,7 +829,7 @@ def render(df, cfg, pillar_filter=None):
                     fig_dd = fig_card(fig_dd, f'Trụ cột — {_sel_unit}', 'So sánh với toàn nhóm')
                     fig_dd.update_layout(barmode='group', xaxis_tickangle=-30,
                                         showlegend=True, yaxis=dict(range=[0, 110]))
-                    st.plotly_chart(fig_dd, width='stretch')
+                    st.plotly_chart(fig_dd, width='stretch', key="view_a_current_state_chart_831")
 
     except Exception as _dd_err:
         st.caption(f"Deep Dive không khả dụng: {_dd_err}")
@@ -875,7 +875,7 @@ def render(df, cfg, pillar_filter=None):
                     ))
                     fig = fig_card(fig, f'Gắn kết theo {col_name}', f'Phân tích nhóm {col_name.lower()} đông nhất')
                     fig.update_layout(barmode='group', xaxis_tickangle=-30)
-                    st.plotly_chart(fig, width='stretch')
+                    st.plotly_chart(fig, width='stretch', key="view_a_current_state_chart_877")
                     
                     if col_id == 'Q5':
                         prompt = "Hãy giải thích nguyên nhân vì sao nhóm nhân viên có thâm niên 'Trên 3 đến 5 năm' lại có chỉ số eNPS thấp (có thể là số âm) so với các nhóm khác. Dựa vào vòng đời nhân sự (Employee Lifecycle) để giải thích thực trạng chững lại về nhiệt huyết và kỳ vọng nghề nghiệp ở giai đoạn này."

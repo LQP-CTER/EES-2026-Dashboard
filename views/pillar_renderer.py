@@ -190,7 +190,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch', key=f"diag_bar_{pillar_id}")
+    st.plotly_chart(fig, width='stretch', key="diag_bar_chart")
 
     # Highlight câu yếu nhất & câu có tiềm năng cải thiện cao nhất
     weakest = q_df.iloc[0]
@@ -263,7 +263,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig2, width='stretch', key=f"tenure_{pillar_id}")
+            st.plotly_chart(fig2, width='stretch', key="tenure_cliff_chart")
 
             # Cliff alert
             if cliff_drop is not None and cliff_drop < -0.4:
@@ -376,13 +376,13 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                     with c1:
                         st.markdown(f"<div style='font-size:0.8rem; color:#475569; margin-top:20px;'><strong>{qA}</strong>: {labelA}<br><br><strong>{qB}</strong>: {labelB}</div>", unsafe_allow_html=True)
                     with c2:
-                        st.plotly_chart(fig_comp, width='stretch', key=f"comp_{pillar_id}_{qA}_{qB}")
+                        st.plotly_chart(fig_comp, width='stretch', key="comp_paradox_chart")
                         
                     st.markdown("<hr style='margin:16px 0;border:none;border-top:1px dashed #E2E8F0;'>", unsafe_allow_html=True)
 
     st.markdown("##### Phân bố phản hồi từng câu hỏi")
 
-    for q in q_cols:
+    for i, q in enumerate(q_cols):
         if q not in df.columns:
             continue
         vals = df[q].dropna()
@@ -408,10 +408,10 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
             labels_map = ['1-Rất không ĐY', '2-Không ĐY', '3-Trung lập', '4-Đồng ý', '5-Rất đồng ý']
             fig = go.Figure(go.Bar(
                 y=labels_map,
-                x=[dist_pct.get(i, 0) for i in range(1, 6)],
+                x=[dist_pct.get(j, 0) for j in range(1, 6)],
                 orientation='h',
                 marker_color=c_map,
-                text=[f"{dist_pct.get(i, 0):.1f}%" for i in range(1, 6)],
+                text=[f"{dist_pct.get(j, 0):.1f}%" for j in range(1, 6)],
                 textposition='outside',
             ))
             fig.update_layout(
@@ -421,7 +421,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 showlegend=False, font=dict(family='Inter', size=11),
             )
-            st.plotly_chart(fig, width='stretch', key=f"dist_{pillar_id}_{q}")
+            st.plotly_chart(fig, width='stretch', key=f"dist_chart_{i}")
 
         st.markdown("<hr style='margin:6px 0;border:none;border-top:1px solid #F1F5F9;'>", unsafe_allow_html=True)
 
@@ -478,7 +478,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig, width='stretch', key=f"region_{pillar_id}")
+            st.plotly_chart(fig, width='stretch', key="region_risk_chart")
 
     st.markdown("---")
 
