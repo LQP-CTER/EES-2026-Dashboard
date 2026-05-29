@@ -651,8 +651,8 @@ def _render_action_priorities(df, group_id, contradictions):
 
 def _render_employee_voice(df, group_id, cfg):
     """
-    Phần "Tiếng nói nhân viên" — chọn đƠn vị rồi AI phân tích
-    các câu hỏi mở (Q34: Điều cần thay đổi/cải thiện) theo từng đƠn vị.
+    Phần "Tiếng nói nhân viên" — chọn đơn vị rồi AI phân tích
+    các câu hỏi mở (Q34: Điều cần thay đổi/cải thiện) theo từng đơn vị.
     """
     _BAD_VALS = {None, 'nan', 'none', '', 'n/a', 'na'}
 
@@ -673,7 +673,7 @@ def _render_employee_voice(df, group_id, cfg):
     has_section    = 'section'    in df.columns
 
     if not (has_division or has_department or has_section):
-        st.info("Đây là nhóm không có phân cấp đƠn vị (phóng ban/vùng). Phân tích đang dùng toàn bộ nhóm.")
+        st.info("Đây là nhóm không có phân cấp đơn vị (phóng ban/vùng). Phân tích đang dùng toàn bộ nhóm.")
         _run_voice_analysis(df, open_col, group_id, "Đồng bộ toàn nhóm", cfg)
         return
 
@@ -681,7 +681,7 @@ def _render_employee_voice(df, group_id, cfg):
     st.markdown("""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;
                 padding:16px 20px;margin-bottom:16px;">
-        <div style="font-size:0.82rem;color:#64748B;margin-bottom:4px;">Chọn đƠn vị cần phân tích</div>
+        <div style="font-size:0.82rem;color:#64748B;margin-bottom:4px;">Chọn đơn vị cần phân tích</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -760,7 +760,7 @@ def _render_employee_voice(df, group_id, cfg):
     """, unsafe_allow_html=True)
 
     if n_responses < 3:
-        st.info(f"Không đủ dữ liệu (≥ 3 phản hồi) tại đƠn vị này để phân tích.")
+        st.info(f"Không đủ dữ liệu (≥ 3 phản hồi) tại đơn vị này để phân tích.")
         return
 
     _run_voice_analysis(df_filt, open_col, group_id, unit_label, cfg)
@@ -769,7 +769,7 @@ def _render_employee_voice(df, group_id, cfg):
 def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
     """
     Gọi Groq AI (llama-3.3-70b-versatile) phân tích các câu trả lời mở
-    và trích xuất top mong muốn thay đổi của nhân viên tại đƠn vị.
+    và trích xuất top mong muốn thay đổi của nhân viên tại đơn vị.
     """
     import json, hashlib
     from utils.ai_generator import get_groq_clients_all, format_ai_html
@@ -819,7 +819,7 @@ def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
     mode = st.session_state.get(f'ev_mode_{group_id}', 'desires')
 
     if mode == 'desires':
-        ai_prompt = f"""Bạn là chuyên gia phân tích trải nghiệm nhân viên. Dưới đây là {len(sample)} phản hồi thực tế của nhân viên nhóm «{group_name}», đƠn vị «{unit_label}», về câu hỏi "Bạn mong muốn điều gì cần thay đổi hoặc cải thiện tại GHN?":
+        ai_prompt = f"""Bạn là chuyên gia phân tích trải nghiệm nhân viên. Dưới đây là {len(sample)} phản hồi thực tế của nhân viên nhóm «{group_name}», đơn vị «{unit_label}», về câu hỏi "Bạn mong muốn điều gì cần thay đổi hoặc cải thiện tại GHN?":
 
 {responses_text}
 
@@ -834,16 +834,29 @@ Chủ đề 2: [Tên] (~XX% người dùng) | Dẫn chứng: "..." | Hành độ
 ... (tương tự đến Chủ đề 5)
 TUYỆT ĐỐI KHÔNG viết giới thiệu, kết luận hay giải thích thêm."""
     else:
-        ai_prompt = f"""Bạn là chuyên gia phân tích cảm xúc (Sentiment Analysis) trong HR. Dưới đây là {len(sample)} phản hồi của nhân viên nhóm «{group_name}», đƠn vị «{unit_label}»:
+        ai_prompt = f"""Bạn là Chuyên gia Tâm lý học Tổ chức (Organizational Psychologist) & Phân tích Trải nghiệm Nhân viên cấp cao. Dưới đây là {len(sample)} phản hồi ẩn danh thực tế của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}»:
 
 {responses_text}
 
-Nhiệm vụ:
-1. Phân tích cảm xúc tổng thể: %Tích cực / %Trung lập / %Tiêu cực.
-2. Xác định tâm lý chi phối: nhân viên đang cảm thấy gì nhất?
-3. Tìm 3 tín hiệu cảnh báo định tính (nếu có): mệt mỏi, bất mãn với quản lý, lo ngại về thu nhập...
-4. Tóm tắt trong 3-4 câu cho CEO đọc: trạng thái tâm lý tổng quát của đƠn vị này là gì?
-TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
+Nhiệm vụ của bạn là đọc hiểu sâu sắc (deep reading) các phản hồi này để bóc tách những cảm xúc, trăn trở ngầm ẩn bên dưới. Hãy xuất báo cáo định tính (bằng tiếng Việt) theo đúng cấu trúc sau:
+
+1. Bức Tranh Cảm Xúc Tổng Thể:
+- Tỷ lệ ước lượng: XX% Tích cực / XX% Trung lập / XX% Tiêu cực.
+- Tâm lý chủ đạo: [Ghi rõ trạng thái tâm lý đang chi phối tập thể này: VD Lạc quan, Kiệt sức, Hoang mang, Gắn kết...]. Giải thích ngắn gọn (1 câu) lý do gốc rễ.
+
+2. Phân Tích Sâu Các Trọng Tâm Cảm Xúc (Deep Dive):
+- [Vấn đề 1]: Phân tích sâu nguyên nhân gốc rễ (root cause) khiến nhân viên có cảm xúc này, dựa trên văn bản. Trích dẫn ngắn gọn 1-2 cụm từ điển hình từ dữ liệu để chứng minh.
+- [Vấn đề 2]: (Làm tương tự nếu có)
+
+3. Tín Hiệu Cảnh Báo Ngầm (Red Flags) (Nếu có):
+- Chỉ ra những rủi ro ngầm có thể gây tỷ lệ nghỉ việc cao (turnover) hoặc giảm sút hiệu suất (VD: mâu thuẫn nội bộ, mất niềm tin quản lý, kiệt sức thầm lặng).
+
+4. Tóm Tắt Khuyến Nghị Dành Cho Lãnh Đạo (CEO Summary):
+- Đúc kết trong 2-3 câu sắc sảo nhất về tình trạng "sức khỏe tinh thần" của đơn vị này, và 1 định hướng ưu tiên cần giải quyết ngay.
+
+TUYỆT ĐỐI: 
+- Dùng bullet points rõ ràng, trình bày chuyên nghiệp, câu chữ mang tính tư vấn chiến lược.
+- KHÔNG thêm lời chào, KHÔNG tự sáng tác ngoài dữ liệu."""
 
     # SHOW RAW RESPONSES collapsible
     with st.expander(f"Xem {len(sample)} phản hồi thực tế", expanded=False):
@@ -930,4 +943,4 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
             err_msg = last_error if 'last_error' in locals() else 'Unknown error'
             ai_container.error(f"Không thể kết nối AI. Chi tiết lỗi: {err_msg}")
     else:
-        st.info("Chọn đƠn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")
+        st.info("Chọn đơn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")
