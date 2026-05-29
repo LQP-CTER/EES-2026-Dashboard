@@ -111,15 +111,27 @@ def render_narrative(df, cfg, group_id):
     """, unsafe_allow_html=True)
 
     # ── Tabs for each Act ───────────────────────────────────────────
-    tab_act1, tab_act2, tab_act3, tab_act4, tab_act5 = st.tabs([
-        "Act 1 · Tổng thể",
-        "Act 2 · Nghịch lý",
-        "Act 3 · Đi sâu",
-        "Act 4 · Hành động",
-        "Act 5 · Tiếng nói NV",
-    ])
+    if contradictions:
+        tab_names = [
+            "Act 1 · Tổng thể",
+            "Act 2 · Nghịch lý",
+            "Act 3 · Đi sâu",
+            "Act 4 · Hành động",
+            "Act 5 · Tiếng nói NV",
+        ]
+        tabs = st.tabs(tab_names)
+        tab_act1, tab_act2, tab_act3, tab_act4, tab_act5 = tabs
+    else:
+        tab_names = [
+            "Act 1 · Tổng thể",
+            "Act 2 · Hành động",
+            "Act 3 · Tiếng nói NV",
+        ]
+        tabs = st.tabs(tab_names)
+        tab_act1, tab_act4, tab_act5 = tabs
+        tab_act2 = None
+        tab_act3 = None
 
-    # ── ACT 1 ──────────────────────────────────────────────────────
     # ── ACT 1 ──────────────────────────────────────────────────────
     with tab_act1:
         st.markdown(_act_header(
@@ -150,39 +162,34 @@ def render_narrative(df, cfg, group_id):
                 render_ai_insight_card("CHRO Strategic Summary", {"kpis": kpis, "pillars": pdf.to_dict('records')}, ai_prompt, badge="Act 1 Insight")
 
     # ── ACT 2 ──────────────────────────────────────────────────────
-    with tab_act2:
-        st.markdown(_act_header(
-            "Act 2", "Những nghịch lý dữ liệu",
-            "Mâu thuẫn đáng chú ý cần lãnh đạo quan tâm",
-            color="#DC2626"
-        ), unsafe_allow_html=True)
-        if not contradictions:
-            st.markdown("""
-            <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;
-                        padding:20px 24px;text-align:center;color:#15803D;font-size:0.9rem;font-weight:600">
-                Không phát hiện mâu thuẫn dữ liệu đáng kể. Các chỉ số đều nhất quán.
-            </div>
-            """, unsafe_allow_html=True)
-        else:
+    if tab_act2 is not None:
+        with tab_act2:
+            st.markdown(_act_header(
+                "Act 2", "Những nghịch lý dữ liệu",
+                "Mâu thuẫn đáng chú ý cần lãnh đạo quan tâm",
+                color="#DC2626"
+            ), unsafe_allow_html=True)
             _render_contradiction_cards(contradictions)
 
     # ── ACT 3 ──────────────────────────────────────────────────────
-    with tab_act3:
-        st.markdown(_act_header(
-            "Act 3", "Đi sâu vào nghịch lý",
-            "Phân tích chi tiết các mâu thuẫn có impact cao nhất",
-            color="#8B5CF6"
-        ), unsafe_allow_html=True)
-        if not top_contradictions:
-            st.info("Không có mâu thuẫn nào đủ impact để phân tích sâu.")
-        else:
-            for i, contradiction in enumerate(top_contradictions, 1):
-                _render_deep_dive(df, contradiction, group_id, i)
+    if tab_act3 is not None:
+        with tab_act3:
+            st.markdown(_act_header(
+                "Act 3", "Đi sâu vào nghịch lý",
+                "Phân tích chi tiết các mâu thuẫn có impact cao nhất",
+                color="#8B5CF6"
+            ), unsafe_allow_html=True)
+            if not top_contradictions:
+                st.info("Không có mâu thuẫn nào đủ impact để phân tích sâu.")
+            else:
+                for i, contradiction in enumerate(top_contradictions, 1):
+                    _render_deep_dive(df, contradiction, group_id, i)
 
     # ── ACT 4 ──────────────────────────────────────────────────────
     with tab_act4:
+        act_num_4 = "Act 4" if contradictions else "Act 2"
         st.markdown(_act_header(
-            "Act 4", "Hành động ưu tiên",
+            act_num_4, "Hành động ưu tiên",
             "Ma trận ưu tiên dựa trên tương quan với Engagement Index",
             color="#F59E0B"
         ), unsafe_allow_html=True)
@@ -190,8 +197,9 @@ def render_narrative(df, cfg, group_id):
 
     # ── ACT 5 ──────────────────────────────────────────────────────
     with tab_act5:
+        act_num_5 = "Act 5" if contradictions else "Act 3"
         st.markdown(_act_header(
-            "Act 5", "Tiếng nói nhân viên",
+            act_num_5, "Tiếng nói nhân viên",
             "Mong muốn thay đổi theo từng đơn vị — phân tích định tính bằng AI",
             color="#10B981"
         ), unsafe_allow_html=True)
