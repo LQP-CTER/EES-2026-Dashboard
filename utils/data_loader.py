@@ -22,9 +22,11 @@ BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(BASE, 'Data')
 
 PILLAR_LABELS = {
-    'TC1': 'Niềm tin & Định hướng', 'TC2': 'Quản lý Trực tiếp',
-    'TC3': 'Môi trường & Công cụ', 'TC4': 'Đãi ngộ & Công bằng',
-    'TC5': 'Văn hóa & Tự hào',
+    'TC1': 'Niềm tin & Định hướng',
+    'TC2': 'Năng lực Quản lý Trực tiếp',
+    'TC3': 'Công việc & Điều kiện Vận hành',
+    'TC4': 'Thu nhập & Tính Minh bạch',
+    'TC5': 'Môi trường & Sự Gắn kết',
 }
 
 

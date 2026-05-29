@@ -573,7 +573,7 @@ PILLAR_META = {
     },
     'TC2': {
         'name': 'Năng lực Quản lý Trực tiếp',
-        'short': 'Quản lý TT',
+        'short': 'Năng lực QL',
         'icon': '',
         'color': '#0EA5E9',
         'description': 'Năng lực hỗ trợ, công bằng và phản hồi của quản lý trực tiếp (AM/TBC/Leader)',
