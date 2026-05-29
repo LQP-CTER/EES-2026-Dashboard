@@ -859,16 +859,33 @@ TUYỆT ĐỐI:
 - KHÔNG thêm lời chào, KHÔNG tự sáng tác ngoài dữ liệu."""
 
     # SHOW RAW RESPONSES collapsible
-    with st.expander(f"Xem {len(sample)} phản hồi thực tế", expanded=False):
-        for i, r in enumerate(sample[:50], 1):
-            st.markdown(f"""
+    limit_key = f"ev_limit_{group_id}_{unit_label}"
+    if limit_key not in st.session_state:
+        st.session_state[limit_key] = 50
+
+    is_expanded = st.session_state[limit_key] > 50
+
+    with st.expander(f"Xem {len(responses)} phản hồi thực tế", expanded=is_expanded):
+        current_limit = st.session_state[limit_key]
+        import html
+        
+        html_str = '<div style="max-height: 400px; overflow-y: auto; padding-right: 8px;">'
+        for i, r in enumerate(responses.iloc[:current_limit], 1):
+            safe_r = html.escape(str(r))
+            html_str += f"""
             <div style="background:#F8FAFC;border-left:3px solid #E2E8F0;padding:8px 12px;
                         margin-bottom:6px;border-radius:0 6px 6px 0;font-size:0.83rem;color:#475569;">
-                <span style="color:#94A3B8;font-size:0.72rem;">{i}.</span> {r}
+                <span style="color:#94A3B8;font-size:0.72rem;">{i}.</span> {safe_r}
             </div>
-            """, unsafe_allow_html=True)
-        if len(sample) > 50:
-            st.caption(f"(Chỉ hiển 50/{len(sample)} phản hồi)")
+            """
+        html_str += "</div>"
+        st.markdown(html_str, unsafe_allow_html=True)
+        
+        if current_limit < len(responses):
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button(f"Xem thêm 50 phản hồi (Đang hiện {current_limit}/{len(responses)})", key=f"btn_loadmore_{group_id}_{unit_label}"):
+                st.session_state[limit_key] += 50
+                st.rerun()
 
     # AI ANALYSIS
     st.markdown("")
