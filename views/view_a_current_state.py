@@ -164,19 +164,24 @@ def render(df, cfg, pillar_filter=None):
         st.plotly_chart(fig2, width='stretch', key="view_a_current_state_chart_163")
 
     with col3:
+        from shared.codebook import PILLAR_META
         pillar_data = []
         for pillar, label in PILLAR_LABELS.items():
             col = f'{pillar}_pct'
             if col in df.columns:
-                pillar_data.append({'Trụ cột': label, 'EI (%)': round(df[col].mean(), 1)})
+                pillar_data.append({'Trụ cột': label, 'EI (%)': round(df[col].mean(), 1), 'Code': pillar})
         if pillar_data:
             df_pillars = pd.DataFrame(pillar_data)
-            fig3 = px.bar(df_pillars, x='Trụ cột', y='EI (%)',
-                         color='EI (%)', color_continuous_scale='RdYlGn', range_color=[40, 100],
-                         text='EI (%)')
+            fig3 = go.Figure(go.Bar(
+                x=df_pillars['Trụ cột'], 
+                y=df_pillars['EI (%)'],
+                text=[f"{v:.1f}%" for v in df_pillars['EI (%)']],
+                textposition='outside',
+                marker_color=[PILLAR_META[p]['color'] for p in df_pillars['Code']],
+                hovertemplate='%{x}<br>EI: %{y:.1f}%<extra></extra>'
+            ))
             fig3 = fig_card(fig3, '5 Trụ cột Gắn kết', 'Điểm trung bình theo trụ cột')
-            fig3.update_traces(textposition='outside', texttemplate='%{text:.1f}%')
-            fig3.update_layout(showlegend=False, xaxis_tickangle=-45, coloraxis_showscale=False, yaxis=dict(range=[0, 105]))
+            fig3.update_layout(showlegend=False, xaxis_tickangle=-45, yaxis=dict(range=[0, 110]))
             st.plotly_chart(fig3, width='stretch', key="view_a_current_state_chart_179")
 
     # --- AI Insight for Group Detail ---
