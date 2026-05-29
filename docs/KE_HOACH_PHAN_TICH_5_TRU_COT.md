@@ -427,9 +427,26 @@ def deep_dive_TC5(df_unit, group_id):
 | XP_3 | **Manager Island** | TC2 > 80% + EI < 60% | QL tốt nhưng tổ chức yếu |
 | XP_4 | **Flight Risk Cluster** | Muốn nghỉ > 20% ở 1 đơn vị | Nghỉ hàng loạt — cần can thiệp khẩn |
 | XP_5 | **Income Paradox** | TC4 cao + EI thấp | Tiền tốt nhưng vẫn không gắn kết |
-| XP_6 | **Onboarding Shock** | TC1-TC5 đều thấp ở nhóm < 3 tháng | Sốc onboarding toàn diện |
+| XP_6 | **Onboarding Shock (EWS)** | Tenure ≤ 3 tháng + Q22 thấp + TC2/TC3 thấp | Sốc onboarding, cảnh báo nghỉ việc sớm (Early Warning Score) |
 | XP_7 | **Tenure Cliff** | Điểm giảm đột ngột ở mốc 12-18 tháng | "Cliff" — khi kỳ vọng gặp thực tế |
 | XP_8 | **Generation Gap** | Gen Z < Gen X > 1.0 điểm ở > 2 trụ cột | Khác biệt thế hệ hệ thống |
+| XP_9 | **Engagement Quadrant** | Phân loại 4 nhóm dựa trên eNPS và Q22 | Tách bạch Champions, Trapped Loyalists, Confused Leavers, Flight Risk |
+| XP_10 | **Contradiction Index** | EI > 75% nhưng Open-text Sentiment tiêu cực > 40% | Sức khỏe giả, "sợ nói thật" (Fear-based compliance) |
+| XP_11 | **Satisfaction Gap (JSI)** | Phân tích JSI Proxy (0.4*TC4 + 0.3*TC3_workload + 0.3*TC5_respect) vs EI | Hài lòng công việc hiện tại nhưng không gắn kết, hay ngược lại |
+
+---
+
+## 4.1 CÁC CHỈ SỐ NỀN TẢNG (FOUNDATION INDICES) BỔ SUNG
+
+Ngoài 5 trụ cột, mô hình phân tích cần đo lường:
+1. **Silence Rate**: Tỷ lệ không điền câu hỏi mở (Q26). Silence rate càng cao = nhân viên càng thiếu niềm tin vào việc phản hồi có tác dụng.
+2. **Engagement Quadrant Matrix**:
+   - *Champions*: eNPS cao + Q22 cao (gắn kết & ở lại).
+   - *Trapped Loyalists*: eNPS thấp + Q22 cao (disengaged nhưng chưa nghỉ).
+   - *Confused Leavers*: eNPS cao + Q22 thấp (thích công ty nhưng sắp đi).
+   - *Flight Risk*: eNPS thấp + Q22 thấp (đang lên kế hoạch rời đi).
+3. **JSI (Overall Job Satisfaction Index) Proxy**: Ước tính mức độ hài lòng chung bằng công thức `JSI ≈ 0.4*TC4 + 0.3*TC3_workload + 0.3*TC5_respect`. Dùng để phân tích chéo "Hài lòng" vs "Gắn kết".
+4. **Early Warning Score (EWS)**: Cảnh báo nghỉ việc sớm ở nhóm thâm niên ≤ 3 tháng thông qua Q22, TC2, TC3.
 
 ---
 

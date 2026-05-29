@@ -29,8 +29,8 @@ Tất cả 6 nhóm đều có **24 câu hỏi chính** theo cùng một sườn:
 |--------------|----------|-------|
 | Nhân khẩu học (Q1–Q8) | 8 câu | Năm sinh, giới tính, thâm niên, trình độ, v.v. |
 | Likert 1–5 (Q9–Q29) | 21 câu | Đo lường 5 trụ cột + ý định ở lại |
-| Câu hỏi mở (Q32–Q34) | 3 câu | Thích nhất / Điều giúp gắn bó / Cần cải thiện |
-| eNPS (Q31) | 1 câu | Thang 0–10 |
+| Câu hỏi mở (Q24–Q26) | 3 câu | Thích nhất / Điều giúp gắn bó / Cần cải thiện |
+| eNPS (Q23) | 1 câu | Thang 0–10 |
 
 **5 trụ cột đo lường (Engagement Index):**
 
@@ -106,8 +106,8 @@ Một mình "đánh đồng đều" (straight-line) không đủ cơ sở để 
 | Headcount | 13,867 |
 | Raw form | 12,955 |
 | Tỷ lệ phản hồi | 93.4% |
-| Câu Likert | 21 câu (Q9–Q29), không bắt buộc toàn bộ |
-| Câu mở | 3 câu (Q32, Q33, Q34), không bắt buộc |
+| Câu Likert | 21 câu (Q9–Q22), không bắt buộc toàn bộ |
+| Câu mở | 3 câu (Q24, Q25, Q26), không bắt buộc |
 
 **Phân tích Straight-line:**
 
@@ -308,7 +308,7 @@ Không có phản hồi nào bị loại vì:
 
 ```
 1.  Load raw CSV (Supabase → fallback Google Sheets)
-2.  Rename columns theo codebook (col_idx → Q9, Q10, ..., Q34)
+2.  Rename columns theo codebook (col_idx → Q9, Q10, ..., Q26)
 3.  Decode Likert: A→1, B→2, C→3, D→4, E→5
 4.  Decode eNPS: A→1 ... J→10
 5.  Decode Q5 (thâm niên): A→"Dưới 1 tháng" ... I→"Trên 5 năm"
@@ -321,9 +321,10 @@ Không có phản hồi nào bị loại vì:
 8.  Map org structure (division / department / section / region)
 9.  Tính Pillar scores: TC1_pct ... TC5_pct (top-2-box %)
 10. Tính Engagement Index (EI) = weighted average 5 pillars
-11. Tính MEI, burnout_risk, stay_intention, eNPS_group
+11. Tính MEI, burnout_risk, stay_intention (Q22), eNPS_group (Q23)
 12. Preprocess open-text (NLP pipeline)
-13. Return (df_clean, n_before)
+13. Tính toán các chỉ số phái sinh: Silence Rate (tỷ lệ trống Q26) và Contradiction Index (EI cao nhưng NLP tiêu cực)
+14. Return (df_clean, n_before)
 ```
 
 ### Pattern Straight-line theo Nhóm
