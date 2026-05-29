@@ -102,15 +102,20 @@ def load_group(group_id: str):
     df['flag_straightline_and_empty'] = df['flag_straightline'] & df['flag_empty_open']
 
     if group_id in ['1A', '1B']:
-        # Đối với 1A, 1B: Loại nếu đánh bừa (straight-line) VÀ không ghi ý kiến mở
+        # Đối với 1A, 1B (Quiz Platform): Loại nếu đánh bừa (straight-line) VÀ không ghi ý kiến mở
         df_clean = df[~df['flag_straightline_and_empty']].copy()
         _filter_method = 'straight_and_empty'
         _filter_desc   = 'Loại phiếu: đánh cùng 1 điểm cho tất cả câu (straight-line) VÀ không có câu trả lời mở ý nghĩa'
     else:
-        # Đối với 2A, 2B, 3A, 3B
-        df_clean = df[~(df['flag_too_missing'] | df['flag_straightline'])].copy()
-        _filter_method = 'standard'
-        _filter_desc   = 'Loại phiếu: bỏ trống >80% câu hỏi hoặc đánh cùng 1 điểm cho tất cả câu (straight-line)'
+        # Đối với 2A, 2B, 3A, 3B (Google Form):
+        # - Tất cả câu hỏi BẮT BUỘC → không thể có missing → flag_too_missing luôn = False
+        # - Không lấy email → không thể dedup theo email
+        # - Straight-line ĐƠN LẺ KHÔNG bị loại: nhân viên có thể thật sự đánh đồng đều
+        # - Chỉ loại khi straight-line VÀ không có open-text ý nghĩa (cùng tiêu chí với 1A/1B)
+        df_clean = df[~df['flag_straightline_and_empty']].copy()
+        _filter_method = 'straight_and_empty_google_form'
+        _filter_desc   = 'Loại phiếu (Google Form): đánh cùng 1 điểm cho tất cả câu Likert VÀ không có câu trả lời mở ý nghĩa'
+
 
     _n_removed = n_before - len(df_clean)
     _pct_removed = round(_n_removed / n_before * 100, 1) if n_before > 0 else 0
