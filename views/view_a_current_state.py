@@ -851,6 +851,9 @@ def render(df, cfg, pillar_filter=None):
                     sample_size = min(20, len(all_texts))
                     sampled = random.sample(all_texts, sample_size)
                     sample_texts = "\n- ".join(sampled)
+                    
+                    with st.expander("💬 Xem nhanh các bình luận / ý kiến mở của bộ phận này (Dữ liệu thô)"):
+                        st.markdown(sample_texts)
                         
                 ai_data = {
                     "Unit": _sel_unit,
@@ -872,15 +875,17 @@ def render(df, cfg, pillar_filter=None):
                 )
                 if sample_texts:
                     prompt += f"Trích xuất một số ý kiến thực tế của nhân viên bộ phận này:\n- {sample_texts}\n\n"
+                else:
+                    prompt += "Lưu ý: Không có dữ liệu câu hỏi mở cho bộ phận này.\n\n"
                 
                 prompt += (
                     "Yêu cầu (trình bày súc tích, trực diện):\n"
-                    "1. Chỉ ra nguyên nhân tại sao các chỉ số của bộ phận này lại cao/thấp hơn mặt bằng chung (kết nối số liệu trụ cột và ý kiến nhân viên để giải thích).\n"
-                    "2. Nhận diện vấn đề nhức nhối nhất hoặc điểm sáng nổi bật nhất của bộ phận.\n"
+                    "1. BẮT BUỘC: Sử dụng và trích dẫn trực tiếp các ý kiến thực tế (câu hỏi mở) bên trên để giải thích TẠI SAO các chỉ số của bộ phận này lại cao/thấp hoặc có sự bất thường (kết nối số liệu với lời nói thực tế).\n"
+                    "2. Nhận diện vấn đề nhức nhối nhất hoặc điểm sáng nổi bật nhất của bộ phận dựa trên các bằng chứng đó.\n"
                     "3. Đề xuất hành động quản trị cụ thể, khả thi dành riêng cho quản lý của bộ phận này."
                 )
                 
-                render_ai_insight_card("Phân tích Đơn vị", ai_data, prompt)
+                render_ai_insight_card("Phân tích Đơn vị & Tiếng nói nhân viên", ai_data, prompt)
 
 
     except Exception as _dd_err:
