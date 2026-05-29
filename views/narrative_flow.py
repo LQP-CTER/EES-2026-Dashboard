@@ -725,6 +725,37 @@ def _render_hidden_risks(df, group_id):
     )
     st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_hidden_risks")
     
+    # Thêm Heatmap phân rã theo phòng ban / vùng
+    group_col = None
+    if 'tên_bc' in df.columns and df['tên_bc'].nunique() > 1:
+        group_col = 'tên_bc'
+    elif 'vùng' in df.columns and df['vùng'].nunique() > 1:
+        group_col = 'vùng'
+        
+    if group_col:
+        st.markdown(f"<div style='font-size:0.9rem;font-weight:700;color:#64748B;margin-top:20px;margin-bottom:10px;'>Phân rã Rủi ro theo {group_col.replace('_', ' ').title()}</div>", unsafe_allow_html=True)
+        top_5_qs = sdf['Q'].tolist()
+        heatmap_data = df.groupby(group_col)[top_5_qs].mean().round(2)
+        
+        fig_hm = go.Figure(data=go.Heatmap(
+            z=heatmap_data.values,
+            x=[get_question_label(group_id, q) for q in heatmap_data.columns],
+            y=heatmap_data.index,
+            colorscale='RdYlGn',
+            zmin=1, zmax=5,
+            text=heatmap_data.values,
+            texttemplate="%{text:.2f}",
+            showscale=False
+        ))
+        fig_hm.update_layout(
+            height=max(250, len(heatmap_data) * 40),
+            margin=dict(l=10, r=10, t=10, b=80),
+            xaxis=dict(tickangle=30),
+            yaxis=dict(autorange="reversed"),
+            font=dict(family='Inter')
+        )
+        st.plotly_chart(fig_hm, use_container_width=True, key="narrative_flow_chart_hidden_risks_heatmap")
+    
     # AI Insight
     prompt = (
         f"Bạn là Senior Data Analyst. Đơn vị này không có mâu thuẫn dữ liệu nghiêm trọng, "
@@ -770,6 +801,49 @@ def _render_weakness_deep_dive(df, group_id):
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # 1. Biểu đồ phân bố điểm
+    fig_dist = go.Figure(go.Bar(
+        x=[f"{int(k)} sao" for k in dist.index], y=dist.values,
+        marker=dict(color='#8B5CF6', cornerradius=4),
+        text=[f"{v:.1f}%" for v in dist.values],
+        textposition='outside',
+        textfont=dict(size=12, color='#0A1F44', family='Inter')
+    ))
+    fig_dist.update_layout(
+        title=dict(text="Tỷ lệ phân bố điểm đánh giá", font=dict(size=14, color='#475569')),
+        height=250, margin=dict(l=10, r=10, t=40, b=10),
+        yaxis=dict(showgrid=True, gridcolor='rgba(226,232,240,0.6)', range=[0, max(dist.values)*1.2]),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(family='Inter')
+    )
+    st.plotly_chart(fig_dist, use_container_width=True, key="narrative_flow_chart_weakness_dist")
+
+    # 2. Phân rã theo vùng/phòng ban
+    group_col = None
+    if 'tên_bc' in df.columns and df['tên_bc'].nunique() > 1:
+        group_col = 'tên_bc'
+    elif 'vùng' in df.columns and df['vùng'].nunique() > 1:
+        group_col = 'vùng'
+        
+    if group_col:
+        region_scores = df.groupby(group_col)[worst_q].mean().dropna().sort_values()
+        
+        fig_brk = go.Figure(go.Bar(
+            x=region_scores.values, y=region_scores.index, orientation='h',
+            marker=dict(color='#EF4444', cornerradius=4),
+            text=[f"{v:.2f}" for v in region_scores.values],
+            textposition='outside',
+            textfont=dict(size=12, color='#0A1F44', family='Inter')
+        ))
+        fig_brk.update_layout(
+            title=dict(text=f"Điểm '{worst_q}' theo {group_col.replace('_', ' ').title()} (Vùng kéo dữ liệu xuống)", font=dict(size=14, color='#475569')),
+            height=max(250, len(region_scores) * 35), margin=dict(l=10, r=40, t=40, b=10),
+            xaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)'),
+            yaxis=dict(automargin=True, autorange="reversed"),
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(family='Inter')
+        )
+        st.plotly_chart(fig_brk, use_container_width=True, key="narrative_flow_chart_weakness_breakdown")
+
     
     # AI Deep Dive
     prompt = (
