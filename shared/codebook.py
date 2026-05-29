@@ -644,6 +644,91 @@ _CODEBOOK_REGISTRY = {
     '3B': CODEBOOK_3B,
 }
 
+# ============================================================
+# 10. SEMANTIC QUESTION-ROLE MAP (theo KE_HOACH_PHAN_TICH_5_TRU_COT)
+# ============================================================
+#
+# Tài liệu KE_HOACH định nghĩa cấu trúc câu hỏi → trụ cột KHÁC NHAU giữa
+# nhóm 1A/1B (frontline) và 2A/2B/3A/3B (back office / quản lý):
+#
+#   | Trụ cột | 1A/1B        | 2A/2B/3A/3B  |
+#   |---------|--------------|--------------|
+#   | TC1     | Q9-Q10 (2)   | Q9-Q12  (4)  |
+#   | TC2     | Q11-Q15 (5)  | Q13-Q17 (5)  |
+#   | TC3     | Q16-Q20 (5)  | Q18-Q21 (4)  |
+#   | TC4     | Q21-Q25 (5)  | Q22-Q25 (4)  |
+#   | TC5     | Q26-Q29 (4)  | Q26-Q29 (4)  |
+#
+# Vì cùng một "vai trò phân tích" (ví dụ: câu về công cụ, câu về thăng tiến,
+# câu về thu nhập...) nằm ở các SỐ CÂU KHÁC NHAU tùy nhóm, engine phân tích
+# KHÔNG được hard-code số câu. Thay vào đó, ta tra "vai trò" (role) → mã câu
+# theo từng nhóm thông qua bảng dưới đây.
+#
+# Các vai trò chuẩn (role keys):
+#   info_trust       - Tin vào BLĐ/định hướng (TC1)
+#   info_timely      - Thông báo thay đổi kịp thời (TC1)
+#   mgr_support      - Quản lý trực tiếp hỗ trợ (TC2)
+#   mgr_fairness     - Quản lý phân bổ/xử lý công bằng (TC2)
+#   mgr_feedback     - Quản lý phản hồi/ghi nhận (TC2)
+#   tool             - Công cụ / thiết bị / app (TC3)
+#   career           - Lộ trình thăng tiến (TC3)
+#   change_guide     - Hướng dẫn khi thay đổi quy trình (TC3)
+#   workload         - Cường độ / khối lượng công việc (TC3)
+#   income_fair      - Thu nhập phản ánh công sức / công bằng (TC4)
+#   transparency     - Minh bạch cách tính / phạt / phụ cấp (TC4)
+#   incident_support - Hỗ trợ khi gặp sự cố ảnh hưởng thu nhập (TC4)
+#   peer             - Đồng nghiệp / tập thể hỗ trợ (TC5)
+#   pride            - Tự hào về tổ chức (TC5)
+#   pressure         - Áp lực không ảnh hưởng cuộc sống (TC5)
+
+# Layout 1A — Shipper (TC5: Q26 ATGT, Q27 đồng nghiệp, Q28 tự hào, Q29 áp lực)
+_ROLES_1A = {
+    'info_trust': 'Q9',  'info_timely': 'Q10',
+    'mgr_support': 'Q11', 'mgr_fairness': 'Q12', 'mgr_feedback': 'Q15',
+    'tool': 'Q16', 'workload': 'Q18', 'career': 'Q19', 'change_guide': 'Q20',
+    'income_fair': 'Q21', 'transparency': 'Q22', 'incident_support': 'Q25',
+    'peer': 'Q27', 'pride': 'Q28', 'pressure': 'Q29',
+}
+
+# Layout 1B — Tài xế (TC5: Q26 đội xe, Q27 tự hào, Q28 áp lực, Q29 được tôn trọng)
+_ROLES_1B = {
+    'info_trust': 'Q9',  'info_timely': 'Q10',
+    'mgr_support': 'Q11', 'mgr_fairness': 'Q12', 'mgr_feedback': 'Q15',
+    'tool': 'Q16', 'workload': 'Q18', 'career': 'Q19', 'change_guide': 'Q20',
+    'income_fair': 'Q21', 'transparency': 'Q22', 'incident_support': 'Q25',
+    'peer': 'Q26', 'pride': 'Q27', 'pressure': 'Q28',
+}
+
+# Layout back office / quản lý (2A/2B/3A/3B)
+# TC5 = Q26-Q29 (generic). Quy ước: Q26 môi trường/đồng nghiệp, Q27 đồng nghiệp/
+# phối hợp, Q28 tự hào/thuộc về, Q29 áp lực kiểm soát được.
+_ROLES_BACKOFFICE = {
+    'info_trust': 'Q9',  'info_timely': 'Q10',
+    'mgr_support': 'Q13', 'mgr_fairness': 'Q14', 'mgr_feedback': 'Q17',
+    'tool': 'Q18', 'workload': 'Q21', 'career': 'Q21', 'change_guide': 'Q20',
+    'income_fair': 'Q22', 'transparency': 'Q23', 'incident_support': 'Q25',
+    'peer': 'Q27', 'pride': 'Q28', 'pressure': 'Q29',
+}
+
+PILLAR_QUESTION_ROLES = {
+    '1A': _ROLES_1A,
+    '1B': _ROLES_1B,
+    '2A': _ROLES_BACKOFFICE,
+    '2B': _ROLES_BACKOFFICE,
+    '3A': _ROLES_BACKOFFICE,
+    '3B': _ROLES_BACKOFFICE,
+}
+
+
+def get_role_question(group_id, role):
+    """Trả về mã câu hỏi (vd 'Q16') đóng vai trò `role` cho nhóm `group_id`.
+
+    Returns None nếu nhóm/role không tồn tại. Engine phân tích nên dùng hàm này
+    thay vì hard-code số câu, để đúng cho cả 6 nhóm.
+    """
+    return PILLAR_QUESTION_ROLES.get(group_id, _ROLES_1A).get(role)
+
+
 def get_pillar_description(pillar_id, group_id=None):
     """Return the context-specific pillar description based on the user group."""
     meta = PILLAR_META.get(pillar_id)

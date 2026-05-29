@@ -1,6 +1,11 @@
 """
-Pillar Anomaly Detector — EES 2026
-Phát hiện bất thường trong từng trụ cột (TC1-TC5) cho mỗi nhóm khảo sát.
+Pillar Anomaly Detector — EES 2026  [DEPRECATED — KHÔNG DÙNG]
+
+⚠️  Module này KHÔNG còn được import ở bất kỳ đâu trong dashboard.
+    Engine anomaly chính thức (đã refactor theo role-based mapping cho cả 6
+    nhóm) là `utils/anomaly_detector.py`. File này hard-code số câu theo
+    layout 1A/1B nên KHÔNG đúng cho 2A/2B/3A/3B — giữ lại chỉ để tham khảo
+    lịch sử. Mọi thay đổi logic phải thực hiện ở `utils/anomaly_detector.py`.
 
 Logic: DETECT → DEEP DIVE → AI INSIGHT
 - Detect: Chạy rules per pillar per group

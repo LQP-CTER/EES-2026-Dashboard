@@ -17,6 +17,8 @@ Mỗi hàm trả về list[dict] với format:
 import pandas as pd
 import numpy as np
 
+from shared.codebook import get_role_question, get_pillar_questions
+
 
 # ─────────────────────────────────────────────────────────────
 # HELPERS
@@ -43,6 +45,19 @@ def _qmean(df, col):
     return _safe_mean(q) if q is not None else None
 
 
+def _role_mean(df, group_id, role):
+    """Trả về điểm TB của câu đóng vai trò `role` cho `group_id`.
+
+    Cốt lõi của bản refactor: anomaly detector KHÔNG còn hard-code số câu
+    theo layout 1A/1B. Mọi tham chiếu "câu công cụ", "câu thăng tiến",
+    "câu thu nhập"... đều tra qua role → đúng cho cả 6 nhóm.
+    """
+    qid = get_role_question(group_id, role)
+    if qid is None:
+        return None, None
+    return qid, _qmean(df, qid)
+
+
 def _pillar_pct(df, pillar_id):
     col = f'{pillar_id}_pct'
     if col in df.columns:
@@ -60,8 +75,8 @@ def _severity_badge(s):
 
 def detect_TC1(df, group_id=''):
     anomalies = []
-    q9  = _qmean(df, 'Q9')
-    q10 = _qmean(df, 'Q10')
+    trust_q, q9  = _role_mean(df, group_id, 'info_trust')   # vd Q9
+    timely_q, q10 = _role_mean(df, group_id, 'info_timely')  # vd Q10
     ei  = df['EI'].mean() if 'EI' in df.columns else None
     tc1 = _pillar_pct(df, 'TC1')
     intent_pct = None
@@ -119,9 +134,9 @@ def detect_TC2(df, group_id=''):
     tc2 = _pillar_pct(df, 'TC2')
     ei  = df['EI'].mean() if 'EI' in df.columns else None
     mei = df['MEI'].mean() if 'MEI' in df.columns else None
-    q11 = _qmean(df, 'Q11')
-    q12 = _qmean(df, 'Q12')
-    q15 = _qmean(df, 'Q15')
+    support_q, q11 = _role_mean(df, group_id, 'mgr_support')   # 1A/1B: Q11 | 2A-3B: Q13
+    fairness_q, q12 = _role_mean(df, group_id, 'mgr_fairness')  # 1A/1B: Q12 | 2A-3B: Q14
+    feedback_q, q15 = _role_mean(df, group_id, 'mgr_feedback')  # 1A/1B: Q15 | 2A-3B: Q17
     intent_pct = None
     if 'intent' in df.columns:
         valid = df['intent'].dropna()
@@ -147,11 +162,11 @@ def detect_TC2(df, group_id=''):
             'id': 'TC2_A2', 'pillar': 'TC2', 'severity': 'warning',
             'title': 'Phân công không công bằng là vấn đề chính',
             'message': (
-                f'Hỗ trợ từ quản lý (Q11={q11:.2f}) tốt hơn nhiều so với công bằng phân công (Q12={q12:.2f}). '
+                f'Hỗ trợ từ quản lý ({support_q}={q11:.2f}) tốt hơn nhiều so với công bằng phân công ({fairness_q}={q12:.2f}). '
                 f'Nhân viên cảm nhận quản lý HỖ TRỢ tốt nhưng PHÂN ĐƠN/LỊCH không công bằng. '
                 f'Đây là ngòi nổ chính cho mâu thuẫn nội bộ và flight risk.'
             ),
-            'data': {'Q11_ho_tro': round(q11, 2), 'Q12_cong_bang': round(q12, 2), 'gap': round(q11-q12, 2)},
+            'data': {f'{support_q}_ho_tro': round(q11, 2), f'{fairness_q}_cong_bang': round(q12, 2), 'gap': round(q11-q12, 2)},
             'action': 'Audit quy trình phân đơn/phân lịch. Xem xét thuật toán có tạo ra bất công không (tuyến dài vs ngắn, khu vực dày vs thưa).'
         })
 
@@ -184,19 +199,19 @@ def detect_TC2(df, group_id=''):
         })
 
     # TC2_A5: Feedback một chiều
-    if q15 is not None:
-        tc2_qs = [c for c in ['Q11','Q12','Q13','Q14','Q15'] if c in df.columns]
+    if q15 is not None and feedback_q is not None:
+        tc2_qs = [c for c in get_pillar_questions(group_id, 'TC2') if c in df.columns]
         means = {q: _qmean(df, q) for q in tc2_qs if _qmean(df, q) is not None}
         if means and q15 == min(means.values()) and q15 < 3.6:
             anomalies.append({
                 'id': 'TC2_A5', 'pillar': 'TC2', 'severity': 'watch',
                 'title': 'Phản hồi một chiều — Nhân viên không được lắng nghe',
                 'message': (
-                    f'Câu về phản hồi (Q15={q15:.2f}) là điểm thấp nhất trong TC2. '
+                    f'Câu về phản hồi ({feedback_q}={q15:.2f}) là điểm thấp nhất trong TC2. '
                     f'Nhân viên có thể hoàn thành công việc nhưng không cảm thấy được lắng nghe và ghi nhận. '
                     f'Đây là dấu hiệu sớm của silent disengagement.'
                 ),
-                'data': {'Q15_phan_hoi': round(q15, 2)},
+                'data': {f'{feedback_q}_phan_hoi': round(q15, 2)},
                 'action': 'Triển khai "weekly check-in 5 phút" — quản lý hỏi 2 câu: "Tuần này có vấn đề gì không?" và "Cần hỗ trợ gì?".'
             })
 
@@ -209,11 +224,11 @@ def detect_TC2(df, group_id=''):
 
 def detect_TC3(df, group_id=''):
     anomalies = []
-    q16 = _qmean(df, 'Q16')
-    q18 = _qmean(df, 'Q18')
-    q19 = _qmean(df, 'Q19')
-    q20 = _qmean(df, 'Q20')
-    q10 = _qmean(df, 'Q10')  # TC1 — thông báo kịp thời
+    tool_q, q16 = _role_mean(df, group_id, 'tool')          # 1A/1B: Q16 | 2A-3B: Q18
+    workload_q, q18 = _role_mean(df, group_id, 'workload')   # 1A/1B: Q18 | 2A-3B: Q21
+    career_q, q19 = _role_mean(df, group_id, 'career')       # 1A/1B: Q19 | 2A-3B: Q21
+    change_q, q20 = _role_mean(df, group_id, 'change_guide')  # 1A/1B: Q20 | 2A-3B: Q20
+    timely_q, q10 = _role_mean(df, group_id, 'info_timely')   # TC1 — thông báo kịp thời
 
     burnout_pct = None
     if 'burnout_risk' in df.columns:
@@ -221,40 +236,40 @@ def detect_TC3(df, group_id=''):
         burnout_pct = (valid > 0).sum() / len(valid) * 100 if len(valid) > 0 else None
 
     # TC3_A1: Công cụ cản trở
-    if q16 is not None and q16 < 3.5:
+    if q16 is not None and q16 < 3.5 and tool_q is not None:
         anomalies.append({
             'id': 'TC3_A1', 'pillar': 'TC3', 'severity': 'warning',
             'title': 'Công cụ/App đang cản trở công việc, không phải hỗ trợ',
             'message': (
-                f'Q16 (App/thiết bị) = {q16:.2f}/5 — dưới ngưỡng 3.5. '
+                f'{tool_q} (App/thiết bị/công cụ) = {q16:.2f}/5 — dưới ngưỡng 3.5. '
                 f'Công cụ kém không chỉ ảnh hưởng hiệu suất mà còn tạo ra frustration mỗi ngày, '
                 f'tích lũy thành bất mãn tổng thể. Liên kết với HRIS: năng suất thực tế có bị ảnh hưởng không?'
             ),
-            'data': {'Q16_cong_cu': round(q16, 2)},
-            'action': 'Thu thập báo lỗi App Driver cụ thể từ nhân viên. Fix bug ưu tiên cao trong 2 tuần. Thông báo rõ roadmap cải thiện.'
+            'data': {f'{tool_q}_cong_cu': round(q16, 2)},
+            'action': 'Thu thập báo lỗi công cụ/thiết bị cụ thể từ nhân viên. Fix lỗi ưu tiên cao trong 2 tuần. Thông báo rõ roadmap cải thiện.'
         })
 
     # TC3_A2: Burnout ẩn
-    if q18 is not None and burnout_pct is not None and q18 > 3.5 and burnout_pct > 28:
+    if q18 is not None and burnout_pct is not None and q18 > 3.5 and burnout_pct > 28 and workload_q is not None:
         anomalies.append({
             'id': 'TC3_A2', 'pillar': 'TC3', 'severity': 'critical',
             'title': 'Burnout ẩn — Nhân viên không nhận ra mình đang kiệt sức',
             'message': (
-                f'Nhân viên tự đánh giá cường độ ổn (Q18={q18:.2f}) nhưng chỉ số Burnout thực tế lên tới {burnout_pct:.1f}%. '
+                f'Nhân viên tự đánh giá cường độ ổn ({workload_q}={q18:.2f}) nhưng chỉ số Burnout thực tế lên tới {burnout_pct:.1f}%. '
                 f'Đây là "burnout blind spot" — nguy hiểm vì không có dấu hiệu cảnh báo sớm từ chính nhân viên. '
                 f'Flip point thường xảy ra đột ngột khi vượt qua ngưỡng chịu đựng.'
             ),
-            'data': {'Q18_cuong_do': round(q18, 2), 'burnout_pct': round(burnout_pct, 1)},
+            'data': {f'{workload_q}_cuong_do': round(q18, 2), 'burnout_pct': round(burnout_pct, 1)},
             'action': 'Pulse check hàng tháng về tải công việc. Xem xét giảm KPI đơn vào mùa thấp điểm để tái nạp năng lượng cho nhân viên.'
         })
 
     # TC3_A3: Trần thủy tinh (Glass Ceiling)
-    if q19 is not None and 'Q5' in df.columns:
+    if q19 is not None and career_q is not None and 'Q5' in df.columns:
         senior_mask = df['Q5'].isin(TENURE_SENIOR)
         if senior_mask.sum() >= 10:
-            senior_career = df.loc[senior_mask, 'Q19'].dropna().mean()
+            senior_career = df.loc[senior_mask, career_q].dropna().mean()
             junior_mask = df['Q5'].isin(TENURE_EARLY)
-            junior_career = df.loc[junior_mask, 'Q19'].dropna().mean() if junior_mask.sum() >= 10 else None
+            junior_career = df.loc[junior_mask, career_q].dropna().mean() if junior_mask.sum() >= 10 else None
             if senior_career < 3.2 and (junior_career is None or (junior_career - senior_career) > 0.3):
                 anomalies.append({
                     'id': 'TC3_A3', 'pillar': 'TC3', 'severity': 'warning',
@@ -272,16 +287,16 @@ def detect_TC3(df, group_id=''):
                 })
 
     # TC3_A4: Thay đổi không hướng dẫn + Thông tin kém
-    if q20 is not None and q10 is not None and q20 < 3.4 and q10 < 3.5:
+    if q20 is not None and q10 is not None and q20 < 3.4 and q10 < 3.5 and change_q is not None:
         anomalies.append({
             'id': 'TC3_A4', 'pillar': 'TC3', 'severity': 'warning',
             'title': 'Double Gap: Thay đổi không được thông báo VÀ không được hướng dẫn',
             'message': (
-                f'TC1-Q10 (thông báo kịp thời) = {q10:.2f} thấp, kết hợp Q20 (hướng dẫn khi thay đổi) = {q20:.2f} thấp. '
+                f'TC1-{timely_q} (thông báo kịp thời) = {q10:.2f} thấp, kết hợp {change_q} (hướng dẫn khi thay đổi) = {q20:.2f} thấp. '
                 f'Đây là "double gap": nhân viên không biết thay đổi sắp đến VÀ khi đến cũng không biết làm gì. '
                 f'Gây ra lo lắng, sai sót và mất tin tưởng.'
             ),
-            'data': {'Q10_thong_bao': round(q10, 2), 'Q20_huong_dan': round(q20, 2)},
+            'data': {f'{timely_q}_thong_bao': round(q10, 2), f'{change_q}_huong_dan': round(q20, 2)},
             'action': 'Bất kỳ thay đổi quy trình nào cần kèm SOP rõ ràng. Triển khai "Change Communication Checklist": thông báo trước 7 ngày + hướng dẫn thực hành.'
         })
 
@@ -294,9 +309,9 @@ def detect_TC3(df, group_id=''):
 
 def detect_TC4(df, group_id=''):
     anomalies = []
-    q21 = _qmean(df, 'Q21')
-    q22_tc4 = _qmean(df, 'Q22')  # Trong 1A: App hiển thị rõ phạt/thu nhập
-    q25 = _qmean(df, 'Q25')
+    income_q, q21 = _role_mean(df, group_id, 'income_fair')        # 1A/1B: Q21 | 2A-3B: Q22
+    transp_q, q22_tc4 = _role_mean(df, group_id, 'transparency')   # 1A/1B: Q22 | 2A-3B: Q23
+    incident_q, q25 = _role_mean(df, group_id, 'incident_support')  # Q25 cho cả hai layout
     tc4 = _pillar_pct(df, 'TC4')
 
     intent_pct = None
@@ -307,32 +322,32 @@ def detect_TC4(df, group_id=''):
     tc5 = _pillar_pct(df, 'TC5')
 
     # TC4_A1: Cảm nhận bất công (có thể do minh bạch, không phải mức lương)
-    if q21 is not None and q21 < 3.4:
+    if q21 is not None and q21 < 3.4 and income_q is not None:
         anomalies.append({
             'id': 'TC4_A1', 'pillar': 'TC4', 'severity': 'warning',
             'title': 'Thu nhập bị cảm nhận là không công bằng',
             'message': (
-                f'Q21 (thu nhập phản ánh công sức) = {q21:.2f}/5. '
+                f'{income_q} (thu nhập phản ánh công sức) = {q21:.2f}/5. '
                 f'Lưu ý: vấn đề có thể là MINH BẠCH, không phải mức lương. '
-                f'Cần so sánh với dữ liệu HRIS: nếu thu nhập thực tế ổn mà Q21 vẫn thấp → '
+                f'Cần so sánh với dữ liệu HRIS: nếu thu nhập thực tế ổn mà {income_q} vẫn thấp → '
                 f'nhân viên không hiểu cách tính, không phải lương thấp.'
             ),
-            'data': {'Q21_cong_bang': round(q21, 2)},
+            'data': {f'{income_q}_cong_bang': round(q21, 2)},
             'action': 'Tổ chức buổi giải thích "Lương của bạn được tính như thế nào" cho nhân viên TC4 thấp nhất. Đơn giản hóa cách trình bày thu nhập trên App.'
         })
 
     # TC4_A2: Phạt không minh bạch
-    if q21 is not None and q22_tc4 is not None and (q21 - q22_tc4) > 0.45:
+    if q21 is not None and q22_tc4 is not None and (q21 - q22_tc4) > 0.45 and transp_q is not None:
         anomalies.append({
             'id': 'TC4_A2', 'pillar': 'TC4', 'severity': 'warning',
             'title': 'Phạt/Thu nhập hiển thị không rõ ràng',
             'message': (
-                f'Q21 (thu nhập công bằng) = {q21:.2f} vs Q22 (App hiển thị rõ phạt) = {q22_tc4:.2f}. '
+                f'{income_q} (thu nhập công bằng) = {q21:.2f} vs {transp_q} (minh bạch cách tính/phạt) = {q22_tc4:.2f}. '
                 f'Khoảng cách {q21-q22_tc4:.2f} điểm: nhân viên CHẤP NHẬN thu nhập nhưng không hiểu các khoản khấu trừ/phạt. '
                 f'Sự mờ ám về phạt tạo ra cảm giác bị bất công dù mức lương ổn.'
             ),
-            'data': {'Q21': round(q21, 2), 'Q22_app_phat': round(q22_tc4, 2)},
-            'action': 'Cải thiện UI màn hình thu nhập App Driver: tách rõ lương cơ bản / thưởng / phạt / khấu trừ thành từng dòng với giải thích đơn giản.'
+            'data': {income_q: round(q21, 2), f'{transp_q}_minh_bach': round(q22_tc4, 2)},
+            'action': 'Cải thiện UI màn hình thu nhập: tách rõ lương cơ bản / thưởng / phạt / khấu trừ thành từng dòng với giải thích đơn giản.'
         })
 
     # TC4_A3: Thu nhập ổn nhưng vẫn muốn nghỉ
@@ -351,19 +366,19 @@ def detect_TC4(df, group_id=''):
         })
 
     # TC4_A4: Hỗ trợ sự cố kém
-    if q25 is not None:
-        tc4_qs = [c for c in ['Q21','Q22','Q23','Q24','Q25'] if c in df.columns]
+    if q25 is not None and incident_q is not None:
+        tc4_qs = [c for c in get_pillar_questions(group_id, 'TC4') if c in df.columns]
         means = {q: _qmean(df, q) for q in tc4_qs if _qmean(df, q) is not None}
         if means and q25 <= min(means.values()) + 0.05 and q25 < 3.5:
             anomalies.append({
                 'id': 'TC4_A5', 'pillar': 'TC4', 'severity': 'watch',
                 'title': 'Hỗ trợ sự cố ảnh hưởng thu nhập — Điểm yếu nhất TC4',
                 'message': (
-                    f'Q25 (hỗ trợ sự cố ảnh hưởng thu nhập) = {q25:.2f} — thấp nhất trong TC4. '
+                    f'{incident_q} (hỗ trợ sự cố ảnh hưởng thu nhập) = {q25:.2f} — thấp nhất trong TC4. '
                     f'Khi nhân viên gặp sự cố (giao hàng thất bại, mất hàng, tai nạn) mà không được hỗ trợ, '
                     f'thu nhập bị cắt và bất mãn bùng phát ngay lập tức.'
                 ),
-                'data': {'Q25_ho_tro_su_co': round(q25, 2)},
+                'data': {f'{incident_q}_ho_tro_su_co': round(q25, 2)},
                 'action': 'Thiết lập quy trình xử lý khiếu nại sự cố trong 24h. Nhân viên phải biết đầu mối liên hệ và timeline xử lý rõ ràng.'
             })
 
@@ -376,9 +391,9 @@ def detect_TC4(df, group_id=''):
 
 def detect_TC5(df, group_id=''):
     anomalies = []
-    q27 = _qmean(df, 'Q27')
-    q28 = _qmean(df, 'Q28')
-    q29 = _qmean(df, 'Q29')
+    peer_q, q27 = _role_mean(df, group_id, 'peer')        # 1A: Q27 | 1B: Q26 | 2A-3B: Q27
+    pride_q, q28 = _role_mean(df, group_id, 'pride')       # 1A: Q28 | 1B: Q27 | 2A-3B: Q28
+    pressure_q, q29 = _role_mean(df, group_id, 'pressure')  # 1A: Q29 | 1B: Q28 | 2A-3B: Q29
     ei = df['EI'].mean() if 'EI' in df.columns else None
 
     burnout_pct = None
@@ -392,59 +407,59 @@ def detect_TC5(df, group_id=''):
         intent_pct = (valid <= 2).sum() / len(valid) * 100 if len(valid) > 0 else None
 
     # TC5_A1: Tự hào nhưng kiệt sức
-    if q28 is not None and q29 is not None and q28 > 3.9 and q29 < 3.2:
+    if q28 is not None and q29 is not None and q28 > 3.9 and q29 < 3.2 and pride_q and pressure_q:
         anomalies.append({
             'id': 'TC5_A1', 'pillar': 'TC5', 'severity': 'critical',
             'title': 'Tự hào nhưng đang kiệt sức — Sắp đến điểm bùng phát',
             'message': (
-                f'Nhân viên tự hào về GHN (Q28={q28:.2f}) nhưng áp lực đang xâm lấn cuộc sống (Q29={q29:.2f}). '
+                f'Nhân viên tự hào về GHN ({pride_q}={q28:.2f}) nhưng áp lực đang xâm lấn cuộc sống ({pressure_q}={q29:.2f}). '
                 f'Đây là pattern nguy hiểm nhất: yêu công ty NHƯNG không chịu nổi. '
                 f'Khi vượt ngưỡng chịu đựng, họ sẽ nghỉ đột ngột và không thể giữ lại.'
             ),
-            'data': {'Q28_tu_hao': round(q28, 2), 'Q29_ap_luc': round(q29, 2)},
+            'data': {f'{pride_q}_tu_hao': round(q28, 2), f'{pressure_q}_ap_luc': round(q29, 2)},
             'action': 'Giảm tải ngay: xem xét KPI có hợp lý không. Triển khai "No-Deadline Friday" hoặc giờ nghỉ phép tăng thêm cho nhóm có áp lực cao nhất.'
         })
 
     # TC5_A2: Đồng nghiệp tốt, công ty tệ (Social Glue Risk)
-    if q27 is not None and ei is not None and q27 > 4.0 and ei < 57:
+    if q27 is not None and ei is not None and q27 > 4.0 and ei < 57 and peer_q:
         anomalies.append({
             'id': 'TC5_A2', 'pillar': 'TC5', 'severity': 'warning',
             'title': 'Social Glue Risk — Ở lại vì bạn bè, không vì tổ chức',
             'message': (
-                f'Đồng nghiệp hỗ trợ tốt (Q27={q27:.2f}) nhưng EI tổng thể thấp ({ei:.1f}%). '
+                f'Đồng nghiệp hỗ trợ tốt ({peer_q}={q27:.2f}) nhưng EI tổng thể thấp ({ei:.1f}%). '
                 f'Nhân viên ở lại vì TẬP THỂ, không vì tổ chức. '
                 f'Rủi ro: khi 1-2 người bạn thân nghỉ, cả nhóm có thể nghỉ theo (domino effect).'
             ),
-            'data': {'Q27_dong_nghiep': round(q27, 2), 'EI': round(ei, 1)},
+            'data': {f'{peer_q}_dong_nghiep': round(q27, 2), 'EI': round(ei, 1)},
             'action': 'Theo dõi các đơn vị có turnover cao: khi 1 người nghỉ, pulse check ngay các đồng nghiệp thân thiết trong vòng 2 tuần.'
         })
 
     # TC5_A3: Burnout nghịch lý
-    if q29 is not None and burnout_pct is not None and q29 > 3.8 and burnout_pct > 25:
+    if q29 is not None and burnout_pct is not None and q29 > 3.8 and burnout_pct > 25 and pressure_q:
         anomalies.append({
             'id': 'TC5_A5', 'pillar': 'TC5', 'severity': 'critical',
             'title': 'Burnout Blind Spot — Nhân viên không nhận ra mình đang kiệt sức',
             'message': (
-                f'Nhân viên tự đánh giá áp lực OK (Q29={q29:.2f}) nhưng Burnout Risk Index cho thấy '
+                f'Nhân viên tự đánh giá áp lực OK ({pressure_q}={q29:.2f}) nhưng Burnout Risk Index cho thấy '
                 f'{burnout_pct:.1f}% đang trong vùng nguy hiểm. '
                 f'Đây là "burnout mù" — nhân viên đã normalize mức độ kiệt sức đến mức coi là bình thường. '
                 f'Flip point thường xảy ra đột ngột.'
             ),
-            'data': {'Q29_ap_luc': round(q29, 2), 'burnout_pct': round(burnout_pct, 1)},
+            'data': {f'{pressure_q}_ap_luc': round(q29, 2), 'burnout_pct': round(burnout_pct, 1)},
             'action': 'Áp dụng Burnout Assessment ẩn danh hàng quý thay vì chỉ dựa vào self-report. Xây dựng early warning system dựa trên HRIS (vắng mặt, hiệu suất giảm).'
         })
 
     # TC5_A4: Pride Paradox
-    if q28 is not None and intent_pct is not None and q28 > 4.0 and intent_pct > 15:
+    if q28 is not None and intent_pct is not None and q28 > 4.0 and intent_pct > 15 and pride_q:
         anomalies.append({
             'id': 'TC5_P1', 'pillar': 'TC5', 'severity': 'warning',
             'title': 'Pride Paradox — Tự hào về GHN nhưng vẫn muốn nghỉ',
             'message': (
-                f'Nhân viên tự hào (Q28={q28:.2f}) nhưng {intent_pct:.1f}% muốn nghỉ. '
+                f'Nhân viên tự hào ({pride_q}={q28:.2f}) nhưng {intent_pct:.1f}% muốn nghỉ. '
                 f'Vấn đề nằm ở ĐIỀU KIỆN, không phải TÌNH CẢM. Họ yêu GHN nhưng điều kiện làm việc '
                 f'(TC3 hoặc TC4) đang buộc họ phải ra đi.'
             ),
-            'data': {'Q28_tu_hao': round(q28, 2), 'flight_risk_pct': round(intent_pct, 1)},
+            'data': {f'{pride_q}_tu_hao': round(q28, 2), 'flight_risk_pct': round(intent_pct, 1)},
             'action': 'Phỏng vấn exit nhóm này: "Điều gì duy nhất khiến bạn ở lại nếu được thay đổi?" — câu trả lời sẽ chỉ rõ điều kiện cần cải thiện.'
         })
 

@@ -326,14 +326,28 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
     color = meta['color']
 
     # ── So sánh tương quan (Nghịch lý) ──
-    pairs = {
-        'TC1': [('Q9', 'Q10', 'Tin tưởng định hướng vs Nhận thông tin kịp thời')],
-        'TC2': [('Q11', 'Q12', 'Quản lý hỗ trợ vs Phân công công bằng')],
-        'TC3': [('Q20', 'Q10', 'Hướng dẫn thay đổi vs Thông báo thay đổi')],
-        'TC4': [('Q21', 'Q22', 'Thu nhập công bằng vs Minh bạch khấu trừ/phạt')],
-        'TC5': [('Q28', 'Q29', 'Tự hào về tổ chức vs Mức độ áp lực/Burnout')]
+    # Dùng "vai trò câu hỏi" (role) thay vì hard-code số câu → đúng cho cả 6 nhóm.
+    # Mỗi cặp: (role_A, role_B, tiêu đề). Role được resolve về mã câu theo group_id.
+    from shared.codebook import get_role_question
+    role_pairs = {
+        'TC1': [('info_trust', 'info_timely', 'Tin tưởng định hướng vs Nhận thông tin kịp thời')],
+        'TC2': [('mgr_support', 'mgr_fairness', 'Quản lý hỗ trợ vs Phân công công bằng')],
+        'TC3': [('change_guide', 'info_timely', 'Hướng dẫn thay đổi vs Thông báo thay đổi')],
+        'TC4': [('income_fair', 'transparency', 'Thu nhập công bằng vs Minh bạch khấu trừ/phạt')],
+        'TC5': [('pride', 'pressure', 'Tự hào về tổ chức vs Mức độ áp lực/Burnout')],
     }
-    
+
+    pairs = {}
+    if pillar_id in role_pairs:
+        resolved = []
+        for roleA, roleB, title in role_pairs[pillar_id]:
+            qA = get_role_question(group_id, roleA)
+            qB = get_role_question(group_id, roleB)
+            if qA and qB:
+                resolved.append((qA, qB, title))
+        if resolved:
+            pairs[pillar_id] = resolved
+
     if pillar_id in pairs:
         for qA, qB, title in pairs[pillar_id]:
             if qA in q_cols and qB in q_cols:

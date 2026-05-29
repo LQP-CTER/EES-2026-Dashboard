@@ -14,6 +14,7 @@ from shared.codebook import (
     LIKERT_CODE_MAP, ENPS_CODE_MAP, PILLAR_WEIGHTS,
     decode_likert, decode_enps, decode_intent, classify_enps,
     calc_engagement_pct, classify_ei,
+    get_pillar_questions, get_role_question,
 )
 from shared.workforce_mapper import map_survey_to_org, get_org_summary
 
@@ -184,26 +185,133 @@ def load_group(group_id: str):
     df_clean['EI'] = sum(df_clean[p] * w for p, w in zip(pillar_pcts, weights) if p in df_clean.columns)
     df_clean['EI_class'] = df_clean['EI'].apply(classify_ei)
 
-    # MEI
-    mei_cols = ['Q11', 'Q12', 'Q14', 'Q15']
-    vm = [c for c in mei_cols if c in df_clean.columns]
-    if vm:
-        df_clean['MEI'] = df_clean[vm].apply(
+    # MEI — Manager Effectiveness Index (% câu TC2 được đánh ≥4)
+    # Dùng toàn bộ câu TC2 của ĐÚNG nhóm thay vì hard-code Q-number theo 1A/1B.
+    # (Với 2A/2B/3A/3B, TC2 = Q13-Q17; với 1A/1B, TC2 = Q11-Q15.)
+    mei_cols = [c for c in get_pillar_questions(group_id, 'TC2') if c in df_clean.columns]
+    if mei_cols:
+        df_clean['MEI'] = df_clean[mei_cols].apply(
             lambda r: (r >= 4).sum() / r.notna().sum() * 100 if r.notna().sum() > 0 else None, axis=1)
 
-    # Burnout risk
-    pressure = [c for c in ['Q18', 'Q29'] if c in df_clean.columns]
-    resource = [c for c in ['Q11', 'Q16'] if c in df_clean.columns]
+    # Burnout risk = áp lực (đảo chiều) trừ nguồn lực hỗ trợ.
+    # Vai trò câu hỏi (pressure / workload / mgr_support / tool) được tra theo nhóm.
+    pressure_roles = ['pressure', 'workload']
+    resource_roles = ['mgr_support', 'tool']
+    pressure = [q for q in (get_role_question(group_id, r) for r in pressure_roles)
+                if q and q in df_clean.columns]
+    resource = [q for q in (get_role_question(group_id, r) for r in resource_roles)
+                if q and q in df_clean.columns]
     if pressure and resource:
         df_clean['burnout_risk'] = df_clean[pressure].mean(axis=1) - df_clean[resource].mean(axis=1)
 
-    # Stay Intention Score (Q22): Thang 1–5, cao = muốn ở lại
-    # Flight Risk: Q22 ≤ 2 | At Risk: Q22 = 3 | Stable: Q22 ≥ 4
-    if 'Q22' in df_clean.columns:
-        df_clean['stay_intention'] = df_clean['Q22']  # giữ nguyên điểm thô 1-5
-        df_clean['stay_risk_group'] = df_clean['Q22'].apply(
-            lambda v: 'Flight Risk' if v <= 2 else ('At Risk' if v == 3 else 'Stable')
+    # Stay Intention — dùng câu Ý ĐỊNH Ở LẠI thực sự (Q30 → cột `intent`),
+    # KHÔNG dùng Q22 (vốn là câu Likert thuộc TC4). Thang 1–5, cao = muốn ở lại.
+    # Flight Risk: ≤ 2 | At Risk: = 3 | Stable: ≥ 4
+    if 'intent' in df_clean.columns and df_clean['intent'].notna().any():
+        df_clean['stay_intention'] = df_clean['intent']
+        df_clean['stay_risk_group'] = df_clean['intent'].apply(
+            lambda v: ('Flight Risk' if v <= 2 else ('At Risk' if v == 3 else 'Stable'))
             if pd.notna(v) else None
+        )
+
+    # ════════════════════════════════════════════════════════════
+    # CHỈ SỐ NỀN TẢNG (Foundation Indices) — mục 4.1 KE_HOACH
+    # ════════════════════════════════════════════════════════════
+
+    # 1) Silence Rate — tỷ lệ KHÔNG điền câu hỏi mở "Cần cải thiện".
+    #    Silence cao = thiếu niềm tin rằng phản hồi có tác dụng.
+    #    Tài liệu gọi là Q26; trong codebook này câu "Cần thay đổi/cải thiện"
+    #    là câu mở cuối cùng (Q34). Fallback: dùng flag_empty_open nếu thiếu.
+    improve_open = None
+    for cand in ['Q34', 'Q33', 'Q32']:
+        if cand in df_clean.columns:
+            improve_open = cand
+            break
+    if improve_open is not None:
+        df_clean['is_silent'] = df_clean[improve_open].apply(is_meaningless)
+    else:
+        df_clean['is_silent'] = df_clean.get('flag_empty_open', pd.Series(True, index=df_clean.index))
+
+    # 2) JSI Proxy (Overall Job Satisfaction Index)
+    #    JSI ≈ 0.4*TC4 + 0.3*TC3_workload + 0.3*TC5_respect  (thang %, 0-100)
+    #    - TC4: dùng TC4_pct (đãi ngộ & công bằng)
+    #    - TC3_workload: câu workload (cường độ/khối lượng) — role 'workload'
+    #    - TC5_respect: câu pride/được tôn trọng — role 'pride'
+    workload_q = get_role_question(group_id, 'workload')
+    respect_q = get_role_question(group_id, 'pride')
+    tc4_pct_series = df_clean.get('TC4_pct')
+    if tc4_pct_series is not None:
+        workload_pct = (df_clean[workload_q].apply(calc_engagement_pct)
+                        if workload_q and workload_q in df_clean.columns else None)
+        respect_pct = (df_clean[respect_q].apply(calc_engagement_pct)
+                       if respect_q and respect_q in df_clean.columns else None)
+        # Nếu thiếu thành phần nào, rút trọng số về phần còn lại (chuẩn hóa).
+        comps, weights = [], []
+        comps.append(tc4_pct_series); weights.append(0.4)
+        if workload_pct is not None:
+            comps.append(workload_pct); weights.append(0.3)
+        if respect_pct is not None:
+            comps.append(respect_pct); weights.append(0.3)
+        wsum = sum(weights)
+        df_clean['JSI'] = sum(c * (w / wsum) for c, w in zip(comps, weights))
+
+    # 3) Early Warning Score (EWS) — cảnh báo nghỉ sớm cho nhóm thâm niên ≤ 3 tháng.
+    #    Dựa trên: ý định ở lại (intent), TC2 (quản lý), TC3 (điều kiện).
+    #    Điểm 0-100, cao = rủi ro cao. Chỉ tính cho nhóm mới; còn lại = NaN.
+    EARLY_TENURE = ['Dưới 1 tháng', 'Trên 1 đến 3 tháng', '< 1 tháng', '1-3 tháng']
+    if 'Q5' in df_clean.columns:
+        early_mask = df_clean['Q5'].isin(EARLY_TENURE)
+
+        def _ews(row):
+            score = 0.0
+            n = 0
+            # Intent thấp → rủi ro cao
+            iv = row.get('intent')
+            if pd.notna(iv):
+                score += (5 - iv) / 4 * 40; n += 1   # tối đa 40 điểm
+            tc2 = row.get('TC2_pct')
+            if pd.notna(tc2):
+                score += (100 - tc2) / 100 * 30; n += 1  # tối đa 30
+            tc3 = row.get('TC3_pct')
+            if pd.notna(tc3):
+                score += (100 - tc3) / 100 * 30; n += 1  # tối đa 30
+            return round(score, 1) if n > 0 else None
+
+        df_clean['EWS'] = None
+        if early_mask.any():
+            df_clean.loc[early_mask, 'EWS'] = df_clean.loc[early_mask].apply(_ews, axis=1)
+        df_clean['EWS_flag'] = df_clean['EWS'].apply(
+            lambda v: 'Cảnh báo đỏ' if pd.notna(v) and v >= 60
+            else ('Theo dõi' if pd.notna(v) and v >= 40 else ('Ổn' if pd.notna(v) else None))
+        )
+
+    # 4) Engagement Quadrant — phân loại dựa trên eNPS (cao/thấp) và intent (cao/thấp).
+    #    Tài liệu dùng eNPS × Q22; ở đây Q22-stay được thay bằng intent thực.
+    #    Champions / Trapped Loyalists / Confused Leavers / Flight Risk.
+    if 'eNPS' in df_clean.columns and 'intent' in df_clean.columns:
+        def _quadrant(row):
+            e = row.get('eNPS')
+            i = row.get('intent')
+            if pd.isna(e) or pd.isna(i):
+                return None
+            enps_high = e >= 7         # Passive/Promoter
+            stay_high = i >= 4         # muốn ở lại
+            if enps_high and stay_high:
+                return 'Champions'
+            if (not enps_high) and stay_high:
+                return 'Trapped Loyalists'
+            if enps_high and (not stay_high):
+                return 'Confused Leavers'
+            return 'Flight Risk'
+        df_clean['engagement_quadrant'] = df_clean.apply(_quadrant, axis=1)
+
+    # 5) Contradiction Index (per-row) — gắn kết cao (EI) nhưng phản hồi mở tiêu cực.
+    #    Đánh dấu hàng có EI cao nhưng vẫn "im lặng/né tránh" hoặc intent thấp,
+    #    phục vụ phát hiện "sức khỏe giả" (fear-based compliance). Sentiment chi tiết
+    #    được tính ở tầng NLP; ở đây chỉ đánh dấu mâu thuẫn EI↑ vs intent↓.
+    if 'EI' in df_clean.columns and 'intent' in df_clean.columns:
+        df_clean['contradiction_flag'] = (
+            (df_clean['EI'] >= 75) & (df_clean['intent'] <= 2)
         )
 
     # NLP prep
@@ -288,6 +396,26 @@ def compute_kpis(df):
     stay_stable_pct = round((q22_col >= 4).sum() / q22_valid * 100, 1) if q22_valid > 0 else 0
     intent_pct_high = round((intent_col >= 4).sum() / intent_col.notna().sum() * 100, 1) if intent_col.notna().sum() > 0 else 0
 
+    # ── Foundation Indices (mục 4.1 KE_HOACH) ──
+    silence_rate = round(df['is_silent'].mean() * 100, 1) if 'is_silent' in df.columns else 0
+    jsi_avg = round(df['JSI'].mean(), 1) if 'JSI' in df.columns and df['JSI'].notna().any() else 0
+
+    ews_col = df.get('EWS')
+    ews_red_pct = 0
+    if ews_col is not None and ews_col.notna().any():
+        ews_valid = ews_col.dropna()
+        ews_red_pct = round((ews_valid >= 60).sum() / len(ews_valid) * 100, 1) if len(ews_valid) > 0 else 0
+
+    quad = df.get('engagement_quadrant')
+    quad_counts = {}
+    if quad is not None and quad.notna().any():
+        qv = quad.dropna()
+        total_q = len(qv)
+        for label in ['Champions', 'Trapped Loyalists', 'Confused Leavers', 'Flight Risk']:
+            quad_counts[label] = round((qv == label).sum() / total_q * 100, 1) if total_q > 0 else 0
+
+    contradiction_pct = round(df['contradiction_flag'].mean() * 100, 1) if 'contradiction_flag' in df.columns else 0
+
     return {
         'n': n, 'ei_mean': round(ei_mean, 1),
         'enps_score': round(enps_score, 0),
@@ -300,6 +428,12 @@ def compute_kpis(df):
         'stay_flight_pct': stay_flight_pct,
         'stay_atrisk_pct': stay_atrisk_pct,
         'stay_stable_pct': stay_stable_pct,
+        # Foundation indices
+        'silence_rate': silence_rate,
+        'jsi_avg': jsi_avg,
+        'ews_red_pct': ews_red_pct,
+        'quadrant': quad_counts,
+        'contradiction_pct': contradiction_pct,
     }
 
 
