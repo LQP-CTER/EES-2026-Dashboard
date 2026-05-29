@@ -1049,7 +1049,7 @@ with st.sidebar:
 
     # Main navigation
     st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
-    main_nav_opts = [OVERVIEW_LABEL] + [available[g]['label'] for g in group_opts] + [COMPANY_LABEL, "Độ tin cậy dữ liệu", "Phụ lục"]
+    main_nav_opts = [OVERVIEW_LABEL, COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["Độ tin cậy dữ liệu", "Phụ lục"]
     sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
