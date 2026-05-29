@@ -379,20 +379,22 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                         st.plotly_chart(fig_comp, width='stretch', key=f"comp_paradox_chart_{qA}_{qB}")
                         
                     if gap >= 0.4:
-                        text_col = None
-                        for tc in ['Q32', 'Q34', 'Q36', 'Q30', 'open_text', 'Open-ended']:
-                            if tc in df.columns and df[tc].notna().sum() > 0:
-                                text_col = tc
-                                break
+                        open_cols = df.attrs.get('open_cols', ['Q32', 'Q33', 'Q34', 'Q35', 'Q36'])
+                        all_texts = []
+                        for tc in open_cols:
+                            clean_col = f"{tc}_clean"
+                            target_col = clean_col if clean_col in df.columns else tc
+                            if target_col in df.columns:
+                                vals = df[target_col].dropna().astype(str)
+                                vals = vals[vals.str.len() > 10]
+                                all_texts.extend(vals.tolist())
                         
                         sample_texts = ""
-                        if text_col:
-                            texts = df[text_col].dropna().astype(str).tolist()
+                        if all_texts:
                             import random
-                            sample_size = min(15, len(texts))
-                            if sample_size > 0:
-                                sampled = random.sample(texts, sample_size)
-                                sample_texts = "\n- ".join(sampled)
+                            sample_size = min(20, len(all_texts))
+                            sampled = random.sample(all_texts, sample_size)
+                            sample_texts = "\n- ".join(sampled)
                         
                         ai_data = {
                             "Title": title,

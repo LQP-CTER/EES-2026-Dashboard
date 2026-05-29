@@ -834,20 +834,23 @@ def render(df, cfg, pillar_filter=None):
                 # ── AI Insight for Unit ──
                 st.markdown("---")
                 
-                text_col = None
-                for tc in ['Q32', 'Q34', 'Q36', 'Q30', 'open_text', 'Open-ended']:
-                    if tc in _udf.columns and _udf[tc].notna().sum() > 0:
-                        text_col = tc
-                        break
+                open_cols = _udf.attrs.get('open_cols', ['Q32', 'Q33', 'Q34', 'Q35', 'Q36'])
+                all_texts = []
+                for tc in open_cols:
+                    clean_col = f"{tc}_clean"
+                    target_col = clean_col if clean_col in _udf.columns else tc
+                    if target_col in _udf.columns:
+                        vals = _udf[target_col].dropna().astype(str)
+                        # Filter out too short or generic answers
+                        vals = vals[vals.str.len() > 10]
+                        all_texts.extend(vals.tolist())
                         
                 sample_texts = ""
-                if text_col:
-                    texts = _udf[text_col].dropna().astype(str).tolist()
+                if all_texts:
                     import random
-                    sample_size = min(15, len(texts))
-                    if sample_size > 0:
-                        sampled = random.sample(texts, sample_size)
-                        sample_texts = "\n- ".join(sampled)
+                    sample_size = min(20, len(all_texts))
+                    sampled = random.sample(all_texts, sample_size)
+                    sample_texts = "\n- ".join(sampled)
                         
                 ai_data = {
                     "Unit": _sel_unit,
