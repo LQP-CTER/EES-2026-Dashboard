@@ -758,8 +758,8 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
     elif run_desires or run_sentiment:
         # Gọi Groq streaming với llama-3.3-70b-versatile (tốt nhất cho phân tích định tính)
         VOICE_MODELS = ["llama-3.3-70b-versatile",
-                        "meta-llama/llama-4-scout-17b-16e-instruct",
-                        "qwen/qwen3-32b", "llama-3.1-8b-instant"]
+                        "llama-3.1-8b-instant",
+                        "mixtral-8x7b-32768"]
         all_clients = get_groq_clients_all()
         full_text = ""
         success = False
@@ -800,9 +800,8 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
                         success = True
                         break
                     except Exception as e:
-                        if "rate_limit" in str(e).lower() or "429" in str(e):
-                            break
-                        continue
+                        last_error = str(e)
+                        continue # Try the next model/client regardless of error type
                 if success:
                     break
 
@@ -810,6 +809,7 @@ TUYỆT ĐỐI KHÔNG viết dài dòng. Chỉ bullet points súc tích."""
             st.session_state[cache_key] = full_text
             ai_container.markdown(_build_voice_html(full_text), unsafe_allow_html=True)
         else:
-            ai_container.error("Không thể kết nối AI. Vui lòng thử lại.")
+            err_msg = last_error if 'last_error' in locals() else 'Unknown error'
+            ai_container.error(f"Không thể kết nối AI. Chi tiết lỗi: {err_msg}")
     else:
         st.info("👆 Chọn đƠn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")

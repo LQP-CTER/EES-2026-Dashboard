@@ -898,7 +898,7 @@ def apply_global_filters(df):
             return df[df['Q5'] == st.session_state.global_tenure]
     return df
 
-COMPANY_LABEL = "Toàn bộ Giao Hàng Nhanh"
+COMPANY_LABEL = "Tổng quan GHN"
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
