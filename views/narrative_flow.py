@@ -31,7 +31,7 @@ def render_narrative(df, cfg, group_id):
     st.markdown(section_header(
         "Act 1 — Bức tranh tổng thể",
         f"Các chỉ số cốt lõi của {group_name}"
-    ))
+    ), unsafe_allow_html=True)
 
     _render_kpi_row(kpis)
 
@@ -42,7 +42,7 @@ def render_narrative(df, cfg, group_id):
     st.markdown(section_header(
         "Act 2 — Những nghịch lý dữ liệu",
         "Các mâu thuẫn đáng chú ý cần lãnh đạo quan tâm"
-    ))
+    ), unsafe_allow_html=True)
 
     contradictions = detect_contradictions(df, group_id, cfg)
 
@@ -57,7 +57,7 @@ def render_narrative(df, cfg, group_id):
         st.markdown(section_header(
             "Act 3 — Đi sâu vào nghịch lý",
             "Phân tích chi tiết các mâu thuẫn có impact cao nhất"
-        ))
+        ), unsafe_allow_html=True)
 
         for i, contradiction in enumerate(top_contradictions, 1):
             _render_deep_dive(df, contradiction, group_id, i)
@@ -66,7 +66,7 @@ def render_narrative(df, cfg, group_id):
     st.markdown(section_header(
         "Act 4 — Hành động ưu tiên",
         "Đề xuất hành động dựa trên dữ liệu"
-    ))
+    ), unsafe_allow_html=True)
 
     _render_action_priorities(df, group_id, contradictions)
 
