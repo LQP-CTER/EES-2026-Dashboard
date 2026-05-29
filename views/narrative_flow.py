@@ -819,20 +819,29 @@ def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
     mode = st.session_state.get(f'ev_mode_{group_id}', 'desires')
 
     if mode == 'desires':
-        ai_prompt = f"""Bạn là chuyên gia phân tích trải nghiệm nhân viên. Dưới đây là {len(sample)} phản hồi thực tế của nhân viên nhóm «{group_name}», đơn vị «{unit_label}», về câu hỏi "Bạn mong muốn điều gì cần thay đổi hoặc cải thiện tại GHN?":
+        ai_prompt = f"""Bạn là Chuyên gia Tư vấn Quản trị & Phân tích Trải nghiệm Nhân viên. Dưới đây là {len(sample)} phản hồi THỰC TẾ ẩn danh của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}», khi được hỏi: "Bạn mong muốn điều gì cần thay đổi hoặc cải thiện tại công ty?":
 
 {responses_text}
 
-Nhiệm vụ của bạn:
-1. Xác định TOP 5 chủ đề mong muốn/khiếu nại thường xuât hiện nhất, sắp xếp từ nhiều đến ít.
-2. Với mỗi chủ đề: gọi tên ngắn gọn, ước lượng % người đề cập, trích dẫn 1 câu điển hình từ dữ liệu.
-3. Đề xuất 1 hành động cụ thể ngắn hạn cho từng chủ đề.
+NHIỆM VỤ TỐI QUAN TRỌNG: 
+Đọc kỹ {len(sample)} câu phản hồi trên. TỔNG HỢP và GOM NHÓM các ý kiến lặp lại nhiều nhất thành TOP 5 mong muốn/khiếu nại cốt lõi. 
+Mọi phân tích, kết luận VÀ DẪN CHỨNG PHẢI ĐƯỢC LẤY CHÍNH XÁC TỪ DỮ LIỆU CUNG CẤP NÀY. TUYỆT ĐỐI KHÔNG BỊA ĐẶT (HALLUCINATE) HOẶC DÙNG DỮ LIỆU CỦA ĐƠN VỊ KHÁC.
 
-YEU CẦU FORMAT output theo dạng sau (bằng tiếng Việt):
-Chủ đề 1: [Tên] (~XX% người dùng) | Dẫn chứng: "..." | Hành động: ...
-Chủ đề 2: [Tên] (~XX% người dùng) | Dẫn chứng: "..." | Hành động: ...
-... (tương tự đến Chủ đề 5)
-TUYỆT ĐỐI KHÔNG viết giới thiệu, kết luận hay giải thích thêm."""
+Hãy trình bày báo cáo định tính (bằng tiếng Việt) theo đúng cấu trúc sau:
+
+1. Top 5 Vấn Đề / Mong Muốn Cấp Bách Nhất (Sắp xếp theo tần suất xuất hiện):
+- [Tên Vấn Đề 1]: (Chiếm khoảng XX% số phản hồi) Phân tích ngắn gọn bản chất vấn đề từ góc độ dữ liệu.
+  + 📝 Trích dẫn thực tế: Trích chính xác 1-2 câu (hoặc cụm từ) BÊ NGUYÊN TỪ DỮ LIỆU BÊN TRÊN để làm bằng chứng. KHÔNG tự chế ra câu trích dẫn.
+  + 💡 Khuyến nghị hành động: Đề xuất 1 hành động quản trị cụ thể, khả thi để giải quyết.
+- [Tên Vấn Đề 2]: (Làm tương tự)
+... (Đến Vấn Đề 5)
+
+2. Đánh Giá Mức Độ Nghiêm Trọng (Severity Warning):
+- Nhận diện 1 vấn đề mang tính hệ thống (systemic) nhất hoặc gây ức chế sâu sắc nhất dựa trên cách dùng từ của nhân viên (Giải thích trong 2 dòng).
+
+TUYỆT ĐỐI: 
+- Trình bày dạng bullet points, câu chữ tư vấn chuyên nghiệp.
+- KHÔNG thêm lời chào, kết luận dài dòng hay bịa đặt dữ liệu."""
     else:
         ai_prompt = f"""Bạn là Chuyên gia Tâm lý học Tổ chức (Organizational Psychologist) & Phân tích Trải nghiệm Nhân viên cấp cao. Dưới đây là {len(sample)} phản hồi ẩn danh thực tế của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}»:
 
