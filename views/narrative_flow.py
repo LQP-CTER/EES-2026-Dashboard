@@ -120,13 +120,34 @@ def render_narrative(df, cfg, group_id):
     ])
 
     # ── ACT 1 ──────────────────────────────────────────────────────
+    # ── ACT 1 ──────────────────────────────────────────────────────
     with tab_act1:
         st.markdown(_act_header(
             "Act 1", "Bức tranh tổng thể",
             f"Các chỉ số cốt lõi và hiệu suất trụ cột của {group_name}"
         ), unsafe_allow_html=True)
         _render_kpi_row(kpis)
-        _render_pillar_overview(df, group_id)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        col_chart, col_ai = st.columns([55, 45], gap="large")
+        with col_chart:
+            st.markdown("<div style='font-size:0.9rem;font-weight:700;color:#64748B;text-transform:uppercase;margin-bottom:10px;'>Hiệu suất 5 Trụ cột Trải nghiệm</div>", unsafe_allow_html=True)
+            pdf = _render_pillar_overview(df, group_id)
+        
+        with col_ai:
+            if pdf is not None:
+                ai_prompt = (
+                    f"Bạn là Giám đốc Nhân sự (CHRO) kiêm Senior Data Analyst. "
+                    f"Phân tích bức tranh sức khỏe tổ chức của nhóm {group_name} dựa trên dữ liệu:\n"
+                    f"- KPI: EI Score={kpis['ei_mean']:.1f}%, eNPS={kpis['enps_score']:+.0f}, "
+                    f"Rủi ro nghỉ việc={kpis['intent_pct_low']:.1f}%, Hiệu quả QL (MEI)={kpis.get('mei_avg',0):.1f}%\n"
+                    f"- Điểm trụ cột (Thang 5): {pdf[['Trụ cột', 'Điểm TB']].to_dict('records')}\n\n"
+                    f"Yêu cầu:\n"
+                    f"1. Đánh giá nhanh 'Sức khỏe tổng thể' đang ở mức nào.\n"
+                    f"2. Đâu là tử huyệt (bottleneck) đang cản trở trải nghiệm nhân viên nhất?\n"
+                    f"Viết cực kỳ sắc sảo, chiến lược, đúng 2 đoạn văn ngắn."
+                )
+                render_ai_insight_card("CHRO Strategic Summary", {"kpis": kpis, "pillars": pdf.to_dict('records')}, ai_prompt, badge="Act 1 Insight")
 
     # ── ACT 2 ──────────────────────────────────────────────────────
     with tab_act2:
@@ -250,7 +271,8 @@ def _render_pillar_overview(df, group_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_146")
+    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_146")
+    return pdf
 
 
 def _render_contradiction_cards(contradictions):
@@ -278,6 +300,19 @@ def _render_contradiction_cards(contradictions):
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # AI Systemic Risk Analysis
+    if contradictions:
+        prompt = (
+            f"Bạn là Senior Data Analyst. Dưới đây là danh sách {total} nghịch lý/mâu thuẫn dữ liệu:\n"
+            f"{[c['title'] for c in contradictions]}\n\n"
+            f"Thay vì phân tích rời rạc từng cái, hãy TỔNG HỢP và trả lời:\n"
+            f"1. Có 'sợi dây liên kết ngầm' nào giữa các nghịch lý này không?\n"
+            f"2. Rủi ro hệ thống (Systemic Risk) lớn nhất là gì nếu lãnh đạo phớt lờ chúng?\n"
+            f"Chỉ viết 2 đoạn văn ngắn, súc tích, đậm chất chiến lược."
+        )
+        render_ai_insight_card("Phân tích Rủi ro Hệ thống (Systemic Risk)", {"contradictions": [c['title'] for c in contradictions]}, prompt, badge="Act 2 Insight")
+        st.markdown("<br>", unsafe_allow_html=True)
 
     # Render top contradictions as cards
     for c in contradictions[:5]:
@@ -508,15 +543,15 @@ def _render_ai_deep_dive(contradiction, group_id):
     metrics = contradiction['metrics']
 
     prompt = (
-        f"Bạn là Chuyên gia People Analytics. Phân tích nghịch lý sau của {group_id}:\n\n"
+        f"Bạn là Senior Data Analyst. Áp dụng framework 5 Whys (5 Câu hỏi Tại sao) để phân tích nghịch lý sau của {group_id}:\n\n"
         f"**{contradiction['title']}**\n\n"
         f"{contradiction['narrative']}\n\n"
         f"Dữ liệu: {metrics}\n\n"
         f"Hãy trả lời:\n"
-        f"1. Nguyên nhân gốc rễ của nghịch lý này là gì?\n"
-        f"2. Nếu không can thiệp, điều gì sẽ xảy ra trong 3-6 tháng?\n"
-        f"3. Đề xuất 1 hành động cụ thể, khả thi trong 30 ngày.\n\n"
-        f"Viết cho Giám đốc HR đọc — không dùng thuật ngữ kỹ thuật."
+        f"1. Nguyên nhân gốc rễ sâu xa nhất (Root Cause) của nghịch lý này là gì theo 5 Whys?\n"
+        f"2. Đánh giá định lượng rủi ro (Risk Quantification) nếu vấn đề này tiếp diễn.\n"
+        f"3. Đề xuất 1 hành động can thiệp trúng đích nhất.\n\n"
+        f"Viết ngắn gọn, sắc bén, tập trung vào phân tích dữ liệu."
     )
 
     render_ai_insight_card(
@@ -583,47 +618,61 @@ def _render_action_priorities(df, group_id, contradictions):
         'Không ưu tiên': '#94A3B8',
     }
 
-    st.markdown("""
-    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px 20px;margin-bottom:16px;">
-        <div style="font-size:0.82rem;color:#64748B;margin-bottom:8px;">
-            Ma trận Ưu tiên Hành động — dựa trên tương quan với EI
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <span style="background:#FEF2F2;color:#DC2626;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;">Ưu tiên cao: Điểm thấp + Ảnh hưởng lớn</span>
-            <span style="background:#F0FDF4;color:#10B981;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;">Duy trì: Điểm cao + Ảnh hưởng lớn</span>
-            <span style="background:#FFFBEB;color:#D97706;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;">Theo dõi: Điểm thấp + Ảnh hưởng nhỏ</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Create Scatter Plot for Action Matrix
+    fig = go.Figure()
 
-    # Display top priorities
+    for priority, color in priority_colors.items():
+        subset = rdf[rdf['Priority'] == priority]
+        if not subset.empty:
+            fig.add_trace(go.Scatter(
+                x=subset['Mean'],
+                y=subset['Correlation'],
+                mode='markers+text',
+                name=priority,
+                marker=dict(size=14, color=color, line=dict(width=1.5, color='white')),
+                text=subset['Q'],
+                textposition="top center",
+                textfont=dict(size=10, color='#475569', family='Inter'),
+                hovertemplate="<b>%{text}</b><br>Điểm: %{x:.2f}<br>Tương quan: %{y:.3f}<extra></extra>"
+            ))
+
+    # Add Quadrant Lines
+    fig.add_vline(x=3.7, line_dash="dot", line_color="#94A3B8", line_width=1.5)
+    fig.add_hline(y=0.3, line_dash="dot", line_color="#94A3B8", line_width=1.5)
+
+    # Quadrant annotations
+    fig.add_annotation(x=1, y=0.9, text="Ưu tiên Cải thiện", showarrow=False, font=dict(color='#DC2626', size=14, weight='bold'), xref="paper", yref="paper")
+    fig.add_annotation(x=1, y=0.1, text="Duy trì & Phát huy", showarrow=False, font=dict(color='#10B981', size=14, weight='bold'), xref="paper", yref="paper")
+
+    fig.update_layout(
+        height=450,
+        margin=dict(l=20, r=20, t=40, b=40),
+        xaxis_title="Hiệu suất (Điểm trung bình)",
+        yaxis_title="Tác động (Tương quan với EI)",
+        xaxis=dict(range=[1, 5.3], gridcolor='rgba(226,232,240,0.5)'),
+        yaxis=dict(gridcolor='rgba(226,232,240,0.5)'),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter'),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_action_matrix")
+
+    # Display list of Top Priorities
     top_priority = rdf[rdf['Priority'] == 'Ưu tiên cao'].head(5)
-    maintain = rdf[rdf['Priority'] == 'Duy trì'].head(3)
-
     if not top_priority.empty:
-        st.markdown("**Top hành động ưu tiên:**")
-        for _, row in top_priority.iterrows():
-            st.markdown(f"""
-            <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:12px 16px;margin-bottom:10px;">
-                <div style="font-size:0.88rem;font-weight:700;color:#0A1F44;">
-                    {row['Q']}: {row['Label']}
-                </div>
-                <div style="font-size:0.82rem;color:#475569;margin-top:4px;">
-                    Điểm: {row['Mean']:.2f}/5 | Tương quan với EI: {row['Correlation']:.3f}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    if not maintain.empty:
-        st.markdown("**Duy trì:**")
-        maintain_labels = ', '.join([f"{row['Q']}: {row['Label']}" for _, row in maintain.iterrows()])
-        st.markdown(f"""
-        <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:12px 16px;margin-bottom:10px;">
-            <div style="font-size:0.85rem;color:#166534;">
-                {maintain_labels} — đang tốt, tiếp tục phát huy.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        # AI 90-Day Action Plan Insight
+        prompt = (
+            f"Bạn là Senior Data Analyst & HR Consultant. Dựa trên Ma trận Hành động của {group_id}, "
+            f"đây là top các yếu tố 'Ưu tiên cao' (Điểm thấp nhưng Tương quan cực mạnh với sự gắn kết - EI):\n"
+            f"{top_priority[['Q', 'Label', 'Mean', 'Correlation']].to_dict('records')}\n\n"
+            f"Yêu cầu:\n"
+            f"1. Tại sao việc cải thiện các yếu tố này lại mang lại ROI cao nhất?\n"
+            f"2. Đề xuất một Kế hoạch hành động 90 ngày (90-Day Action Plan) cực kỳ súc tích gồm 3 bước "
+            f"để giải quyết triệt để các vấn đề này.\n"
+            f"Chỉ viết 2 đoạn văn ngắn, tập trung vào giải pháp thực chiến."
+        )
+        render_ai_insight_card("Kế hoạch Hành động 90 ngày (90-Day Action Plan)", {"top_priority": top_priority.to_dict('records')}, prompt, badge="Act 4 Insight")
 
 
 # ═══════════════════════════════════════════════════════════════
