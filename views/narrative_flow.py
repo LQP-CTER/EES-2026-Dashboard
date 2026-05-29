@@ -160,7 +160,7 @@ def render_narrative(df, cfg, group_id):
         if not contradictions:
             _render_hidden_risks(df, group_id)
         else:
-            _render_contradiction_cards(contradictions)
+            _render_contradiction_cards(df, contradictions)
 
     # ── ACT 3 ──────────────────────────────────────────────────────
     with tab_act3:
@@ -271,7 +271,7 @@ def _render_pillar_overview(df, group_id):
     return pdf
 
 
-def _render_contradiction_cards(contradictions):
+def _render_contradiction_cards(df, contradictions):
     """Render các contradiction cards."""
     critical = [c for c in contradictions if c['severity'] == 'critical']
     warning = [c for c in contradictions if c['severity'] == 'warning']
@@ -341,6 +341,19 @@ def _render_contradiction_cards(contradictions):
             </div>
         </div>
         """, unsafe_allow_html=True)
+        
+        c_id = c['id']
+        metrics = c['metrics']
+        if c_id == 'TENURE_CLIFF':
+            _render_tenure_cliff_chart(df, metrics)
+        elif c_id in ('INFO_GAP', 'FAIRNESS_GAP'):
+            _render_gap_chart(df, metrics, c_id)
+        elif c_id in ('PRIDE_PARADOX', 'INCOME_PARADOX', 'SILENT_DISENGAGED', 'MEI_SHIELD_FAIL', 'BURNOUT_TRAP', 'LEADERSHIP_HALO'):
+            _render_paradox_chart(df, metrics, c_id)
+        elif c_id == 'BURNOUT_BLIND_SPOT':
+            _render_burnout_blind_chart(df, metrics)
+        elif c_id == 'GLASS_CEILING':
+            _render_glass_ceiling_chart(df, metrics)
 
 
 def _render_deep_dive(df, contradiction, group_id, index):
@@ -362,20 +375,83 @@ def _render_deep_dive(df, contradiction, group_id, index):
     </div>
     """, unsafe_allow_html=True)
 
-    # Render specific deep dive visualization based on contradiction type
-    if c_id == 'TENURE_CLIFF':
-        _render_tenure_cliff_chart(df, metrics)
-    elif c_id in ('INFO_GAP', 'FAIRNESS_GAP'):
-        _render_gap_chart(df, metrics, c_id)
-    elif c_id in ('PRIDE_PARADOX', 'INCOME_PARADOX', 'SILENT_DISENGAGED', 'MEI_SHIELD_FAIL', 'BURNOUT_TRAP', 'LEADERSHIP_HALO'):
-        _render_paradox_chart(df, metrics, c_id)
-    elif c_id == 'BURNOUT_BLIND':
-        _render_burnout_blind_chart(df, metrics)
-    elif c_id == 'GLASS_CEILING':
-        _render_glass_ceiling_chart(df, metrics)
+    # Render regional breakdown visualization
+    _render_regional_breakdown_chart(df, c_id)
 
     # AI deep dive
     _render_ai_deep_dive(contradiction, group_id)
+
+
+def _render_regional_breakdown_chart(df, c_id):
+    """Render regional breakdown chart cho Act 3."""
+    group_col = None
+    if 'tên_bc' in df.columns and df['tên_bc'].nunique() > 1:
+        group_col = 'tên_bc'
+    elif 'vùng' in df.columns and df['vùng'].nunique() > 1:
+        group_col = 'vùng'
+    elif 'phòng ban' in df.columns and df['phòng ban'].nunique() > 1:
+        group_col = 'phòng ban'
+        
+    if not group_col:
+        return
+        
+    q_cols = []
+    labels = []
+    
+    if c_id == 'LEADERSHIP_HALO':
+        q_cols = ['Q9', 'Q31']
+        labels = ['Q9: Niềm tin LĐ', 'Q31: eNPS']
+    elif c_id == 'BURNOUT_TRAP':
+        q_cols = ['Q29', 'Q30', 'Q32', 'Q33']
+        labels = ['Q29: Khối lượng CV', 'Q30: Áp lực', 'Q32: Kiệt sức', 'Q33: Muốn ở lại']
+    elif c_id == 'PRIDE_PARADOX':
+        q_cols = ['Q28', 'Q33']
+        labels = ['Q28: Tự hào', 'Q33: Muốn ở lại']
+    elif c_id == 'INCOME_PARADOX':
+        q_cols = ['Q21', 'Q33']
+        labels = ['Q21: Thu nhập', 'Q33: Muốn ở lại']
+    elif c_id == 'SILENT_DISENGAGED':
+        q_cols = ['Q28', 'Q31']
+        labels = ['Q28: Hài lòng chung', 'Q31: eNPS']
+    elif c_id == 'MEI_SHIELD_FAIL':
+        q_cols = ['Q12', 'Q33']
+        labels = ['Q12: Hỗ trợ', 'Q33: Muốn ở lại']
+
+    q_cols = [c for c in q_cols if c in df.columns]
+    if not q_cols: return
+    
+    data = []
+    for g, grp in df.groupby(group_col):
+        if len(grp) < 5: continue
+        row = {'Nhóm': g}
+        for q in q_cols:
+            row[q] = grp[q].mean()
+        data.append(row)
+        
+    if not data: return
+    pdf = pd.DataFrame(data)
+    
+    fig = go.Figure()
+    colors = ['#4318FF', '#EF4444', '#F59E0B', '#10B981']
+    for idx, q in enumerate(q_cols):
+        fig.add_trace(go.Bar(
+            name=labels[idx],
+            x=pdf['Nhóm'], y=pdf[q],
+            marker_color=colors[idx % len(colors)],
+            text=[f"{v:.1f}" for v in pdf[q]],
+            textposition='outside',
+            textfont=dict(size=11)
+        ))
+    
+    fig.update_layout(
+        barmode='group',
+        title=f"Phân rã theo {group_col}",
+        height=320, margin=dict(l=10, r=10, t=40, b=10),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter', size=12),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    st.plotly_chart(fig, use_container_width=True, key=f"regional_breakdown_{c_id}")
 
 
 def _render_tenure_cliff_chart(df, metrics):
