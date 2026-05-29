@@ -192,6 +192,11 @@ def _render_login_page():
 
 
 if not is_admin:
+    # 0. Check if we need to save token to browser (after successful login)
+    if "needs_saving_token" in st.session_state:
+        _save_token_to_browser(st.session_state.needs_saving_token)
+        del st.session_state["needs_saving_token"]
+
     # 1. Xử lý callback OAuth (có ?code= trên URL)
     if "code" in st.query_params:
         code = st.query_params.get("code")
@@ -207,9 +212,8 @@ if not is_admin:
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 token = _make_auth_token(email, name, picture)
+                st.session_state.needs_saving_token = token
                 st.query_params.clear()
-                st.query_params["s"] = token
-                _save_token_to_browser(token)  # Ghi nhớ đăng nhập trên browser
                 st.rerun()
             else:
                 st.query_params.clear()
@@ -241,6 +245,14 @@ if not is_admin:
                 st.session_state.user_email = token_data["email"]
                 st.session_state.user_name = token_data["name"]
                 st.session_state.user_picture = token_data["picture"]
+                # Xóa token khỏi URL để tránh rò rỉ khi copy link
+                st.query_params.clear()
+                st.rerun()
+            else:
+                st.query_params.clear()
+                _clear_token_from_browser()
+                _render_login_page()
+                st.stop()
 
     # 3. Nếu vẫn chưa có user → hiện trang login
     user_email = st.session_state.get("user_email")
