@@ -376,8 +376,55 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                     with c1:
                         st.markdown(f"<div style='font-size:0.8rem; color:#475569; margin-top:20px;'><strong>{qA}</strong>: {labelA}<br><br><strong>{qB}</strong>: {labelB}</div>", unsafe_allow_html=True)
                     with c2:
-                        st.plotly_chart(fig_comp, width='stretch', key="comp_paradox_chart")
+                        st.plotly_chart(fig_comp, width='stretch', key=f"comp_paradox_chart_{qA}_{qB}")
                         
+                    if gap >= 0.4:
+                        text_col = None
+                        for tc in ['Q32', 'Q34', 'Q36', 'Q30', 'open_text', 'Open-ended']:
+                            if tc in df.columns and df[tc].notna().sum() > 0:
+                                text_col = tc
+                                break
+                        
+                        sample_texts = ""
+                        if text_col:
+                            texts = df[text_col].dropna().astype(str).tolist()
+                            import random
+                            sample_size = min(15, len(texts))
+                            if sample_size > 0:
+                                sampled = random.sample(texts, sample_size)
+                                sample_texts = "\n- ".join(sampled)
+                        
+                        ai_data = {
+                            "Title": title,
+                            "Q_High": f"{qA if mA > mB else qB}: {labelA if mA > mB else labelB}",
+                            "Score_High": round(max(mA, mB), 2),
+                            "Q_Low": f"{qB if mA > mB else qA}: {labelB if mA > mB else labelA}",
+                            "Score_Low": round(min(mA, mB), 2),
+                            "Gap": round(gap, 2)
+                        }
+                        
+                        prompt = (
+                            f"Phân tích nghịch lý '{title}'.\n"
+                            f"Trong dữ liệu khảo sát, nhân viên đánh giá cao yếu tố sau:\n"
+                            f"- {ai_data['Q_High']} (Điểm: {ai_data['Score_High']}/5).\n"
+                            f"Tuy nhiên, họ lại đánh giá rất thấp yếu tố sau:\n"
+                            f"- {ai_data['Q_Low']} (Điểm: {ai_data['Score_Low']}/5).\n"
+                            f"Khoảng cách (Gap): {ai_data['Gap']} điểm.\n\n"
+                        )
+                        if sample_texts:
+                            prompt += f"Dưới đây là một số ý kiến thực tế của nhân viên (câu hỏi mở):\n- {sample_texts}\n\n"
+                        else:
+                            prompt += "Lưu ý: Không có dữ liệu câu hỏi mở cho nhóm này.\n\n"
+                            
+                        prompt += (
+                            "Yêu cầu (trình bày trực diện, ngắn gọn):\n"
+                            "1. Dựa vào các ý kiến thực tế trên (nếu có) và hiểu biết chuyên môn về quản trị nhân sự, giải thích TẠI SAO lại xuất hiện nghịch lý này? "
+                            "(ví dụ: tại sao điểm Q_High lại tốt nhưng điểm Q_Low lại thấp, mâu thuẫn cốt lõi ẩn giấu là gì?)\n"
+                            "2. Đề xuất một hành động can thiệp ngay lập tức để giải tỏa ức chế tâm lý và thu hẹp khoảng cách này."
+                        )
+                        
+                        render_ai_insight_card(f"Bằng chứng từ Dữ liệu & AI Phân tích", ai_data, prompt)
+
                     st.markdown("<hr style='margin:16px 0;border:none;border-top:1px dashed #E2E8F0;'>", unsafe_allow_html=True)
 
     st.markdown("##### Phân bố phản hồi từng câu hỏi")
