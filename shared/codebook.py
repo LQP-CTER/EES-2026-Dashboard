@@ -557,8 +557,8 @@ CODEBOOK_3B = {
 
 PILLAR_META = {
     'TC1': {
-        'name': 'Niềm tin & Định hướng',
-        'short': 'Niềm tin BLĐ',
+        'name': 'Niềm tin lãnh đạo',
+        'short': 'Niềm tin LĐ',
         'icon': '',
         'color': '#6366F1',
         'description': 'Niềm tin vào Ban Lãnh đạo và định hướng chiến lược của tổ chức',
@@ -572,8 +572,8 @@ PILLAR_META = {
         }
     },
     'TC2': {
-        'name': 'Năng lực Quản lý Trực tiếp',
-        'short': 'Năng lực QL',
+        'name': 'Quản lý trực tiếp (MEI)',
+        'short': 'QL trực tiếp',
         'icon': '',
         'color': '#0EA5E9',
         'description': 'Năng lực hỗ trợ, công bằng và phản hồi của quản lý trực tiếp (AM/TBC/Leader)',
@@ -587,8 +587,8 @@ PILLAR_META = {
         }
     },
     'TC3': {
-        'name': 'Công việc & Điều kiện Vận hành',
-        'short': 'Công việc & VH',
+        'name': 'Công việc & phát triển',
+        'short': 'CV & Phát triển',
         'icon': '',
         'color': '#F59E0B',
         'description': 'Công cụ, quy trình, lộ trình thăng tiến và điều kiện làm việc hàng ngày',
@@ -602,7 +602,7 @@ PILLAR_META = {
         }
     },
     'TC4': {
-        'name': 'Thu nhập & Tính Minh bạch',
+        'name': 'Thu nhập & minh bạch',
         'short': 'Thu nhập & MB',
         'icon': '',
         'color': '#10B981',
@@ -617,7 +617,7 @@ PILLAR_META = {
         }
     },
     'TC5': {
-        'name': 'Môi trường & Sự Gắn kết',
+        'name': 'Môi trường & gắn kết',
         'short': 'Môi trường & GK',
         'icon': '',
         'color': '#EF4444',

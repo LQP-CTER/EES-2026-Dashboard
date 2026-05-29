@@ -957,7 +957,7 @@ with st.sidebar:
             st.error(f"Không tìm thấy nhóm khảo sát: {sel_dashboard}")
             st.stop()
 
-        # Sub-navigation
+        # Sub-navigation - updated
         st.markdown('<span class="sb-section">Trụ cột trải nghiệm</span>', unsafe_allow_html=True)
         SUB_NAV = ["Tổng quan Tổ chức"] + [f"{PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
         SUB_NAV.append("Đo lường Impact")

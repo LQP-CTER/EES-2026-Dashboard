@@ -161,14 +161,21 @@ def _render_contradiction_cards(contradictions):
 
     # Summary banner
     total = len(contradictions)
+    
+    badges = []
+    if critical:
+        badges.append(f'<span style="background:#FEF2F2;color:#DC2626;padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:700;">{len(critical)} Nghiêm trọng</span>')
+    if warning:
+        badges.append(f'<span style="background:#FFFBEB;color:#D97706;padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:700;">{len(warning)} Cảnh báo</span>')
+    badges_html = " ".join(badges)
+
     st.markdown(f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
         <div style="font-size:0.82rem;color:#64748B;margin-bottom:8px;">
             Phát hiện <strong>{total} mâu thuẫn</strong> trong dữ liệu
         </div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;">
-            {'<span style="background:#FEF2F2;color:#DC2626;padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:700;">' + str(len(critical)) + ' Nghiêm trọng</span>' if critical else ''}
-            {'<span style="background:#FFFBEB;color:#D97706;padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:700;">' + str(len(warning)) + ' Cảnh báo</span>' if warning else ''}
+            {badges_html}
         </div>
     </div>
     """, unsafe_allow_html=True)

@@ -407,13 +407,17 @@ def render(all_data, available_groups):
             st.plotly_chart(fig_evp, width='stretch', key="company_overview_chart_406")
             
         with c_evp2:
-            nlp_ai_data = {
-                "EVP_Buckets_Frequencies": df_evp.set_index('EVP_Factor')['Mentions'].to_dict(),
-                "Top_Bucket": df_evp.iloc[-1]['EVP_Factor'],
-                "Bottom_Bucket": df_evp.iloc[0]['EVP_Factor']
-            }
-            prompt = "Phân tích dữ liệu đếm từ khóa từ các câu hỏi mở (Open-text) của nhân viên. Bóc tách những yếu tố ảnh hưởng mạnh nhất đến định vị thương hiệu tuyển dụng (EVP). Nêu rõ những điểm được đánh giá cao (như môi trường, thu nhập) và cảnh báo về những rủi ro bất mãn (ví dụ: công nghệ, tốc độ xử lý, truy thu... tùy theo dữ liệu đếm)."
-            render_ai_insight_card("AI NLP Insight: Định Vị Thương Hiệu (EVP)", nlp_ai_data, prompt, badge="NLP Engine", custom_style="height: 100%; margin-bottom: 0; padding: 24px;")
+            df_evp_ai = df_evp[df_evp['Mentions'] > 0]
+            if df_evp_ai.empty:
+                st.info("Chưa có đủ từ khóa để phân tích sâu.")
+            else:
+                nlp_ai_data = {
+                    "EVP_Buckets_Frequencies": df_evp_ai.set_index('EVP_Factor')['Mentions'].to_dict(),
+                    "Top_Bucket": df_evp_ai.iloc[-1]['EVP_Factor'],
+                    "Bottom_Bucket_with_mentions": df_evp_ai.iloc[0]['EVP_Factor']
+                }
+                prompt = "Phân tích dữ liệu đếm từ khóa từ các câu hỏi mở (Open-text) của nhân viên. Bóc tách những yếu tố ảnh hưởng mạnh nhất đến định vị thương hiệu tuyển dụng (EVP). CHÚ Ý: Tuyệt đối KHÔNG nhắc đến các yếu tố không có phản hồi (0 mentions). CHỈ phân tích dựa trên những yếu tố thực sự được nhân viên đề cập, nêu bật điểm mạnh và rủi ro tiềm ẩn (nếu có)."
+                render_ai_insight_card("AI NLP Insight: Định Vị Thương Hiệu (EVP)", nlp_ai_data, prompt, badge="NLP Engine", custom_style="height: 100%; margin-bottom: 0; padding: 24px;")
     else:
         st.info("Chưa có dữ liệu câu hỏi mở (NLP) để phân tích EVP.")
 
