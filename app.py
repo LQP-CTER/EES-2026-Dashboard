@@ -7,6 +7,10 @@ import hashlib
 import json
 import re
 import time
+from datetime import datetime
+
+from streamlit_cookies_controller import CookieController
+cookie_controller = CookieController()
 
 # Setup paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -101,55 +105,7 @@ def _verify_auth_token(token: str):
         return None
 
 
-LOCALSTORAGE_KEY = "ees2026_auth_token"
-
-def _save_token_to_browser(token: str):
-    """Inject JS to save auth token to localStorage."""
-    import streamlit.components.v1 as components
-    components.html(f"""
-    <script>
-        (function() {{
-            try {{
-                window.parent.localStorage.setItem('{LOCALSTORAGE_KEY}', '{token}');
-            }} catch(e) {{}}
-        }})();
-    </script>
-    """, width=0, height=0)
-
-
-def _inject_restore_from_localstorage():
-    """Inject JS to read token from localStorage and redirect with ?s= if missing from URL."""
-    import streamlit.components.v1 as components
-    components.html(f"""
-    <script>
-        (function() {{
-            try {{
-                var token = window.parent.localStorage.getItem('{LOCALSTORAGE_KEY}');
-                if (token) {{
-                    var url = new URL(window.parent.location.href);
-                    if (!url.searchParams.get('s')) {{
-                        url.searchParams.set('s', token);
-                        window.parent.location.replace(url.toString());
-                    }}
-                }}
-            }} catch(e) {{}}
-        }})();
-    </script>
-    """, width=0, height=0)
-
-
-def _clear_token_from_browser():
-    """Inject JS to remove auth token from localStorage (logout)."""
-    import streamlit.components.v1 as components
-    components.html(f"""
-    <script>
-        (function() {{
-            try {{
-                window.parent.localStorage.removeItem('{LOCALSTORAGE_KEY}');
-            }} catch(e) {{}}
-        }})();
-    </script>
-    """, width=0, height=0)
+# Removed localStorage inject functions
 
 
 is_admin = st.session_state.get("is_admin", False)
@@ -206,6 +162,11 @@ def _render_login_page():
 
 
 if not is_admin:
+    # 0. Set cookie if needed (after successful login)
+    if "needs_saving_token" in st.session_state:
+        cookie_controller.set("ees2026_auth_token", st.session_state.needs_saving_token, max_age=43200, path="/")
+        del st.session_state["needs_saving_token"]
+
     # 1. Xử lý callback OAuth (có ?code= trên URL)
     if "code" in st.query_params:
         code = st.query_params.get("code")
@@ -221,9 +182,8 @@ if not is_admin:
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 token = _make_auth_token(email, name, picture)
+                st.session_state.needs_saving_token = token
                 st.query_params.clear()
-                st.query_params["s"] = token
-                _save_token_to_browser(token)
                 st.rerun()
             else:
                 st.query_params.clear()
@@ -240,24 +200,19 @@ if not is_admin:
             _render_login_page()
             st.stop()
 
-    # 2. Restore session từ auth token trên URL hoặc localStorage
+    # 2. Restore session từ Cookie
     user_email = st.session_state.get("user_email")
     if not user_email:
-        auth_token = st.query_params.get("s")
-        if not auth_token:
-            # Chưa có token trên URL → inject JS để đọc từ localStorage và redirect
-            _inject_restore_from_localstorage()
-            _render_login_page()
-            st.stop()
+        auth_token = cookie_controller.get("ees2026_auth_token")
         if auth_token:
             token_data = _verify_auth_token(auth_token)
             if token_data and _is_allowed_email(token_data["email"]):
                 st.session_state.user_email = token_data["email"]
                 st.session_state.user_name = token_data["name"]
                 st.session_state.user_picture = token_data["picture"]
+                st.rerun()
             else:
-                st.query_params.clear()
-                _clear_token_from_browser()
+                cookie_controller.remove("ees2026_auth_token")
                 _render_login_page()
                 st.stop()
 

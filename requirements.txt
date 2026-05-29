@@ -10,3 +10,4 @@ xlsxwriter
 pyarrow>=14.0.0
 requests
 sqlalchemy>=2.0.0
+streamlit-cookies-controller
