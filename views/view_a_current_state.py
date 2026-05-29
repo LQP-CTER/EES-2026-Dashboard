@@ -831,6 +831,55 @@ def render(df, cfg, pillar_filter=None):
                                         showlegend=True, yaxis=dict(range=[0, 110]))
                     st.plotly_chart(fig_dd, width='stretch', key="view_a_current_state_chart_831")
 
+                # ── AI Insight for Unit ──
+                st.markdown("---")
+                
+                text_col = None
+                for tc in ['Q32', 'Q34', 'Q36', 'Q30', 'open_text', 'Open-ended']:
+                    if tc in _udf.columns and _udf[tc].notna().sum() > 0:
+                        text_col = tc
+                        break
+                        
+                sample_texts = ""
+                if text_col:
+                    texts = _udf[text_col].dropna().astype(str).tolist()
+                    import random
+                    sample_size = min(15, len(texts))
+                    if sample_size > 0:
+                        sampled = random.sample(texts, sample_size)
+                        sample_texts = "\n- ".join(sampled)
+                        
+                ai_data = {
+                    "Unit": _sel_unit,
+                    "N": len(_udf),
+                    "EI_mean": round(_ukpis['ei_mean'], 1),
+                    "Group_EI_mean": round(_grp_kpis['ei_mean'], 1),
+                    "eNPS": round(_ukpis['enps_score'], 0),
+                    "Group_eNPS": round(_grp_kpis['enps_score'], 0),
+                    "Anomalies": [a['label'] for a in _anomalies] if _anomalies else [],
+                    "Pillar_scores": _pillar_rows
+                }
+                
+                prompt = (
+                    f"Phân tích chuyên sâu bộ phận/đơn vị: {_sel_unit} (N={len(_udf)}).\n"
+                    f"Chỉ số EI: {_ukpis['ei_mean']:.1f}% (Toàn nhóm: {_grp_kpis['ei_mean']:.1f}%).\n"
+                    f"eNPS: {_ukpis['enps_score']:.0f} (Toàn nhóm: {_grp_kpis['enps_score']:.0f}).\n"
+                    f"Điểm các trụ cột: {_pillar_rows}.\n"
+                    f"Bất thường phát hiện: {ai_data['Anomalies']}.\n"
+                )
+                if sample_texts:
+                    prompt += f"Trích xuất một số ý kiến thực tế của nhân viên bộ phận này:\n- {sample_texts}\n\n"
+                
+                prompt += (
+                    "Yêu cầu (trình bày súc tích, trực diện):\n"
+                    "1. Chỉ ra nguyên nhân tại sao các chỉ số của bộ phận này lại cao/thấp hơn mặt bằng chung (kết nối số liệu trụ cột và ý kiến nhân viên để giải thích).\n"
+                    "2. Nhận diện vấn đề nhức nhối nhất hoặc điểm sáng nổi bật nhất của bộ phận.\n"
+                    "3. Đề xuất hành động quản trị cụ thể, khả thi dành riêng cho quản lý của bộ phận này."
+                )
+                
+                render_ai_insight_card("Phân tích Đơn vị", ai_data, prompt)
+
+
     except Exception as _dd_err:
         st.caption(f"Deep Dive không khả dụng: {_dd_err}")
 
