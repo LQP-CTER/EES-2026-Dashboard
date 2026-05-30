@@ -34,22 +34,9 @@ def render(all_data, available_groups):
     except Exception:
         total_headcount = 21353
 
-    try:
-        total_raw_forms = 0
-        from config.groups import GROUP_REGISTRY
-        for gid in all_data.keys():
-            cfg = GROUP_REGISTRY.get(gid)
-            if cfg:
-                try:
-                    df_raw = pd.read_csv(cfg['url'])
-                    total_raw_forms += len(df_raw)
-                except Exception:
-                    pass
-        total_participants = (total_raw_forms - 94) if total_raw_forms >= 20099 else 20005
-    except Exception:
-        total_participants = 20005
-
-    total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 93.7
+    # Tổng số phản hồi hợp lệ sau làm sạch ở cấp công ty
+    total_participants = total_n
+    total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 0
     bm = get_company_benchmark_2025()
     ei_delta = total_ei - bm['ei_mean']
     enps_delta = total_enps - bm['enps_score']
@@ -139,7 +126,7 @@ def render(all_data, available_groups):
             <div class="overview-kpi-grid">
                 <div class="overview-kpi"><div class="label">Nhân sự</div><div class="value">{total_headcount:,}</div><div class="sub">Quy mô toàn tổ chức</div></div>
                 <div class="overview-kpi"><div class="label">Phản hồi</div><div class="value">{total_participants:,}</div><div class="sub">Mẫu khảo sát hợp lệ</div></div>
-                <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">So với benchmark 2025: {rr_delta:+.1f}%</div></div>
+                <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">Phản hồi hợp lệ / Headcount</div></div>
                 <div class="overview-kpi"><div class="label">Mức gắn kết</div><div class="value">{total_ei:.1f}</div><div class="sub">EI tổng thể · {ei_delta:+.1f} so với 2025</div></div>
             </div>
         </div>
