@@ -1065,7 +1065,7 @@ with st.sidebar:
     df_filtered = None
     n_before    = 0
 
-    if is_appendix or is_data_trust:
+    if is_appendix or is_data_trust or is_overview:
         pass
 
     elif is_company:
@@ -1078,7 +1078,7 @@ with st.sidebar:
         )
         st.session_state.global_tenure = sel_tenure_sb
 
-    else:
+    elif not is_overview:
         # Identify selected group
         for g in group_opts:
             if available[g]['label'] == sel_dashboard:
