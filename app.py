@@ -12,6 +12,12 @@ from datetime import datetime
 import secrets
 import threading
 
+from streamlit_cookies_controller import CookieController
+
+COOKIE_NAME = "ees_remember_token"
+COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+cookie_controller = CookieController()
+
 ACTIVE_SESSIONS_FILE = os.path.join("config", "active_sessions.json")
 _sessions_lock = threading.Lock()
 
@@ -87,6 +93,27 @@ def _save_active_sessions(sessions: dict):
         os.makedirs(os.path.dirname(ACTIVE_SESSIONS_FILE), exist_ok=True)
         with open(ACTIVE_SESSIONS_FILE, "w", encoding="utf-8") as f:
             json.dump(sessions, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
+
+
+def _get_remember_cookie() -> str:
+    try:
+        return cookie_controller.get(COOKIE_NAME) or ""
+    except Exception:
+        return ""
+
+
+def _set_remember_cookie(token: str):
+    try:
+        cookie_controller.set(COOKIE_NAME, token, max_age=COOKIE_MAX_AGE)
+    except Exception:
+        pass
+
+
+def _clear_remember_cookie():
+    try:
+        cookie_controller.remove(COOKIE_NAME)
     except Exception:
         pass
 
@@ -253,6 +280,7 @@ if not is_admin:
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 st.session_state.current_token = secure_token
+                _set_remember_cookie(secure_token)
                 
                 st.query_params.clear()
                 st.query_params["s"] = secure_token
@@ -274,9 +302,9 @@ if not is_admin:
             _render_login_page()
             st.stop()
 
-    # 2. Đồng bộ session từ URL hoặc Session State
+    # 2. Đồng bộ session từ URL, Session State hoặc remember cookie
     user_email = st.session_state.get("user_email")
-    current_token = st.session_state.get("current_token")
+    current_token = st.session_state.get("current_token") or _get_remember_cookie()
 
     if user_email and current_token:
         # User đã đăng nhập trong session này, cập nhật last_seen
@@ -1178,9 +1206,10 @@ with st.sidebar:
                         sessions.pop(token, None)
                         _save_active_sessions(sessions)
                 
-                # Dọn sạch session state và query parameters
+                # Dọn sạch session state, cookie và query parameters
                 for _k in ["user_email", "user_name", "user_picture", "current_token"]:
                     st.session_state.pop(_k, None)
+                _clear_remember_cookie()
                 st.query_params.clear()
                 st.query_params["logout"] = "1"
                 st.rerun()
