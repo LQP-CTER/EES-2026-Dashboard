@@ -127,47 +127,44 @@ def render(all_data, available_groups):
     </style>
     ''', unsafe_allow_html=True)
 
-    tab_overview, tab_company = st.tabs(["Overview EES 2026", "Toàn bộ GHN"])
-
-    with tab_overview:
-        st.markdown(f'''
-        <div class="overview-hero">
-            <div style="position:relative; z-index:2;">
-                <div style="font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:#BFDBFE; font-weight:800;">EES 2026 · Executive Overview</div>
-                <h2 style="margin:10px 0 8px; font-size:2rem; line-height:1.15; font-weight:900; color:white;">Bức tranh tổng quan EES 2026</h2>
-                <p style="margin:0; max-width:860px; color:#DBEAFE; line-height:1.75; font-size:0.92rem;">
-                    Tab này dành riêng cho phần tóm tắt điều hành: team đã làm gì cho EES 2026, những trục phân tích chéo cần đọc cùng nhau,
-                    và các khoảng trống nội dung sẽ được bổ sung dần. Hiện tại đây là một sườn nền tảng sạch, sang, sẵn sàng để fill thông tin sau.
-                </p>
-                <div class="overview-kpi-grid">
-                    <div class="overview-kpi"><div class="label">Nhân sự</div><div class="value">{total_headcount:,}</div><div class="sub">Quy mô toàn tổ chức</div></div>
-                    <div class="overview-kpi"><div class="label">Phản hồi</div><div class="value">{total_participants:,}</div><div class="sub">Mẫu khảo sát hợp lệ</div></div>
-                    <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">So với benchmark 2025: {rr_delta:+.1f}%</div></div>
-                    <div class="overview-kpi"><div class="label">Mức gắn kết</div><div class="value">{total_ei:.1f}</div><div class="sub">EI tổng thể · {ei_delta:+.1f} so với 2025</div></div>
-                </div>
+    st.markdown(f'''
+    <div class="overview-hero">
+        <div style="position:relative; z-index:2;">
+            <div style="font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:#BFDBFE; font-weight:800;">EES 2026 · Executive Overview</div>
+            <h2 style="margin:10px 0 8px; font-size:2rem; line-height:1.15; font-weight:900; color:white;">Bức tranh tổng quan EES 2026</h2>
+            <p style="margin:0; max-width:860px; color:#DBEAFE; line-height:1.75; font-size:0.92rem;">
+                Trang này là một mặt phẳng truyền thông nội bộ dành cho team EX: kể lại team đã làm gì cho EES 2026,
+                cách team biến dữ liệu thành câu chuyện điều hành, và các lớp phân tích chéo đã được dựng lên cho toàn công ty.
+            </p>
+            <div class="overview-kpi-grid">
+                <div class="overview-kpi"><div class="label">Nhân sự</div><div class="value">{total_headcount:,}</div><div class="sub">Quy mô toàn tổ chức</div></div>
+                <div class="overview-kpi"><div class="label">Phản hồi</div><div class="value">{total_participants:,}</div><div class="sub">Mẫu khảo sát hợp lệ</div></div>
+                <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">So với benchmark 2025: {rr_delta:+.1f}%</div></div>
+                <div class="overview-kpi"><div class="label">Mức gắn kết</div><div class="value">{total_ei:.1f}</div><div class="sub">EI tổng thể · {ei_delta:+.1f} so với 2025</div></div>
             </div>
         </div>
+    </div>
 
-        <div class="overview-section">
-            <div class="background-grid">
-                <div class="bg-card"><div class="bg-chip">Phân tích chéo</div><h4>Cross-check theo nhiều lớp</h4><p>Đọc đồng thời theo phòng ban, thâm niên, khối, và trụ cột để tránh kết luận từ một lát cắt đơn lẻ.</p></div>
-                <div class="bg-card"><div class="bg-chip">Chiến lược</div><h4>Executive narrative</h4><p>Không chỉ hiển thị số liệu, mà còn gom thành câu chuyện điều hành: tín hiệu chính, rủi ro và ưu tiên hành động.</p></div>
-                <div class="bg-card"><div class="bg-chip">Nội dung sắp fill</div><h4>Roadmap & team contributions</h4><p>Khu vực này sẽ dùng để ghi lại team đã làm gì cho EES 2026, ai phụ trách phần nào và các deliverable quan trọng.</p></div>
-                <div class="bg-card"><div class="bg-chip">Tốc độ</div><h4>Tối ưu truy cập</h4><p>Dữ liệu đang được cache theo nhóm để giảm thời gian tải và giúp dashboard phản hồi nhanh hơn.</p></div>
-            </div>
+    <div class="overview-section">
+        <div class="background-grid">
+            <div class="bg-card"><div class="bg-chip">Phân tích chéo</div><h4>Cross-check theo nhiều lớp</h4><p>Đọc đồng thời theo phòng ban, thâm niên, khối, và trụ cột để tránh kết luận từ một lát cắt đơn lẻ.</p></div>
+            <div class="bg-card"><div class="bg-chip">Chiến lược</div><h4>Executive narrative</h4><p>Không chỉ hiển thị số liệu, mà còn gom thành câu chuyện điều hành: tín hiệu chính, rủi ro và ưu tiên hành động.</p></div>
+            <div class="bg-card"><div class="bg-chip">Nội dung sắp fill</div><h4>Roadmap & team contributions</h4><p>Khu vực này sẽ dùng để ghi lại team đã làm gì cho EES 2026, ai phụ trách phần nào và các deliverable quan trọng.</p></div>
+            <div class="bg-card"><div class="bg-chip">Tối ưu</div><h4>Nhanh hơn & gọn hơn</h4><p>Dữ liệu đang được cache theo nhóm để giảm thời gian tải và giúp dashboard phản hồi nhanh hơn.</p></div>
         </div>
-        ''', unsafe_allow_html=True)
+    </div>
+    ''', unsafe_allow_html=True)
 
-        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-        st.markdown(f'''
-        <div class="cov-container">
-            <div class="cov-card"><div class="cov-label">Tổng nhân sự</div><div class="cov-value" style="color:#0A1F44;">{total_headcount:,}</div><div class="cov-sub">Headcount toàn tổ chức GHN</div></div>
-            <div class="cov-card"><div class="cov-label">Đã tham gia khảo sát</div><div class="cov-value" style="color:#006FAD;">{total_participants:,}</div><div class="cov-sub"><span class="cov-badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;"><span class="cov-badge-dot" style="background:#3B82F6;"></span>{total_rr}% tỷ lệ phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(total_rr, 100):.1f}%; background: linear-gradient(90deg, #3B82F6, #006FAD);"></div></div></div>
-            <div class="cov-card"><div class="cov-label">Chưa tham gia</div><div class="cov-value" style="color:#94A3B8;">{max(total_headcount - total_participants, 0):,}</div><div class="cov-sub"><span class="cov-badge" style="background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;"><span class="cov-badge-dot" style="background:#CBD5E1;"></span>{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(max(round((1 - total_participants / total_headcount) * 100, 1), 0), 100):.1f}%; background: #E2E8F0;"></div></div></div>
-        </div>
-        ''', unsafe_allow_html=True)
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    st.markdown(f'''
+    <div class="cov-container">
+        <div class="cov-card"><div class="cov-label">Tổng nhân sự</div><div class="cov-value" style="color:#0A1F44;">{total_headcount:,}</div><div class="cov-sub">Headcount toàn tổ chức GHN</div></div>
+        <div class="cov-card"><div class="cov-label">Đã tham gia khảo sát</div><div class="cov-value" style="color:#006FAD;">{total_participants:,}</div><div class="cov-sub"><span class="cov-badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;"><span class="cov-badge-dot" style="background:#3B82F6;"></span>{total_rr}% tỷ lệ phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(total_rr, 100):.1f}%; background: linear-gradient(90deg, #3B82F6, #006FAD);"></div></div></div>
+        <div class="cov-card"><div class="cov-label">Chưa tham gia</div><div class="cov-value" style="color:#94A3B8;">{max(total_headcount - total_participants, 0):,}</div><div class="cov-sub"><span class="cov-badge" style="background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;"><span class="cov-badge-dot" style="background:#CBD5E1;"></span>{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(max(round((1 - total_participants / total_headcount) * 100, 1), 0), 100):.1f}%; background: #E2E8F0;"></div></div></div>
+    </div>
+    ''', unsafe_allow_html=True)
 
-    with tab_company:
+    # Executive company overview section
         from shared.plotly_theme import make_html_kpi
         kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
         with kpi_c1:
