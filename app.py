@@ -74,7 +74,18 @@ from utils.auth import get_google_auth_url, get_user_info
 # Load client secrets
 GOOGLE_CLIENT_ID     = st.secrets.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET", "")
-REDIRECT_URI         = st.secrets.get("REDIRECT_URI", "http://localhost:8501/")
+
+# IMPORTANT:
+# Google OAuth requires the redirect URI to match exactly what is configured
+# in Google Cloud Console. Local development and Streamlit Cloud often need
+# different values, so prefer an explicit secret and only fall back to localhost.
+def _get_redirect_uri() -> str:
+    secret_redirect = st.secrets.get("REDIRECT_URI", "").strip()
+    if secret_redirect:
+        return secret_redirect
+    return "http://localhost:8501/"
+
+REDIRECT_URI = _get_redirect_uri()
 _domains_raw = st.secrets.get("ALLOWED_DOMAINS", "ghn.vn,scommerce.asia")
 ALLOWED_DOMAINS = [d.strip().lower() for d in _domains_raw.split(",")] if isinstance(_domains_raw, str) else [d.lower() for d in _domains_raw]
 
@@ -159,75 +170,203 @@ def _is_allowed_email(email: str) -> bool:
 
 def _render_login_page():
     auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
-    
+
     st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none !important; }
         header[data-testid="stHeader"] { display: none !important; }
-        
-        /* Center form container */
-        .block-container {
-            max-width: 440px !important;
-            padding-top: 10vh !important;
+        .stApp {
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255, 82, 0, 0.12), transparent 24%),
+                radial-gradient(circle at 80% 10%, rgba(10, 31, 68, 0.12), transparent 18%),
+                linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%) !important;
         }
-        
-        .login-title { font-size: 1.7rem; font-weight: 700; color: #0F172A; text-align: center; margin-bottom: 24px; font-family: "Inter", sans-serif; }
-        
+        .block-container {
+            max-width: 1120px !important;
+            padding-top: 8vh !important;
+        }
+        .login-shell {
+            min-height: 78vh;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+        .login-hero, .login-card {
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 28px;
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
+        }
+        .login-hero {
+            padding: 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .login-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .login-brand img { width: 72px; height: 72px; object-fit: contain; }
+        .login-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FFF3EE;
+            color: #C2410C;
+            border: 1px solid #FED7AA;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            width: fit-content;
+            margin-bottom: 18px;
+        }
+        .login-title {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 900;
+            color: #0A1F44;
+            line-height: 1.05;
+            margin: 0 0 14px;
+            letter-spacing: -0.04em;
+        }
+        .login-subtitle {
+            font-size: 1rem;
+            line-height: 1.75;
+            color: #475569;
+            max-width: 54ch;
+            margin-bottom: 26px;
+        }
+        .login-points {
+            display: grid;
+            gap: 12px;
+            margin-top: auto;
+        }
+        .login-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            color: #0F172A;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid #E2E8F0;
+        }
+        .login-point strong { display: block; font-size: 0.94rem; }
+        .login-card {
+            padding: 38px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .login-card h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0A1F44;
+            margin: 0 0 8px;
+        }
+        .login-card p {
+            color: #64748B;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            margin: 0 0 22px;
+        }
         .google-btn {
             display: flex; align-items: center; justify-content: center; gap: 12px;
-            background-color: white; color: #1E293B !important; 
-            padding: 10px 24px; border-radius: 8px; border: 1px solid #E2E8F0;
-            font-weight: 600; font-size: 0.95rem; margin-bottom: 24px; 
-            text-decoration: none !important; transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            font-family: "Inter", sans-serif;
+            width: 100%;
+            background: #FFFFFF; color: #0F172A !important;
+            padding: 14px 20px; border-radius: 14px; border: 1px solid #E2E8F0;
+            font-weight: 700; font-size: 0.96rem;
+            text-decoration: none !important; transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.05);
+            margin-bottom: 18px;
         }
-        .google-btn:hover { background-color: #F8FAFC; border-color: #CBD5E1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
+        .google-btn:hover {
+            transform: translateY(-1px);
+            border-color: #CBD5E1;
+            box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+        }
         .divider {
-            display: flex; align-items: center; text-align: center; color: #64748B; font-size: 0.9rem; margin-bottom: 20px;
-            font-weight: 500; font-family: "Inter", sans-serif;
+            display: flex; align-items: center; text-align: center; color: #94A3B8; font-size: 0.82rem; margin: 18px 0 16px;
+            font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
         }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #E2E8F0; }
         .divider:not(:empty)::before { margin-right: .75em; }
         .divider:not(:empty)::after { margin-left: .75em; }
-        
-        /* Customize Streamlit button to look purple like Cloudflare */
         [data-testid="stFormSubmitButton"] button {
-            background-color: #6366F1 !important; /* Indigo/Purple */
+            background: linear-gradient(135deg, #0A1F44 0%, #1D4ED8 100%) !important;
             color: white !important;
             border: none !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            padding: 10px 24px !important;
-            font-size: 0.95rem !important;
+            border-radius: 14px !important;
+            font-weight: 700 !important;
+            padding: 12px 24px !important;
+            font-size: 0.96rem !important;
+            box-shadow: 0 12px 24px rgba(29, 78, 216, 0.18) !important;
         }
         [data-testid="stFormSubmitButton"] button:hover {
-            background-color: #4F46E5 !important;
+            filter: brightness(1.03);
         }
-        
-        /* Label style */
-        .email-label {
-            font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 4px; font-family: "Inter", sans-serif;
+        .login-footnote {
+            margin-top: 14px;
+            font-size: 0.8rem;
+            color: #94A3B8;
+            text-align: center;
+        }
+        @media (max-width: 900px) {
+            .login-shell { grid-template-columns: 1fr; }
+            .login-hero { padding: 28px; }
+            .login-card { padding: 28px; }
         }
     </style>
     """, unsafe_allow_html=True)
-    
-    st.markdown("<div style='text-align: center; margin-bottom: 20px;'><img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='120'></div>", unsafe_allow_html=True)
-    st.markdown("<div class='login-title'>Log in to your account</div>", unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <a href="{auth_url}" target="_self" class="google-btn">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
-        Log in with Google
-    </a>
-    <div class="divider">Email Address</div>
+
+    st.markdown("""
+    <div class='login-shell'>
+        <div class='login-hero'>
+            <div>
+                <div class='login-brand'>
+                    <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' alt='GHN Logo'>
+                    <div>
+                        <div style='font-size:0.9rem;font-weight:800;color:#0A1F44;letter-spacing:0.08em;text-transform:uppercase;'>EES 2026 Dashboard</div>
+                        <div style='font-size:0.82rem;color:#64748B;'>Employee Engagement Survey</div>
+                    </div>
+                </div>
+                <div class='login-kicker'>Secure access · Google SSO</div>
+                <div class='login-title'>Đăng nhập an toàn để xem dashboard nội bộ</div>
+                <div class='login-subtitle'>
+                    Truy cập dữ liệu EES 2026 với trải nghiệm đăng nhập gọn gàng, hiện đại và an toàn hơn cho người dùng nội bộ GHN.
+                </div>
+            </div>
+            <div class='login-points'>
+                <div class='login-point'><div style='font-weight:800;color:#FF5200;'>01</div><div><strong>Google SSO</strong> Đăng nhập nhanh bằng tài khoản công ty.</div></div>
+                <div class='login-point'><div style='font-weight:800;color:#FF5200;'>02</div><div><strong>Chỉ cho domain nội bộ</strong> Hỗ trợ `@ghn.vn` và `@scommerce.asia`.</div></div>
+                <div class='login-point'><div style='font-weight:800;color:#FF5200;'>03</div><div><strong>Bảo mật session</strong> Kiểm soát token và phiên đăng nhập trên server.</div></div>
+            </div>
+        </div>
+        <div class='login-card'>
+            <h2>Chọn phương thức đăng nhập</h2>
+            <p>Ưu tiên đăng nhập bằng Google để xác thực nhanh. Nếu cần, bạn vẫn có thể nhập email nội bộ hợp lệ để vào hệ thống.</p>
     """, unsafe_allow_html=True)
-    
+
+    st.markdown(f"""
+            <a href="{auth_url}" target="_self" class="google-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
+                Tiếp tục với Google
+            </a>
+            <div class="divider">Hoặc dùng email nội bộ</div>
+    """, unsafe_allow_html=True)
+
     with st.form("login_form", clear_on_submit=False):
         email_input = st.text_input("Email Address", label_visibility="collapsed", placeholder="nguyenvana@ghn.vn")
-        submitted = st.form_submit_button("Log in", use_container_width=True)
-        
+        submitted = st.form_submit_button("Đăng nhập", use_container_width=True)
+
         if submitted:
             email = email_input.strip().lower()
             if not email:
@@ -235,11 +374,11 @@ def _render_login_page():
             elif _is_allowed_email(email):
                 name = email.split('@')[0].capitalize()
                 picture = ""
-                
+
                 secure_token = secrets.token_urlsafe(32)
                 now = time.time()
                 current_sid = get_current_streamlit_session_id()
-                
+
                 with _sessions_lock:
                     sessions = _load_active_sessions()
                     sessions = _cleanup_expired_sessions(sessions)
@@ -252,18 +391,21 @@ def _render_login_page():
                         "created_at": now
                     }
                     _save_active_sessions(sessions)
-                
+
                 st.session_state.user_email = email
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 st.session_state.current_token = secure_token
                 _set_remember_cookie(secure_token)
-                
+
                 st.query_params.clear()
                 st.query_params["s"] = secure_token
                 st.rerun()
             else:
                 st.error(f"Email **{email}** không hợp lệ.\n\nChỉ chấp nhận email `@ghn.vn` hoặc `@scommerce.asia`.")
+
+    st.markdown("<div class='login-footnote'>Nếu đăng nhập Google bị lỗi 403 trên Streamlit Cloud, hãy kiểm tra redirect URI ở Google Cloud Console và secrets của ứng dụng.</div>", unsafe_allow_html=True)
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 
 def _render_security_error_page():
