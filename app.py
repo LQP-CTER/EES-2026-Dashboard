@@ -429,49 +429,46 @@ animation: pulse-dot 2s ease-in-out infinite;
 }
 
 .stAlert { border-radius: 12px !important; margin-top: 12px !important; }
-[data-testid="stForm"] { background: transparent !important; border: none !important; padding: 0 !important; }
+[data-testid="stForm"] { 
+    background: #FFFFFF !important; 
+    border: 1px solid rgba(226,232,240,0.8) !important; 
+    border-radius: 24px !important; 
+    padding: 36px 32px 32px !important; 
+    box-shadow: 0 0 0 1px rgba(255,82,0,0.05), 0 20px 60px rgba(15,23,42,0.08), 0 4px 16px rgba(15,23,42,0.04) !important; 
+}
 </style>
 """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-<div class="lc-top">
+    with st.form("login_form", clear_on_submit=False):
+        st.markdown(f"""
 <div class="lc-logo-wrap">
 <img class="lc-logo-main" src="{_ghn_logo}" alt="Giao Hang Nhanh">
 </div>
-<div class="lc-brand-bar">
-<img class="lc-brand-icon" src="{_logo_src}" alt="EES">
-<div>
-<span class="lc-brand-name">Employee Engagement Survey</span>
-<span class="lc-brand-sub">Dashboard · 2026</span>
-</div>
-</div>
-<span class="lc-eyebrow">Cổng đăng nhập nội bộ</span>
+<span class="lc-eyebrow">Cổng đăng nhập</span>
 <div class="lc-title">Chào mừng trở lại</div>
-<p class="lc-desc">Truy cập dashboard EES 2026 bằng tài khoản Google nội bộ của bạn. Chỉ dành cho nhân sự thuộc domain công ty.</p>
+<p class="lc-desc">Vui lòng đăng nhập để tiếp tục truy cập hệ thống.</p>
 <a href="{auth_url}" target="_self" class="gsi-btn">
 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
 Đăng nhập với Google
 </a>
 <div class="lc-divider">
 <div class="lc-divider-line"></div>
-<span class="lc-divider-text">hoặc dùng email</span>
+<span class="lc-divider-text">hoặc dùng mã bảo mật</span>
 <div class="lc-divider-line"></div>
-</div>
 </div>
 """, unsafe_allow_html=True)
 
-    st.markdown('<div class="lc-bottom">', unsafe_allow_html=True)
-    with st.form("login_form", clear_on_submit=False):
-        st.markdown("<span class='lc-field-label'>Email nội bộ</span>", unsafe_allow_html=True)
-        email_input = st.text_input("Email Address", label_visibility="collapsed", placeholder="nhập email")
-        submitted = st.form_submit_button("Tiếp tục với Email", use_container_width=True)
+        st.markdown("<span class='lc-field-label'>Mã đăng nhập</span>", unsafe_allow_html=True)
+        code_input = st.text_input("Access Code", type="password", label_visibility="collapsed", placeholder="Nhập mã bảo mật")
+        submitted = st.form_submit_button("Đăng nhập bằng Mã", use_container_width=True)
 
         if submitted:
-            email = email_input.strip().lower()
-            if not email:
-                st.error("Vui lòng nhập email.")
-            elif _is_allowed_email(email):
-                name = email.split('@')[0].capitalize()
+            code = code_input.strip()
+            if not code:
+                st.error("Vui lòng nhập mã đăng nhập.")
+            elif code == st.secrets.get("ACCESS_CODE", "EX-TEAM-EES-2026"):
+                email = "ex-team@ghn.vn"
+                name = "Thành viên EX-TEAM"
                 picture = ""
                 secure_token = secrets.token_urlsafe(32)
                 now = time.time()
@@ -497,7 +494,7 @@ animation: pulse-dot 2s ease-in-out infinite;
                 st.query_params["s"] = secure_token
                 st.rerun()
             else:
-                st.error(f"Email **{email}** không hợp lệ. Chỉ chấp nhận `@ghn.vn` hoặc `@scommerce.asia`.")
+                st.error("Mã đăng nhập không chính xác. Vui lòng thử lại.")
 
     st.markdown("""
 <div class="lc-footer">
