@@ -179,6 +179,8 @@ def _render_login_page():
     except Exception:
         _logo_src = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png"
 
+    _ghn_logo = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778161/LOGO%20GHN/LOGO_CHUAN_hviaug.png"
+
     st.markdown("""
 <style>
 [data-testid="stSidebar"] { display: none !important; }
@@ -200,7 +202,7 @@ z-index: 0;
 }
 
 .block-container {
-max-width: 460px !important;
+max-width: 440px !important;
 padding-top: 0 !important;
 padding-bottom: 0 !important;
 padding-left: 1rem !important;
@@ -214,72 +216,88 @@ display: flex !important;
 flex-direction: column !important;
 justify-content: center !important;
 min-height: 100vh !important;
+gap: 0 !important;
 }
 
-.lc {
+.lc-top {
 background: #FFFFFF;
 border: 1px solid rgba(226,232,240,0.8);
-border-radius: 24px;
-padding: 40px 36px 32px;
+border-bottom: none;
+border-radius: 24px 24px 0 0;
+padding: 36px 32px 24px;
 box-shadow:
 0 0 0 1px rgba(255,82,0,0.05),
 0 20px 60px rgba(15,23,42,0.08),
 0 4px 16px rgba(15,23,42,0.04);
 }
 
-.lc-brand {
+.lc-logo-wrap {
+display: flex;
+justify-content: center;
+margin-bottom: 20px;
+}
+.lc-logo-main {
+width: 160px;
+height: auto;
+object-fit: contain;
+}
+
+.lc-brand-bar {
 display: flex;
 align-items: center;
-gap: 14px;
-margin-bottom: 28px;
-padding-bottom: 24px;
+justify-content: center;
+gap: 10px;
+margin-bottom: 24px;
+padding-bottom: 20px;
 border-bottom: 1px solid #F1F5F9;
 }
-.lc-logo {
-width: 44px;
-height: 44px;
+.lc-brand-icon {
+width: 32px;
+height: 32px;
 object-fit: contain;
-border-radius: 10px;
-padding: 5px;
+border-radius: 8px;
+padding: 4px;
 background: #FFF5F0;
 border: 1px solid #FFD5C0;
 }
 .lc-brand-name {
-font-size: 0.95rem;
+font-size: 0.88rem;
 font-weight: 700;
 color: #0A1F44;
 line-height: 1.2;
-display: block;
 }
 .lc-brand-sub {
-font-size: 0.72rem;
+font-size: 0.68rem;
 color: #94A3B8;
 display: block;
-margin-top: 2px;
+margin-top: 1px;
 }
 
 .lc-eyebrow {
-font-size: 0.65rem;
+font-size: 0.62rem;
 font-weight: 700;
-letter-spacing: 0.16em;
+letter-spacing: 0.18em;
 text-transform: uppercase;
 color: #FF5200;
 display: block;
-margin-bottom: 8px;
+margin-bottom: 6px;
+text-align: center;
 }
 .lc-title {
-font-size: 1.65rem;
+font-size: 1.5rem;
 font-weight: 800;
 color: #0A1F44;
-margin: 0 0 10px;
+margin: 0 0 8px;
 letter-spacing: -0.03em;
 line-height: 1.15;
+text-align: center;
 }
 .lc-desc {
-font-size: 0.85rem;
+font-size: 0.82rem;
 color: #64748B;
 line-height: 1.65;
-margin-bottom: 28px;
+margin-bottom: 24px;
+text-align: center;
 }
 
 .gsi-btn {
@@ -290,11 +308,11 @@ gap: 12px;
 width: 100%;
 background: #FFFFFF;
 color: #1F2937 !important;
-padding: 14px 20px;
+padding: 13px 20px;
 border-radius: 14px;
 border: 1.5px solid #E2E8F0;
 font-weight: 700;
-font-size: 0.95rem;
+font-size: 0.92rem;
 text-decoration: none !important;
 cursor: pointer;
 transition: all 0.2s ease;
@@ -312,7 +330,7 @@ text-decoration: none !important;
 display: flex;
 align-items: center;
 gap: 14px;
-margin: 20px 0;
+margin: 18px 0 0;
 }
 .lc-divider-line {
 flex: 1;
@@ -320,16 +338,28 @@ height: 1px;
 background: #E2E8F0;
 }
 .lc-divider-text {
-font-size: 0.7rem;
+font-size: 0.68rem;
 font-weight: 600;
 letter-spacing: 0.12em;
 text-transform: uppercase;
 color: #94A3B8;
 }
 
+.lc-bottom {
+background: #FFFFFF;
+border: 1px solid rgba(226,232,240,0.8);
+border-top: none;
+border-radius: 0 0 24px 24px;
+padding: 20px 32px 28px;
+box-shadow:
+0 0 0 1px rgba(255,82,0,0.05),
+0 20px 60px rgba(15,23,42,0.08),
+0 4px 16px rgba(15,23,42,0.04);
+}
+
 .lc-field-label {
 display: block;
-font-size: 0.72rem;
+font-size: 0.7rem;
 font-weight: 700;
 color: #64748B;
 margin-bottom: 8px;
@@ -375,12 +405,12 @@ transform: translateY(-1px) !important;
 
 .lc-footer {
 text-align: center;
-margin-top: 22px;
-padding-top: 18px;
+margin-top: 18px;
+padding-top: 16px;
 border-top: 1px solid #F1F5F9;
 }
 .lc-footer-text {
-font-size: 0.72rem;
+font-size: 0.7rem;
 color: #94A3B8;
 line-height: 1.5;
 }
@@ -398,18 +428,21 @@ animation: pulse-dot 2s ease-in-out infinite;
 50% { opacity: 0.4; }
 }
 
-.stAlert { border-radius: 12px !important; }
-[data-testid="stForm"] { background: transparent !important; border: none !important; }
+.stAlert { border-radius: 12px !important; margin-top: 12px !important; }
+[data-testid="stForm"] { background: transparent !important; border: none !important; padding: 0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
     st.markdown(f"""
-<div class="lc">
-<div class="lc-brand">
-<img class="lc-logo" src="{_logo_src}" alt="GHN">
+<div class="lc-top">
+<div class="lc-logo-wrap">
+<img class="lc-logo-main" src="{_ghn_logo}" alt="Giao Hang Nhanh">
+</div>
+<div class="lc-brand-bar">
+<img class="lc-brand-icon" src="{_logo_src}" alt="EES">
 <div>
-<span class="lc-brand-name">GHN Express</span>
-<span class="lc-brand-sub">Employee Engagement Survey · 2026</span>
+<span class="lc-brand-name">Employee Engagement Survey</span>
+<span class="lc-brand-sub">Dashboard · 2026</span>
 </div>
 </div>
 <span class="lc-eyebrow">Cổng đăng nhập nội bộ</span>
@@ -427,6 +460,7 @@ animation: pulse-dot 2s ease-in-out infinite;
 </div>
 """, unsafe_allow_html=True)
 
+    st.markdown('<div class="lc-bottom">', unsafe_allow_html=True)
     with st.form("login_form", clear_on_submit=False):
         st.markdown("<span class='lc-field-label'>Email nội bộ</span>", unsafe_allow_html=True)
         email_input = st.text_input("Email Address", label_visibility="collapsed", placeholder="nhập email")
@@ -469,6 +503,7 @@ animation: pulse-dot 2s ease-in-out infinite;
 <div class="lc-footer">
 <span class="lc-footer-dot"></span>
 <span class="lc-footer-text">Hệ thống bảo mật · Chỉ dành cho nội bộ GHN &amp; Scommerce</span>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
