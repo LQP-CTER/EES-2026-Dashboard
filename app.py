@@ -421,7 +421,7 @@ animation: pulse-dot 2s ease-in-out infinite;
 
     with st.form("login_form", clear_on_submit=False):
         st.markdown("<span class='lc-field-label'>Email nội bộ</span>", unsafe_allow_html=True)
-        email_input = st.text_input("Email Address", label_visibility="collapsed", placeholder="nguyenvana@ghn.vn")
+        email_input = st.text_input("Email Address", label_visibility="collapsed", placeholder="nhập email")
         submitted = st.form_submit_button("Tiếp tục với Email", use_container_width=True)
 
         if submitted:
