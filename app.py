@@ -172,272 +172,252 @@ def _render_login_page():
     auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
 
     st.markdown("""
-    <style>
-        [data-testid="stSidebar"] { display: none !important; }
-        header[data-testid="stHeader"] { display: none !important; }
+<style>
+[data-testid="stSidebar"] { display: none !important; }
+header[data-testid="stHeader"] { display: none !important; }
 
-        .stApp {
-            background: #07111F !important;
-        }
-        .stApp::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 70% 60% at 80% 10%, rgba(255,82,0,0.18) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 50% at 15% 90%, rgba(10,31,68,0.8) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
+.stApp {
+background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F0 40%, #FFF0E8 70%, #FEF3ED 100%) !important;
+}
+.stApp::before {
+content: '';
+position: fixed;
+inset: 0;
+background:
+radial-gradient(ellipse 55% 45% at 95% 5%, rgba(255,82,0,0.10) 0%, transparent 55%),
+radial-gradient(ellipse 40% 40% at 5% 95%, rgba(10,31,68,0.06) 0%, transparent 60%),
+radial-gradient(ellipse 30% 30% at 50% 50%, rgba(255,150,80,0.04) 0%, transparent 70%);
+pointer-events: none;
+z-index: 0;
+}
 
-        .block-container {
-            max-width: 460px !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-            position: relative;
-            z-index: 1;
-        }
+.block-container {
+max-width: 460px !important;
+padding-top: 0 !important;
+padding-bottom: 0 !important;
+padding-left: 1rem !important;
+padding-right: 1rem !important;
+position: relative;
+z-index: 1;
+}
 
-        /* Center the entire column vertically */
-        section.main > div {
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            min-height: 100vh !important;
-        }
+section.main > div {
+display: flex !important;
+flex-direction: column !important;
+justify-content: center !important;
+min-height: 100vh !important;
+}
 
-        /* ── Card ── */
-        .lc {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.10);
-            border-radius: 24px;
-            padding: 40px 36px 32px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow:
-                0 0 0 1px rgba(255,82,0,0.08),
-                0 32px 80px rgba(0,0,0,0.55),
-                inset 0 1px 0 rgba(255,255,255,0.08);
-        }
+.lc {
+background: #FFFFFF;
+border: 1px solid rgba(226,232,240,0.8);
+border-radius: 24px;
+padding: 40px 36px 32px;
+box-shadow:
+0 0 0 1px rgba(255,82,0,0.05),
+0 20px 60px rgba(15,23,42,0.08),
+0 4px 16px rgba(15,23,42,0.04);
+}
 
-        /* ── Brand row ── */
-        .lc-brand {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 32px;
-            padding-bottom: 28px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-        .lc-logo {
-            width: 44px;
-            height: 44px;
-            object-fit: contain;
-            border-radius: 10px;
-            padding: 6px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.10);
-        }
-        .lc-brand-text {}
-        .lc-brand-name {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #F1F5F9;
-            line-height: 1.2;
-            display: block;
-        }
-        .lc-brand-sub {
-            font-size: 0.72rem;
-            color: rgba(148,163,184,0.8);
-            display: block;
-            margin-top: 2px;
-        }
+.lc-brand {
+display: flex;
+align-items: center;
+gap: 14px;
+margin-bottom: 28px;
+padding-bottom: 24px;
+border-bottom: 1px solid #F1F5F9;
+}
+.lc-logo {
+width: 44px;
+height: 44px;
+object-fit: contain;
+border-radius: 10px;
+padding: 5px;
+background: #FFF5F0;
+border: 1px solid #FFD5C0;
+}
+.lc-brand-name {
+font-size: 0.95rem;
+font-weight: 700;
+color: #0A1F44;
+line-height: 1.2;
+display: block;
+}
+.lc-brand-sub {
+font-size: 0.72rem;
+color: #94A3B8;
+display: block;
+margin-top: 2px;
+}
 
-        /* ── Heading ── */
-        .lc-heading {
-            margin-bottom: 8px;
-        }
-        .lc-eyebrow {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            color: #FF5200;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .lc-title {
-            font-size: 1.65rem;
-            font-weight: 800;
-            color: #F8FAFC;
-            margin: 0 0 10px;
-            letter-spacing: -0.03em;
-            line-height: 1.15;
-        }
-        .lc-desc {
-            font-size: 0.85rem;
-            color: rgba(148,163,184,0.9);
-            line-height: 1.65;
-            margin-bottom: 28px;
-        }
+.lc-eyebrow {
+font-size: 0.65rem;
+font-weight: 700;
+letter-spacing: 0.16em;
+text-transform: uppercase;
+color: #FF5200;
+display: block;
+margin-bottom: 8px;
+}
+.lc-title {
+font-size: 1.65rem;
+font-weight: 800;
+color: #0A1F44;
+margin: 0 0 10px;
+letter-spacing: -0.03em;
+line-height: 1.15;
+}
+.lc-desc {
+font-size: 0.85rem;
+color: #64748B;
+line-height: 1.65;
+margin-bottom: 28px;
+}
 
-        /* ── Google button ── */
-        .gsi-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            width: 100%;
-            background: #FFFFFF;
-            color: #1F2937 !important;
-            padding: 14px 20px;
-            border-radius: 14px;
-            border: none;
-            font-weight: 700;
-            font-size: 0.95rem;
-            text-decoration: none !important;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-            letter-spacing: -0.01em;
-        }
-        .gsi-btn:hover {
-            background: #F9FAFB;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.4);
-            transform: translateY(-1px);
-        }
-        .gsi-btn:active { transform: translateY(0); }
+.gsi-btn {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 12px;
+width: 100%;
+background: #FFFFFF;
+color: #1F2937 !important;
+padding: 14px 20px;
+border-radius: 14px;
+border: 1.5px solid #E2E8F0;
+font-weight: 700;
+font-size: 0.95rem;
+text-decoration: none !important;
+cursor: pointer;
+transition: all 0.2s ease;
+box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+letter-spacing: -0.01em;
+}
+.gsi-btn:hover {
+border-color: #CBD5E1;
+box-shadow: 0 4px 16px rgba(15,23,42,0.10);
+transform: translateY(-1px);
+text-decoration: none !important;
+}
 
-        /* ── Divider ── */
-        .lc-divider {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin: 22px 0;
-        }
-        .lc-divider-line {
-            flex: 1;
-            height: 1px;
-            background: rgba(255,255,255,0.09);
-        }
-        .lc-divider-text {
-            font-size: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: rgba(148,163,184,0.6);
-        }
+.lc-divider {
+display: flex;
+align-items: center;
+gap: 14px;
+margin: 20px 0;
+}
+.lc-divider-line {
+flex: 1;
+height: 1px;
+background: #E2E8F0;
+}
+.lc-divider-text {
+font-size: 0.7rem;
+font-weight: 600;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: #94A3B8;
+}
 
-        /* ── Form inputs ── */
-        .lc-field-label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: rgba(148,163,184,0.9);
-            margin-bottom: 8px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
+.lc-field-label {
+display: block;
+font-size: 0.72rem;
+font-weight: 700;
+color: #64748B;
+margin-bottom: 8px;
+letter-spacing: 0.06em;
+text-transform: uppercase;
+}
 
-        [data-testid="stTextInput"] input {
-            background: rgba(255,255,255,0.06) !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            border-radius: 12px !important;
-            color: #F1F5F9 !important;
-            padding: 13px 16px !important;
-            font-size: 0.92rem !important;
-            transition: border-color 0.15s ease !important;
-        }
-        [data-testid="stTextInput"] input::placeholder {
-            color: rgba(148,163,184,0.45) !important;
-        }
-        [data-testid="stTextInput"] input:focus {
-            border-color: rgba(255,82,0,0.5) !important;
-            background: rgba(255,255,255,0.08) !important;
-            box-shadow: 0 0 0 3px rgba(255,82,0,0.12) !important;
-        }
+[data-testid="stTextInput"] input {
+background: #F8FAFC !important;
+border: 1.5px solid #E2E8F0 !important;
+border-radius: 12px !important;
+color: #0F172A !important;
+padding: 13px 16px !important;
+font-size: 0.92rem !important;
+transition: all 0.15s ease !important;
+}
+[data-testid="stTextInput"] input::placeholder {
+color: #CBD5E1 !important;
+}
+[data-testid="stTextInput"] input:focus {
+border-color: #FF5200 !important;
+background: #FFFFFF !important;
+box-shadow: 0 0 0 3px rgba(255,82,0,0.10) !important;
+}
 
-        [data-testid="stFormSubmitButton"] button {
-            background: #FF5200 !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 12px !important;
-            font-weight: 700 !important;
-            padding: 13px 20px !important;
-            font-size: 0.92rem !important;
-            letter-spacing: -0.01em !important;
-            box-shadow: 0 4px 16px rgba(255,82,0,0.35) !important;
-            transition: all 0.2s ease !important;
-        }
-        [data-testid="stFormSubmitButton"] button:hover {
-            background: #E84A00 !important;
-            box-shadow: 0 6px 24px rgba(255,82,0,0.5) !important;
-            transform: translateY(-1px) !important;
-        }
+[data-testid="stFormSubmitButton"] button {
+background: #FF5200 !important;
+color: white !important;
+border: none !important;
+border-radius: 12px !important;
+font-weight: 700 !important;
+padding: 13px 20px !important;
+font-size: 0.92rem !important;
+letter-spacing: -0.01em !important;
+box-shadow: 0 4px 16px rgba(255,82,0,0.30) !important;
+transition: all 0.2s ease !important;
+}
+[data-testid="stFormSubmitButton"] button:hover {
+background: #E84A00 !important;
+box-shadow: 0 6px 24px rgba(255,82,0,0.45) !important;
+transform: translateY(-1px) !important;
+}
 
-        /* ── Footer note ── */
-        .lc-footer {
-            text-align: center;
-            margin-top: 24px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.06);
-        }
-        .lc-footer-text {
-            font-size: 0.72rem;
-            color: rgba(100,116,139,0.7);
-            line-height: 1.5;
-        }
-        .lc-footer-dot {
-            display: inline-block;
-            width: 5px; height: 5px;
-            background: #22C55E;
-            border-radius: 50%;
-            vertical-align: middle;
-            margin-right: 5px;
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
+.lc-footer {
+text-align: center;
+margin-top: 22px;
+padding-top: 18px;
+border-top: 1px solid #F1F5F9;
+}
+.lc-footer-text {
+font-size: 0.72rem;
+color: #94A3B8;
+line-height: 1.5;
+}
+.lc-footer-dot {
+display: inline-block;
+width: 5px; height: 5px;
+background: #22C55E;
+border-radius: 50%;
+vertical-align: middle;
+margin-right: 5px;
+animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.4; }
+}
 
-        /* Streamlit overrides for dark background */
-        .stAlert { border-radius: 12px !important; }
-        [data-testid="stForm"] { background: transparent !important; border: none !important; }
-        div[data-testid="stVerticalBlock"] > div { gap: 0 !important; }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="lc">
-        <div class="lc-brand">
-            <img class="lc-logo" src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" alt="GHN">
-            <div class="lc-brand-text">
-                <span class="lc-brand-name">GHN Express</span>
-                <span class="lc-brand-sub">Employee Engagement Survey · 2026</span>
-            </div>
-        </div>
-
-        <div class="lc-heading">
-            <span class="lc-eyebrow">Cổng đăng nhập nội bộ</span>
-            <div class="lc-title">Chào mừng trở lại</div>
-            <p class="lc-desc">Truy cập dashboard EES 2026 bằng tài khoản Google nội bộ của bạn. Chỉ dành cho nhân sự thuộc domain công ty.</p>
-        </div>
-    """, unsafe_allow_html=True)
+.stAlert { border-radius: 12px !important; }
+[data-testid="stForm"] { background: transparent !important; border: none !important; }
+</style>
+""", unsafe_allow_html=True)
 
     st.markdown(f"""
-        <a href="{auth_url}" target="_self" class="gsi-btn">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
-            Đăng nhập với Google
-        </a>
-        <div class="lc-divider">
-            <div class="lc-divider-line"></div>
-            <span class="lc-divider-text">hoặc dùng email</span>
-            <div class="lc-divider-line"></div>
-        </div>
-    """, unsafe_allow_html=True)
+<div class="lc">
+<div class="lc-brand">
+<img class="lc-logo" src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" alt="GHN">
+<div>
+<span class="lc-brand-name">GHN Express</span>
+<span class="lc-brand-sub">Employee Engagement Survey · 2026</span>
+</div>
+</div>
+<span class="lc-eyebrow">Cổng đăng nhập nội bộ</span>
+<div class="lc-title">Chào mừng trở lại</div>
+<p class="lc-desc">Truy cập dashboard EES 2026 bằng tài khoản Google nội bộ của bạn. Chỉ dành cho nhân sự thuộc domain công ty.</p>
+<a href="{auth_url}" target="_self" class="gsi-btn">
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
+Đăng nhập với Google
+</a>
+<div class="lc-divider">
+<div class="lc-divider-line"></div>
+<span class="lc-divider-text">hoặc dùng email</span>
+<div class="lc-divider-line"></div>
+</div>
+</div>
+""", unsafe_allow_html=True)
 
     with st.form("login_form", clear_on_submit=False):
         st.markdown("<span class='lc-field-label'>Email nội bộ</span>", unsafe_allow_html=True)
@@ -478,12 +458,11 @@ def _render_login_page():
                 st.error(f"Email **{email}** không hợp lệ. Chỉ chấp nhận `@ghn.vn` hoặc `@scommerce.asia`.")
 
     st.markdown("""
-        <div class="lc-footer">
-            <span class="lc-footer-dot"></span>
-            <span class="lc-footer-text">Hệ thống bảo mật · Chỉ dành cho nội bộ GHN &amp; Scommerce</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+<div class="lc-footer">
+<span class="lc-footer-dot"></span>
+<span class="lc-footer-text">Hệ thống bảo mật · Chỉ dành cho nội bộ GHN &amp; Scommerce</span>
+</div>
+""", unsafe_allow_html=True)
 
 
 def _render_security_error_page():
