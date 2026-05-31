@@ -176,196 +176,147 @@ def _render_login_page():
         [data-testid="stSidebar"] { display: none !important; }
         header[data-testid="stHeader"] { display: none !important; }
         .stApp {
-            background:
-                radial-gradient(circle at 20% 20%, rgba(255, 82, 0, 0.12), transparent 24%),
-                radial-gradient(circle at 80% 10%, rgba(10, 31, 68, 0.12), transparent 18%),
-                linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%) !important;
+            background: linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%) !important;
         }
         .block-container {
-            max-width: 1120px !important;
-            padding-top: 8vh !important;
+            max-width: 640px !important;
+            padding-top: 14vh !important;
+            padding-bottom: 8vh !important;
         }
-        .login-shell {
-            min-height: 78vh;
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            gap: 28px;
-            align-items: stretch;
-        }
-        .login-hero, .login-card {
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            border-radius: 28px;
-            background: rgba(255,255,255,0.82);
-            backdrop-filter: blur(16px);
-            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
-        }
-        .login-hero {
-            padding: 42px;
+        .login-wrap {
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .login-brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 28px;
-        }
-        .login-brand img { width: 72px; height: 72px; object-fit: contain; }
-        .login-kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #FFF3EE;
-            color: #C2410C;
-            border: 1px solid #FED7AA;
-            padding: 8px 12px;
-            border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            width: fit-content;
-            margin-bottom: 18px;
-        }
-        .login-title {
-            font-size: clamp(2rem, 4vw, 3.2rem);
-            font-weight: 900;
-            color: #0A1F44;
-            line-height: 1.05;
-            margin: 0 0 14px;
-            letter-spacing: -0.04em;
-        }
-        .login-subtitle {
-            font-size: 1rem;
-            line-height: 1.75;
-            color: #475569;
-            max-width: 54ch;
-            margin-bottom: 26px;
-        }
-        .login-points {
-            display: grid;
-            gap: 12px;
-            margin-top: auto;
-        }
-        .login-point {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            color: #0F172A;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            padding: 14px 16px;
-            border-radius: 18px;
-            background: rgba(255,255,255,0.7);
-            border: 1px solid #E2E8F0;
-        }
-        .login-point strong { display: block; font-size: 0.94rem; }
-        .login-card {
-            padding: 38px;
-            display: flex;
-            flex-direction: column;
             justify-content: center;
         }
-        .login-card h2 {
-            font-size: 1.35rem;
-            font-weight: 800;
+        .login-card {
+            width: 100%;
+            background: rgba(255,255,255,0.92);
+            border: 1px solid #E2E8F0;
+            border-radius: 24px;
+            box-shadow: 0 16px 50px rgba(15, 23, 42, 0.08);
+            padding: 34px;
+        }
+        .login-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .login-top img { width: 56px; height: 56px; object-fit: contain; }
+        .login-kicker {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #C2410C;
+            background: #FFF3EE;
+            border: 1px solid #FED7AA;
+            padding: 6px 10px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+        }
+        .login-title {
+            font-size: 1.9rem;
+            line-height: 1.15;
+            font-weight: 900;
             color: #0A1F44;
             margin: 0 0 8px;
+            letter-spacing: -0.03em;
         }
-        .login-card p {
+        .login-subtitle {
             color: #64748B;
-            font-size: 0.92rem;
+            font-size: 0.94rem;
             line-height: 1.6;
-            margin: 0 0 22px;
+            margin-bottom: 22px;
         }
         .google-btn {
-            display: flex; align-items: center; justify-content: center; gap: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             width: 100%;
-            background: #FFFFFF; color: #0F172A !important;
-            padding: 14px 20px; border-radius: 14px; border: 1px solid #E2E8F0;
-            font-weight: 700; font-size: 0.96rem;
-            text-decoration: none !important; transition: all 0.2s ease;
+            background: #FFFFFF;
+            color: #0F172A !important;
+            padding: 13px 18px;
+            border-radius: 14px;
+            border: 1px solid #CBD5E1;
+            font-weight: 700;
+            text-decoration: none !important;
             box-shadow: 0 1px 2px rgba(15,23,42,0.05);
-            margin-bottom: 18px;
+            transition: all 0.18s ease;
         }
         .google-btn:hover {
+            border-color: #94A3B8;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.08);
             transform: translateY(-1px);
-            border-color: #CBD5E1;
-            box-shadow: 0 12px 28px rgba(15,23,42,0.08);
         }
         .divider {
-            display: flex; align-items: center; text-align: center; color: #94A3B8; font-size: 0.82rem; margin: 18px 0 16px;
-            font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0 14px;
+            color: #94A3B8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
         }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #E2E8F0; }
-        .divider:not(:empty)::before { margin-right: .75em; }
-        .divider:not(:empty)::after { margin-left: .75em; }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E2E8F0;
+        }
         [data-testid="stFormSubmitButton"] button {
-            background: linear-gradient(135deg, #0A1F44 0%, #1D4ED8 100%) !important;
+            background: #0A1F44 !important;
             color: white !important;
             border: none !important;
             border-radius: 14px !important;
             font-weight: 700 !important;
-            padding: 12px 24px !important;
-            font-size: 0.96rem !important;
-            box-shadow: 0 12px 24px rgba(29, 78, 216, 0.18) !important;
+            padding: 12px 20px !important;
+            font-size: 0.95rem !important;
         }
         [data-testid="stFormSubmitButton"] button:hover {
-            filter: brightness(1.03);
+            background: #132C5A !important;
         }
-        .login-footnote {
-            margin-top: 14px;
+        .login-note {
+            margin-top: 12px;
             font-size: 0.8rem;
             color: #94A3B8;
             text-align: center;
-        }
-        @media (max-width: 900px) {
-            .login-shell { grid-template-columns: 1fr; }
-            .login-hero { padding: 28px; }
-            .login-card { padding: 28px; }
+            line-height: 1.5;
         }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class='login-shell'>
-        <div class='login-hero'>
-            <div>
-                <div class='login-brand'>
-                    <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' alt='GHN Logo'>
-                    <div>
-                        <div style='font-size:0.9rem;font-weight:800;color:#0A1F44;letter-spacing:0.08em;text-transform:uppercase;'>EES 2026 Dashboard</div>
-                        <div style='font-size:0.82rem;color:#64748B;'>Employee Engagement Survey</div>
-                    </div>
-                </div>
-                <div class='login-kicker'>Secure access · Google SSO</div>
-                <div class='login-title'>Đăng nhập an toàn để xem dashboard nội bộ</div>
-                <div class='login-subtitle'>
-                    Truy cập dữ liệu EES 2026 với trải nghiệm đăng nhập gọn gàng, hiện đại và an toàn hơn cho người dùng nội bộ GHN.
-                </div>
-            </div>
-            <div class='login-points'>
-                <div class='login-point'><div style='font-weight:800;color:#FF5200;'>01</div><div><strong>Google SSO</strong> Đăng nhập nhanh bằng tài khoản công ty.</div></div>
-                <div class='login-point'><div style='font-weight:800;color:#FF5200;'>02</div><div><strong>Chỉ cho domain nội bộ</strong> Hỗ trợ `@ghn.vn` và `@scommerce.asia`.</div></div>
-                <div class='login-point'><div style='font-weight:800;color:#FF5200;'>03</div><div><strong>Bảo mật session</strong> Kiểm soát token và phiên đăng nhập trên server.</div></div>
-            </div>
-        </div>
+    <div class='login-wrap'>
         <div class='login-card'>
-            <h2>Chọn phương thức đăng nhập</h2>
-            <p>Ưu tiên đăng nhập bằng Google để xác thực nhanh. Nếu cần, bạn vẫn có thể nhập email nội bộ hợp lệ để vào hệ thống.</p>
+            <div class='login-top'>
+                <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' alt='GHN Logo'>
+                <div>
+                    <div style='font-size:0.82rem;font-weight:800;color:#64748B;letter-spacing:0.08em;text-transform:uppercase;'>EES 2026 Dashboard</div>
+                    <div style='font-size:0.76rem;color:#94A3B8;'>Employee Engagement Survey</div>
+                </div>
+            </div>
+            <div class='login-kicker'>Secure access · Google SSO</div>
+            <div class='login-title'>Đăng nhập để vào dashboard nội bộ</div>
+            <div class='login-subtitle'>
+                Ưu tiên dùng Google để đăng nhập nhanh. Chỉ tài khoản nội bộ của GHN mới được truy cập hệ thống.
+            </div>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
             <a href="{auth_url}" target="_self" class="google-btn">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
-                Tiếp tục với Google
+                Đăng nhập bằng Google
             </a>
-            <div class="divider">Hoặc dùng email nội bộ</div>
+            <div class="divider">hoặc</div>
     """, unsafe_allow_html=True)
 
     with st.form("login_form", clear_on_submit=False):
         email_input = st.text_input("Email Address", label_visibility="collapsed", placeholder="nguyenvana@ghn.vn")
-        submitted = st.form_submit_button("Đăng nhập", use_container_width=True)
+        submitted = st.form_submit_button("Đăng nhập bằng email", use_container_width=True)
 
         if submitted:
             email = email_input.strip().lower()
@@ -374,11 +325,9 @@ def _render_login_page():
             elif _is_allowed_email(email):
                 name = email.split('@')[0].capitalize()
                 picture = ""
-
                 secure_token = secrets.token_urlsafe(32)
                 now = time.time()
                 current_sid = get_current_streamlit_session_id()
-
                 with _sessions_lock:
                     sessions = _load_active_sessions()
                     sessions = _cleanup_expired_sessions(sessions)
@@ -391,20 +340,18 @@ def _render_login_page():
                         "created_at": now
                     }
                     _save_active_sessions(sessions)
-
                 st.session_state.user_email = email
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 st.session_state.current_token = secure_token
                 _set_remember_cookie(secure_token)
-
                 st.query_params.clear()
                 st.query_params["s"] = secure_token
                 st.rerun()
             else:
                 st.error(f"Email **{email}** không hợp lệ.\n\nChỉ chấp nhận email `@ghn.vn` hoặc `@scommerce.asia`.")
 
-    st.markdown("<div class='login-footnote'>Nếu đăng nhập Google bị lỗi 403 trên Streamlit Cloud, hãy kiểm tra redirect URI ở Google Cloud Console và secrets của ứng dụng.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='login-note'>Nếu Google báo 403 trên Streamlit Cloud, thường là do `redirect_uri` trong Google Cloud Console chưa khớp chính xác với domain deploy.</div>", unsafe_allow_html=True)
     st.markdown("</div></div>", unsafe_allow_html=True)
 
 
