@@ -245,7 +245,15 @@ def _render_security_error_page():
     """, unsafe_allow_html=True)
 
 
-if not is_admin:
+# TẠM THỜI TẮT TÍNH NĂNG ĐĂNG NHẬP (Chuyển thành True để bật lại)
+ENABLE_LOGIN = False
+
+if not is_admin and not ENABLE_LOGIN:
+    st.session_state.user_email = "guest@ghn.vn"
+    st.session_state.user_name = "Khách (Đã tắt Đăng nhập)"
+    st.session_state.user_picture = ""
+
+if not is_admin and ENABLE_LOGIN:
     current_sid = get_current_streamlit_session_id()
 
     # 1. Xử lý callback OAuth (có ?code= trên URL)
