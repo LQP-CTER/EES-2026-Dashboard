@@ -158,48 +158,62 @@ def _is_allowed_email(email: str) -> bool:
     return domain in [d.lower() for d in ALLOWED_DOMAINS]
 
 def _render_login_page():
-    auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
-    
-    st.markdown(f"""
+    st.markdown("""
     <style>
-        [data-testid="stSidebar"] {{ display: none !important; }}
-        header[data-testid="stHeader"] {{ display: none !important; }}
-        .login-wrap {{
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; min-height: 80vh; gap: 24px;
-        }}
-        .login-card {{
-            background: white; border-radius: 20px; padding: 48px 56px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
-            text-align: center; max-width: 480px; width: 100%;
-        }}
-        .login-title {{ font-size: 1.6rem; font-weight: 800; color: #0A1F44; margin: 16px 0 8px; }}
-        .login-subtitle {{ font-size: 0.9rem; color: #64748B; margin-bottom: 28px; line-height: 1.5; }}
-        .login-note {{ font-size: 0.8rem; color: #94A3B8; margin-top: 24px; }}
-        .login-divider {{ border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }}
-        .google-btn {{
-            display: inline-block; background-color: #FF5200; color: white !important;
-            text-decoration: none; padding: 12px 24px; border-radius: 8px;
-            font-weight: 600; font-size: 1rem; width: 100%; text-align: center;
-            box-sizing: border-box; transition: background-color 0.2s; margin-top: 10px;
-        }}
-        .google-btn:hover {{ background-color: #E64A00; text-decoration: none; }}
+        [data-testid="stSidebar"] { display: none !important; }
+        header[data-testid="stHeader"] { display: none !important; }
+        .login-title { font-size: 1.6rem; font-weight: 800; color: #0A1F44; text-align: center; margin: 16px 0 8px; }
+        .login-subtitle { font-size: 0.9rem; color: #64748B; text-align: center; margin-bottom: 28px; line-height: 1.5; }
     </style>
-    <div class="login-wrap">
-        <div class="login-card">
-            <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" width="140">
-            <div class="login-title">GHN EES 2026 Dashboard</div>
-            <div class="login-subtitle">
-                Hệ thống phân tích Trải nghiệm Nhân viên<br>dành riêng cho nội bộ GHN & Scommerce
-            </div>
-            <hr class="login-divider">
-            <a href="{auth_url}" target="_blank" class="google-btn">
-                Đăng nhập bằng Google
-            </a>
-            <div class="login-note">Bảo mật bởi Google OAuth 2.0</div>
-        </div>
-    </div>
     """, unsafe_allow_html=True)
+    
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<div style='text-align: center;'><img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='140'></div>", unsafe_allow_html=True)
+        st.markdown("<div class='login-title'>GHN EES 2026 Dashboard</div>", unsafe_allow_html=True)
+        st.markdown("<div class='login-subtitle'>Hệ thống phân tích Trải nghiệm Nhân viên<br>dành riêng cho nội bộ GHN & Scommerce</div>", unsafe_allow_html=True)
+        
+        with st.form("login_form"):
+            email_input = st.text_input("Nhập email nội bộ (@ghn.vn hoặc @scommerce.asia)", placeholder="ví dụ: nguyenvana@ghn.vn")
+            submitted = st.form_submit_button("Đăng nhập", type="primary", use_container_width=True)
+            
+            if submitted:
+                email = email_input.strip().lower()
+                if not email:
+                    st.error("Vui lòng nhập email.")
+                elif _is_allowed_email(email):
+                    name = email.split('@')[0].capitalize()
+                    picture = ""
+                    
+                    secure_token = secrets.token_urlsafe(32)
+                    now = time.time()
+                    current_sid = get_current_streamlit_session_id()
+                    
+                    with _sessions_lock:
+                        sessions = _load_active_sessions()
+                        sessions = _cleanup_expired_sessions(sessions)
+                        sessions[secure_token] = {
+                            "email": email,
+                            "name": name,
+                            "picture": picture,
+                            "streamlit_session_id": current_sid,
+                            "last_seen": now,
+                            "created_at": now
+                        }
+                        _save_active_sessions(sessions)
+                    
+                    st.session_state.user_email = email
+                    st.session_state.user_name = name
+                    st.session_state.user_picture = picture
+                    st.session_state.current_token = secure_token
+                    _set_remember_cookie(secure_token)
+                    
+                    st.query_params.clear()
+                    st.query_params["s"] = secure_token
+                    st.rerun()
+                else:
+                    st.error(f"Email **{email}** không hợp lệ.\n\nChỉ chấp nhận email `@ghn.vn` hoặc `@scommerce.asia`.")
 
 
 def _render_security_error_page():
@@ -245,70 +259,8 @@ def _render_security_error_page():
     """, unsafe_allow_html=True)
 
 
-# TẠM THỜI TẮT TÍNH NĂNG ĐĂNG NHẬP (Chuyển thành True để bật lại)
-ENABLE_LOGIN = False
-
-if not is_admin and not ENABLE_LOGIN:
-    st.session_state.user_email = "guest@ghn.vn"
-    st.session_state.user_name = "Khách (Đã tắt Đăng nhập)"
-    st.session_state.user_picture = ""
-
-if not is_admin and ENABLE_LOGIN:
+if not is_admin:
     current_sid = get_current_streamlit_session_id()
-
-    # 1. Xử lý callback OAuth (có ?code= trên URL)
-    if "code" in st.query_params:
-        code = st.query_params.get("code")
-        with st.spinner("Đang xác thực..."):
-            user_info = get_user_info(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI)
-
-        if user_info and "email" in user_info:
-            email = user_info["email"]
-            if _is_allowed_email(email):
-                name = user_info.get("name", "User")
-                picture = user_info.get("picture", "")
-                
-                secure_token = secrets.token_urlsafe(32)
-                now = time.time()
-                
-                with _sessions_lock:
-                    sessions = _load_active_sessions()
-                    sessions = _cleanup_expired_sessions(sessions)
-                    sessions[secure_token] = {
-                        "email": email,
-                        "name": name,
-                        "picture": picture,
-                        "streamlit_session_id": current_sid,
-                        "last_seen": now,
-                        "created_at": now
-                    }
-                    _save_active_sessions(sessions)
-                
-                st.session_state.user_email = email
-                st.session_state.user_name = name
-                st.session_state.user_picture = picture
-                st.session_state.current_token = secure_token
-                _set_remember_cookie(secure_token)
-                
-                st.query_params.clear()
-                st.query_params["s"] = secure_token
-                st.rerun()
-            else:
-                st.query_params.clear()
-                st.query_params["error"] = "1"  # Tránh tự động redirect loop
-                st.session_state.pop("user_email", None)
-                st.error(
-                    f"Email **{email}** không được phép truy cập.\n\n"
-                    "Chỉ email `@ghn.vn` hoặc `@scommerce.asia` mới có quyền vào hệ thống."
-                )
-                _render_login_page()
-                st.stop()
-        else:
-            st.query_params.clear()
-            st.query_params["error"] = "1"  # Tránh tự động redirect loop
-            st.error("Xác thực Google thất bại. Vui lòng thử lại.")
-            _render_login_page()
-            st.stop()
 
     # 2. Đồng bộ session từ URL, Session State hoặc remember cookie
     user_email = st.session_state.get("user_email")
@@ -387,20 +339,7 @@ if not is_admin and ENABLE_LOGIN:
                 _render_login_page()
                 st.stop()
             else:
-                # Trải nghiệm SSO Đẳng Cấp: Tự động kết nối/Đăng nhập qua Google (Silent Auto-Login)
-                auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
-                st.markdown(f"""
-                <div style='text-align: center; margin-top: 150px;'>
-                    <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='160'>
-                    <h2 style='color: #0A1F44; margin-top: 30px; font-family: "Inter", sans-serif;'>Đang kết nối phiên đăng nhập...</h2>
-                    <p style='color: #64748B; font-family: "Inter", sans-serif;'>Hệ thống đang tự động xác thực qua Google Workspace GHN.</p>
-                </div>
-                <meta http-equiv="refresh" content="0; url={auth_url}">
-                <style>
-                    [data-testid="stSidebar"] {{ display: none !important; }}
-                    header[data-testid="stHeader"] {{ display: none !important; }}
-                </style>
-                """, unsafe_allow_html=True)
+                _render_login_page()
                 st.stop()
 
 if is_admin and not st.session_state.preview_mode:
