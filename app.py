@@ -171,6 +171,14 @@ def _is_allowed_email(email: str) -> bool:
 def _render_login_page():
     auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
 
+    _logo_path = os.path.join(os.path.dirname(__file__), "img", "Logo_EES.png")
+    try:
+        with open(_logo_path, "rb") as _f:
+            _logo_b64 = base64.b64encode(_f.read()).decode()
+        _logo_src = f"data:image/png;base64,{_logo_b64}"
+    except Exception:
+        _logo_src = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png"
+
     st.markdown("""
 <style>
 [data-testid="stSidebar"] { display: none !important; }
@@ -398,7 +406,7 @@ animation: pulse-dot 2s ease-in-out infinite;
     st.markdown(f"""
 <div class="lc">
 <div class="lc-brand">
-<img class="lc-logo" src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" alt="GHN">
+<img class="lc-logo" src="{_logo_src}" alt="GHN">
 <div>
 <span class="lc-brand-name">GHN Express</span>
 <span class="lc-brand-sub">Employee Engagement Survey · 2026</span>
