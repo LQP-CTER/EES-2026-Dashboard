@@ -158,62 +158,112 @@ def _is_allowed_email(email: str) -> bool:
     return domain in [d.lower() for d in ALLOWED_DOMAINS]
 
 def _render_login_page():
+    auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
+    
     st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none !important; }
         header[data-testid="stHeader"] { display: none !important; }
-        .login-title { font-size: 1.6rem; font-weight: 800; color: #0A1F44; text-align: center; margin: 16px 0 8px; }
-        .login-subtitle { font-size: 0.9rem; color: #64748B; text-align: center; margin-bottom: 28px; line-height: 1.5; }
+        
+        /* Center form container */
+        .block-container {
+            max-width: 440px !important;
+            padding-top: 10vh !important;
+        }
+        
+        .login-title { font-size: 1.7rem; font-weight: 700; color: #0F172A; text-align: center; margin-bottom: 24px; font-family: "Inter", sans-serif; }
+        
+        .google-btn {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            background-color: white; color: #1E293B !important; 
+            padding: 10px 24px; border-radius: 8px; border: 1px solid #E2E8F0;
+            font-weight: 600; font-size: 0.95rem; margin-bottom: 24px; 
+            text-decoration: none !important; transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-family: "Inter", sans-serif;
+        }
+        .google-btn:hover { background-color: #F8FAFC; border-color: #CBD5E1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        .divider {
+            display: flex; align-items: center; text-align: center; color: #64748B; font-size: 0.9rem; margin-bottom: 20px;
+            font-weight: 500; font-family: "Inter", sans-serif;
+        }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #E2E8F0; }
+        .divider:not(:empty)::before { margin-right: .75em; }
+        .divider:not(:empty)::after { margin-left: .75em; }
+        
+        /* Customize Streamlit button to look purple like Cloudflare */
+        [data-testid="stFormSubmitButton"] button {
+            background-color: #6366F1 !important; /* Indigo/Purple */
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            padding: 10px 24px !important;
+            font-size: 0.95rem !important;
+        }
+        [data-testid="stFormSubmitButton"] button:hover {
+            background-color: #4F46E5 !important;
+        }
+        
+        /* Label style */
+        .email-label {
+            font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 4px; font-family: "Inter", sans-serif;
+        }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown("<div style='text-align: center;'><img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='140'></div>", unsafe_allow_html=True)
-        st.markdown("<div class='login-title'>GHN EES 2026 Dashboard</div>", unsafe_allow_html=True)
-        st.markdown("<div class='login-subtitle'>Hệ thống phân tích Trải nghiệm Nhân viên<br>dành riêng cho nội bộ GHN & Scommerce</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; margin-bottom: 20px;'><img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='120'></div>", unsafe_allow_html=True)
+    st.markdown("<div class='login-title'>Log in to your account</div>", unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <a href="{auth_url}" target="_self" class="google-btn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
+        Log in with Google
+    </a>
+    <div class="divider">Email Address</div>
+    """, unsafe_allow_html=True)
+    
+    with st.form("login_form", clear_on_submit=False):
+        email_input = st.text_input("Email Address", label_visibility="collapsed", placeholder="nguyenvana@ghn.vn")
+        submitted = st.form_submit_button("Log in", use_container_width=True)
         
-        with st.form("login_form"):
-            email_input = st.text_input("Nhập email nội bộ (@ghn.vn hoặc @scommerce.asia)", placeholder="ví dụ: nguyenvana@ghn.vn")
-            submitted = st.form_submit_button("Đăng nhập", type="primary", use_container_width=True)
-            
-            if submitted:
-                email = email_input.strip().lower()
-                if not email:
-                    st.error("Vui lòng nhập email.")
-                elif _is_allowed_email(email):
-                    name = email.split('@')[0].capitalize()
-                    picture = ""
-                    
-                    secure_token = secrets.token_urlsafe(32)
-                    now = time.time()
-                    current_sid = get_current_streamlit_session_id()
-                    
-                    with _sessions_lock:
-                        sessions = _load_active_sessions()
-                        sessions = _cleanup_expired_sessions(sessions)
-                        sessions[secure_token] = {
-                            "email": email,
-                            "name": name,
-                            "picture": picture,
-                            "streamlit_session_id": current_sid,
-                            "last_seen": now,
-                            "created_at": now
-                        }
-                        _save_active_sessions(sessions)
-                    
-                    st.session_state.user_email = email
-                    st.session_state.user_name = name
-                    st.session_state.user_picture = picture
-                    st.session_state.current_token = secure_token
-                    _set_remember_cookie(secure_token)
-                    
-                    st.query_params.clear()
-                    st.query_params["s"] = secure_token
-                    st.rerun()
-                else:
-                    st.error(f"Email **{email}** không hợp lệ.\n\nChỉ chấp nhận email `@ghn.vn` hoặc `@scommerce.asia`.")
+        if submitted:
+            email = email_input.strip().lower()
+            if not email:
+                st.error("Vui lòng nhập email.")
+            elif _is_allowed_email(email):
+                name = email.split('@')[0].capitalize()
+                picture = ""
+                
+                secure_token = secrets.token_urlsafe(32)
+                now = time.time()
+                current_sid = get_current_streamlit_session_id()
+                
+                with _sessions_lock:
+                    sessions = _load_active_sessions()
+                    sessions = _cleanup_expired_sessions(sessions)
+                    sessions[secure_token] = {
+                        "email": email,
+                        "name": name,
+                        "picture": picture,
+                        "streamlit_session_id": current_sid,
+                        "last_seen": now,
+                        "created_at": now
+                    }
+                    _save_active_sessions(sessions)
+                
+                st.session_state.user_email = email
+                st.session_state.user_name = name
+                st.session_state.user_picture = picture
+                st.session_state.current_token = secure_token
+                _set_remember_cookie(secure_token)
+                
+                st.query_params.clear()
+                st.query_params["s"] = secure_token
+                st.rerun()
+            else:
+                st.error(f"Email **{email}** không hợp lệ.\n\nChỉ chấp nhận email `@ghn.vn` hoặc `@scommerce.asia`.")
 
 
 def _render_security_error_page():
@@ -261,6 +311,60 @@ def _render_security_error_page():
 
 if not is_admin:
     current_sid = get_current_streamlit_session_id()
+
+    # 1. Xử lý callback OAuth (có ?code= trên URL)
+    if "code" in st.query_params:
+        code = st.query_params.get("code")
+        with st.spinner("Đang xác thực Google..."):
+            user_info = get_user_info(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI)
+
+        if user_info and "email" in user_info:
+            email = user_info["email"]
+            if _is_allowed_email(email):
+                name = user_info.get("name", "User")
+                picture = user_info.get("picture", "")
+                
+                secure_token = secrets.token_urlsafe(32)
+                now = time.time()
+                
+                with _sessions_lock:
+                    sessions = _load_active_sessions()
+                    sessions = _cleanup_expired_sessions(sessions)
+                    sessions[secure_token] = {
+                        "email": email,
+                        "name": name,
+                        "picture": picture,
+                        "streamlit_session_id": current_sid,
+                        "last_seen": now,
+                        "created_at": now
+                    }
+                    _save_active_sessions(sessions)
+                
+                st.session_state.user_email = email
+                st.session_state.user_name = name
+                st.session_state.user_picture = picture
+                st.session_state.current_token = secure_token
+                _set_remember_cookie(secure_token)
+                
+                st.query_params.clear()
+                st.query_params["s"] = secure_token
+                st.rerun()
+            else:
+                st.query_params.clear()
+                st.query_params["error"] = "1"  # Tránh tự động redirect loop
+                st.session_state.pop("user_email", None)
+                st.error(
+                    f"Email **{email}** không được phép truy cập.\n\n"
+                    "Chỉ email `@ghn.vn` hoặc `@scommerce.asia` mới có quyền vào hệ thống."
+                )
+                _render_login_page()
+                st.stop()
+        else:
+            st.query_params.clear()
+            st.query_params["error"] = "1"  # Tránh tự động redirect loop
+            st.error("Xác thực Google thất bại. Vui lòng thử lại.")
+            _render_login_page()
+            st.stop()
 
     # 2. Đồng bộ session từ URL, Session State hoặc remember cookie
     user_email = st.session_state.get("user_email")
