@@ -140,37 +140,35 @@ def render():
 
         st.markdown("""
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin-bottom:20px">
-            Mỗi phản hồi được phân loại theo 4 tiêu chí chất lượng đồng thời: tỷ lệ trả lời
-            thẳng hàng, thời gian hoàn thành, mẫu câu trả lời bất thường, và nội dung câu hỏi
-            mở. Từ đó xác định nhóm nào được <em>giữ nguyên</em>, <em>giảm trọng số</em>, hay
-            <em>loại bỏ</em>.
+            Mỗi phản hồi được chấm <strong>trọng số tin cậy</strong> dựa trên các bằng chứng:
+            có viết câu hỏi mở không, và điểm eNPS có nhất quán với Likert không. Từ đó xác định nhóm nào được
+            <em>giữ nguyên trọng số</em>, <em>giảm trọng số</em> (ví dụ: x0.5, x0.8), hay
+            <em>loại bỏ hoàn toàn (DROP)</em>. Nhờ vậy, số lượng mẫu bị xóa bỏ oan được giảm thiểu tối đa (toàn công ty chỉ loại 208 mẫu).
         </p>
         """, unsafe_allow_html=True)
 
         # Bảng phân hạng
         table_data = {
-            "Nhóm": ["1A - Shipper", "1B - Tài xế", "2A - NV Kho",
-                     "2B - QL tuyến đầu", "3A - NV Văn phòng", "3B - Manager HO"],
-            "Raw n": [12955, 801, 4892, 425, 917, 109],
-            "Loại bỏ": [2926, 132, 115, 3, 2, 0],
-            "Giảm trọng số": [7590, 371, 2907, 181, 316, 20],
-            "Giữ nguyên": [2439, 298, 1870, 241, 599, 89],
-            "Base phân tích": [10029, 669, 4777, 422, 915, 109],
-            '"n hiệu dụng"': [4638, 416, 2625, 286, 669, 92],
+            "Nhóm": ["1A - Giao hàng", "1B - Tài xế", "2A - NV Kho",
+                     "2B - QL Tuyến", "3A - Văn phòng", "3B - QL Cấp cao"],
+            "Mẫu thô": [12955, 801, 4892, 425, 917, 109],
+            "Loại bỏ (DROP)": [175, 2, 31, 0, 0, 0],
+            "Base phân tích": [12780, 799, 4861, 425, 917, 109],
+            '"n hiệu dụng"': [9377, 630, 3827, 358, 798, 102],
+            "Tỷ lệ giữ": ["72,4%", "78,7%", "78,2%", "84,2%", "87,0%", "93,3%"]
         }
         df_table = pd.DataFrame(table_data)
 
         # Render table with custom styling
-        header_cols = st.columns([2, 1, 1, 1.5, 1.5, 1.5, 1.5])
+        header_cols = st.columns([2, 1.2, 1.5, 1.5, 1.5, 1.2])
         headers = list(table_data.keys())
         header_styles = [
             "background:#0A1F44;color:white;padding:10px 12px;border-radius:8px 0 0 0;font-size:0.78rem;font-weight:700",
             "background:#0A1F44;color:white;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
             "background:#FEF2F2;color:#DC2626;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
-            "background:#FFFBEB;color:#D97706;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
-            "background:#F0FDF4;color:#15803D;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
             "background:#EFF6FF;color:#1D4ED8;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
-            "background:#F5F3FF;color:#7C3AED;padding:10px 12px;border-radius:0 8px 0 0;font-size:0.78rem;font-weight:700;text-align:right",
+            "background:#F5F3FF;color:#7C3AED;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
+            "background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:0 8px 0 0;font-size:0.78rem;font-weight:700;text-align:right",
         ]
         for col, h, style in zip(header_cols, headers, header_styles):
             with col:
@@ -178,24 +176,22 @@ def render():
 
         row_colors = ["#FFFFFF", "#F8FAFC"]
         for i, row in df_table.iterrows():
-            row_cols = st.columns([2, 1, 1, 1.5, 1.5, 1.5, 1.5])
+            row_cols = st.columns([2, 1.2, 1.5, 1.5, 1.5, 1.2])
             bg = row_colors[i % 2]
             cell_style = f"background:{bg};padding:9px 12px;font-size:0.84rem;border-bottom:1px solid #F1F5F9"
             num_style  = f"background:{bg};padding:9px 12px;font-size:0.84rem;border-bottom:1px solid #F1F5F9;text-align:right"
             with row_cols[0]:
                 st.markdown(f'<div style="{cell_style};font-weight:600;color:#0A1F44">{row["Nhóm"]}</div>', unsafe_allow_html=True)
             with row_cols[1]:
-                st.markdown(f'<div style="{num_style};color:#0A1F44">{row["Raw n"]:,}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{num_style};color:#0A1F44">{row["Mẫu thô"]:,}</div>', unsafe_allow_html=True)
             with row_cols[2]:
-                st.markdown(f'<div style="{num_style};color:#DC2626">{row["Loại bỏ"]:,}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="{num_style};color:#DC2626;font-weight:600">{row["Loại bỏ (DROP)"]:,}</div>', unsafe_allow_html=True)
             with row_cols[3]:
-                st.markdown(f'<div style="{num_style};color:#D97706">{row["Giảm trọng số"]:,}</div>', unsafe_allow_html=True)
-            with row_cols[4]:
-                st.markdown(f'<div style="{num_style};color:#15803D">{row["Giữ nguyên"]:,}</div>', unsafe_allow_html=True)
-            with row_cols[5]:
                 st.markdown(f'<div style="{num_style};color:#1D4ED8;font-weight:600">{row["Base phân tích"]:,}</div>', unsafe_allow_html=True)
-            with row_cols[6]:
+            with row_cols[4]:
                 st.markdown(f'<div style="{num_style};color:#7C3AED;font-weight:700">{row[chr(34)+"n hiệu dụng"+chr(34)]:,}</div>', unsafe_allow_html=True)
+            with row_cols[5]:
+                st.markdown(f'<div style="{num_style};color:#15803D;font-weight:600">{row["Tỷ lệ giữ"]}</div>', unsafe_allow_html=True)
 
         st.markdown("""
         <p style="font-size:0.78rem;color:#94A3B8;margin-top:12px;line-height:1.6;font-style:italic">

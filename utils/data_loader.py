@@ -102,23 +102,51 @@ def load_group(group_id: str):
         return False
 
     df['flag_empty_open'] = df[open_cols].apply(lambda row: all(is_meaningless(x) for x in row), axis=1) if open_cols else True
-    df['flag_straightline_and_empty'] = df['flag_straightline'] & df['flag_empty_open']
+    df['evidence_open'] = ~df['flag_empty_open']
+    
+    enps_col = df.get('eNPS', pd.Series(dtype=float))
+    df['evidence_enps'] = False
+    if 'eNPS' in df.columns:
+        df['evidence_enps'] = (
+            ((df['likert_mean'] >= 4) & (enps_col >= 7)) |
+            ((df['likert_mean'] <= 2) & (enps_col <= 6))
+        )
+        
+    df['num_evidence'] = df['evidence_open'].astype(int) + df['evidence_enps'].astype(int)
+    
+    def _calc_weight(row):
+        if not row['flag_straightline']:
+            return 1.0, False
+        ev = row['num_evidence']
+        is_neutral = (row['likert_mean'] == 3)
+        if ev == 0:
+            return 0.2, True
+        elif ev == 1:
+            w = 0.5
+        else:
+            w = 0.8
+        if is_neutral:
+            w = min(w, 0.5)
+        return w, False
 
-    if group_id in ['1A', '1B']:
-        # Đối với 1A, 1B (Quiz Platform): Loại nếu đánh bừa (straight-line) VÀ không ghi ý kiến mở
-        df_clean = df[~df['flag_straightline_and_empty']].copy()
-        _filter_method = 'straight_and_empty'
-        _filter_desc   = 'Loại phiếu: đánh cùng 1 điểm cho tất cả câu (straight-line) VÀ không có câu trả lời mở ý nghĩa'
-    else:
-        # Đối với 2A, 2B, 3A, 3B (Google Form):
-        # - Tất cả câu hỏi BẮT BUỘC → không thể có missing → flag_too_missing luôn = False
-        # - Không lấy email → không thể dedup theo email
-        # - Straight-line ĐƠN LẺ KHÔNG bị loại: nhân viên có thể thật sự đánh đồng đều
-        # - Chỉ loại khi straight-line VÀ không có open-text ý nghĩa (cùng tiêu chí với 1A/1B)
-        df_clean = df[~df['flag_straightline_and_empty']].copy()
-        _filter_method = 'straight_and_empty_google_form'
-        _filter_desc   = 'Loại phiếu (Google Form): đánh cùng 1 điểm cho tất cả câu Likert VÀ không có câu trả lời mở ý nghĩa'
+    res = df.apply(_calc_weight, axis=1)
+    df['CompanyRollup_Weight'] = [x[0] for x in res]
+    df['flag_drop'] = [x[1] for x in res]
+    
+    if group_id == '2A':
+        dup_cols = likert_cols.copy()
+        if 'eNPS' in df.columns: dup_cols.append('eNPS')
+        def get_long_open(row):
+            txt = " ".join([str(x) for x in row[open_cols] if pd.notna(x)])
+            return txt if len(txt) >= 25 else np.nan
+        df['_long_open'] = df.apply(get_long_open, axis=1)
+        dup_cols.append('_long_open')
+        is_dup = df.duplicated(subset=dup_cols, keep='first') & df['_long_open'].notna()
+        df.loc[is_dup, 'flag_drop'] = True
 
+    df_clean = df[~df['flag_drop']].copy()
+    _filter_method = 'weighted_reliability'
+    _filter_desc   = 'Tính trọng số tin cậy (0.2 - 1.0). Chỉ loại (DROP) nếu thẳng hàng VÀ không có bằng chứng (không open, không nhất quán eNPS)'
 
     _n_removed = n_before - len(df_clean)
     _pct_removed = round(_n_removed / n_before * 100, 1) if n_before > 0 else 0
@@ -367,57 +395,71 @@ def load_all_available():
 
 
 def compute_kpis(df):
-    """Compute KPI dict from any group's dataframe."""
-    n = len(df)
-    if n == 0:
+    """Compute KPI dict from any group's dataframe using CompanyRollup_Weight."""
+    n_rows = len(df)
+    if n_rows == 0:
         return {'n': 0, 'ei_mean': 0, 'enps_score': 0, 'promoters': 0,
                 'passives': 0, 'detractors': 0, 'mei_avg': 0,
                 'intent_pct_low': 0, 'burnout_pct': 0,
                 'stay_score_avg': 0, 'stay_flight_pct': 0,
-                'stay_atrisk_pct': 0, 'stay_stable_pct': 0}
+                'stay_atrisk_pct': 0, 'stay_stable_pct': 0,
+                'silence_rate': 0, 'jsi_avg': 0, 'ews_red_pct': 0,
+                'quadrant': {}, 'contradiction_pct': 0}
 
-    ei_mean = df['EI'].mean()
+    w = df.get('CompanyRollup_Weight', pd.Series(1.0, index=df.index))
+    n = int(w.sum()) # effective n
+    
+    def weighted_avg(col):
+        mask = col.notna()
+        if not mask.any(): return 0
+        return np.average(col[mask], weights=w[mask])
+        
+    def weighted_pct(condition_mask, valid_mask=None):
+        if valid_mask is None: valid_mask = pd.Series(True, index=df.index)
+        v_mask = valid_mask & df.index.isin(condition_mask[condition_mask].index)
+        if not v_mask.any() or w[v_mask].sum() == 0: return 0
+        return (w[condition_mask & v_mask].sum() / w[v_mask].sum()) * 100
+
+    ei_mean = weighted_avg(df['EI']) if 'EI' in df.columns else 0
     enps_col = df.get('eNPS', pd.Series(dtype=float))
-    n_valid_enps = enps_col.notna().sum()
-    promoters = (enps_col >= 9).sum()
-    passives = ((enps_col >= 7) & (enps_col <= 8)).sum()
-    detractors = (enps_col <= 6).sum()
-    enps_score = (promoters - detractors) / n_valid_enps * 100 if n_valid_enps > 0 else 0
-    mei_avg = df['MEI'].mean() if 'MEI' in df.columns else 0
+    n_valid_enps = enps_col.notna()
+    
+    promoters = w[enps_col >= 9].sum()
+    passives = w[(enps_col >= 7) & (enps_col <= 8)].sum()
+    detractors = w[enps_col <= 6].sum()
+    
+    enps_score = weighted_pct(enps_col >= 9, n_valid_enps) - weighted_pct(enps_col <= 6, n_valid_enps)
+    
+    mei_avg = weighted_avg(df['MEI']) if 'MEI' in df.columns else 0
     intent_col = df.get('intent', pd.Series(dtype=float))
-    intent_low = (intent_col <= 2).sum()
-    intent_pct = intent_low / intent_col.notna().sum() * 100 if intent_col.notna().sum() > 0 else 0
-    burnout_high = (df['burnout_risk'] > 0).sum() if 'burnout_risk' in df.columns else 0
-    burnout_pct = burnout_high / n * 100
+    intent_valid = intent_col.notna()
+    intent_pct = weighted_pct(intent_col <= 2, intent_valid)
+    intent_pct_high = weighted_pct(intent_col >= 4, intent_valid)
+    
+    burnout_pct = weighted_pct(df.get('burnout_risk', pd.Series(0, index=df.index)) > 0)
 
-    # Stay Intention Score (Q22)
     q22_col = df.get('stay_intention', pd.Series(dtype=float))
-    q22_valid = q22_col.notna().sum()
-    stay_score_avg = round(q22_col.mean(), 2) if q22_valid > 0 else 0
-    stay_flight_pct = round((q22_col <= 2).sum() / q22_valid * 100, 1) if q22_valid > 0 else 0
-    stay_atrisk_pct = round((q22_col == 3).sum() / q22_valid * 100, 1) if q22_valid > 0 else 0
-    stay_stable_pct = round((q22_col >= 4).sum() / q22_valid * 100, 1) if q22_valid > 0 else 0
-    intent_pct_high = round((intent_col >= 4).sum() / intent_col.notna().sum() * 100, 1) if intent_col.notna().sum() > 0 else 0
+    q22_valid = q22_col.notna()
+    stay_score_avg = round(weighted_avg(q22_col), 2)
+    stay_flight_pct = round(weighted_pct(q22_col <= 2, q22_valid), 1)
+    stay_atrisk_pct = round(weighted_pct(q22_col == 3, q22_valid), 1)
+    stay_stable_pct = round(weighted_pct(q22_col >= 4, q22_valid), 1)
 
-    # ── Foundation Indices (mục 4.1 KE_HOACH) ──
-    silence_rate = round(df['is_silent'].mean() * 100, 1) if 'is_silent' in df.columns else 0
-    jsi_avg = round(df['JSI'].mean(), 1) if 'JSI' in df.columns and df['JSI'].notna().any() else 0
+    silence_rate = round(weighted_pct(df['is_silent']), 1) if 'is_silent' in df.columns else 0
+    jsi_avg = round(weighted_avg(df['JSI']), 1) if 'JSI' in df.columns else 0
 
     ews_col = df.get('EWS')
     ews_red_pct = 0
     if ews_col is not None and ews_col.notna().any():
-        ews_valid = ews_col.dropna()
-        ews_red_pct = round((ews_valid >= 60).sum() / len(ews_valid) * 100, 1) if len(ews_valid) > 0 else 0
+        ews_red_pct = round(weighted_pct(ews_col >= 60, ews_col.notna()), 1)
 
     quad = df.get('engagement_quadrant')
     quad_counts = {}
     if quad is not None and quad.notna().any():
-        qv = quad.dropna()
-        total_q = len(qv)
         for label in ['Champions', 'Trapped Loyalists', 'Confused Leavers', 'Flight Risk']:
-            quad_counts[label] = round((qv == label).sum() / total_q * 100, 1) if total_q > 0 else 0
+            quad_counts[label] = round(weighted_pct(quad == label, quad.notna()), 1)
 
-    contradiction_pct = round(df['contradiction_flag'].mean() * 100, 1) if 'contradiction_flag' in df.columns else 0
+    contradiction_pct = round(weighted_pct(df.get('contradiction_flag', pd.Series(False, index=df.index))), 1)
 
     return {
         'n': n, 'ei_mean': round(ei_mean, 1),
@@ -425,13 +467,12 @@ def compute_kpis(df):
         'promoters': int(promoters), 'passives': int(passives), 'detractors': int(detractors),
         'mei_avg': round(mei_avg, 1),
         'intent_pct_low': round(intent_pct, 1),
-        'intent_pct_high': intent_pct_high,
+        'intent_pct_high': round(intent_pct_high, 1),
         'burnout_pct': round(burnout_pct, 1),
         'stay_score_avg': stay_score_avg,
         'stay_flight_pct': stay_flight_pct,
         'stay_atrisk_pct': stay_atrisk_pct,
         'stay_stable_pct': stay_stable_pct,
-        # Foundation indices
         'silence_rate': silence_rate,
         'jsi_avg': jsi_avg,
         'ews_red_pct': ews_red_pct,
