@@ -139,12 +139,15 @@ def render():
         st.markdown(_sec("Phân hạng độ tin cậy & Base phân tích"), unsafe_allow_html=True)
 
         st.markdown("""
-        <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin-bottom:20px">
-            Mỗi phản hồi được chấm <strong>trọng số tin cậy</strong> dựa trên các bằng chứng:
-            có viết câu hỏi mở không, và điểm eNPS có nhất quán với Likert không. Từ đó xác định nhóm nào được
-            <em>giữ nguyên trọng số</em>, <em>giảm trọng số</em> (ví dụ: x0.5, x0.8), hay
-            <em>loại bỏ hoàn toàn (DROP)</em>. Nhờ vậy, số lượng mẫu bị xóa bỏ oan được giảm thiểu tối đa (toàn công ty chỉ loại 208 mẫu).
+        <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin-bottom:12px">
+            Thay vì áp dụng cách làm truyền thống là xóa bỏ hàng loạt các phản hồi nghi ngờ, hệ thống áp dụng thuật toán <strong>Trọng số tin cậy (Reliability Weight)</strong> từ 0.0 đến 1.0 cho mỗi phản hồi dựa trên 3 nguyên tắc xử lý:
         </p>
+        <ul style="font-size:0.85rem;color:#475569;line-height:1.7;margin-bottom:20px;padding-left:20px">
+            <li><strong>Phát hiện Straight-lining (Đánh đồng màu):</strong> Tính toán độ biến thiên (variance) của các câu Likert. Nếu người tham gia đánh cùng 1 mức điểm cho 100% câu hỏi (variance cực thấp), hệ thống sẽ đánh cờ cảnh báo rác.</li>
+            <li><strong>Kiểm tra Mâu thuẫn (Inconsistency):</strong> Đối chiếu điểm eNPS (Q33) với trung bình các câu Likert. Nếu có mâu thuẫn lớn (ví dụ: khuyên người thân làm việc ở mức 10/10 nhưng Likert lại toàn đánh 1 sao), điểm tin cậy sẽ bị trừ.</li>
+            <li><strong>Cứu xét bằng Câu hỏi mở (Open-ended):</strong> Nếu người tham gia có để lại ý kiến đóng góp thực tế ở câu hỏi mở, hệ thống sẽ tự động cộng điểm tin cậy vì đây là bằng chứng cốt lõi của người làm khảo sát có đọc câu hỏi.</li>
+            <li><strong>Quyết định:</strong> Chỉ những phản hồi vi phạm TẤT CẢ các lỗi trên (đánh đồng màu + mâu thuẫn + bỏ trống câu hỏi mở) mới bị loại bỏ hoàn toàn (DROP). Các phản hồi vi phạm nhẹ sẽ bị giảm trọng số đóng góp (ví dụ: x0.5) thay vì xóa bỏ.</li>
+        </ul>
         """, unsafe_allow_html=True)
 
         # Bảng phân hạng
