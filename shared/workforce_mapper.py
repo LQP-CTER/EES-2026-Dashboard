@@ -68,12 +68,32 @@ def load_workforce_and_mapping() -> tuple[pd.DataFrame, dict, dict]:
             if attempt == 2: print(f"Lỗi tải Mapping: {e}")
             else: time.sleep(2)
 
-    # 2. Tải Workforce (Ưu tiên Supabase vì siêu nặng)
+    # 2. Tải Workforce (Ưu tiên Firestore vì siêu nặng)
     try:
-        conn = st.connection("supabase", type="sql")
-        df_wf = conn.query("SELECT * FROM workforce_data", ttl=3600)
+        import firebase_admin
+        from firebase_admin import credentials, firestore
+        import toml
+
+        if not firebase_admin._apps:
+            secrets_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.streamlit', 'secrets.toml'))
+            with open(secrets_path, 'r', encoding='utf-8') as f:
+                secrets = toml.load(f)
+            firebase_config = secrets.get('firebase')
+            if "\\n" in firebase_config['private_key']:
+                firebase_config['private_key'] = firebase_config['private_key'].replace('\\n', '\n')
+            cred = credentials.Certificate(firebase_config)
+            firebase_admin.initialize_app(cred)
+
+        db = firestore.client()
+        docs = db.collection("workforce_data").stream()
+        records = [doc.to_dict() for doc in docs]
+        
+        if not records:
+            raise ValueError("Collection workforce_data is empty in Firestore.")
+            
+        df_wf = pd.DataFrame(records)
     except Exception as db_err:
-        print(f"Lỗi đọc Supabase ({db_err}), fallback Workforce về Google Sheets...")
+        print(f"Lỗi đọc Firestore ({db_err}), fallback Workforce về Google Sheets...")
         for attempt in range(3):
             try:
                 try:

@@ -37,14 +37,35 @@ def load_group(group_id: str):
     cfg = GROUP_REGISTRY[group_id]
     codebook = cfg['codebook']
     try:
-        # Load directly from Supabase via standard SQL Connection
-        conn = st.connection("supabase", type="sql")
-        table_name = f"survey_{group_id.lower()}"
-        df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
-        print(f" Đã tải {len(df_raw)} dòng dữ liệu {group_id} từ Supabase siêu tốc!")
+        # Load directly from Firebase Firestore
+        import firebase_admin
+        from firebase_admin import credentials, firestore
+        import toml
+
+        # Initialize Firebase if not already initialized
+        if not firebase_admin._apps:
+            secrets_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.streamlit', 'secrets.toml'))
+            with open(secrets_path, 'r', encoding='utf-8') as f:
+                secrets = toml.load(f)
+            firebase_config = secrets.get('firebase')
+            if "\\n" in firebase_config['private_key']:
+                firebase_config['private_key'] = firebase_config['private_key'].replace('\\n', '\n')
+            cred = credentials.Certificate(firebase_config)
+            firebase_admin.initialize_app(cred)
+
+        db = firestore.client()
+        collection_name = f"survey_{group_id.lower()}"
+        docs = db.collection(collection_name).stream()
+        records = [doc.to_dict() for doc in docs]
+        
+        if not records:
+            raise ValueError(f"Collection {collection_name} is empty in Firestore.")
+            
+        df_raw = pd.DataFrame(records)
+        print(f" Đã tải {len(df_raw)} dòng dữ liệu {group_id} từ Firestore siêu tốc!")
     except Exception as e:
         # Fallback to CSV if DB is not reachable
-        print(f"Lỗi kết nối Supabase ({e}). Đang dùng file dự phòng (Google Sheets)...")
+        print(f"Lỗi kết nối Firestore ({e}). Đang dùng file dự phòng (Google Sheets)...")
         df_raw = pd.read_csv(cfg['url'])
     n_before = len(df_raw)
 
