@@ -1225,8 +1225,7 @@ TUYỆT ĐỐI:
         """, unsafe_allow_html=True)
     elif run_desires or run_sentiment:
         # Gọi Groq streaming với llama-3.3-70b-versatile (tốt nhất cho phân tích định tính)
-        VOICE_MODELS = ["qwen/qwen3-32b",
-                        "llama-3.3-70b-versatile",
+        VOICE_MODELS = ["llama-3.3-70b-versatile",
                         "llama-3.1-8b-instant",
                         "mixtral-8x7b-32768"]
         all_clients = get_groq_clients_all()

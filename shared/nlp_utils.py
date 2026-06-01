@@ -936,7 +936,7 @@ TRẢ LỜI (chỉ JSON, không giải thích):"""
         try:
             response = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="qwen/qwen3-32b",
+                model="llama-3.3-70b-versatile",
                 temperature=0.1,
                 max_tokens=2000,
             )

@@ -86,8 +86,7 @@ def get_cache_key(data_json, context_prompt):
 # Danh sách model đã kiểm tra thực tế qua API Groq (2026-05-28)
 # Chỉ giữ các model đã PASS test - các model khác đã bị decommissioned
 GROQ_MODELS = [
-    "qwen/qwen3-32b",                      # Qwen3 32B - mạnh nhất về phân tích & lập luận
-    "llama-3.3-70b-versatile",              # Llama 3.3 70B - mạnh, fallback
+    "llama-3.3-70b-versatile",              # Llama 3.3 70B - mạnh nhất, ổn định tiếng Việt
     "meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Scout - nhanh
     "compound-beta",                       # Groq compound model
     "llama-3.1-8b-instant",                # Nhẹ, fallback cuối
@@ -234,7 +233,7 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
         return output
 
     # Thử tất cả Groq keys × models
-    validator_models = ["qwen/qwen3-32b", "llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "compound-beta", "llama-3.1-8b-instant"]
+    validator_models = ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "compound-beta", "llama-3.1-8b-instant"]
     for client in get_groq_clients_all():
         for model in validator_models:
             try:

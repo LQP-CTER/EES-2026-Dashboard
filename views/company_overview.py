@@ -401,10 +401,12 @@ def render(all_data, available_groups):
         }
         
         evp_counts = {k: 0 for k in evp_buckets.keys()}
-        for w in words:
-            for k, keywords in evp_buckets.items():
-                if w in keywords:
-                    evp_counts[k] += 1
+        for k, keywords in evp_buckets.items():
+            for kw in keywords:
+                # Use simple count for the keyword in the entire text
+                # We add a simple space padding check or regex word boundary
+                pattern = r'\b' + re.escape(kw) + r'\b'
+                evp_counts[k] += len(re.findall(pattern, all_text))
                     
         df_evp = pd.DataFrame(list(evp_counts.items()), columns=['EVP_Factor', 'Mentions']).sort_values('Mentions', ascending=True)
         

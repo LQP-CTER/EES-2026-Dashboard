@@ -12,3 +12,4 @@ requests
 sqlalchemy>=2.0.0
 streamlit-cookies-controller
 streamlit_antd_components
+psycopg2-binary>=2.9.0
