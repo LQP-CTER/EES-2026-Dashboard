@@ -119,13 +119,16 @@ def render(df, cfg, pillar_filter=None):
         "Group_Name": cfg.get('label', '')
     }
     prompt = (
-        f"Dựa trên dữ liệu: {ai_data['Total_Feedback']} nhân viên đã chia sẻ ý kiến tự luận. "
-        f"Chủ đề được nhắc nhiều nhất là '{ai_data['Top_Topic']}' ({ai_data['Top_Topic_Percentage']}% nhân viên đề cập), "
-        f"trong đó {ai_data['Top_Topic_Negative_Pct']}% mang giọng điệu tiêu cực. "
-        f"Hãy giải thích bằng ngôn ngữ thông thường cho một Giám đốc không chuyên về data: "
-        f"(1) Tỷ lệ tiêu cực này có đáng lo không? "
-        f"(2) Tại sao đây lại là điều họ muốn nói nhất? "
-        f"(3) Lãnh đạo cần chú ý điều gì từ tín hiệu này?"
+        f"DỰA CHÍNH XÁC VÀO DỮ LIỆU SAU (KHÔNG bịa thêm):\n"
+        f"- Tổng ý kiến: {ai_data['Total_Feedback']} nhân viên\n"
+        f"- Chủ đề nhiều nhất: '{ai_data['Top_Topic']}' ({ai_data['Top_Topic_Percentage']}% đề cập)\n"
+        f"- Tỷ lệ tiêu cực: {ai_data['Top_Topic_Negative_Pct']}%\n"
+        f"- Nhóm: {ai_data['Group_Name']}\n\n"
+        f"Giải thích cho Giám đốc không chuyên về data: "
+        f"(1) Tỷ lệ tiêu cực {ai_data['Top_Topic_Negative_Pct']}% có đáng lo không? "
+        f"(2) Tại sao đây là điều họ muốn nói nhất? "
+        f"(3) Lãnh đạo cần chú ý điều gì? "
+        f"CHỈ dùng các con số đã liệt kê."
     )
     if pillar_filter:
         from shared.codebook import PILLAR_META
@@ -302,10 +305,13 @@ def render(df, cfg, pillar_filter=None):
         p_topics = [r[0] for r in rows_promoter[:3]] if rows_promoter else []
         d_topics = [r[0] for r in rows_detractor[:3]] if rows_detractor else []
         prompt_diff = (
-            f"Phân tích sự khác biệt về chủ đề quan tâm giữa nhóm Promoter (trung thành) và Detractor (bất mãn): "
-            f"Nhóm Promoter quan tâm nhất tới {', '.join(p_topics) if p_topics else 'không rõ'}. "
-            f"Nhóm Detractor kêu ca nhiều nhất về {', '.join(d_topics) if d_topics else 'không rõ'}. "
-            f"Hãy đưa ra kết luận cốt lõi: Làm sao để chuyển hóa Detractor thành Promoter dựa trên sự khác biệt này?"
+            f"DỰA VÀO DỮ LIỆU THỰC TẾ (KHÔNG bịa thêm):\n"
+            f"- Promoter quan tâm: {', '.join(p_topics) if p_topics else 'không rõ'}\n"
+            f"- Detractor kêu ca: {', '.join(d_topics) if d_topics else 'không rõ'}\n"
+            f"- Câu hỏi: {sel_q}\n\n"
+            f"Phân tích sự khác biệt và đưa ra kết luận: "
+            f"Làm sao chuyển hóa Detractor thành Promoter? "
+            f"CHỈ phân tích từ các chủ đề đã liệt kê."
         )
         if pillar_filter:
             from shared.codebook import PILLAR_META

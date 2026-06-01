@@ -78,7 +78,13 @@ def render(df, cfg, pillar_filter=None):
                 "Bottom_Unit": bot_unit,
                 "Bottom_Score": round(bot_score, 1)
             }
-            prompt = f"So sánh sự phân hóa giữa đơn vị dẫn đầu ({top_unit}) và đơn vị yếu kém nhất ({bot_unit}) theo chỉ số {metric}. Cảnh báo rủi ro cho đơn vị yếu kém."
+            prompt = (
+                f"So sánh sự phân hóa DỰA VÀO DỮ LIỆU SAU (KHÔNG bịa thêm):\n"
+                f"- Đơn vị dẫn đầu: {top_unit} ({metric} = {top_score:.1f})\n"
+                f"- Đơn vị yếu nhất: {bot_unit} ({metric} = {bot_score:.1f})\n"
+                f"Phân tích: (1) Khoảng cách này có ý nghĩa gì? (2) Rủi ro cho đơn vị yếu kém. "
+                f"CHỈ dùng 2 con số đã cho."
+            )
             render_ai_insight_card("AI Drilldown Insight", ai_data, prompt, custom_style="margin-top: 16px; margin-bottom: 24px;")
 
         fig = px.bar(df_met_sorted, x='name', y=m_col, color=m_col,
@@ -145,6 +151,11 @@ def render(df, cfg, pillar_filter=None):
                 "Dimensions": list(df_heat.columns),
                 "Sample_Count": len(df_heat)
             }
-            prompt_heat = f"Đây là biểu đồ nhiệt (Heatmap) đánh giá điểm mạnh/yếu của từng đơn vị qua các khía cạnh {ai_data_heat['Dimensions']}. Phân tích nhanh những rủi ro khi một đơn vị có màu đỏ (điểm thấp) ở nhiều cột liên tiếp. Khuyến nghị hành động tiếp theo cho quản lý cấp cao là gì?"
+            prompt_heat = (
+                f"DỰA VÀO Heatmap với {ai_data_heat['Sample_Count']} đơn vị và các khía cạnh: "
+                f"{ai_data_heat['Dimensions']} (KHÔNG bịa thêm dữ liệu):\n"
+                f"Phân tích: (1) Rủi ro khi một đơn vị có điểm thấp ở nhiều cột liên tiếp. "
+                f"(2) Khuyến nghị hành động cho quản lý cấp cao."
+            )
             render_ai_insight_card("AI Heatmap Analysis", ai_data_heat, prompt_heat, custom_style="margin-top: 16px; margin-bottom: 24px;")
             

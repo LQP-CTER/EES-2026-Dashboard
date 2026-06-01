@@ -139,14 +139,18 @@ def render_narrative(df, cfg, group_id):
             if pdf is not None:
                 ai_prompt = (
                     f"Bạn là Giám đốc Nhân sự (CHRO) kiêm Senior Data Analyst. "
-                    f"Phân tích bức tranh sức khỏe tổ chức của nhóm {group_name} dựa trên dữ liệu:\n"
-                    f"- KPI: EI Score={kpis['ei_mean']:.1f}%, eNPS={kpis['enps_score']:+.0f}, "
-                    f"Rủi ro nghỉ việc={kpis['intent_pct_low']:.1f}%, Hiệu quả QL (MEI)={kpis.get('mei_avg',0):.1f}%\n"
-                    f"- Điểm trụ cột (Thang 5): {pdf[['Trụ cột', 'Điểm TB']].to_dict('records')}\n\n"
+                    f"Phân tích bức tranh sức khỏe tổ chức của nhóm {group_name} DỰA CHÍNH XÁC VÀO DỮ LIỆU SAU "
+                    f"(TUYỆT ĐỐI KHÔNG bịa thêm chỉ số nào):\n"
+                    f"- EI Score = {kpis['ei_mean']:.1f}%\n"
+                    f"- eNPS = {kpis['enps_score']:+.0f}\n"
+                    f"- Rủi ro nghỉ việc = {kpis['intent_pct_low']:.1f}% (tỷ lệ muốn NGHỈ, intent ≤ 2/5)\n"
+                    f"- Hiệu quả QL (MEI) = {kpis.get('mei_avg',0):.1f}%\n"
+                    f"- Burnout = {kpis.get('burnout_pct',0):.1f}%\n"
+                    f"- Điểm trụ cột (thang 5): {pdf[['Trụ cột', 'Điểm TB']].to_dict('records')}\n\n"
                     f"Yêu cầu:\n"
-                    f"1. Đánh giá nhanh 'Sức khỏe tổng thể' đang ở mức nào.\n"
-                    f"2. Đâu là tử huyệt (bottleneck) đang cản trở trải nghiệm nhân viên nhất?\n"
-                    f"Viết cực kỳ sắc sảo, chiến lược, đúng 2 đoạn văn ngắn."
+                    f"1. Đánh giá 'Sức khỏe tổng thể' đang ở mức nào — dẫn chứng bằng con số cụ thể.\n"
+                    f"2. Đâu là tử huyệt (bottleneck) cản trở trải nghiệm nhân viên nhất?\n"
+                    f"Viết 2 đoạn văn ngắn, sắc bén. CHỈ trích dẫn các con số đã liệt kê."
                 )
                 render_ai_insight_card("CHRO Strategic Summary", {"kpis": kpis, "pillars": pdf.to_dict('records')}, ai_prompt, badge="Act 1 Insight")
 
@@ -300,12 +304,14 @@ def _render_contradiction_cards(df, contradictions):
     # AI Systemic Risk Analysis
     if contradictions:
         prompt = (
-            f"Bạn là Senior Data Analyst. Dưới đây là danh sách {total} nghịch lý/mâu thuẫn dữ liệu:\n"
+            f"Bạn là Senior Data Analyst. Dưới đây là danh sách {total} nghịch lý/mâu thuẫn dữ liệu "
+            f"ĐƯỢC PHÁT HIỆN TỪ DỮ LIỆU KHẢO SÁT THỰC TẾ:\n"
             f"{[c['title'] for c in contradictions]}\n\n"
-            f"Thay vì phân tích rời rạc từng cái, hãy TỔNG HỢP và trả lời:\n"
+            f"Thay vì phân tích rời rạc từng cái, hãy TỔNG HỢP và trả lời "
+            f"(CHỈ dựa vào các nghịch lý được liệt kê, KHÔNG bịa thêm):\n"
             f"1. Có 'sợi dây liên kết ngầm' nào giữa các nghịch lý này không?\n"
             f"2. Rủi ro hệ thống (Systemic Risk) lớn nhất là gì nếu lãnh đạo phớt lờ chúng?\n"
-            f"Chỉ viết 2 đoạn văn ngắn, súc tích, đậm chất chiến lược."
+            f"Viết 2 đoạn văn ngắn, súc tích, đậm chất chiến lược."
         )
         render_ai_insight_card("Phân tích Rủi ro Hệ thống (Systemic Risk)", {"contradictions": [c['title'] for c in contradictions]}, prompt, badge="Act 2 Insight")
         st.markdown("<br>", unsafe_allow_html=True)
@@ -623,15 +629,16 @@ def _render_ai_deep_dive(contradiction, group_id):
     metrics = contradiction['metrics']
 
     prompt = (
-        f"Bạn là Senior Data Analyst. Áp dụng framework 5 Whys (5 Câu hỏi Tại sao) để phân tích nghịch lý sau của {group_id}:\n\n"
-        f"**{contradiction['title']}**\n\n"
-        f"{contradiction['narrative']}\n\n"
-        f"Dữ liệu: {metrics}\n\n"
-        f"Hãy trả lời:\n"
-        f"1. Nguyên nhân gốc rễ sâu xa nhất (Root Cause) của nghịch lý này là gì theo 5 Whys?\n"
-        f"2. Đánh giá định lượng rủi ro (Risk Quantification) nếu vấn đề này tiếp diễn.\n"
-        f"3. Đề xuất 1 hành động can thiệp trúng đích nhất.\n\n"
-        f"Viết ngắn gọn, sắc bén, tập trung vào phân tích dữ liệu."
+        f"Bạn là Senior Data Analyst. Áp dụng framework 5 Whys để phân tích nghịch lý sau "
+        f"(DỰA VÀO DỮ LIỆU THỰC TẾ BÊN DƯỚI, KHÔNG BỊA THÊM):\n\n"
+        f"Nghịch lý: {contradiction['title']}\n\n"
+        f"Mô tả: {contradiction['narrative']}\n\n"
+        f"Dữ liệu thực tế: {metrics}\n\n"
+        f"Trả lời (CHỈ dùng dữ liệu đã cung cấp):\n"
+        f"1. Nguyên nhân gốc rễ (Root Cause) theo 5 Whys là gì?\n"
+        f"2. Đánh giá rủi ro nếu vấn đề tiếp diễn — dẫn chứng bằng con số từ dữ liệu.\n"
+        f"3. Đề xuất 1 hành động can thiệp trúng đích nhất.\n"
+        f"Viết ngắn gọn, sắc bén. KHÔNG tự suy diễn con số ngoài dữ liệu."
     )
 
     render_ai_insight_card(
@@ -743,14 +750,14 @@ def _render_action_priorities(df, group_id, contradictions):
         st.markdown("<br>", unsafe_allow_html=True)
         # AI 90-Day Action Plan Insight
         prompt = (
-            f"Bạn là Senior Data Analyst & HR Consultant. Dựa trên Ma trận Hành động của {group_id}, "
-            f"đây là top các yếu tố 'Ưu tiên cao' (Điểm thấp nhưng Tương quan cực mạnh với sự gắn kết - EI):\n"
+            f"Bạn là Senior Data Analyst & HR Consultant. DỰA VÀO Ma trận Hành động của {group_id}, "
+            f"đây là top các yếu tố 'Ưu tiên cao' (Điểm thấp nhưng Tương quan mạnh với EI) "
+            f"— CHỈ phân tích từ dữ liệu này:\n"
             f"{top_priority[['Q', 'Label', 'Mean', 'Correlation']].to_dict('records')}\n\n"
             f"Yêu cầu:\n"
-            f"1. Tại sao việc cải thiện các yếu tố này lại mang lại ROI cao nhất?\n"
-            f"2. Đề xuất một Kế hoạch hành động 90 ngày (90-Day Action Plan) cực kỳ súc tích gồm 3 bước "
-            f"để giải quyết triệt để các vấn đề này.\n"
-            f"Chỉ viết 2 đoạn văn ngắn, tập trung vào giải pháp thực chiến."
+            f"1. Tại sao cải thiện các yếu tố này mang lại ROI cao nhất? Dẫn chứng bằng số tương quan và điểm.\n"
+            f"2. Đề xuất Kế hoạch 90 ngày gồm 3 bước thực chiến.\n"
+            f"Viết 2 đoạn văn ngắn. KHÔNG bịa thêm dữ liệu ngoài danh sách trên."
         )
         render_ai_insight_card("Kế hoạch Hành động 90 ngày (90-Day Action Plan)", {"top_priority": top_priority.to_dict('records')}, prompt, badge="Act 4 Insight")
 
@@ -835,10 +842,10 @@ def _render_hidden_risks(df, group_id):
     # AI Insight
     prompt = (
         f"Bạn là Senior Data Analyst. Đơn vị này không có mâu thuẫn dữ liệu nghiêm trọng, "
-        f"nhưng đây là 5 câu hỏi có điểm thấp nhất (thang 5):\n"
+        f"nhưng đây là 5 câu hỏi có điểm thấp nhất (thang 5) — DỰA CHÍNH XÁC VÀO DỮ LIỆU NÀY:\n"
         f"{sdf.to_dict('records')}\n\n"
-        f"Hãy phân tích:\n"
-        f"1. Những điểm yếu này đang phản ánh vấn đề gì về môi trường làm việc hay chính sách?\n"
+        f"Phân tích (CHỈ dùng dữ liệu đã cung cấp, KHÔNG bịa thêm):\n"
+        f"1. Những điểm yếu này phản ánh vấn đề gì về môi trường làm việc hay chính sách?\n"
         f"2. Nếu không cải thiện, rủi ro ngầm (Hidden Risk) lớn nhất là gì?\n"
         f"Viết 2 đoạn văn ngắn gọn, phân tích sâu."
     )
@@ -923,13 +930,14 @@ def _render_weakness_deep_dive(df, group_id):
     
     # AI Deep Dive
     prompt = (
-        f"Bạn là Senior Data Analyst. Đơn vị này đang gặp vấn đề nghiêm trọng nhất ở yếu tố:\n"
-        f"'{worst_q}: {worst_label}' với điểm trung bình rất thấp là {worst_score:.2f}/5.\n"
-        f"Tỷ lệ phân bố điểm đánh giá của nhân viên: {dist_dict}\n\n"
-        f"Áp dụng framework 5 Whys (5 Câu hỏi Tại sao), hãy phân tích:\n"
-        f"1. Nguyên nhân gốc rễ sâu xa nhất (Root Cause) khiến nhân viên đánh giá thấp yếu tố này là gì?\n"
-        f"2. Gợi ý 1 hành động can thiệp (Intervention) cụ thể và khả thi nhất trong ngắn hạn.\n"
-        f"Viết ngắn gọn, sắc bén."
+        f"Bạn là Senior Data Analyst. DỰA VÀO DỮ LIỆU THỰC TẾ SAU "
+        f"(KHÔNG BỊA THÊM):\n"
+        f"Yếu tố yếu nhất: '{worst_q}: {worst_label}' — Điểm TB = {worst_score:.2f}/5.\n"
+        f"Phân bố điểm: {dist_dict}\n\n"
+        f"Áp dụng 5 Whys:\n"
+        f"1. Nguyên nhân gốc rễ khiến nhân viên đánh giá thấp yếu tố này?\n"
+        f"2. Đề xuất 1 hành động can thiệp cụ thể, khả thi trong ngắn hạn.\n"
+        f"Viết ngắn gọn, sắc bén. CHỈ dùng dữ liệu đã cung cấp."
     )
     render_ai_insight_card(f"AI Deep Dive: Root Cause của {worst_q}", {"metric": worst_q, "score": worst_score}, prompt, badge="Deep Dive")
 
@@ -1217,7 +1225,8 @@ TUYỆT ĐỐI:
         """, unsafe_allow_html=True)
     elif run_desires or run_sentiment:
         # Gọi Groq streaming với llama-3.3-70b-versatile (tốt nhất cho phân tích định tính)
-        VOICE_MODELS = ["llama-3.3-70b-versatile",
+        VOICE_MODELS = ["qwen/qwen3-32b",
+                        "llama-3.3-70b-versatile",
                         "llama-3.1-8b-instant",
                         "mixtral-8x7b-32768"]
         all_clients = get_groq_clients_all()

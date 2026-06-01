@@ -54,7 +54,7 @@ def get_secret(key):
 
 GROUP_REGISTRY = {
     '1A': {
-        'label': 'Nhóm 1A — Nhân viên Giao nhận',
+        'label': '[1A] Nhân viên Giao nhận',
         'short': 'Nhân viên Giao nhận',
         'url': get_secret('SHEET_1A'),
         'codebook': CODEBOOK_1A,
@@ -62,7 +62,7 @@ GROUP_REGISTRY = {
         'color': '#FF5200',
     },
     '1B': {
-        'label': 'Nhóm 1B — Tài xế xe tải',
+        'label': '[1B] Tài xế xe tải',
         'short': 'Tài xế xe tải',
         'url': get_secret('SHEET_1B'),
         'codebook': CODEBOOK_1B,
@@ -70,7 +70,7 @@ GROUP_REGISTRY = {
         'color': '#006FAD',
     },
     '2A': {
-        'label': 'Nhóm 2A — Nhân viên Vận hành Kho',
+        'label': '[2A] Nhân viên Vận hành Kho',
         'short': 'Nhân viên Vận hành Kho',
         'url': get_secret('SHEET_2A'),
         'codebook': CODEBOOK_2A,
@@ -78,7 +78,7 @@ GROUP_REGISTRY = {
         'color': '#10B981',
     },
     '2B': {
-        'label': 'Nhóm 2B — Quản lý Vận hành Tuyến đầu',
+        'label': '[2B] Quản lý Vận hành Tuyến đầu',
         'short': 'Quản lý Vận hành Tuyến đầu',
         'url': get_secret('SHEET_2B'),
         'codebook': CODEBOOK_2B,
@@ -86,7 +86,7 @@ GROUP_REGISTRY = {
         'color': '#8B5CF6',
     },
     '3A': {
-        'label': 'Nhóm 3A — Nhân viên Văn phòng',
+        'label': '[3A] Nhân viên Văn phòng',
         'short': 'Nhân viên Văn phòng',
         'url': get_secret('SHEET_3A'),
         'codebook': CODEBOOK_3A,
@@ -94,7 +94,7 @@ GROUP_REGISTRY = {
         'color': '#F59E0B',
     },
     '3B': {
-        'label': 'Nhóm 3B — Quản lý HQ',
+        'label': '[3B] Quản lý HQ',
         'short': 'Quản lý HQ',
         'url': get_secret('SHEET_3B'),
         'codebook': CODEBOOK_3B,

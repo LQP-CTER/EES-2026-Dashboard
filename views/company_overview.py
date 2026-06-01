@@ -198,7 +198,21 @@ def render(all_data, available_groups):
             "Total_Attrition_Risk": round(total_intent, 1)
         }
         
-        prompt = "Hãy viết một đoạn Tóm tắt Điều hành (Executive Summary). Phân tích sự tăng giảm của EI và eNPS. Đánh giá nhóm (Division) xuất sắc nhất và nhóm yếu kém nhất. Đề xuất một chiến lược cải thiện cấp bách (Strategic Recommendation) dựa trên Gartner Human Deal cho nhóm yếu kém nhất."
+        prompt = (
+            f"Viết một đoạn Tóm tắt Điều hành (Executive Summary) DỰA CHÍNH XÁC vào các chỉ số sau "
+            f"(KHÔNG bịa thêm chỉ số nào khác):\n"
+            f"- EI tổng = {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} so với 2025)\n"
+            f"- eNPS tổng = {ai_data['Total_eNPS']:+.0f}\n"
+            f"- Rủi ro nghỉ việc (Attrition Risk) = {ai_data['Total_Attrition_Risk']:.1f}%\n"
+            f"- Division xuất sắc nhất: {ai_data['Top_Division']} (EI {ai_data['Top_Division_EI']:.1f}%)\n"
+            f"- Division yếu nhất: {ai_data['Bottom_Division']} (EI {ai_data['Bottom_Division_EI']:.1f}%)\n"
+            f"- Trụ cột mạnh nhất hệ thống: {ai_data['Top_Pillar']}\n"
+            f"- Trụ cột yếu nhất hệ thống: {ai_data['Bottom_Pillar']}\n\n"
+            f"Yêu cầu: (1) Phân tích ý nghĩa của sự thay đổi EI/eNPS. "
+            f"(2) Đánh giá khoảng cách giữa Division dẫn đầu và Division chót bảng. "
+            f"(3) Đề xuất 1 chiến lược cải thiện cấp bách dựa trên Gartner Human Deal cho Division yếu nhất. "
+            f"CHỈ dùng đúng các con số đã liệt kê, KHÔNG tự suy diễn thêm."
+        )
         
         render_ai_insight_card("AI Executive Summary & Insight", ai_data, prompt)
 
@@ -262,7 +276,17 @@ def render(all_data, available_groups):
                 "Bottom_EI": round(df_div_stats.iloc[0]['ei_mean'], 1),
                 "Lowest_System_Pillar": lowest_pillar
             }
-            prompt = "Phân tích khoảng cách sức khỏe tổ chức giữa Khối dẫn đầu và Khối đứng chót. Phát đi cảnh báo 'Pillar Alert' cho trụ cột có điểm số thấp nhất toàn hệ thống, yêu cầu một chiến lược xuyên suốt thay vì giải quyết cục bộ."
+            prompt = (
+                f"Phân tích khoảng cách sức khỏe tổ chức DỰA VÀO CÁC CON SỐ SAU "
+                f"(KHÔNG đề cập đến chỉ số nào khác):\n"
+                f"- Khối dẫn đầu: {org_ai_data['Top_Division']} (EI = {org_ai_data['Top_EI']:.1f}%)\n"
+                f"- Khối đứng chót: {org_ai_data['Bottom_Division']} (EI = {org_ai_data['Bottom_EI']:.1f}%)\n"
+                f"- Trụ cột thấp nhất toàn hệ thống: {org_ai_data['Lowest_System_Pillar']}\n\n"
+                f"Yêu cầu: (1) Lượng hóa khoảng cách EI giữa 2 khối. "
+                f"(2) Phát cảnh báo 'Pillar Alert' cho trụ cột yếu nhất, giải thích TẠI SAO nó thấp. "
+                f"(3) Đề xuất chiến lược xuyên suốt thay vì giải quyết cục bộ. "
+                f"CHỈ dùng đúng 3 dữ kiện trên."
+            )
             render_ai_insight_card("AI Organization Insight", org_ai_data, prompt, custom_style="margin-top: 24px; padding: 20px;")
 
     # ══════════════════════════════════════════════════════════════
@@ -329,7 +353,16 @@ def render(all_data, available_groups):
                         "Lowest_Engagement_Group": bot_group,
                         "Bottom_EI": round(df_demo.iloc[-1]['ei_mean'], 1)
                     }
-                    prompt = "Dựa trên phân mảnh nhân khẩu học, hãy bình luận về nhóm có mức gắn kết cao nhất và thấp nhất. Đưa ra một 'Góc nhìn Chuyên gia (HR Insight)' liên quan đến Vòng đời Trải nghiệm Nhân viên (Employee Life-cycle), phân tích rủi ro 'kỳ vọng không được đáp ứng' (honeymoon phase) và cách can thiệp giữ chân (retention)."
+                    prompt = (
+                        f"Dựa trên phân mảnh nhân khẩu học, phân tích DỰA VÀO CÁC CON SỐ SAU "
+                        f"(KHÔNG bịa thêm chỉ số):\n"
+                        f"- Nhóm gắn kết CAO nhất: {demo_ai_data['Highest_Engagement_Group']} (EI = {demo_ai_data['Top_EI']:.1f}%)\n"
+                        f"- Nhóm gắn kết THẤP nhất: {demo_ai_data['Lowest_Engagement_Group']} (EI = {demo_ai_data['Bottom_EI']:.1f}%)\n\n"
+                        f"Yêu cầu: (1) Giải thích khoảng cách EI giữa 2 nhóm. "
+                        f"(2) Đưa ra góc nhìn Employee Life-cycle: tại sao nhóm thấp lại ở giai đoạn 'kỳ vọng không được đáp ứng' (honeymoon phase)? "
+                        f"(3) Đề xuất 1 cách can thiệp giữ chân cụ thể. "
+                        f"CHỈ phân tích từ 2 con số EI đã cho."
+                    )
                     render_ai_insight_card("AI Demographic Insight", demo_ai_data, prompt, custom_style="margin-top: 16px; padding: 20px;")
 
     else:
@@ -389,7 +422,16 @@ def render(all_data, available_groups):
                     "Top_Bucket": df_evp_ai.iloc[-1]['EVP_Factor'],
                     "Bottom_Bucket_with_mentions": df_evp_ai.iloc[0]['EVP_Factor']
                 }
-                prompt = "Phân tích dữ liệu đếm từ khóa từ các câu hỏi mở (Open-text) của nhân viên. Bóc tách những yếu tố ảnh hưởng mạnh nhất đến định vị thương hiệu tuyển dụng (EVP). CHÚ Ý: Tuyệt đối KHÔNG nhắc đến các yếu tố không có phản hồi (0 mentions). CHỈ phân tích dựa trên những yếu tố thực sự được nhân viên đề cập, nêu bật điểm mạnh và rủi ro tiềm ẩn (nếu có)."
+                prompt = (
+                    f"Phân tích dữ liệu đếm từ khóa EVP từ câu hỏi mở của nhân viên. "
+                    f"Dữ liệu thực tế:\n"
+                    f"{nlp_ai_data['EVP_Buckets_Frequencies']}\n\n"
+                    f"YÊU CẦU NGHIÊM NGẶT:\n"
+                    f"- CHỈ phân tích các yếu tố CÓ mentions > 0 trong dữ liệu trên.\n"
+                    f"- TUYỆT ĐỐI KHÔNG nhắc đến, ám chỉ, hoặc suy diễn về các yếu tố có 0 mentions.\n"
+                    f"- Nêu bật yếu tố được nhắc nhiều nhất (điểm mạnh EVP) và yếu tố ít được nhắc nhất (rủi ro tiềm ẩn).\n"
+                    f"- Mọi con số trích dẫn PHẢI khớp với dữ liệu đã cho."
+                )
                 render_ai_insight_card("AI NLP Insight: Định Vị Thương Hiệu (EVP)", nlp_ai_data, prompt, badge="NLP Engine", custom_style="height: 100%; margin-bottom: 0; padding: 24px;")
     else:
         st.info("Chưa có dữ liệu câu hỏi mở (NLP) để phân tích EVP.")

@@ -156,13 +156,14 @@ def render_anomaly_tab(anomalies: list, pillar_id: str = None, show_cross: bool 
 
         p_name = PILLAR_META.get(pillar_id, {}).get('name', 'trụ cột này') if pillar_id else 'toàn nhóm'
         prompt = (
-            f"Phân tích tổng hợp các bất thường phát hiện trong {p_name}: "
+            f"Phân tích tổng hợp các bất thường DỰA VÀO DỮ LIỆU THỰC TẾ trong {p_name} "
+            f"(TUYỆT ĐỐI KHÔNG bịa thêm pattern nào khác):\n"
             f"{'Vấn đề khẩn cấp: ' + '; '.join(critical_titles) + '. ' if critical_titles else ''}"
             f"{'Cảnh báo: ' + '; '.join(warning_titles) + '. ' if warning_titles else ''}"
-            f"Hãy: (1) Xác định NÚT THẮT CỔ CHAI — pattern nào nếu giải quyết sẽ kéo các vấn đề khác lên theo? "
-            f"(2) Nếu không can thiệp, điều gì sẽ xảy ra trong 3-6 tháng tới? "
-            f"(3) Nếu chỉ có ngân sách cho 1 can thiệp, nên đầu tư vào đâu? "
-            f"Trả lời theo format: đoạn 1 = tóm tắt tình trạng, đoạn 2 = hệ quả, đoạn 3 = khuyến nghị ưu tiên."
+            f"(1) Xác định NÚT THẮT — pattern nào nếu giải quyết sẽ kéo các vấn đề khác lên? "
+            f"(2) Nếu không can thiệp, điều gì xảy ra trong 3-6 tháng? "
+            f"(3) Nếu chỉ có ngân sách cho 1 can thiệp, đầu tư vào đâu? "
+            f"CHỈ phân tích từ các bất thường đã liệt kê."
         )
         ai_data = {
             'Total_Anomalies': len(all_shown),

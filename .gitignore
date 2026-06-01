@@ -9,6 +9,7 @@ env/
 
 # Project Specific
 Data/
+Data_Clean/
 *.xlsx
 *.csv
 .DS_Store

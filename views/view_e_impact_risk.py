@@ -389,7 +389,14 @@ def render(df, cfg, pillar_filter=None):
         "Top_Negative_Signal": top_signal,
         "Most_Affected_Section": top_section
     }
-    prompt = "Phân tích số lượng tín hiệu cảnh báo từ phản hồi mở (NLP). Đánh giá vấn đề nổi cộm nhất (Top Negative Signal) và bộ phận bị ảnh hưởng nặng nhất (Most Affected Section). Yêu cầu sự can thiệp từ HRBP đối với điểm nóng này."
+    prompt = (
+        f"DỰA VÀO DỮ LIỆU THỰC TẾ SAU (KHÔNG bịa thêm):\n"
+        f"- Tổng tín hiệu cảnh báo đã xác nhận: {ai_data['Total_Warning_Signals']}\n"
+        f"- Tín hiệu nổi cộm nhất: {ai_data['Top_Negative_Signal']}\n"
+        f"- Bộ phận bị ảnh hưởng nặng nhất: {ai_data['Most_Affected_Section']}\n\n"
+        f"Đánh giá vấn đề và yêu cầu can thiệp từ HRBP. "
+        f"CHỈ dùng 3 dữ kiện đã liệt kê."
+    )
     render_ai_insight_card("AI NLP Insight", ai_data, prompt, custom_style="margin-top: 24px; margin-bottom: 24px;")
 
     c1, c2 = st.columns(2)

@@ -189,11 +189,27 @@ def render(df, cfg, pillar_filter=None):
         "Group_Name": cfg.get('label', ''),
         "EI_Score": round(kpis.get('ei_mean', 0), 1),
         "eNPS_Score": round(kpis.get('enps_score', 0), 0),
-        "Long_Term_Intent": round(kpis.get('intent_pct_high', 0), 1),
-        "Burnout_Risk": round(kpis.get('burnout_pct', 0), 1),
+        "Attrition_Risk_Pct": round(kpis.get('intent_pct_low', 0), 1),
+        "Stay_Intent_Pct": round(kpis.get('intent_pct_high', 0), 1),
+        "Burnout_Risk_Pct": round(kpis.get('burnout_pct', 0), 1),
         "MEI_Score": round(kpis.get('mei_avg', 0), 1)
     }
-    ai_prompt = f"Bạn đang nói chuyện với một Giám đốc/Trưởng phòng không chuyên về data. Dựa trên các chỉ số EI={group_ai_data['EI_Score']}%, eNPS={group_ai_data['eNPS_Score']:+.0f}, rủi ro nghỉ={group_ai_data['Long_Term_Intent']:.0f}% và MEI={group_ai_data['MEI_Score']:.1f}%, hãy trả lời 2 câu hỏi thiết thực: (1) Nhóm này đang ở trạng thái sức khỏe tổ chức nào — tốt, trung bình, hay đáng lo ngại? (2) Nếu không can thiệp trong 3 tháng tới, điều gì có thể xảy ra với nhóm này? Viết như đang báo cáo cho lãnh đạo cấp cao, không dùng thuật ngữ kỹ thuật."
+    ai_prompt = (
+        f"Bạn đang nói chuyện với một Giám đốc/Trưởng phòng không chuyên về data. "
+        f"Phân tích sức khỏe tổ chức của nhóm «{cfg.get('label', '')}» DỰA CHÍNH XÁC VÀO CÁC CHỈ SỐ SAU "
+        f"(tuyệt đối KHÔNG bịa thêm chỉ số nào khác):\n"
+        f"- Engagement Index (EI) = {group_ai_data['EI_Score']}% (mức độ gắn kết, thang 0-100%)\n"
+        f"- eNPS = {group_ai_data['eNPS_Score']:+.0f} (chỉ số sẵn lòng giới thiệu, thang -100 đến +100)\n"
+        f"- Rủi ro nghỉ việc = {group_ai_data['Attrition_Risk_Pct']:.1f}% (tỷ lệ nhân viên MUỐN NGHỈ, intent ≤ 2/5)\n"
+        f"- Ý định ở lại = {group_ai_data['Stay_Intent_Pct']:.1f}% (tỷ lệ nhân viên MUỐN Ở LẠI, intent ≥ 4/5)\n"
+        f"- Burnout = {group_ai_data['Burnout_Risk_Pct']:.1f}% (tỷ lệ có dấu hiệu kiệt sức)\n"
+        f"- Hiệu quả quản lý (MEI) = {group_ai_data['MEI_Score']:.1f}%\n\n"
+        f"Trả lời 2 câu hỏi:\n"
+        f"(1) Nhóm này đang ở trạng thái sức khỏe tổ chức nào — tốt, trung bình, hay đáng lo ngại? Dẫn chứng bằng số liệu cụ thể.\n"
+        f"(2) Nếu không can thiệp trong 3 tháng tới, điều gì có thể xảy ra?\n"
+        f"Viết như đang báo cáo cho lãnh đạo cấp cao. KHÔNG dùng thuật ngữ kỹ thuật. "
+        f"CHỈ dùng đúng các con số đã cung cấp ở trên, KHÔNG tự suy diễn thêm chỉ số nào."
+    )
     # ► Đặt chỗ trống cho AI — sẽ được render SAU khi toàn bộ UI đã hiển thị
     ai_placeholder = st.empty()
 
@@ -385,7 +401,19 @@ def render(df, cfg, pillar_filter=None):
                 Điểm Nóng Phân Tích Thực Địa — {cfg.get('label', '')}
             </h4>
         """, unsafe_allow_html=True)
-        strategic_prompt = f"Bạn là Chuyên gia HR Consultant cấp cao. Dựa trên dữ liệu EI={group_ai_data['EI_Score']}%, eNPS={group_ai_data['eNPS_Score']:+.0f} của nhóm {cfg.get('label', '')}, hãy xác định 2 điểm nóng thực địa cụ thể (viết dưới dạng 2 đoạn văn ngắn, súc tích). Mỗi điểm nóng phải nêu rõ: (1) hiện tượng là gì, (2) tại sao gây ra rủi ro nghỉ việc, (3) chỉ số liên quan cần chú ý. Dùng ngôn ngữ doanh nghiệp, không dùng bullet point."
+        strategic_prompt = (
+            f"Bạn là Chuyên gia HR Consultant cấp cao. DỰA VÀO CÁC CHỈ SỐ SAU của nhóm «{cfg.get('label', '')}» "
+            f"(KHÔNG bịa thêm chỉ số):\n"
+            f"- EI = {group_ai_data['EI_Score']}%\n"
+            f"- eNPS = {group_ai_data['eNPS_Score']:+.0f}\n"
+            f"- Rủi ro nghỉ việc = {group_ai_data['Attrition_Risk_Pct']:.1f}%\n"
+            f"- Burnout = {group_ai_data['Burnout_Risk_Pct']:.1f}%\n"
+            f"- MEI = {group_ai_data['MEI_Score']:.1f}%\n\n"
+            f"Xác định 2 điểm nóng thực địa cụ thể (2 đoạn văn ngắn). "
+            f"Mỗi điểm nóng: (1) hiện tượng là gì, (2) tại sao gây rủi ro, (3) chỉ số liên quan cần chú ý. "
+            f"Dùng ngôn ngữ doanh nghiệp, KHÔNG dùng bullet point. "
+            f"CHỈ trích dẫn các con số đã liệt kê ở trên."
+        )
         render_ai_insight_card("AI Strategic Insight", group_ai_data, strategic_prompt, badge="Field Analytics", custom_style="margin-top: 12px; margin-bottom: 0px; box-shadow: none; border: none; padding: 0; background: transparent;")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -940,7 +968,13 @@ def render(df, cfg, pillar_filter=None):
                     st.plotly_chart(fig, width='stretch', key="view_a_current_state_chart_877")
                     
                     if col_id == 'Q5':
-                        prompt = "Hãy giải thích nguyên nhân vì sao nhóm nhân viên có thâm niên 'Trên 3 đến 5 năm' lại có chỉ số eNPS thấp (có thể là số âm) so với các nhóm khác. Dựa vào vòng đời nhân sự (Employee Lifecycle) để giải thích thực trạng chững lại về nhiệt huyết và kỳ vọng nghề nghiệp ở giai đoạn này."
+                        prompt = (
+                            f"DỰA VÀO DỮ LIỆU THÂM NIÊN SAU (KHÔNG bịa thêm):\n"
+                            f"{demo_data}\n\n"
+                            f"Giải thích nguyên nhân nhóm 'Trên 3 đến 5 năm' có eNPS thấp so với các nhóm khác. "
+                            f"Dùng Employee Lifecycle để phân tích sự chững lại về nhiệt huyết và kỳ vọng. "
+                            f"CHỈ trích dẫn con số từ dữ liệu đã cho."
+                        )
                         render_ai_insight_card(
                             title="AI Insight: Phân tích chênh lệch gắn kết giai đoạn 3-5 năm",
                             data_dict={"Thâm_niên": demo_data},

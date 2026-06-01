@@ -289,16 +289,17 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     pillar_doc_desc = get_pillar_description(pillar_id, group_id)
 
     prompt = (
-        f"Bạn là Chuyên gia People Analytics cấp cao, phân tích sâu trụ cột '{p_name}' cho đơn vị {group_name}. "
-        f"ĐỊNH HƯỚNG PHÂN TÍCH THEO BÁO CÁO EES: {pillar_doc_desc} "
-        f"DỮ LIỆU: Điểm TB trụ cột = {p_mean:.2f}/5. "
-        f"Câu yếu nhất: {weakest_label} ({weakest['Mean']:.2f}/5, {weakest['Negative']:.1f}% tiêu cực). "
-        f"Câu mạnh nhất: {strongest['Label']} ({strongest['Mean']:.2f}/5). "
-        f"YÊU CẦU: "
-        f"(1) Tại sao '{weakest['Label']}' lại yếu nhất? Hãy liên kết nguyên nhân gốc rễ với định hướng phân tích của nhóm này. "
-        f"(2) Điều gì sẽ xảy ra trong 3-6 tháng tới nếu không can thiệp? "
-        f"(3) Đề xuất 1 hành động CỤ THỂ, KHẢ THI trong 30 ngày. "
-        f"Đừng dùng ngôn ngữ chung chung. Phải thật sắc bén và bám sát đặc thù của {group_name}."
+        f"Bạn là Chuyên gia People Analytics, phân tích trụ cột '{p_name}' cho {group_name}. "
+        f"DỰA CHÍNH XÁC VÀO DỮ LIỆU SAU (KHÔNG bịa thêm chỉ số):\n"
+        f"- Điểm TB trụ cột: {p_mean:.2f}/5\n"
+        f"- Câu yếu nhất: {weakest_label} ({weakest['Mean']:.2f}/5, {weakest['Negative']:.1f}% tiêu cực)\n"
+        f"- Câu mạnh nhất: {strongest['Label']} ({strongest['Mean']:.2f}/5)\n"
+        f"- Định hướng: {pillar_doc_desc}\n\n"
+        f"YÊU CẦU (CHỈ dùng dữ liệu đã cung cấp): "
+        f"(1) Tại sao '{weakest['Label']}' yếu nhất? Liên kết với đặc thù {group_name}. "
+        f"(2) Điều gì xảy ra trong 3-6 tháng nếu không can thiệp? "
+        f"(3) Đề xuất 1 hành động CỤ THỂ trong 30 ngày. "
+        f"Sắc bén, bám sát đặc thù, KHÔNG chung chung."
     )
     ai_data = {
         'Pillar': p_name, 'Group': group_name,
@@ -420,23 +421,22 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                         }
                         
                         prompt = (
-                            f"Phân tích nghịch lý '{title}'.\n"
-                            f"Trong dữ liệu khảo sát, nhân viên đánh giá cao yếu tố sau:\n"
-                            f"- {ai_data['Q_High']} (Điểm: {ai_data['Score_High']}/5).\n"
-                            f"Tuy nhiên, họ lại đánh giá rất thấp yếu tố sau:\n"
-                            f"- {ai_data['Q_Low']} (Điểm: {ai_data['Score_Low']}/5).\n"
-                            f"Khoảng cách (Gap): {ai_data['Gap']} điểm.\n\n"
+                            f"Phân tích nghịch lý DỰA VÀO DỮ LIỆU THỰC TẾ SAU "
+                            f"(TUYỆT ĐỐI KHÔNG bịa thêm):\n"
+                            f"Nghịch lý: '{title}'\n"
+                            f"- Yếu tố CAO: {ai_data['Q_High']} (Điểm: {ai_data['Score_High']}/5)\n"
+                            f"- Yếu tố THẤP: {ai_data['Q_Low']} (Điểm: {ai_data['Score_Low']}/5)\n"
+                            f"- Khoảng cách: {ai_data['Gap']} điểm\n\n"
                         )
                         if sample_texts:
-                            prompt += f"Dưới đây là một số ý kiến thực tế của nhân viên (câu hỏi mở):\n- {sample_texts}\n\n"
+                            prompt += f"Ý kiến thực tế của nhân viên:\n- {sample_texts}\n\n"
                         else:
-                            prompt += "Lưu ý: Không có dữ liệu câu hỏi mở cho nhóm này.\n\n"
+                            prompt += "Không có dữ liệu câu hỏi mở.\n\n"
                             
                         prompt += (
-                            "Yêu cầu (trình bày trực diện, ngắn gọn):\n"
-                            "1. Dựa vào các ý kiến thực tế trên (nếu có) và hiểu biết chuyên môn về quản trị nhân sự, giải thích TẠI SAO lại xuất hiện nghịch lý này? "
-                            "(ví dụ: tại sao điểm Q_High lại tốt nhưng điểm Q_Low lại thấp, mâu thuẫn cốt lõi ẩn giấu là gì?)\n"
-                            "2. Đề xuất một hành động can thiệp ngay lập tức để giải tỏa ức chế tâm lý và thu hẹp khoảng cách này."
+                            "Yêu cầu (CHỈ dùng dữ liệu đã cung cấp):\n"
+                            "1. Giải thích TẠI SAO xuất hiện nghịch lý này — mâu thuẫn cốt lõi là gì?\n"
+                            "2. Đề xuất 1 hành động can thiệp để thu hẹp khoảng cách."
                         )
                         
                         render_ai_insight_card(f"Bằng chứng từ Dữ liệu & AI Phân tích", ai_data, prompt)

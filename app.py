@@ -46,6 +46,11 @@ try:
     importlib.reload(shared.workforce_mapper)
 except Exception:
     pass
+try:
+    import config.groups
+    importlib.reload(config.groups)
+except Exception:
+    pass
 
 st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", layout="wide", initial_sidebar_state="expanded")
 
@@ -1345,8 +1350,8 @@ def apply_global_filters(df):
             return df[df['Q5'] == st.session_state.global_tenure]
     return df
 
-OVERVIEW_LABEL = "Overview EES 2026"
-COMPANY_LABEL = "Toàn bộ GHN"
+OVERVIEW_LABEL = "EES 2026 Overview"
+COMPANY_LABEL = "Tổng quan GHN"
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -1367,8 +1372,77 @@ with st.sidebar:
 
     # Main navigation
     st.markdown('<span class="sb-section">Phân khúc báo cáo</span>', unsafe_allow_html=True)
-    main_nav_opts = [OVERVIEW_LABEL, COMPANY_LABEL] + [available[g]['label'] for g in group_opts] + ["Độ tin cậy dữ liệu", "Phụ lục"]
-    sel_dashboard = st.radio("Nav", main_nav_opts, label_visibility="collapsed", key="main_nav")
+    import streamlit_antd_components as sac
+
+    menu_items = []
+    index_map = {}
+    curr_idx = 0
+
+    menu_items.append(sac.MenuItem(OVERVIEW_LABEL))
+    index_map[curr_idx] = (OVERVIEW_LABEL, None)
+    curr_idx += 1
+
+    menu_items.append(sac.MenuItem(COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
+    index_map[curr_idx] = (COMPANY_LABEL, None)
+    curr_idx += 1
+
+    for g in group_opts:
+        label = available[g]['label']
+        
+        # Build children for the group
+        group_children = []
+        
+        # 1. Tổng quan Tổ chức
+        group_children.append(sac.MenuItem("Tổng quan Tổ chức"))
+        
+        # 2. Các trụ cột (phẳng, không gom nhóm thêm 1 cấp nữa để dễ thấy)
+        for p in PILLAR_ORDER:
+            p_name = PILLAR_META[p]['name']
+            group_children.append(sac.MenuItem(p_name))
+            
+        # 3. Đo lường Impact & Xem Báo Cáo
+        group_children.append(sac.MenuItem("Đo lường Impact"))
+        group_children.append(sac.MenuItem("Xem Báo Cáo"))
+        
+        # Add parent node
+        menu_items.append(sac.MenuItem(label, children=group_children))
+        
+        # Mapping index
+        index_map[curr_idx] = (label, "Tổng quan Tổ chức") # Parent node
+        curr_idx += 1
+        
+        index_map[curr_idx] = (label, "Tổng quan Tổ chức") # Child 1
+        curr_idx += 1
+        
+        for p in PILLAR_ORDER:
+            p_name = PILLAR_META[p]['name']
+            index_map[curr_idx] = (label, p_name)
+            curr_idx += 1
+            
+        index_map[curr_idx] = (label, "Đo lường Impact")
+        curr_idx += 1
+        
+        index_map[curr_idx] = (label, "Xem Báo Cáo")
+        curr_idx += 1
+
+    menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
+    index_map[curr_idx] = ("Độ tin cậy dữ liệu", None)
+    curr_idx += 1
+
+    menu_items.append(sac.MenuItem("Phụ lục"))
+    index_map[curr_idx] = ("Phụ lục", None)
+    curr_idx += 1
+
+    sel_index = sac.menu(
+        menu_items,
+        key='sac_main_menu',
+        return_index=True,
+        size='sm',
+        open_all=False,      # Đóng mặc định cho gọn gàng
+        variant='subtle',
+        color='indigo',
+    )
+    sel_dashboard, sel_nav = index_map.get(sel_index, (OVERVIEW_LABEL, None))
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
@@ -1379,7 +1453,6 @@ with st.sidebar:
 
     # Initialize scope variables
     sel_group   = None
-    sel_nav     = None
     df_filtered = None
     n_before    = 0
 
@@ -1406,15 +1479,6 @@ with st.sidebar:
         if sel_group is None:
             st.error(f"Không tìm thấy nhóm khảo sát: {sel_dashboard}")
             st.stop()
-
-        # Sub-navigation - updated
-        st.markdown('<span class="sb-section">Trụ cột trải nghiệm</span>', unsafe_allow_html=True)
-        SUB_NAV = ["Tổng quan Tổ chức"] + [f"{PILLAR_META[p]['name']}" for p in PILLAR_ORDER]
-        SUB_NAV.append("Đo lường Impact")
-        SUB_NAV.append("Xem Báo Cáo")
-        sel_nav = st.radio("SubNav", SUB_NAV, label_visibility="collapsed", key="sub_nav")
-
-        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
         # Filters
         st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)

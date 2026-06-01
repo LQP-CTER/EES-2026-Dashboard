@@ -65,7 +65,18 @@ def render(df, cfg, pillar_filter=None, **kwargs):
         "Total_High_Priority_Count": len(df_high_priority)
     }
     
-    prompt = "Bạn đang tư vấn cho một Giám đốc HR không chuyên về data analytics. Dựa trên danh sách các yếu tố 'Ưu tiên cao' (điểm thấp nhưng ảnh hưởng lớn đến sự gắn kết), hãy giải thích bằng ngôn ngữ thông thường: (1) Các yếu tố này thực tế nghĩa là gì — nhân viên đang gặp phải vấn đề gì trong ngày làm việc? (2) Nếu cải thiện những điểm này, điều gì sẽ thay đổi? (3) Bước đầu tiên cần làm ngay là gì — một hành động cụ thể có thể triển khai trong tháng tới?"
+    prompt = (
+        f"Bạn đang tư vấn cho Giám đốc HR. DỰA VÀO DỮ LIỆU THỰC TẾ SAU "
+        f"(TUYỆT ĐỐI KHÔNG bịa thêm):\n"
+        f"Các yếu tố 'Ưu tiên cao' (điểm thấp + ảnh hưởng lớn đến EI):\n"
+        f"{ai_data['High_Priority_Items']}\n"
+        f"Tổng số yếu tố ưu tiên cao: {ai_data['Total_High_Priority_Count']}\n\n"
+        f"Giải thích bằng ngôn ngữ thông thường: "
+        f"(1) Nhân viên đang gặp vấn đề gì thực tế? "
+        f"(2) Nếu cải thiện, điều gì thay đổi? Dẫn chứng bằng số tương quan. "
+        f"(3) Bước đầu tiên cần làm ngay trong tháng tới? "
+        f"CHỈ phân tích từ danh sách đã cho."
+    )
     render_ai_insight_card("AI Action Priorities", ai_data, prompt, custom_style="margin-bottom: 24px;")
 
     color_map = {'Ưu tiên cao': COLORS['red'], 'Duy trì': COLORS['green'],

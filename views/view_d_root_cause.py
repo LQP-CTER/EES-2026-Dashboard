@@ -127,12 +127,14 @@ def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
     }
     
     prompt = (
-        f"Bạn là Chuyên gia People Analytics cấp cao, đang phân tích EES cho nhóm {ai_data['Group']}. "
-        f"DỮ LIỆU CHÊNH LỆCH LỚN NHẤT (Muốn nghỉ vs Gắn bó): {top_3_gaps}. "
-        f"YÊU CẦU: "
-        f"1. Tại sao nhóm này lại có pattern chênh lệch này mà không phải nhóm khác? Hãy bám sát đặc thù công việc của họ. "
-        f"2. Nếu không can thiệp, điều gì sẽ xảy ra trong 3-6 tháng tới? "
-        f"3. Đề xuất 1 hành động CỤ THỂ, KHẢ THI trong 30 ngày để giải quyết câu hỏi có khoảng cách lớn nhất."
+        f"Bạn là Chuyên gia People Analytics. DỰA VÀO DỮ LIỆU THỰC TẾ SAU "
+        f"(TUYỆT ĐỐI KHÔNG bịa thêm chỉ số):\n"
+        f"Nhóm: {ai_data['Group']}. Trụ cột: {ai_data['Pillar_Filter']}.\n"
+        f"TOP 3 chênh lệch lớn nhất (Muốn nghỉ vs Gắn bó): {top_3_gaps}\n\n"
+        f"YÊU CẦU (CHỈ dùng dữ liệu đã cung cấp): "
+        f"1. Tại sao có pattern chênh lệch này? Bám sát đặc thù công việc. "
+        f"2. Nếu không can thiệp, điều gì xảy ra trong 3-6 tháng? "
+        f"3. Đề xuất 1 hành động CỤ THỂ trong 30 ngày cho câu có khoảng cách lớn nhất."
     )
     
     from utils.ai_generator import render_ai_insight_card
@@ -160,7 +162,13 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
         "Total_Sample": len(df_m),
         "Retention_Intent_Groups": df_m['intent_risk'].value_counts(dropna=True).to_dict()
     }
-    prompt = "Khái quát sơ bộ về việc khớp nối dữ liệu khảo sát EES ẩn danh với dữ liệu hệ thống nhân sự (HRIS). Phân tích tổng quan số lượng nhân sự thuộc các nhóm 'Ý định nghỉ' và 'Gắn bó'. Nhắc tới việc xem xét mối tương quan với thu nhập và tiền phạt."
+    prompt = (
+        f"DỰA VÀO DỮ LIỆU THỰC TẾ SAU (KHÔNG bịa thêm):\n"
+        f"- Tổng mẫu: {ai_data['Total_Sample']} nhân sự\n"
+        f"- Phân nhóm ý định: {ai_data['Retention_Intent_Groups']}\n\n"
+        f"Khái quát việc khớp dữ liệu EES với HRIS. "
+        f"Phân tích số lượng từng nhóm ý định. CHỈ dùng dữ liệu đã cho."
+    )
     render_ai_insight_card("AI Deep Dive Insight", ai_data, prompt, custom_style="margin-bottom: 32px;")
 
     st.markdown("<h4 style='color: #0A1F44; font-weight: 700;'>Bước 1: Phân nhóm ý định rời đi</h4>", unsafe_allow_html=True)
@@ -361,7 +369,16 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
             "Penalty_Gap": float(f"{phat_gap:.2f}") if has_phat else 0,
             "Productivity_Gap": float(f"{don_gap:.2f}") if has_don else 0
         }
-        prompt_comp = f"Nhóm có ý định nghỉ việc đang có sự chênh lệch rõ rệt so với nhóm gắn bó: Thu nhập thấp hơn {ai_data_comp['Income_Gap']} triệu, Mức phạt cao hơn {ai_data_comp['Penalty_Gap']} triệu, Năng suất làm việc khác biệt {ai_data_comp['Productivity_Gap']} đơn. Phân tích tác động tâm lý của những con số này lên động lực của nhân viên. Sự chênh lệch này là nguyên nhân hay kết quả của thái độ làm việc?"
+        prompt_comp = (
+            f"DỰA CHÍNH XÁC VÀO CÁC CON SỐ SAU (KHÔNG bịa thêm):\n"
+            f"Chênh lệch nhóm Muốn nghỉ vs Gắn bó:\n"
+            f"- Thu nhập: {ai_data_comp['Income_Gap']} triệu\n"
+            f"- Phạt: {ai_data_comp['Penalty_Gap']} triệu\n"
+            f"- Năng suất: {ai_data_comp['Productivity_Gap']} đơn\n\n"
+            f"Phân tích: (1) Tác động tâm lý của những con số này. "
+            f"(2) Sự chênh lệch này là nguyên nhân hay kết quả? "
+            f"CHỈ dùng 3 con số đã cho."
+        )
         render_ai_insight_card("AI Root Cause Analysis", ai_data_comp, prompt_comp, custom_style="margin-top: 16px; margin-bottom: 32px;")
         
         # ── JD-R Model Callout Box ──
@@ -624,7 +641,15 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
                         "Max_Risk_Percentage": round(max_risk_row['Risk'], 1),
                         "Sample_Size": int(max_risk_row['N'])
                     }
-                    prompt_hm = f"Dựa trên dữ liệu dự báo từ {ai_data_hm['Sample_Size']} nhân sự: Nhóm có thu nhập {ai_data_hm['Max_Risk_Income']} và chịu mức phạt {ai_data_hm['Max_Risk_Penalty']} đang có tỷ lệ muốn nghỉ việc cao nhất là {ai_data_hm['Max_Risk_Percentage']}%. Hãy đưa ra góc nhìn chiến lược dành cho Giám đốc nhân sự: (1) Tại sao sự kết hợp 2 yếu tố này lại tạo ra rủi ro cục bộ? (2) Cần hành động gì ngay lập tức?"
+                    prompt_hm = (
+                        f"DỰA VÀO DỮ LIỆU THỰC TẾ (N={ai_data_hm['Sample_Size']} nhân sự, KHÔNG bịa thêm):\n"
+                        f"Nhóm rủi ro cao nhất: Thu nhập {ai_data_hm['Max_Risk_Income']}, "
+                        f"Phạt {ai_data_hm['Max_Risk_Penalty']}, "
+                        f"Tỷ lệ muốn nghỉ = {ai_data_hm['Max_Risk_Percentage']}%.\n\n"
+                        f"Góc nhìn chiến lược cho Giám đốc NS: "
+                        f"(1) Tại sao kết hợp 2 yếu tố này tạo rủi ro cục bộ? "
+                        f"(2) Cần hành động gì ngay? CHỈ dùng dữ liệu đã cho."
+                    )
                     render_ai_insight_card("AI Predictive Insight", ai_data_hm, prompt_hm, badge="Predictive AI", custom_style="margin-top: 24px; margin-bottom: 24px;")
                 
                 else:

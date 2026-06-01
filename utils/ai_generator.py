@@ -86,11 +86,11 @@ def get_cache_key(data_json, context_prompt):
 # Danh sách model đã kiểm tra thực tế qua API Groq (2026-05-28)
 # Chỉ giữ các model đã PASS test - các model khác đã bị decommissioned
 GROQ_MODELS = [
-    "llama-3.3-70b-versatile",              # Mạnh nhất, ưu tiên 1
+    "qwen/qwen3-32b",                      # Qwen3 32B - mạnh nhất về phân tích & lập luận
+    "llama-3.3-70b-versatile",              # Llama 3.3 70B - mạnh, fallback
     "meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Scout - nhanh
-    "llama-3.1-8b-instant",                # Nhẹ, fallback nhanh
-    "qwen/qwen3-32b",                      # Qwen3 - trong active list
     "compound-beta",                       # Groq compound model
+    "llama-3.1-8b-instant",                # Nhẹ, fallback cuối
 ]
 
 def _build_insight_system_prompt(data_json, context_prompt, lang='VN'):
@@ -102,6 +102,12 @@ Dữ liệu JSON:
 
 Nhiệm vụ:
 {context_prompt}
+
+QUY TẮC BẮT BUỘC VỀ TÍNH CHÍNH XÁC CỦA DỮ LIỆU (ZERO-HALLUCINATION):
+A. CHỈ phân tích dựa trên các trường (field) và giá trị CÓ TRONG JSON bên trên. TUYỆT ĐỐI KHÔNG đề cập, trích dẫn, hoặc ám chỉ bất kỳ chỉ số, con số, metric, hoặc tỷ lệ phần trăm nào KHÔNG XUẤT HIỆN trong dữ liệu JSON được cung cấp.
+B. Mọi con số bạn viết trong bài phân tích PHẢI khớp chính xác với một giá trị trong JSON. Nếu JSON không có field "Long_Term_Intent" hoặc "rủi ro nghỉ việc dài hạn" thì KHÔNG ĐƯỢC nhắc đến nó.
+C. Nếu bạn không chắc chắn một chỉ số có trong JSON hay không, HÃY BỎ QUA chỉ số đó — đừng đoán hay bịa.
+D. KHÔNG tự tính toán, suy diễn, hoặc ngoại suy thêm bất kỳ con số nào ngoài những gì JSON cung cấp.
 
 YÊU CẦU ĐỊNH DẠNG VÀ TÔNG VĂN NGHIÊM NGẶT:
 1. Tông văn (Tone of voice): Khách quan, chuyên môn sâu, dựa trên dữ liệu (data-driven), chiến lược và đi thẳng vào vấn đề.
@@ -228,7 +234,7 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
         return output
 
     # Thử tất cả Groq keys × models
-    validator_models = ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.1-8b-instant", "qwen/qwen3-32b", "compound-beta"]
+    validator_models = ["qwen/qwen3-32b", "llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "compound-beta", "llama-3.1-8b-instant"]
     for client in get_groq_clients_all():
         for model in validator_models:
             try:
