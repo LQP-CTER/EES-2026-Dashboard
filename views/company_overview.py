@@ -386,12 +386,18 @@ def render(all_data, available_groups):
         all_text = " ".join(open_responses).lower()
         words = re.findall(r'\b[a-z_àáãạảăẵẳâầấậẫẩđèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ]{3,}\b', all_text)
         
-        # Define some key EVP buckets manually for GHN context
+        # Define some key EVP buckets manually for GHN context based on NLP Expert Report
         evp_buckets = {
-            'Lương thưởng & Phụ cấp': ['lương', 'thưởng', 'thu nhập', 'phụ cấp', 'xăng', 'tiền', 'đơn giá', 'truy thu'],
-            'Công việc & Môi trường': ['công việc', 'ổn định', 'môi trường', 'thoải mái', 'áp lực', 'bụi', 'thời gian'],
-            'Quản lý & Hỗ trợ': ['quản lý', 'sếp', 'hỗ trợ', 'tbc', 'tận tâm', 'giúp đỡ', 'hoà đồng'],
-            'Công nghệ & Quy trình': ['app', 'ứng dụng', 'lỗi', 'quy trình', 'chậm', 'thao tác', 'điện thoại']
+            'Phạt & Truy thu (INCOME_Penalty)': ['phạt', 'trừ', 'truy thu', 'đền', 'bắt đền', 'đơn giá', 'sai địa chỉ'],
+            'Minh bạch thu nhập (INCOME_Transparency)': ['minh bạch', 'cách tính', 'không rõ', 'chưa rõ', 'thắc mắc lương'],
+            'Lương & Phụ cấp cơ bản (INCOME_Base)': ['lương', 'thưởng', 'thu nhập', 'phụ cấp', 'xăng', 'tiền', 'chế độ'],
+            'Quá tải công việc (BURNOUT_Overload)': ['quá tải', 'mệt', 'nhiều việc', 'áp lực', 'báo cáo', 'đuối'],
+            'Thiếu ngày nghỉ (BURNOUT_NoRest)': ['ngày nghỉ', 'nghỉ phép', 'không được nghỉ', 'làm suốt', 'nghỉ ngơi', 'chủ nhật'],
+            'Hỗ trợ từ quản lý (MGR_Support)': ['quản lý', 'sếp', 'hỗ trợ', 'tận tâm', 'giúp đỡ', 'tbc', 'am', 'lãnh đạo'],
+            'Lộ trình phát triển (CAREER_Path)': ['thăng tiến', 'phát triển', 'lộ trình', 'tương lai', 'học hỏi', 'đào tạo'],
+            'Quy trình & Công cụ (OPS_Process)': ['quy trình', 'thủ tục', 'rườm rà', 'hệ thống', 'app', 'lỗi', 'pda', 'chậm', 'thao tác'],
+            'Đồng nghiệp & Môi trường (ENV_Team)': ['môi trường', 'đồng nghiệp', 'anh em', 'hòa đồng', 'vui vẻ', 'thân thiện', 'tập thể'],
+            'Tự chủ thời gian (POS_Flexibility)': ['chủ động', 'thời gian', 'tự do', 'không gò bó', 'thoải mái', 'linh hoạt']
         }
         
         evp_counts = {k: 0 for k in evp_buckets.keys()}
