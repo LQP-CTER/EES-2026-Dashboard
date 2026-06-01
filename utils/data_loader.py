@@ -363,7 +363,14 @@ def load_group(group_id: str):
             return hashlib.sha256(str(val).encode()).hexdigest()
 
     # Anonymize ID
-    id_col = df_clean.columns[1]
+    id_col = None
+    for c in df_clean.columns:
+        if str(c).strip().lower() in ['id nhân viên', 'employee id', 'id_nv', 'id']:
+            id_col = c
+            break
+    if id_col is None:
+        id_col = df_clean.columns[1]
+
     df_clean['_nv_hash'] = df_clean[id_col].apply(hash_id)
     df_clean = df_clean.drop(columns=[id_col])
 

@@ -36,6 +36,30 @@
 | TC4 | Q21-Q25 (5 câu) | Q21-Q25 (5 câu) | Q22-Q25 (4 câu) |
 | TC5 | Q26-Q29 (4 câu) | Q26-Q29 (4 câu) | Q26-Q29 (4 câu) |
 
+### Bản đồ Dashboard (Dashboard Map)
+
+Luồng phân tích của mỗi trụ cột trên ứng dụng được thiết kế thành 5-6 Tabs, dẫn dắt người đọc từ "Nhận diện vấn đề" đến "Đề xuất hành động cụ thể":
+
+1. **Tab 1: Chẩn đoán Nhanh (Quick Diagnosis)**
+   - *Mục đích:* Bức tranh toàn cảnh về "điểm nóng".
+   - *Nội dung:* Phát hiện câu hỏi kéo điểm trụ cột xuống thấp nhất, biểu đồ sụt giảm theo thâm niên (Tenure cliff), và AI Insight chẩn đoán tự động.
+2. **Tab 2: Chi tiết Từng câu (Question Detail & NLP)**
+   - *Mục đích:* Đánh giá phân bố và tìm kiếm nghịch lý.
+   - *Nội dung:* Phân bố phản hồi (1-5 sao) cho từng câu, phát hiện "Nghịch lý" (tương quan đối nghịch giữa các câu hỏi), kèm phân tích chủ đề (NLP) từ câu mở.
+3. **Tab 3: Nhóm Rủi ro (Risk Groups)**
+   - *Mục đích:* Khoanh vùng "điểm trũng" trong tổ chức.
+   - *Nội dung:* Đánh giá điểm theo Vùng vận hành (Region) và phân rã sâu xuống từng Khối/Phòng ban/Bưu cục.
+4. **Tab 4: Nguyên nhân & Hành động (Root Cause & Action)**
+   - *Mục đích:* Định hướng giải pháp nhân sự.
+   - *Nội dung:* Phân tích nguyên nhân gốc rễ (Root Cause) gắn với Ý định nghỉ việc, hiển thị Ma trận Ưu tiên Hành động (Action Priority Matrix).
+5. **Tab 5: Bất thường (Anomaly Detection)**
+   - *Mục đích:* Tự động phát hiện các rủi ro ngầm.
+   - *Nội dung:* Cảnh báo bất thường trong nội bộ trụ cột (Per-pillar) và liên trụ cột (Cross-pillar) kết hợp AI Deep Dive Insight.
+6. **Tab 6: Phân tích Nâng cao (Tùy trụ cột)**
+   - *TC3 (Công việc & Điều kiện):* Phân tích HRIS & Năng suất (Tương quan giữa điều kiện vận hành và năng suất giao/nhận).
+   - *TC4 (Thu nhập & Minh bạch):* Phân tích HRIS & Rủi ro (Tương quan mức thu nhập, khoản phạt với tỷ lệ muốn nghỉ).
+   - *TC5 (Môi trường & Gắn kết):* Rủi ro Gắn kết (Mô phỏng rủi ro nhân sự và chi phí thay thế tài chính).
+
 ---
 
 ## 2. FRAMEWORK PHÂN TÍCH: DETECT → DEEP DIVE → INSIGHT

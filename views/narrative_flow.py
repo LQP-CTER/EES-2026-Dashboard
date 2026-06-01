@@ -495,7 +495,7 @@ def _render_tenure_cliff_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter'),
     )
-    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_277")
+    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_tenure_cliff")
 
 
 def _render_gap_chart(df, metrics, c_id):
@@ -524,7 +524,7 @@ def _render_gap_chart(df, metrics, c_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_306")
+    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_gap_{c_id}")
 
 
 def _render_paradox_chart(df, metrics, c_id):
@@ -568,7 +568,7 @@ def _render_paradox_chart(df, metrics, c_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_342")
+    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_paradox_{c_id}")
 
 
 def _render_burnout_blind_chart(df, metrics):
@@ -590,7 +590,7 @@ def _render_burnout_blind_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_364")
+    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_burnout_blind")
 
 
 def _render_glass_ceiling_chart(df, metrics):
@@ -614,7 +614,7 @@ def _render_glass_ceiling_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch', key="narrative_flow_chart_388")
+    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_glass_ceiling")
 
 
 def _render_ai_deep_dive(contradiction, group_id):
