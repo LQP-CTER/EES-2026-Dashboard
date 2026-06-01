@@ -4,7 +4,8 @@ from shared.plotly_theme import apply_theme
 def render():
     apply_theme()
 
-    st.markdown(
+    import textwrap
+    st.markdown(textwrap.dedent(
         """
         <style>
         /* Base Typography Reset */
@@ -255,11 +256,12 @@ def render():
             margin: 0; 
         }
         </style>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
-    st.markdown(
+    import textwrap
+    st.markdown(textwrap.dedent(
         """
         <div class="ed-container">
             <!-- HERO SECTION -->
@@ -361,6 +363,6 @@ def render():
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
