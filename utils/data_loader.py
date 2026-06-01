@@ -416,9 +416,9 @@ def compute_kpis(df):
         
     def weighted_pct(condition_mask, valid_mask=None):
         if valid_mask is None: valid_mask = pd.Series(True, index=df.index)
-        v_mask = valid_mask & df.index.isin(condition_mask[condition_mask].index)
-        if not v_mask.any() or w[v_mask].sum() == 0: return 0
-        return (w[condition_mask & v_mask].sum() / w[v_mask].sum()) * 100
+        if not valid_mask.any() or w[valid_mask].sum() == 0: return 0
+        cond = condition_mask.reindex(df.index).fillna(False).astype(bool)
+        return (w[cond & valid_mask].sum() / w[valid_mask].sum()) * 100
 
     ei_mean = weighted_avg(df['EI']) if 'EI' in df.columns else 0
     enps_col = df.get('eNPS', pd.Series(dtype=float))
