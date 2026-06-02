@@ -25,8 +25,10 @@ def _role_mean(df, group_id, role):
     return qid, _qmean(df, qid)
 
 def _pillar_pct(df, pillar_id):
-    col = f'{pillar_id}_pct'
+    col = f'{pillar_id}_score'
     if col in df.columns: return df[col].mean()
+    col_pct = f'{pillar_id}_pct'
+    if col_pct in df.columns: return df[col_pct].mean()
     return None
 
 def get_unit_hris(df_survey_unit: pd.DataFrame,

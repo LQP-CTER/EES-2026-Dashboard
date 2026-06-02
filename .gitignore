@@ -18,3 +18,5 @@ Data_Clean/
 .streamlit/secrets.toml
 .env
 config/active_sessions.json
+
+img/EES2026/

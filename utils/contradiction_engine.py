@@ -14,6 +14,18 @@ import pandas as pd
 import numpy as np
 from shared.codebook import PILLAR_META, PILLAR_ORDER, get_pillar_questions, get_question_label
 
+_Q_TO_C = {f'Q{i+8}': f'C{i}' for i in range(1, 22)}
+_Q_TO_C.update({'Q30': 'C22', 'Q31': 'C23', 'Q32': 'C24', 'Q33': 'C25', 'Q34': 'C26'})
+
+
+def _resolve_col(df, q_name):
+    if q_name in df.columns:
+        return df[q_name]
+    c_name = _Q_TO_C.get(q_name)
+    if c_name and c_name in df.columns:
+        return df[c_name]
+    return None
+
 
 def detect_contradictions(df, group_id, cfg):
     """
@@ -38,10 +50,11 @@ def detect_contradictions(df, group_id, cfg):
     enps = df['eNPS'].mean() if 'eNPS' in df.columns else None
     intent_low = (df['intent'] <= 2).mean() * 100 if 'intent' in df.columns else None
     mei = df['MEI'].mean() if 'MEI' in df.columns else None
-    burnout = (df['burnout_risk'] > 0).mean() * 100 if 'burnout_risk' in df.columns else None
+    burnout = (df['burnout_proxy'] > 0).mean() * 100 if 'burnout_proxy' in df.columns else None
 
     def _qmean(q):
-        return df[q].mean() if q in df.columns else None
+        col = _resolve_col(df, q)
+        return col.mean() if col is not None else None
 
     # ── CROSS-PILLAR CONTRADICTIONS ──
 
@@ -251,11 +264,12 @@ def detect_contradictions(df, group_id, cfg):
 
     # 9. Glass Ceiling (TC3): Nhân viên cũ không thấy thăng tiến
     q19 = _qmean('Q19')
-    if q19 and 'Q5' in df.columns:
+    q19_col = _resolve_col(df, 'Q19')
+    if q19 and 'Q5' in df.columns and q19_col is not None:
         senior_mask = df['Q5'].isin(['Trên 2 đến 3 năm', 'Trên 3 đến 5 năm', 'Trên 5 năm'])
         junior_mask = df['Q5'].isin(['Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng'])
-        senior_q19 = df.loc[senior_mask, 'Q19'].mean() if senior_mask.any() else None
-        junior_q19 = df.loc[junior_mask, 'Q19'].mean() if junior_mask.any() else None
+        senior_q19 = df.loc[senior_mask, q19_col.name].mean() if senior_mask.any() else None
+        junior_q19 = df.loc[junior_mask, q19_col.name].mean() if junior_mask.any() else None
         if senior_q19 and junior_q19 and senior_q19 < 3.2 and (junior_q19 - senior_q19) > 0.3:
             contradictions.append({
                 'id': 'GLASS_CEILING',

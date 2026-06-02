@@ -307,6 +307,7 @@ def compute_all_indices(df: pd.DataFrame, group_id: str,
     # 1. Pillar Scores
     for p in pillars:
         df[f'{p}_score'] = compute_pillar_score(df, group_id, p)
+        df[f'{p}_pct'] = df[f'{p}_score']
 
     # 2. Engagement Index
     available = [p for p in pillars if f'{p}_score' in df.columns]
@@ -781,7 +782,7 @@ def compute_kpis(df):
     intent_pct = weighted_pct(intent_col <= 2, intent_valid)
     intent_pct_high = weighted_pct(intent_col >= 4, intent_valid)
     
-    burnout_pct = weighted_pct(df.get('burnout_risk', pd.Series(0, index=df.index)) > 0)
+    burnout_pct = weighted_pct(df.get('burnout_proxy', pd.Series(0, index=df.index)) > 0)
 
     q22_col = df.get('stay_intention', pd.Series(np.nan, index=df.index))
     if isinstance(q22_col, pd.DataFrame): q22_col = q22_col.iloc[:, 0]
@@ -808,22 +809,23 @@ def compute_kpis(df):
     contradiction_pct = round(weighted_pct(df.get('contradiction_flag', pd.Series(False, index=df.index))), 1)
 
     return {
-        'n': n, 'ei_mean': round(ei_mean, 1),
-        'enps_score': round(enps_score, 0),
+        'n': int(n), 
+        'ei_mean': float(round(ei_mean, 1)),
+        'enps_score': float(round(enps_score, 0)),
         'promoters': int(promoters), 'passives': int(passives), 'detractors': int(detractors),
-        'mei_avg': round(mei_avg, 1),
-        'intent_pct_low': round(intent_pct, 1),
-        'intent_pct_high': round(intent_pct_high, 1),
-        'burnout_pct': round(burnout_pct, 1),
-        'stay_score_avg': stay_score_avg,
-        'stay_flight_pct': stay_flight_pct,
-        'stay_atrisk_pct': stay_atrisk_pct,
-        'stay_stable_pct': stay_stable_pct,
-        'silence_rate': silence_rate,
-        'jsi_avg': jsi_avg,
-        'ews_red_pct': ews_red_pct,
-        'quadrant': quad_counts,
-        'contradiction_pct': contradiction_pct,
+        'mei_avg': float(round(mei_avg, 1)),
+        'intent_pct_low': float(round(intent_pct, 1)),
+        'intent_pct_high': float(round(intent_pct_high, 1)),
+        'burnout_pct': float(round(burnout_pct, 1)),
+        'stay_score_avg': float(stay_score_avg) if stay_score_avg else 0,
+        'stay_flight_pct': float(stay_flight_pct) if stay_flight_pct else 0,
+        'stay_atrisk_pct': float(stay_atrisk_pct) if stay_atrisk_pct else 0,
+        'stay_stable_pct': float(stay_stable_pct) if stay_stable_pct else 0,
+        'silence_rate': float(silence_rate) if silence_rate else 0,
+        'jsi_avg': float(jsi_avg) if jsi_avg else 0,
+        'ews_red_pct': float(ews_red_pct) if ews_red_pct else 0,
+        'quadrant': {k: float(v) for k, v in quad_counts.items()},
+        'contradiction_pct': float(contradiction_pct) if contradiction_pct else 0,
     }
 
 
