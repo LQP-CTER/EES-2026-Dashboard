@@ -58,14 +58,14 @@ st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", la
 # Đồng thời biến Spinner mặc định thành Loading Overlay toàn màn hình cực đẹp
 st.markdown("""
 <style>
-    /* Xóa hiệu ứng mờ nhòe kẹt trang cũ */
+    /* Tắt hiệu ứng mờ nhòe trang cũ, giữ nguyên trang cũ cho đến khi load xong trang mới */
     [data-stale="true"], 
     [data-testid="stale-element-container"], 
     .stale-element, 
     .stale {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
+        opacity: 1 !important;
+        filter: none !important;
+        transition: none !important;
     }
 
     /* Biến Spinner thành Loading Overlay siêu mượt */
