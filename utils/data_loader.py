@@ -679,6 +679,14 @@ def load_group(group_id: str):
 
     df = compute_all_indices(df, group_id)
     
+    # Backward compatibility for legacy UI variables
+    if 'C23' in df.columns:
+        df['eNPS'] = df['C23']
+    if 'C22' in df.columns:
+        df['intent'] = df['C22']
+    if 'C14' in df.columns:
+        df['stay_intention'] = df['C14']
+    
     df.attrs['group_id'] = group_id
     df.attrs['open_cols'] = ['C24', 'C25', 'C26']
     df.attrs['codebook'] = codebook
