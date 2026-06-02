@@ -536,7 +536,55 @@ def render():
             </div>
         """
 
+    shorts_css = """
+    <style>
+    body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; }
+    .ed-container { max-width: 1200px; margin: 0 auto; padding: 0; }
+    .shorts-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 8px;
+    }
+    @media (max-width: 900px) { .shorts-row { grid-template-columns: repeat(2, 1fr); } }
+    .short-card {
+        position: relative;
+        aspect-ratio: 9 / 16;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #0F172A;
+        box-shadow: 0 6px 18px rgba(10,31,68,0.15);
+        cursor: pointer;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    .short-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 32px rgba(10,31,68,0.25);
+    }
+    .short-card-active { outline: 3px solid #FF5200; outline-offset: 2px; }
+    .short-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .short-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.65) 100%);
+        display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+        padding: 14px 10px; pointer-events: none;
+    }
+    .short-play {
+        width: 44px; height: 44px; border-radius: 50%;
+        background: rgba(255,255,255,0.92); color: #0A1F44; font-size: 16px;
+        display: flex; align-items: center; justify-content: center; padding-left: 3px;
+        margin-top: auto; opacity: 0.9; transition: all 0.3s ease;
+    }
+    .short-card:hover .short-play { background: #FF5200; color: #fff; transform: scale(1.1); }
+    .short-label {
+        font-size: 0.78rem; font-weight: 700; color: #fff; text-align: center;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    }
+    </style>
+    """
+
     shorts_html = f"""
+    {shorts_css}
     <div class="ed-container">
         <div class="shorts-row">
             {cards_html}
@@ -569,7 +617,8 @@ def render():
     }});
     </script>
     """
-    st.markdown(shorts_html, unsafe_allow_html=True)
+    import streamlit.components.v1 as components
+    components.html(shorts_html, height=520, scrolling=False)
 
     # 4. GALLERY & REMAINDER OF PAGE
     st.markdown(f"""
