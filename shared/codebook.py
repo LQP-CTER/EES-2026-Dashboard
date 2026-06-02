@@ -973,21 +973,18 @@ def get_codebook(group_id):
     return _CODEBOOK_REGISTRY.get(group_id, CODEBOOK_1A)
 
 
-def get_pillar_questions(group_id, pillar_id):
-    """Return list of question codes (Q9, Q10, ...) belonging to a pillar."""
-    cb = get_codebook(group_id)
-    return [q for q, meta in cb.items() if meta.get('trụ_cột') == pillar_id]
-
-
-def get_all_likert_questions(group_id):
-    """Return all likert question codes (Q9-Q29)."""
-    cb = get_codebook(group_id)
-    return [q for q, meta in cb.items() if meta.get('loại') == 'likert']
-
-
 def get_question_label(group_id, question_id):
-    """Return short label for a question."""
+    """Return short label for a question. Supports both Q and V3 (C, D) notations."""
     cb = get_codebook(group_id)
-    if question_id in cb:
-        return cb[question_id].get('tên', question_id)
+    lookup_id = question_id
+    if isinstance(question_id, str):
+        if question_id.startswith('C') and question_id[1:].isdigit():
+            idx = int(question_id[1:])
+            lookup_id = f'Q{idx+8}'
+        elif question_id.startswith('D') and question_id[1:].isdigit():
+            idx = int(question_id[1:])
+            lookup_id = f'Q{idx}'
+            
+    if lookup_id in cb:
+        return cb[lookup_id].get('tên', question_id)
     return question_id
