@@ -30,6 +30,302 @@ ENPS_CODE_MAP = {
 # 2. TRỌNG SỐ TRỤ CỘT
 # ============================================================
 
+# ============================================================
+# SECTION 1A: SYSTEM CONSTANTS
+# ============================================================
+
+# Thứ tự thâm niên (ordinal encoding)
+TENURE_LABELS = [
+    'Dưới 1 tháng',        # 0
+    'Trên 1 đến 3 tháng',  # 1
+    'Trên 3 đến 6 tháng',  # 2
+    'Trên 6 đến 9 tháng',  # 3
+    'Trên 9 đến 12 tháng', # 4
+    'Trên 1 đến 2 năm',    # 5
+    'Trên 2 đến 3 năm',    # 6
+    'Trên 3 đến 5 năm',    # 7
+    'Trên 5 năm',           # 8
+]
+
+# Map cả string lẫn số (survey platform có thể export khác nhau)
+TENURE_MAP = {label: i for i, label in enumerate(TENURE_LABELS)}
+TENURE_MAP.update({i + 1: i for i in range(len(TENURE_LABELS))})  # fallback số 1-9
+
+# Thâm niên ngưỡng "nhân viên mới" cho EWS — khác nhau theo nhóm
+# FIX #5: định nghĩa 1 lần, dùng mọi nơi — không hardcode trong từng hàm
+EWS_TENURE_THRESHOLD = {
+    '1A': 2,   # ≤ index 2 = ≤ 6 tháng (frontline turnover nhanh hơn)
+    '1B': 2,
+    '2A': 2,
+    '2B': 3,   # ≤ index 3 = ≤ 9 tháng (QL cần thêm thời gian để thích nghi)
+    '3A': 3,
+    '3B': 3,
+}
+
+# Nhóm thâm niên "senior" để phân tích trần thủy tinh
+SENIOR_TENURE_THRESHOLD = 6  # ≥ index 6 = ≥ 2 năm
+
+# eNPS categories (chuẩn NPS quốc tế)
+ENPS_BINS    = [-1, 6, 8, 10]
+ENPS_LABELS  = ['Detractor', 'Passive', 'Promoter']
+ENPS_PROMOTER_MIN  = 9
+ENPS_DETRACTOR_MAX = 6
+
+# Minimum n cho anonymity
+MIN_UNIT_N = 5
+
+# Anomaly relative threshold (1.5 std = ~87th/13th percentile)
+ANOMALY_STD_MULTIPLIER = 1.5
+
+# Trọng số mặc định (Gallup-based prior — SẼ được overwrite sau calibration)
+DEFAULT_WEIGHTS = {
+    'TC1': 0.15, 'TC2': 0.25, 'TC3': 0.20, 'TC4': 0.20, 'TC5': 0.20,
+}
+CALIBRATED_WEIGHTS = {}  # Populated bởi calibrate_weights()
+
+
+# ============================================================
+# SECTION 1B: DEMOGRAPHIC MAP
+# ============================================================
+
+DEMO_MAP = {
+    '1A': {'D1': 'gen_raw', 'D2': 'gender', 'D3': 'marital',
+            'D4': 'edu', 'D5': 'tenure_raw', 'D6': 'prev_company'},
+    '1B': {'D1': 'gen_raw', 'D2': 'gender', 'D3': 'marital',
+            'D4': 'edu', 'D5': 'tenure_raw', 'D6': 'prev_company'},
+    '2A': {'D1': 'gen_raw', 'D2': 'gender', 'D3': 'marital', 'D4': 'edu',
+            'D5': 'tenure_raw', 'D6': 'prev_company', 'D7': 'dept',
+            'D8': 'sub_dept', 'D9': 'grade'},
+    '2B': {'D1': 'gen_raw', 'D2': 'gender', 'D3': 'marital', 'D4': 'edu',
+            'D5': 'tenure_raw', 'D6': 'prev_company', 'D7': 'dept',
+            'D8': 'sub_dept', 'D9': 'grade'},
+    '3A': {'D1': 'gen_raw', 'D2': 'gender', 'D3': 'marital', 'D4': 'edu',
+            'D5': 'tenure_raw', 'D6': 'prev_company', 'D7': 'dept',
+            'D8': 'sub_dept', 'D9': 'grade'},
+    '3B': {'D1': 'gen_raw', 'D2': 'gender', 'D3': 'marital', 'D4': 'edu',
+            'D5': 'tenure_raw', 'D6': 'prev_company', 'D7': 'dept',
+            'D9': 'grade'},
+}
+
+
+# ============================================================
+# SECTION 1C: QUESTION MAP — NGUỒN CHÂN LÝ DUY NHẤT
+# FIX #4: Thêm comms_item alias tường minh — không dùng TC1[-1] nữa
+# ============================================================
+
+QUESTION_MAP = {
+    # ----------------------------------------------------------
+    # 1A: NV Giao nhận / Shipper
+    # ----------------------------------------------------------
+    '1A': {
+        'TC1': ['C1', 'C2'],
+        'TC2': ['C3', 'C4', 'C5', 'C6', 'C7'],
+        'TC3': ['C8', 'C9', 'C10', 'C11', 'C12'],
+        'TC4': ['C13', 'C14', 'C15', 'C16', 'C17'],
+        'TC5': ['C18', 'C19', 'C20', 'C21'],
+        'attrition': 'C22', 'eNPS': 'C23', 'open': ['C24', 'C25', 'C26'],
+        # Sub-item aliases
+        'trust_item':   'C1',   # Tin GHN đi đúng hướng
+        'comms_item':   'C2',   # Thông báo thay đổi kịp thời ← FIX #4
+        'fairness':     'C4',   # Phân đơn công bằng
+        'feedback':     'C7',   # AM phản hồi phát triển
+        'tool':         'C8',   # App Driver hoạt động ổn định
+        'workload':     'C10',  # Cường độ làm việc có thể duy trì
+        'career':       'C11',  # Lộ trình thăng tiến lên Leader/TBC/AM
+        'income_fair':  'C13',  # Thu nhập phản ánh công sức
+        'transparency': 'C14',  # App hiển thị rõ phạt / thu nhập tạm tính
+        'incident_pay': 'C17',  # Hỗ trợ sự cố ảnh hưởng thu nhập
+        'safety':       'C18',  # An toàn giao thông + GHN quan tâm
+        'peer':         'C19',  # Đồng nghiệp hỗ trợ
+        'pride':        'C20',  # Tự hào là shipper GHN
+        'pressure':     'C21',  # Áp lực không ảnh hưởng cuộc sống
+        'respect':      None,   # 1A không có câu tôn trọng tường minh
+        'psych_safety': None,
+        'autonomy':     None,
+        'belonging':    'C20',  # dùng pride làm proxy belonging cho JSI
+    },
+    # ----------------------------------------------------------
+    # 1B: Tài xế Vận tải
+    # ----------------------------------------------------------
+    '1B': {
+        'TC1': ['C1', 'C2'],
+        'TC2': ['C3', 'C4', 'C5', 'C6', 'C7'],
+        'TC3': ['C8', 'C9', 'C10', 'C11', 'C12'],
+        'TC4': ['C13', 'C14', 'C15', 'C16', 'C17'],
+        'TC5': ['C18', 'C19', 'C20', 'C21'],
+        'attrition': 'C22', 'eNPS': 'C23', 'open': ['C24', 'C25', 'C26'],
+        'trust_item':   'C1',
+        'comms_item':   'C2',   # Thông báo chính sách/lịch trình kịp thời
+        'fairness':     'C4',   # Lịch chạy phân bổ công bằng
+        'feedback':     'C7',   # ĐPV hỗ trợ khi sự cố
+        'tool':         'C8',   # Xe/phương tiện an toàn
+        'workload':     'C9',   # Lịch chạy hợp lý, đủ thời gian nghỉ
+        'safety':       'C10',  # GHN đảm bảo làm việc an toàn trên đường
+        'career':       'C11',  # Lộ trình lên điều phối/giám sát
+        'income_fair':  'C13',  # Thu nhập phản ánh quãng đường/công sức
+        'transparency': 'C14',  # Hiểu rõ phụ cấp đường dài, ca đêm
+        'incident_pay': 'C17',  # Hỗ trợ tai nạn/hư xe/mất hàng
+        'peer':         'C18',  # Đội vận tải hỗ trợ nhau
+        'pride':        'C19',  # Tự hào là tài xế GHN
+        'pressure':     'C20',  # Áp lực không ảnh hưởng cuộc sống
+        'respect':      'C21',  # Được tôn trọng như người lao động có giá trị
+        'psych_safety': None,
+        'autonomy':     None,
+        'belonging':    'C19',
+    },
+    # ----------------------------------------------------------
+    # 2A: NV Vận hành Kho
+    # ----------------------------------------------------------
+    '2A': {
+        'TC1': ['C1', 'C2'],
+        'TC2': ['C3', 'C4', 'C5', 'C6'],
+        'TC3': ['C7', 'C8', 'C9', 'C10', 'C11'],
+        'TC4': ['C12', 'C13', 'C14', 'C15', 'C16'],
+        'TC5': ['C17', 'C18', 'C19', 'C20', 'C21'],
+        'attrition': 'C22', 'eNPS': 'C23', 'open': ['C24', 'C25', 'C26'],
+        'trust_item':    'C1',
+        'comms_item':    'C2',  # Thay đổi quan trọng được thông báo rõ
+        'fairness':      'C3',  # Phân ca/khu vực công bằng (TC2 item đầu)
+        'feedback':      'C4',  # QL lắng nghe và phản hồi bằng hành động
+        'tool':          'C7',  # Thiết bị PDA/xe đẩy/băng tải hoạt động tốt
+        'workload':      'C9',  # Khối lượng hàng không quá sức
+        'career':        'C10', # Biết mình có thể thăng tiến lên Trưởng nhóm
+        'income_fair':   'C12', # Thu nhập phản ánh sức lao động và thời gian
+        'transparency':  'C13', # Phân ca có tiêu chí rõ ràng
+        'ot_fair':       'C14', # Cơ hội tăng ca công bằng
+        'incident_pay':  'C15', # Biết quy trình hỗ trợ khi ốm/tai nạn
+        'recognition':   'C16', # Nỗ lực được công nhận xứng đáng
+        'safety_phys':   'C17', # Điều kiện vật lý kho (nhiệt độ, bụi, ánh sáng)
+        'safety_labor':  'C18', # ATLĐ được tuân thủ nghiêm ngặt
+        'peer':          'C19', # Đồng nghiệp hỗ trợ
+        'pressure':      'C20', # Áp lực không ảnh hưởng cuộc sống
+        'respect':       'C21', # Được tôn trọng như người lao động có giá trị
+        'pride':         None,  # 2A không có câu tự hào tường minh
+        'psych_safety':  None,
+        'autonomy':      None,
+        'belonging':     'C21', # dùng respect làm proxy
+    },
+    # ----------------------------------------------------------
+    # 2B: Quản lý Tuyến đầu (AM, OM, Supervisor, TBC, Team Leader)
+    # ----------------------------------------------------------
+    '2B': {
+        'TC1': ['C1', 'C2', 'C3', 'C4', 'C5'],
+        'TC2': ['C6', 'C7', 'C8', 'C9'],
+        'TC3': ['C10', 'C11', 'C12', 'C13', 'C14'],
+        'TC4': ['C15', 'C16', 'C17'],
+        'TC5': ['C18', 'C19', 'C20', 'C21'],
+        'attrition': 'C22', 'eNPS': 'C23', 'open': ['C24', 'C25', 'C26'],
+        'trust_item':   'C2',  # Tin BLĐ đưa ra quyết định đúng
+        # FIX #4: 2B có 5 TC1 items, comms là C4 (không phải C5 cuối)
+        'comms_item':   'C4',  # Thông tin từ cấp trên rõ ràng và đúng thời điểm
+        'ho_support':   'C3',  # HO (HR, Tech, Finance) hỗ trợ kịp thời
+        'integrity':    'C5',  # BLĐ làm đúng những gì họ nói
+        'autonomy':     'C7',  # Đủ quyền hạn tự ra quyết định
+        'psych_safety': 'C8',  # Tâm lý an toàn khi nói thẳng ý kiến
+        'dev_support':  'C9',  # Cấp trên đầu tư phát triển năng lực QL
+        'tool':         'C10', # Đủ hệ thống/công cụ/dữ liệu quản lý
+        'kpi_fair':     'C11', # KPI khả thi, không phải hy sinh chất lượng
+        'workload':     'C12', # Workload áp lực có thể duy trì lâu dài
+        'career':       'C13', # Thấy rõ lộ trình thăng tiến trong GHN
+        'ho_process':   'C14', # Quy trình HO hỗ trợ, không làm chậm trễ
+        'income_fair':  'C15', # Đãi ngộ phản ánh đóng góp và trách nhiệm
+        'transparency': 'C17', # Đánh giá hiệu suất minh bạch và nhất quán
+        'peer':         'C18', # Quản lý cùng cấp phối hợp không đổ lỗi
+        'pride':        'C19', # Tự hào là QL tuyến đầu tại GHN
+        'pressure':     'C20', # Áp lực không ảnh hưởng cuộc sống
+        'respect':      'C21', # Được tôn trọng bởi cấp trên và đội
+        'belonging':    'C19',
+    },
+    # ----------------------------------------------------------
+    # 3A: NV Văn phòng / Hỗ trợ HO
+    # ----------------------------------------------------------
+    '3A': {
+        'TC1': ['C1', 'C2', 'C3', 'C4', 'C5'],
+        'TC2': ['C6', 'C7', 'C8', 'C9'],
+        'TC3': ['C10', 'C11', 'C12', 'C13', 'C14'],
+        'TC4': ['C15', 'C16', 'C17'],
+        'TC5': ['C18', 'C19', 'C20', 'C21'],
+        'attrition': 'C22', 'eNPS': 'C23', 'open': ['C24', 'C25', 'C26'],
+        'trust_item':   'C2',  # Tin BLĐ quyết định đúng đắn
+        # FIX #4: 3A có 5 TC1 items, comms gần nhất là C3 (SMT giải thích lý do)
+        'comms_item':   'C3',  # SMT giải thích rõ lý do quyết định lớn
+        'integrity':    'C4',  # BLĐ làm đúng những gì họ nói
+        'care':         'C5',  # BLĐ quan tâm thực sự đến phúc lợi NV
+        'mgr_dev':      'C6',  # QL quan tâm phát triển career
+        'autonomy':     'C7',  # Được trao quyền và tin tưởng
+        'feedback':     'C8',  # Nhận phản hồi thường xuyên từ QL
+        'psych_safety': 'C9',  # Thoải mái chia sẻ ý kiến khác biệt
+        'tool':         'C10', # Đủ công cụ/hệ thống/thông tin
+        'process':      'C11', # Quy trình nội bộ không gây chậm trễ
+        'collab':       'C12', # Phối hợp liên phòng ban hiệu quả
+        'career':       'C13', # GHN tạo điều kiện phát triển năng lực
+        'workload':     'C14', # Khối lượng công việc phân bổ hợp lý
+        'income_fair':  'C15', # Đãi ngộ phản ánh đóng góp thực sự
+        'transparency': 'C17', # Chính sách lương thưởng rõ ràng nhất quán
+        'peer':         'C18', # Văn hóa hợp tác, không cạnh tranh nội bộ
+        'pressure':     'C19', # Áp lực kiểm soát được, không ảnh hưởng sức khỏe
+        'pride':        'C20', # Tự hào về GHN và vai trò của mình
+        'belonging':    'C21', # Cảm thấy thuộc về GHN
+        'respect':      None,  # 3A không có câu tôn trọng riêng
+    },
+    # ----------------------------------------------------------
+    # 3B: Manager / Senior Manager / Director HO
+    # ----------------------------------------------------------
+    '3B': {
+        'TC1': ['C1', 'C2', 'C3', 'C4'],
+        'TC2': ['C5', 'C6', 'C7', 'C8'],
+        'TC3': ['C9', 'C10', 'C11', 'C12', 'C13'],
+        'TC4': ['C14', 'C15', 'C16', 'C17'],
+        'TC5': ['C18', 'C19', 'C20', 'C21'],
+        'attrition': 'C22', 'eNPS': 'C23', 'open': ['C24', 'C25', 'C26'],
+        'trust_item':   'C1',  # Thấy rõ tầm nhìn chiến lược dài hạn
+        # FIX #4: 3B có 4 TC1 items; không có "thông báo kịp thời" — C2 gần nhất là data-driven
+        'comms_item':   None,  # 3B TC1 không có item truyền thông tường minh
+        'data_driven':  'C2',  # Quyết định dựa trên dữ liệu và lý do rõ
+        'integrity':    'C3',  # BLĐ hành xử nhất quán giữa lời nói và hành động
+        'autonomy':     'C4',  # Được trao đủ quyền hạn điều hành
+        'priorities':   'C5',  # Biết rõ ưu tiên tổ chức kỳ vọng ở mình
+        'feedback_up':  'C6',  # Có cơ chế nhận feedback trung thực từ NV
+        'ld_dev':       'C7',  # GHN đầu tư phát triển năng lực lãnh đạo
+        'psych_safety': 'C8',  # Chia sẻ bất đồng với đồng cấp/cấp trên an toàn
+        'tool':         'C9',  # Đủ công cụ data ra quyết định
+        'org_design':   'C10', # Cơ cấu tổ chức ít rào cản hành chính
+        'frontline_fb': 'C11', # Nhận được feedback trung thực từ tuyến đầu
+        'innovation':   'C12', # GHN tạo không gian thử nghiệm và chấp nhận thất bại
+        'succession':   'C13', # Hệ thống kế thừa lãnh đạo rõ ràng
+        'income_fair':  'C14', # Đãi ngộ tương xứng trách nhiệm
+        'resource_fair':'C15', # Nguồn lực phân bổ công bằng theo giá trị chiến lược
+        'transparency': 'C16', # Đánh giá lương/thưởng lãnh đạo minh bạch
+        'recognition':  'C17', # Đóng góp được công nhận xứng đáng và kịp thời
+        # FIX #10: workload của 3B nằm ở TC5 (C18), không phải TC3
+        # JSI sẽ dùng đúng C18 — nhưng cần note cross-pillar nature
+        'workload':     'C18', # Áp lực có thể duy trì hiệu quả lâu dài (TC5!)
+        'talent_culture':'C19',# Văn hóa giữ chân người tài
+        'pride':        'C20', # Tự hào là lãnh đạo GHN
+        'peer_collab':  'C21', # Đồng cấp phối hợp thực chất
+        'pressure':     'C18', # alias pressure = workload cho 3B (cùng câu)
+        'respect':      None,
+        'belonging':    'C20',
+    },
+}
+
+
+def get_pillar_questions(group_id: str, pillar: str) -> list:
+    """Truy xuất danh sách câu hỏi cho pillar + group. Entry point duy nhất."""
+    if group_id not in QUESTION_MAP:
+        raise ValueError(f"Group '{group_id}' không hợp lệ. Hợp lệ: {list(QUESTION_MAP.keys())}")
+    if pillar not in QUESTION_MAP[group_id]:
+        raise ValueError(f"Pillar '{pillar}' không tồn tại cho group '{group_id}'")
+    val = QUESTION_MAP[group_id][pillar]
+    return val if isinstance(val, list) else ([val] if val else [])
+
+
+def get_item(group_id: str, alias: str):
+    """Truy xuất column name cho sub-item alias. Trả về None nếu không có."""
+    return QUESTION_MAP.get(group_id, {}).get(alias)
+
+
+
 PILLAR_WEIGHTS = {
     'TC1': 0.15,  # Niềm tin & Định hướng
     'TC2': 0.25,  # Quản lý Trực tiếp
