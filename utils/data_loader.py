@@ -648,6 +648,13 @@ def load_group(group_id: str):
         if idx < len(df_raw.columns):
             col_rename[df_raw.columns[idx]] = q_id
     df = df_raw.rename(columns=col_rename).copy()
+    
+    # Hash ID nhân viên để join với HRIS (bảo mật)
+    from shared.security import hash_id
+    if 'ID nhân viên' in df.columns:
+        df['_nv_hash'] = df['ID nhân viên'].apply(hash_id)
+    elif 'ID' in df.columns:
+        df['_nv_hash'] = df['ID'].apply(hash_id)
 
     q_to_v3 = {}
     for i in range(1, 10): q_to_v3[f'Q{i}'] = f'D{i}'
