@@ -386,6 +386,10 @@ def render():
         cursor: pointer;
         transition: transform 0.35s ease, box-shadow 0.35s ease;
     }
+    .short-card-active {
+        outline: 3px solid #FF5200;
+        outline-offset: 2px;
+    }
     .short-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 14px 32px rgba(10,31,68,0.25);
@@ -471,16 +475,6 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. MAIN VIDEO SECTION
-    st.markdown("""
-    <div class="ed-container">
-        <div class="ed-section-header" style="margin-top: 0; margin-bottom: 20px;">
-            <h2 class="ed-section-title">EES 2026 — Highlight Reel</h2>
-            <span class="ed-section-tag">Main Video</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
     main_video_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780389451/LOGO%20GHN/Action_video_dgq3f7.mp4"
 
     # 2. HERO VIDEO SECTION (màn hình lớn với autoplay + overlay)
@@ -491,7 +485,7 @@ def render():
             <span class="ed-section-tag">Main Video</span>
         </div>
         <div class="hero-video-wrapper">
-            <video class="hero-video" autoplay muted loop playsinline poster="">
+            <video id="hero-video" class="hero-video" autoplay muted loop playsinline poster="">
                 <source src="{main_video_url}" type="video/mp4">
                 Trình duyệt không hỗ trợ video.
             </video>
@@ -499,7 +493,7 @@ def render():
                 <div class="hero-play-icon">▶</div>
                 <div class="hero-video-caption">
                     <span class="hero-video-kicker">EES 2026</span>
-                    <span class="hero-video-title">Hành trình gắn kết toàn GHN</span>
+                    <span class="hero-video-title" id="hero-caption-title">Hành trình gắn kết toàn GHN</span>
                 </div>
             </div>
         </div>
@@ -521,45 +515,31 @@ def render():
     v3_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393954/LOGO%20GHN/IMG_1232_ykz6pz.mp4"
     v4_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393907/LOGO%20GHN/IMG_1723_gdh1gs.mp4"
 
+    shorts_data = [
+        (v1_url, "Khoảnh khắc 1"),
+        (v2_url, "Khoảnh khắc 2"),
+        (v3_url, "Khoảnh khắc 3"),
+        (v4_url, "Khoảnh khắc 4"),
+    ]
+
+    cards_html = ""
+    for url, label in shorts_data:
+        cards_html += f"""
+            <div class="short-card" data-src="{url}" data-label="{label}">
+                <video class="short-video" muted loop playsinline preload="metadata">
+                    <source src="{url}" type="video/mp4">
+                </video>
+                <div class="short-overlay">
+                    <div class="short-play">▶</div>
+                    <div class="short-label">{label}</div>
+                </div>
+            </div>
+        """
+
     shorts_html = f"""
     <div class="ed-container">
         <div class="shorts-row">
-            <div class="short-card">
-                <video class="short-video" muted loop playsinline preload="metadata">
-                    <source src="{v1_url}" type="video/mp4">
-                </video>
-                <div class="short-overlay">
-                    <div class="short-play">▶</div>
-                    <div class="short-label">Khoảnh khắc 1</div>
-                </div>
-            </div>
-            <div class="short-card">
-                <video class="short-video" muted loop playsinline preload="metadata">
-                    <source src="{v2_url}" type="video/mp4">
-                </video>
-                <div class="short-overlay">
-                    <div class="short-play">▶</div>
-                    <div class="short-label">Khoảnh khắc 2</div>
-                </div>
-            </div>
-            <div class="short-card">
-                <video class="short-video" muted loop playsinline preload="metadata">
-                    <source src="{v3_url}" type="video/mp4">
-                </video>
-                <div class="short-overlay">
-                    <div class="short-play">▶</div>
-                    <div class="short-label">Khoảnh khắc 3</div>
-                </div>
-            </div>
-            <div class="short-card">
-                <video class="short-video" muted loop playsinline preload="metadata">
-                    <source src="{v4_url}" type="video/mp4">
-                </video>
-                <div class="short-overlay">
-                    <div class="short-play">▶</div>
-                    <div class="short-label">Khoảnh khắc 4</div>
-                </div>
-            </div>
+            {cards_html}
         </div>
     </div>
     <script>
@@ -567,6 +547,25 @@ def render():
         const video = card.querySelector('video');
         card.addEventListener('mouseenter', () => video.play().catch(() => {{}}));
         card.addEventListener('mouseleave', () => {{ video.pause(); video.currentTime = 0; }});
+        card.addEventListener('click', () => {{
+            const hero = document.getElementById('hero-video');
+            const heroSource = hero.querySelector('source');
+            const newSrc = card.getAttribute('data-src');
+            const newLabel = card.getAttribute('data-label');
+            if (hero && heroSource && newSrc) {{
+                hero.pause();
+                heroSource.setAttribute('src', newSrc);
+                hero.load();
+                hero.muted = true;
+                const playPromise = hero.play();
+                if (playPromise) {{ playPromise.catch(() => {{}}); }}
+            }}
+            const cap = document.getElementById('hero-caption-title');
+            if (cap && newLabel) cap.textContent = newLabel;
+            document.querySelectorAll('.short-card').forEach(c => c.classList.remove('short-card-active'));
+            card.classList.add('short-card-active');
+            window.scrollTo({{ top: 0, behavior: 'smooth' }});
+        }});
     }});
     </script>
     """
