@@ -730,31 +730,46 @@ def compute_kpis(df):
                 'quadrant': {}, 'contradiction_pct': 0}
 
     w = df.get('CompanyRollup_Weight', pd.Series(1.0, index=df.index))
+    if isinstance(w, pd.DataFrame): w = w.iloc[:, 0]
     n = int(w.sum()) # effective n
     
     def weighted_avg(col):
-        mask = col.notna()
+        if isinstance(col, pd.DataFrame): col = col.iloc[:, 0]
+        mask = col.notna().to_numpy(dtype=bool)
         if not mask.any(): return 0
-        return np.average(col[mask], weights=w[mask])
+        return np.average(col.to_numpy()[mask], weights=w.to_numpy()[mask])
         
     def weighted_pct(condition_mask, valid_mask=None):
-        if valid_mask is None: valid_mask = pd.Series(True, index=df.index)
-        if not valid_mask.any() or w[valid_mask].sum() == 0: return 0
-        cond = condition_mask.reindex(df.index).fillna(False).astype(bool)
-        return (w[cond & valid_mask].sum() / w[valid_mask].sum()) * 100
+        if isinstance(condition_mask, pd.DataFrame): condition_mask = condition_mask.iloc[:, 0]
+        cond_arr = condition_mask.to_numpy(dtype=bool, na_value=False)
+        
+        if valid_mask is None: 
+            valid_mask_arr = np.ones(len(df), dtype=bool)
+        else:
+            if isinstance(valid_mask, pd.DataFrame): valid_mask = valid_mask.iloc[:, 0]
+            valid_mask_arr = valid_mask.to_numpy(dtype=bool, na_value=False)
+            
+        w_arr = w.to_numpy()
+        
+        if not valid_mask_arr.any() or w_arr[valid_mask_arr].sum() == 0: return 0
+        return (w_arr[cond_arr & valid_mask_arr].sum() / w_arr[valid_mask_arr].sum()) * 100
 
     ei_mean = weighted_avg(df['EI']) if 'EI' in df.columns else 0
     enps_col = df.get('eNPS', pd.Series(np.nan, index=df.index))
+    if isinstance(enps_col, pd.DataFrame): enps_col = enps_col.iloc[:, 0]
     n_valid_enps = enps_col.notna()
     
-    promoters = w[enps_col >= 9].sum()
-    passives = w[(enps_col >= 7) & (enps_col <= 8)].sum()
-    detractors = w[enps_col <= 6].sum()
+    w_series = pd.Series(w.to_numpy(), index=df.index)
+    
+    promoters = w_series[enps_col >= 9].sum()
+    passives = w_series[(enps_col >= 7) & (enps_col <= 8)].sum()
+    detractors = w_series[enps_col <= 6].sum()
     
     enps_score = weighted_pct(enps_col >= 9, n_valid_enps) - weighted_pct(enps_col <= 6, n_valid_enps)
     
     mei_avg = weighted_avg(df['MEI']) if 'MEI' in df.columns else 0
     intent_col = df.get('intent', pd.Series(np.nan, index=df.index))
+    if isinstance(intent_col, pd.DataFrame): intent_col = intent_col.iloc[:, 0]
     intent_valid = intent_col.notna()
     intent_pct = weighted_pct(intent_col <= 2, intent_valid)
     intent_pct_high = weighted_pct(intent_col >= 4, intent_valid)
@@ -762,6 +777,7 @@ def compute_kpis(df):
     burnout_pct = weighted_pct(df.get('burnout_risk', pd.Series(0, index=df.index)) > 0)
 
     q22_col = df.get('stay_intention', pd.Series(np.nan, index=df.index))
+    if isinstance(q22_col, pd.DataFrame): q22_col = q22_col.iloc[:, 0]
     q22_valid = q22_col.notna()
     stay_score_avg = round(weighted_avg(q22_col), 2)
     stay_flight_pct = round(weighted_pct(q22_col <= 2, q22_valid), 1)
