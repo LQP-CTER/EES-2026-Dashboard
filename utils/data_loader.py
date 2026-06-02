@@ -41,10 +41,10 @@ def load_group(group_id: str):
         conn = st.connection("supabase", type="sql")
         table_name = f"survey_{group_id.lower()}"
         df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
-        print(f" Đã tải {len(df_raw)} dòng dữ liệu {group_id} từ Supabase siêu tốc!")
+        print(f" Đã tải {len(df_raw)} dòng dữ liệu {group_id} từ Neon siêu tốc!")
     except Exception as e:
         # Fallback to CSV if DB is not reachable
-        print(f"Lỗi kết nối Supabase ({e}). Đang dùng file dự phòng (Google Sheets)...")
+        print(f"Lỗi kết nối Neon ({e}). Đang dùng file dự phòng (Google Sheets)...")
         df_raw = pd.read_csv(cfg['url'])
     n_before = len(df_raw)
 

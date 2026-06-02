@@ -73,7 +73,7 @@ def load_workforce_and_mapping() -> tuple[pd.DataFrame, dict, dict]:
         conn = st.connection("supabase", type="sql")
         df_wf = conn.query("SELECT * FROM workforce_data", ttl=3600)
     except Exception as db_err:
-        print(f"Lỗi đọc Supabase ({db_err}), fallback Workforce về Google Sheets...")
+        print(f"Lỗi đọc Neon ({db_err}), fallback Workforce về Google Sheets...")
         for attempt in range(3):
             try:
                 try:
