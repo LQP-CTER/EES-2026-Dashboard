@@ -1,7 +1,9 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import base64
 import os
 from shared.plotly_theme import apply_theme
+
 
 def get_base64_image(filename):
     base_path = os.path.join(os.path.dirname(__file__), '..', 'img', 'EES2026')
@@ -9,441 +11,150 @@ def get_base64_image(filename):
     try:
         with open(path, "rb") as f:
             return base64.b64encode(f.read()).decode()
-    except Exception as e:
+    except Exception:
         return ""
+
 
 def render():
     apply_theme()
 
-    # Cloudinary URLs for masonry layout
+    # ── Cloudinary assets ────────────────────────────────────────────────────
     img1 = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1780393860/LOGO%20GHN/EES_2026_-_CPO_ngang_ayvreb.png"
     img2 = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1780393847/LOGO%20GHN/CPO_kick-off_1_edlqb4.png"
     img3 = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1780393855/LOGO%20GHN/EES_2026_-_GDV_a_Vu%CC%83_ew1dix.png"
     img4 = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392210/LOGO%20GHN/Mr_Nguye%CC%82%CC%83n_Va%CC%82n_Ta%CC%82n_Regional_Director_Gia%CC%81m_%C4%90o%CC%82%CC%81c_Vu%CC%80ng_rbzjr3.png"
 
-    # Base CSS
-    css = """
+    main_video_url  = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780389451/LOGO%20GHN/Action_video_dgq3f7.mp4"
+    short_urls = [
+        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780395113/LOGO%20GHN/IMG_0734_nhqt02.mp4",   "Khoảnh khắc 1"),
+        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393976/LOGO%20GHN/IMG_1233_wgzajm.mp4",   "Khoảnh khắc 2"),
+        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393954/LOGO%20GHN/IMG_1232_ykz6pz.mp4",   "Khoảnh khắc 3"),
+        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393907/LOGO%20GHN/IMG_1723_gdh1gs.mp4",   "Khoảnh khắc 4"),
+    ]
+
+    # ── Global page CSS (no video rules here) ────────────────────────────────
+    st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-    .ed-container {
-        font-family: 'Inter', sans-serif;
-        color: #0A1F44;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
+    .ed-container { font-family:'Inter',sans-serif; color:#0A1F44; max-width:1200px; }
 
-    .ed-hero { margin-bottom: 56px; }
+    /* Hero */
+    .ed-hero { margin-bottom: 52px; }
     .ed-kicker {
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: #FF5200;
-        margin-bottom: 14px;
-        display: block;
+        font-size:.72rem; font-weight:800; letter-spacing:.18em;
+        text-transform:uppercase; color:#FF5200; margin-bottom:14px; display:block;
     }
     .ed-headline {
-        font-size: 3.4rem;
-        font-weight: 900;
-        letter-spacing: -0.03em;
-        line-height: 1.08;
-        margin: 0 0 36px;
-        color: #0A1F44;
+        font-size:3.2rem; font-weight:900; letter-spacing:-.03em;
+        line-height:1.08; margin:0 0 36px; color:#0A1F44;
     }
 
+    /* Metric cards */
     .ed-metrics-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        padding-top: 36px;
-        border-top: 2px solid #E2E8F0;
+        display:grid; grid-template-columns:repeat(4,1fr);
+        gap:16px; padding-top:36px; border-top:2px solid #E2E8F0;
     }
     .ed-metric-item {
-        background: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 16px;
-        padding: 20px 24px 22px;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        overflow: hidden;
+        background:#F8FAFC; border:1px solid #E2E8F0; border-radius:16px;
+        padding:20px 24px 22px; display:flex; flex-direction:column;
+        position:relative; overflow:hidden;
     }
     .ed-metric-item::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #FF5200, #FF8C42);
-        border-radius: 16px 16px 0 0;
+        content:''; position:absolute; top:0; left:0; right:0; height:3px;
+        background:linear-gradient(90deg,#FF5200,#FF8C42);
+        border-radius:16px 16px 0 0;
     }
     .ed-metric-label {
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #94A3B8;
-        margin-bottom: 10px;
+        font-size:.7rem; font-weight:700; text-transform:uppercase;
+        letter-spacing:.1em; color:#94A3B8; margin-bottom:10px;
     }
     .ed-metric-val {
-        font-size: 2.4rem;
-        font-weight: 900;
-        color: #0A1F44;
-        letter-spacing: -0.03em;
-        line-height: 1;
+        font-size:2.4rem; font-weight:900; color:#0A1F44;
+        letter-spacing:-.03em; line-height:1;
     }
-    .ed-metric-sub {
-        font-size: 0.78rem;
-        color: #64748B;
-        margin-top: 8px;
-        font-weight: 600;
-    }
-    .ed-metric-sub.positive { color: #10B981; }
+    .ed-metric-sub { font-size:.78rem; color:#64748B; margin-top:8px; font-weight:600; }
+    .ed-metric-sub.positive { color:#10B981; }
 
+    /* Section header */
     .ed-section-header {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        margin-bottom: 28px;
-        margin-top: 56px;
+        display:flex; align-items:baseline; justify-content:space-between;
+        margin-bottom:24px; margin-top:52px;
     }
     .ed-section-title {
-        font-size: 2rem;
-        font-weight: 900;
-        letter-spacing: -0.03em;
-        color: #0A1F44;
-        margin: 0;
+        font-size:2rem; font-weight:900; letter-spacing:-.03em; color:#0A1F44; margin:0;
     }
     .ed-section-tag {
-        font-size: 0.72rem;
-        font-weight: 800;
-        color: #FF5200;
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        background: #FFF4EF;
-        padding: 4px 12px;
-        border-radius: 999px;
-        border: 1px solid #FFD5BF;
+        font-size:.72rem; font-weight:800; color:#FF5200; text-transform:uppercase;
+        letter-spacing:.15em; background:#FFF4EF; padding:4px 12px;
+        border-radius:999px; border:1px solid #FFD5BF;
     }
 
+    /* Masonry */
     .ed-masonry {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        grid-auto-rows: 210px;
-        gap: 16px;
-        margin-bottom: 72px;
+        display:grid; grid-template-columns:repeat(4,1fr);
+        grid-auto-rows:210px; gap:16px; margin-bottom:72px;
     }
-    .ed-masonry-item {
-        border-radius: 16px;
-        overflow: hidden;
-        position: relative;
-        background: #F1F5F9;
-    }
-    .ed-masonry-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);
-    }
-    .ed-masonry-item:hover img { transform: scale(1.06); }
+    .ed-masonry-item { border-radius:16px; overflow:hidden; position:relative; background:#F1F5F9; }
+    .ed-masonry-item img { width:100%; height:100%; object-fit:cover; transition:transform .7s cubic-bezier(.4,0,.2,1); }
+    .ed-masonry-item:hover img { transform:scale(1.06); }
     .ed-masonry-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(10,31,68,0.75) 0%, transparent 55%);
-        opacity: 0;
-        transition: opacity 0.4s ease;
+        position:absolute; inset:0;
+        background:linear-gradient(to top,rgba(10,31,68,.75) 0%,transparent 55%);
+        opacity:0; transition:opacity .4s ease;
     }
-    .ed-masonry-item:hover .ed-masonry-overlay { opacity: 1; }
+    .ed-masonry-item:hover .ed-masonry-overlay { opacity:1; }
     .ed-masonry-caption {
-        position: absolute;
-        bottom: 18px;
-        left: 18px;
-        z-index: 2;
-        color: #FFFFFF;
-        font-weight: 700;
-        font-size: 1rem;
-        opacity: 0;
-        transform: translateY(10px);
-        transition: all 0.4s ease;
+        position:absolute; bottom:18px; left:18px; z-index:2; color:#fff;
+        font-weight:700; font-size:1rem; opacity:0; transform:translateY(10px);
+        transition:all .4s ease;
     }
-    .ed-masonry-item:hover .ed-masonry-caption { opacity: 1; transform: translateY(0); }
-    .ed-masonry-item-large { grid-column: span 2; grid-row: span 2; }
-    .ed-masonry-item-tall  { grid-row: span 2; }
-    .ed-masonry-item-wide  { grid-column: span 2; }
+    .ed-masonry-item:hover .ed-masonry-caption { opacity:1; transform:translateY(0); }
+    .ed-masonry-item-large { grid-column:span 2; grid-row:span 2; }
+    .ed-masonry-item-tall  { grid-row:span 2; }
+    .ed-masonry-item-wide  { grid-column:span 2; }
 
+    /* Timeline */
     .ed-timeline-section {
-        display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 72px;
-        padding: 72px 0;
-        border-top: 2px solid #F1F5F9;
-        margin-bottom: 72px;
+        display:grid; grid-template-columns:1fr 2fr; gap:72px;
+        padding:72px 0; border-top:2px solid #F1F5F9; margin-bottom:72px;
     }
     .ed-timeline-left h2 {
-        font-size: 3rem;
-        font-weight: 900;
-        line-height: 1.08;
-        margin: 0 0 20px;
-        letter-spacing: -0.04em;
-        color: #0A1F44;
+        font-size:3rem; font-weight:900; line-height:1.08; margin:0 0 20px;
+        letter-spacing:-.04em; color:#0A1F44;
     }
-    .ed-timeline-left p {
-        color: #64748B;
-        font-size: 1.05rem;
-        line-height: 1.7;
-        font-weight: 500;
-        margin: 0;
-    }
-    .ed-timeline-right {
-        display: flex;
-        flex-direction: column;
-        gap: 44px;
-        padding-top: 8px;
-    }
-    .ed-timeline-node {
-        display: flex;
-        gap: 32px;
-        align-items: flex-start;
-    }
+    .ed-timeline-left p { color:#64748B; font-size:1.05rem; line-height:1.7; font-weight:500; margin:0; }
+    .ed-timeline-right { display:flex; flex-direction:column; gap:44px; padding-top:8px; }
+    .ed-timeline-node { display:flex; gap:32px; align-items:flex-start; }
     .ed-timeline-big-num {
-        font-size: 4.5rem;
-        font-weight: 900;
-        color: #FF5200;
-        line-height: 0.85;
-        letter-spacing: -0.05em;
-        min-width: 130px;
-        text-align: right;
-        flex-shrink: 0;
+        font-size:4.5rem; font-weight:900; color:#FF5200; line-height:.85;
+        letter-spacing:-.05em; min-width:130px; text-align:right; flex-shrink:0;
     }
     .ed-timeline-content h4 {
-        font-size: 1.4rem;
-        font-weight: 800;
-        margin: 0 0 10px;
-        color: #0A1F44;
-        letter-spacing: -0.02em;
+        font-size:1.4rem; font-weight:800; margin:0 0 10px;
+        color:#0A1F44; letter-spacing:-.02em;
     }
-    .ed-timeline-content p {
-        font-size: 1rem;
-        color: #64748B;
-        line-height: 1.65;
-        margin: 0;
-    }
+    .ed-timeline-content p { font-size:1rem; color:#64748B; line-height:1.65; margin:0; }
 
-    .ed-team-section { padding-bottom: 100px; }
-    .ed-team-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-top: 28px;
-    }
+    /* Team */
+    .ed-team-section { padding-bottom:100px; }
+    .ed-team-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:28px; }
     .ed-team-card {
-        background: #FFFFFF;
-        border: 1.5px solid #E2E8F0;
-        border-radius: 20px;
-        padding: 28px 28px 24px;
-        transition: box-shadow 0.3s ease, transform 0.3s ease;
+        background:#fff; border:1.5px solid #E2E8F0; border-radius:20px;
+        padding:28px 28px 24px; transition:box-shadow .3s ease, transform .3s ease;
     }
-    .ed-team-card:hover {
-        box-shadow: 0 12px 40px rgba(10,31,68,0.1);
-        transform: translateY(-4px);
-    }
-    .ed-team-role {
-        font-size: 0.68rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: #FF5200;
-        margin-bottom: 8px;
-    }
-    .ed-team-name {
-        font-size: 1.25rem;
-        font-weight: 800;
-        color: #0A1F44;
-        letter-spacing: -0.02em;
-        margin-bottom: 10px;
-    }
-    .ed-team-desc {
-        font-size: 0.9rem;
-        color: #64748B;
-        line-height: 1.6;
-    }
+    .ed-team-card:hover { box-shadow:0 12px 40px rgba(10,31,68,.1); transform:translateY(-4px); }
+    .ed-team-role { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.14em; color:#FF5200; margin-bottom:8px; }
+    .ed-team-name { font-size:1.25rem; font-weight:800; color:#0A1F44; letter-spacing:-.02em; margin-bottom:10px; }
+    .ed-team-desc { font-size:.9rem; color:#64748B; line-height:1.6; }
     .ed-team-badge {
-        display: inline-block;
-        margin-top: 14px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: #0A1F44;
-        background: #F1F5F9;
-        padding: 3px 10px;
-        border-radius: 999px;
-    }
-    
-    /* Video Container Styling */
-    .video-container-wrapper {
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(10,31,68,0.15);
-        margin-bottom: 24px;
-        border: 2px solid #E2E8F0;
-        background: #0F172A;
-    }
-    .video-container-horizontal {
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(10,31,68,0.1);
-        border: 1px solid #E2E8F0;
-        background: #0F172A;
-    }
-
-    /* HERO VIDEO - màn hình lớn ở đầu trang */
-    .hero-video-wrapper {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 21 / 9;
-        border-radius: 20px;
-        overflow: hidden;
-        background: linear-gradient(135deg, #0A1F44 0%, #14345E 100%);
-        box-shadow: 0 20px 50px rgba(10,31,68,0.25);
-        border: 1px solid rgba(255,255,255,0.08);
-    }
-    .hero-video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-    .hero-video-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(10,31,68,0.0) 0%, rgba(10,31,68,0.0) 40%, rgba(10,31,68,0.75) 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: flex-start;
-        padding: 32px 40px;
-        pointer-events: none;
-    }
-    .hero-play-icon {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 90px;
-        height: 90px;
-        border-radius: 50%;
-        background: rgba(255,82,0,0.92);
-        color: #fff;
-        font-size: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-left: 8px;
-        box-shadow: 0 8px 24px rgba(255,82,0,0.5);
-        opacity: 0.85;
-        transition: all 0.3s ease;
-    }
-    .hero-video-wrapper:hover .hero-play-icon {
-        transform: translate(-50%, -50%) scale(1.08);
-        opacity: 1;
-    }
-    .hero-video-caption {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-    .hero-video-kicker {
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: #FF8C42;
-    }
-    .hero-video-title {
-        font-size: 1.8rem;
-        font-weight: 900;
-        color: #fff;
-        letter-spacing: -0.02em;
-        line-height: 1.1;
-    }
-
-    /* SHORTS ROW - 4 video ngang */
-    .shorts-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-        margin-bottom: 24px;
-    }
-    @media (max-width: 900px) {
-        .shorts-row { grid-template-columns: repeat(2, 1fr); }
-    }
-    .short-card {
-        position: relative;
-        aspect-ratio: 9 / 16;
-        border-radius: 14px;
-        overflow: hidden;
-        background: #0F172A;
-        box-shadow: 0 6px 18px rgba(10,31,68,0.15);
-        cursor: pointer;
-        transition: transform 0.35s ease, box-shadow 0.35s ease;
-    }
-    .short-card-active {
-        outline: 3px solid #FF5200;
-        outline-offset: 2px;
-    }
-    .short-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 14px 32px rgba(10,31,68,0.25);
-    }
-    .short-video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-    .short-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.65) 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-        padding: 14px 10px;
-        pointer-events: none;
-    }
-    .short-play {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.92);
-        color: #0A1F44;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-left: 3px;
-        margin-top: auto;
-        opacity: 0.9;
-        transition: all 0.3s ease;
-    }
-    .short-card:hover .short-play {
-        background: #FF5200;
-        color: #fff;
-        transform: scale(1.1);
-    }
-    .short-label {
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #fff;
-        text-align: center;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+        display:inline-block; margin-top:14px; font-size:.72rem; font-weight:700;
+        color:#0A1F44; background:#F1F5F9; padding:3px 10px; border-radius:999px;
     }
     </style>
-    """
+    """, unsafe_allow_html=True)
 
-    st.markdown(css, unsafe_allow_html=True)
-
-    # 1. HERO SECTION
+    # ── 1. HERO (stats) ──────────────────────────────────────────────────────
     st.markdown("""
     <div class="ed-container">
         <div class="ed-hero">
@@ -475,152 +186,466 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
-    main_video_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780389451/LOGO%20GHN/Action_video_dgq3f7.mp4"
-
-    # 2. HERO VIDEO SECTION (màn hình lớn với autoplay + overlay)
-    st.markdown(f"""
-    <div class="ed-container">
-        <div class="ed-section-header" style="margin-top: 20px; margin-bottom: 20px;">
-            <h2 class="ed-section-title">EES 2026 — Highlight Reel</h2>
-            <span class="ed-section-tag">Main Video</span>
-        </div>
-        <div class="hero-video-wrapper">
-            <video id="hero-video" class="hero-video" autoplay muted loop playsinline poster="">
-                <source src="{main_video_url}" type="video/mp4">
-                Trình duyệt không hỗ trợ video.
+    # ── 2. VIDEO SECTION (single components.html so JS works) ────────────────
+    shorts_cards = ""
+    for i, (url, label) in enumerate(short_urls):
+        active = "short-thumb-active" if i == 0 else ""
+        shorts_cards += f"""
+        <div class="short-thumb {active}" data-src="{url}" data-label="{label}">
+            <video class="short-video" muted loop playsinline preload="metadata">
+                <source src="{url}" type="video/mp4">
             </video>
-            <div class="hero-video-overlay">
-                <div class="hero-play-icon">▶</div>
-                <div class="hero-video-caption">
-                    <span class="hero-video-kicker">EES 2026</span>
-                    <span class="hero-video-title" id="hero-caption-title">Hành trình gắn kết toàn GHN</span>
+            <div class="short-overlay">
+                <div class="short-play">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
                 </div>
+                <div class="short-label">{label}</div>
             </div>
-        </div>
+        </div>"""
+
+    video_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: transparent;
+    padding: 0;
+  }}
+
+  /* ── Section header ── */
+  .section-header {{
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }}
+  .section-title {{
+    font-size: 1.6rem; font-weight: 900; color: #0A1F44; letter-spacing: -0.03em;
+  }}
+  .section-tag {{
+    font-size: 0.68rem; font-weight: 800; color: #FF5200;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    background: #FFF4EF; padding: 4px 12px; border-radius: 999px;
+    border: 1px solid #FFD5BF;
+  }}
+
+  /* ── Cinematic player shell ── */
+  .player-shell {{
+    position: relative;
+    width: 100%;
+    aspect-ratio: 21 / 9;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 24px 64px rgba(10,31,68,.28);
+    cursor: pointer;
+  }}
+  .player-shell:hover .ctrl-bar {{ opacity: 1; transform: translateY(0); }}
+  .player-shell:hover .unmute-pill {{ opacity: 1; }}
+
+  /* ── Actual video element ── */
+  #mainVid {{
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }}
+
+  /* ── Gradient scrim ── */
+  .scrim {{
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(0,0,0,.0)   0%,
+      rgba(0,0,0,.0)  55%,
+      rgba(0,0,0,.55) 85%,
+      rgba(0,0,0,.72) 100%
+    );
+  }}
+
+  /* ── Big centre play/pause icon (shows briefly on state change) ── */
+  .centre-icon {{
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(255,255,255,.18); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 28px;
+    transition: transform .15s ease, opacity .3s ease;
+    pointer-events: none; opacity: 0;
+  }}
+  .centre-icon.pop {{
+    transform: translate(-50%,-50%) scale(1);
+    opacity: 1;
+  }}
+
+  /* ── Unmute pill ── */
+  .unmute-pill {{
+    position: absolute; top: 20px; right: 20px;
+    background: rgba(0,0,0,.55); backdrop-filter: blur(10px);
+    color: #fff; border-radius: 999px;
+    padding: 8px 16px; font-size: .8rem; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: opacity .3s ease, background .2s ease;
+    opacity: 0.92; border: 1px solid rgba(255,255,255,.18);
+    z-index: 10;
+  }}
+  .unmute-pill:hover {{ background: rgba(255,82,0,.85); }}
+  .unmute-pill svg {{ flex-shrink: 0; }}
+
+  /* ── Control bar ── */
+  .ctrl-bar {{
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 20px 18px;
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .3s ease, transform .3s ease;
+    z-index: 10;
+  }}
+
+  /* Progress track */
+  .progress-track {{
+    position: relative; width: 100%; height: 4px;
+    background: rgba(255,255,255,.25); border-radius: 99px;
+    cursor: pointer; transition: height .2s ease;
+  }}
+  .progress-track:hover {{ height: 6px; }}
+  .progress-fill {{
+    height: 100%; background: #FF5200; border-radius: 99px;
+    width: 0%; pointer-events: none; transition: width .1s linear;
+    position: relative;
+  }}
+  .progress-fill::after {{
+    content: ''; position: absolute; right: -5px; top: 50%;
+    transform: translateY(-50%);
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 4px rgba(0,0,0,.4);
+    opacity: 0; transition: opacity .2s ease;
+  }}
+  .progress-track:hover .progress-fill::after {{ opacity: 1; }}
+
+  /* Bottom row */
+  .ctrl-row {{
+    display: flex; align-items: center; gap: 14px;
+  }}
+  .ctrl-btn {{
+    background: none; border: none; color: #fff; cursor: pointer;
+    padding: 4px; display: flex; align-items: center; justify-content: center;
+    opacity: .9; transition: opacity .2s ease, transform .15s ease;
+    flex-shrink: 0;
+  }}
+  .ctrl-btn:hover {{ opacity: 1; transform: scale(1.15); }}
+
+  .time-display {{
+    font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.85);
+    letter-spacing: .02em; white-space: nowrap;
+  }}
+  .spacer {{ flex: 1; }}
+
+  /* Volume slider */
+  .vol-wrap {{ display: flex; align-items: center; gap: 8px; }}
+  .vol-slider {{
+    -webkit-appearance: none; appearance: none;
+    width: 72px; height: 3px; border-radius: 99px;
+    background: rgba(255,255,255,.3); cursor: pointer; outline: none;
+  }}
+  .vol-slider::-webkit-slider-thumb {{
+    -webkit-appearance: none; width: 12px; height: 12px;
+    border-radius: 50%; background: #fff; cursor: pointer;
+  }}
+
+  /* Video title */
+  .vid-title {{
+    font-size: .78rem; font-weight: 700; color: rgba(255,255,255,.7);
+    letter-spacing: .06em; text-transform: uppercase;
+  }}
+
+  /* ── Shorts row ── */
+  .shorts-header {{
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 20px; margin-bottom: 14px;
+  }}
+  .shorts-label {{
+    font-size: .95rem; font-weight: 800; color: #0A1F44; letter-spacing: -.01em;
+  }}
+  .shorts-hint {{
+    font-size: .72rem; font-weight: 600; color: #94A3B8;
+  }}
+
+  .shorts-row {{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }}
+
+  .short-thumb {{
+    position: relative;
+    aspect-ratio: 9 / 16;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0F172A;
+    cursor: pointer;
+    transition: transform .3s ease, box-shadow .3s ease;
+    outline: 3px solid transparent;
+    outline-offset: 2px;
+  }}
+  .short-thumb:hover {{
+    transform: translateY(-5px);
+    box-shadow: 0 16px 36px rgba(10,31,68,.25);
+  }}
+  .short-thumb-active {{
+    outline-color: #FF5200;
+    box-shadow: 0 0 0 3px rgba(255,82,0,.25);
+  }}
+  .short-video {{
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }}
+  .short-overlay {{
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,.7) 100%);
+    display: flex; flex-direction: column;
+    justify-content: space-between; align-items: center;
+    padding: 12px 8px 14px;
+    pointer-events: none;
+  }}
+  .short-play {{
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,.9); color: #0A1F44;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: auto; transition: all .25s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  }}
+  .short-thumb:hover .short-play {{ background: #FF5200; color: #fff; transform: scale(1.1); }}
+  .short-label {{
+    font-size: .72rem; font-weight: 700; color: #fff; text-align: center;
+    text-shadow: 0 1px 4px rgba(0,0,0,.7);
+  }}
+</style>
+</head>
+<body>
+
+<!-- Section header -->
+<div class="section-header">
+  <span class="section-title">EES 2026 — Highlight Reel</span>
+  <span class="section-tag">Video</span>
+</div>
+
+<!-- Cinematic player -->
+<div class="player-shell" id="playerShell">
+  <video id="mainVid" autoplay muted loop playsinline preload="auto">
+    <source src="{main_video_url}" type="video/mp4">
+  </video>
+  <div class="scrim"></div>
+
+  <!-- Unmute pill -->
+  <div class="unmute-pill" id="unmutePill" title="Bật / tắt âm thanh">
+    <svg id="muteSvg" viewBox="0 0 24 24" fill="white" width="16" height="16">
+      <path d="M16.5 12A4.5 4.5 0 0014 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0021 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0017.73 18l1.98 2 1.27-1.27L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+    </svg>
+    <span id="muteLabel">Bật tiếng</span>
+  </div>
+
+  <!-- Centre pop icon -->
+  <div class="centre-icon" id="centreIcon">
+    <svg viewBox="0 0 24 24" fill="white" width="32" height="32" id="centreIconSvg">
+      <path d="M8 5v14l11-7z"/>
+    </svg>
+  </div>
+
+  <!-- Controls -->
+  <div class="ctrl-bar" id="ctrlBar">
+    <div class="progress-track" id="progressTrack">
+      <div class="progress-fill" id="progressFill"></div>
     </div>
-    """, unsafe_allow_html=True)
-
-    # 3. HORIZONTAL SHORTS VIDEOS
-    st.markdown("""
-    <div class="ed-container">
-        <div class="ed-section-header" style="margin-top: 40px; margin-bottom: 20px;">
-            <h2 class="ed-section-title" style="font-size: 1.5rem;">Khoảnh khắc đáng nhớ</h2>
-            <span class="ed-section-tag">Shorts</span>
-        </div>
+    <div class="ctrl-row">
+      <!-- Play/Pause -->
+      <button class="ctrl-btn" id="playBtn" title="Play / Pause">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="white" width="22" height="22">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </button>
+      <!-- Time -->
+      <span class="time-display" id="timeDisp">0:00 / 0:00</span>
+      <div class="spacer"></div>
+      <!-- Volume -->
+      <div class="vol-wrap">
+        <button class="ctrl-btn" id="volBtn" title="Mute / Unmute">
+          <svg id="volIcon" viewBox="0 0 24 24" fill="white" width="20" height="20">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0014 7.97v8.05c1.48-.73 2.5-2.25 2.5-3.02z"/>
+          </svg>
+        </button>
+        <input type="range" class="vol-slider" id="volSlider" min="0" max="1" step="0.05" value="0.8">
+      </div>
+      <!-- Fullscreen -->
+      <button class="ctrl-btn" id="fsBtn" title="Toàn màn hình">
+        <svg viewBox="0 0 24 24" fill="white" width="20" height="20">
+          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        </svg>
+      </button>
     </div>
-    """, unsafe_allow_html=True)
+  </div>
+</div>
 
-    v1_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780395113/LOGO%20GHN/IMG_0734_nhqt02.mp4"
-    v2_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393976/LOGO%20GHN/IMG_1233_wgzajm.mp4"
-    v3_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393954/LOGO%20GHN/IMG_1232_ykz6pz.mp4"
-    v4_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393907/LOGO%20GHN/IMG_1723_gdh1gs.mp4"
+<!-- Shorts -->
+<div class="shorts-header">
+  <span class="shorts-label">Khoảnh khắc đáng nhớ</span>
+  <span class="shorts-hint">Click để phát · Hover để xem trước</span>
+</div>
+<div class="shorts-row">
+{shorts_cards}
+</div>
 
-    shorts_data = [
-        (v1_url, "Khoảnh khắc 1"),
-        (v2_url, "Khoảnh khắc 2"),
-        (v3_url, "Khoảnh khắc 3"),
-        (v4_url, "Khoảnh khắc 4"),
-    ]
+<script>
+(function() {{
+  const vid     = document.getElementById('mainVid');
+  const fill    = document.getElementById('progressFill');
+  const track   = document.getElementById('progressTrack');
+  const timeD   = document.getElementById('timeDisp');
+  const playBtn = document.getElementById('playBtn');
+  const playIco = document.getElementById('playIcon');
+  const volBtn  = document.getElementById('volBtn');
+  const volIco  = document.getElementById('volIcon');
+  const volSl   = document.getElementById('volSlider');
+  const fsBtn   = document.getElementById('fsBtn');
+  const shell   = document.getElementById('playerShell');
+  const pill    = document.getElementById('unmutePill');
+  const pillLbl = document.getElementById('muteLabel');
+  const muteSvg = document.getElementById('muteSvg');
+  const centre  = document.getElementById('centreIcon');
+  const centreSvg = document.getElementById('centreIconSvg');
 
-    cards_html = ""
-    for url, label in shorts_data:
-        cards_html += f"""
-            <div class="short-card" data-src="{url}" data-label="{label}">
-                <video class="short-video" muted loop playsinline preload="metadata">
-                    <source src="{url}" type="video/mp4">
-                </video>
-                <div class="short-overlay">
-                    <div class="short-play">▶</div>
-                    <div class="short-label">{label}</div>
-                </div>
-            </div>
-        """
+  const MUTE_PATH   = "M16.5 12A4.5 4.5 0 0014 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0021 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0017.73 18l1.98 2 1.27-1.27L4.27 3zM12 4L9.91 6.09 12 8.18V4z";
+  const UNMUTE_PATH = "M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0014 7.97v8.05c1.48-.73 2.5-2.25 2.5-3.02zM18.5 12c0-2.77-1.5-5.18-4-6.32v12.61c2.5-1.13 4-3.54 4-6.29z";
 
-    shorts_css = """
-    <style>
-    body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; }
-    .ed-container { max-width: 1200px; margin: 0 auto; padding: 0; }
-    .shorts-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-        margin-bottom: 8px;
-    }
-    @media (max-width: 900px) { .shorts-row { grid-template-columns: repeat(2, 1fr); } }
-    .short-card {
-        position: relative;
-        aspect-ratio: 9 / 16;
-        border-radius: 14px;
-        overflow: hidden;
-        background: #0F172A;
-        box-shadow: 0 6px 18px rgba(10,31,68,0.15);
-        cursor: pointer;
-        transition: transform 0.35s ease, box-shadow 0.35s ease;
-    }
-    .short-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 14px 32px rgba(10,31,68,0.25);
-    }
-    .short-card-active { outline: 3px solid #FF5200; outline-offset: 2px; }
-    .short-video { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .short-overlay {
-        position: absolute; inset: 0;
-        background: linear-gradient(180deg, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.65) 100%);
-        display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-        padding: 14px 10px; pointer-events: none;
-    }
-    .short-play {
-        width: 44px; height: 44px; border-radius: 50%;
-        background: rgba(255,255,255,0.92); color: #0A1F44; font-size: 16px;
-        display: flex; align-items: center; justify-content: center; padding-left: 3px;
-        margin-top: auto; opacity: 0.9; transition: all 0.3s ease;
-    }
-    .short-card:hover .short-play { background: #FF5200; color: #fff; transform: scale(1.1); }
-    .short-label {
-        font-size: 0.78rem; font-weight: 700; color: #fff; text-align: center;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-    }
-    </style>
-    """
+  function fmt(s) {{
+    if (isNaN(s)) return '0:00';
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }}
 
-    shorts_html = f"""
-    {shorts_css}
-    <div class="ed-container">
-        <div class="shorts-row">
-            {cards_html}
-        </div>
-    </div>
-    <script>
-    document.querySelectorAll('.short-card').forEach(card => {{
-        const video = card.querySelector('video');
-        card.addEventListener('mouseenter', () => video.play().catch(() => {{}}));
-        card.addEventListener('mouseleave', () => {{ video.pause(); video.currentTime = 0; }});
-        card.addEventListener('click', () => {{
-            const hero = document.getElementById('hero-video');
-            const heroSource = hero.querySelector('source');
-            const newSrc = card.getAttribute('data-src');
-            const newLabel = card.getAttribute('data-label');
-            if (hero && heroSource && newSrc) {{
-                hero.pause();
-                heroSource.setAttribute('src', newSrc);
-                hero.load();
-                hero.muted = true;
-                const playPromise = hero.play();
-                if (playPromise) {{ playPromise.catch(() => {{}}); }}
-            }}
-            const cap = document.getElementById('hero-caption-title');
-            if (cap && newLabel) cap.textContent = newLabel;
-            document.querySelectorAll('.short-card').forEach(c => c.classList.remove('short-card-active'));
-            card.classList.add('short-card-active');
-            window.scrollTo({{ top: 0, behavior: 'smooth' }});
-        }});
+  function updatePlayIcon(paused) {{
+    playIco.querySelector('path').setAttribute('d',
+      paused ? 'M8 5v14l11-7z' : 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+  }}
+
+  function popCentre(paused) {{
+    centreSvg.querySelector('path').setAttribute('d',
+      paused ? 'M8 5v14l11-7z' : 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+    centre.classList.add('pop');
+    setTimeout(() => centre.classList.remove('pop'), 700);
+  }}
+
+  function updateMuteUI(muted) {{
+    muteSvg.querySelector('path').setAttribute('d', muted ? MUTE_PATH : UNMUTE_PATH);
+    pillLbl.textContent = muted ? 'Bật tiếng' : 'Tắt tiếng';
+    volIco.querySelector('path').setAttribute('d', muted ? MUTE_PATH : UNMUTE_PATH);
+    volSl.value = muted ? 0 : (vid.volume || 0.8);
+  }}
+
+  // Tick
+  vid.addEventListener('timeupdate', () => {{
+    if (!vid.duration) return;
+    const pct = (vid.currentTime / vid.duration) * 100;
+    fill.style.width = pct + '%';
+    timeD.textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
+  }});
+
+  vid.addEventListener('play',  () => updatePlayIcon(false));
+  vid.addEventListener('pause', () => updatePlayIcon(true));
+
+  // Click shell = toggle play
+  shell.addEventListener('click', (e) => {{
+    if (e.target.closest('.ctrl-bar') || e.target.closest('.unmute-pill')) return;
+    if (vid.paused) {{ vid.play().catch(()=>{{}}); popCentre(false); }}
+    else            {{ vid.pause(); popCentre(true); }}
+  }});
+
+  // Play button
+  playBtn.addEventListener('click', (e) => {{
+    e.stopPropagation();
+    if (vid.paused) vid.play().catch(()=>{{}});
+    else vid.pause();
+  }});
+
+  // Progress scrub
+  track.addEventListener('click', (e) => {{
+    const rect = track.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    vid.currentTime = pct * vid.duration;
+  }});
+
+  // Unmute pill
+  pill.addEventListener('click', (e) => {{
+    e.stopPropagation();
+    vid.muted = !vid.muted;
+    if (!vid.muted) vid.volume = volSl.value > 0 ? +volSl.value : 0.8;
+    updateMuteUI(vid.muted);
+  }});
+
+  // Vol button
+  volBtn.addEventListener('click', (e) => {{
+    e.stopPropagation();
+    vid.muted = !vid.muted;
+    if (!vid.muted) vid.volume = +volSl.value || 0.8;
+    updateMuteUI(vid.muted);
+  }});
+
+  // Vol slider
+  volSl.addEventListener('input', (e) => {{
+    e.stopPropagation();
+    vid.volume = +volSl.value;
+    vid.muted  = (+volSl.value === 0);
+    updateMuteUI(vid.muted);
+  }});
+
+  // Fullscreen
+  fsBtn.addEventListener('click', (e) => {{
+    e.stopPropagation();
+    if (document.fullscreenElement) document.exitFullscreen();
+    else shell.requestFullscreen().catch(()=>{{}});
+  }});
+
+  // Init volume
+  vid.volume = 0.8;
+  updateMuteUI(true); // starts muted (autoplay requirement)
+
+  // ── Shorts ──
+  document.querySelectorAll('.short-thumb').forEach(card => {{
+    const sv = card.querySelector('video');
+
+    card.addEventListener('mouseenter', () => sv.play().catch(()=>{{}}));
+    card.addEventListener('mouseleave', () => {{ sv.pause(); sv.currentTime = 0; }});
+
+    card.addEventListener('click', () => {{
+      const newSrc   = card.dataset.src;
+      const newLabel = card.dataset.label;
+      const src = vid.querySelector('source');
+      if (src && newSrc) {{
+        const wasMuted = vid.muted;
+        vid.pause();
+        src.setAttribute('src', newSrc);
+        vid.load();
+        vid.muted = wasMuted; // preserve mute state
+        vid.volume = +volSl.value || 0.8;
+        vid.play().catch(()=>{{}});
+        updateMuteUI(wasMuted);
+      }}
+      document.querySelectorAll('.short-thumb').forEach(c => c.classList.remove('short-thumb-active'));
+      card.classList.add('short-thumb-active');
     }});
-    </script>
-    """
-    import streamlit.components.v1 as components
-    components.html(shorts_html, height=520, scrolling=False)
+  }});
+}})();
+</script>
+</body>
+</html>
+"""
 
-    # 4. GALLERY & REMAINDER OF PAGE
+    components.html(video_html, height=860, scrolling=False)
+
+    # ── 3. GALLERY ───────────────────────────────────────────────────────────
     st.markdown(f"""
     <div class="ed-container">
         <div class="ed-section-header">
@@ -631,7 +656,7 @@ def render():
             <div class="ed-masonry-item ed-masonry-item-large">
                 <img src="{img1}" alt="CPO ngang">
                 <div class="ed-masonry-overlay"></div>
-                <div class="ed-masonry-caption">Thảo luận chiến lược (CPO Kick-off)</div>
+                <div class="ed-masonry-caption">Thảo luận chiến lược — CPO Kick-off</div>
             </div>
             <div class="ed-masonry-item">
                 <img src="{img2}" alt="Không khí làm việc">
@@ -639,7 +664,7 @@ def render():
                 <div class="ed-masonry-caption">Không khí làm việc</div>
             </div>
             <div class="ed-masonry-item ed-masonry-item-tall">
-                <img src="{img3}" alt="Giám đốc vùng">
+                <img src="{img3}" alt="GDV">
                 <div class="ed-masonry-overlay"></div>
                 <div class="ed-masonry-caption">Chia sẻ từ Lãnh đạo</div>
             </div>
@@ -652,7 +677,7 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
-    # 5. TIMELINE SECTION
+    # ── 4. TIMELINE ──────────────────────────────────────────────────────────
     st.markdown("""
     <div class="ed-container">
         <div class="ed-timeline-section">
@@ -672,7 +697,7 @@ def render():
                     <div class="ed-timeline-big-num">300+</div>
                     <div class="ed-timeline-content">
                         <h4>Giờ Xử Lý &amp; Làm Sạch Data</h4>
-                        <p>Chuẩn hóa dữ liệu thô, map với hệ thống HRIS và thiết lập cấu trúc phân nhóm (Division/Section) không tì vết.</p>
+                        <p>Chuẩn hóa dữ liệu thô, map với hệ thống HRIS và thiết lập cấu trúc phân nhóm không tì vết.</p>
                     </div>
                 </div>
                 <div class="ed-timeline-node">
@@ -687,7 +712,7 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
-    # 6. TEAM SECTION
+    # ── 5. TEAM ───────────────────────────────────────────────────────────────
     st.markdown("""
     <div class="ed-container">
         <div class="ed-team-section">
@@ -718,4 +743,3 @@ def render():
         </div>
     </div>
     """, unsafe_allow_html=True)
-
