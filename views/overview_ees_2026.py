@@ -430,7 +430,12 @@ def render():
                 <div class="ed-masonry-caption">Chiến dịch EES RACE</div>
             </div>
         </div>
+    </div>
+    """, unsafe_allow_html=True)
 
+    # 5. TIMELINE SECTION
+    st.markdown("""
+    <div class="ed-container">
         <div class="ed-timeline-section">
             <div class="ed-timeline-left">
                 <h2>Nhìn lại<br>Hành trình</h2>
@@ -460,7 +465,12 @@ def render():
                 </div>
             </div>
         </div>
+    </div>
+    """, unsafe_allow_html=True)
 
+    # 6. TEAM SECTION
+    st.markdown("""
+    <div class="ed-container">
         <div class="ed-team-section">
             <div class="ed-section-header">
                 <h2 class="ed-section-title">Đội ngũ thực hiện</h2>
