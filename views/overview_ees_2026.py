@@ -294,6 +294,146 @@ def render():
         border: 1px solid #E2E8F0;
         background: #0F172A;
     }
+
+    /* HERO VIDEO - màn hình lớn ở đầu trang */
+    .hero-video-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 21 / 9;
+        border-radius: 20px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0A1F44 0%, #14345E 100%);
+        box-shadow: 0 20px 50px rgba(10,31,68,0.25);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .hero-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .hero-video-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(10,31,68,0.0) 0%, rgba(10,31,68,0.0) 40%, rgba(10,31,68,0.75) 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-start;
+        padding: 32px 40px;
+        pointer-events: none;
+    }
+    .hero-play-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: rgba(255,82,0,0.92);
+        color: #fff;
+        font-size: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-left: 8px;
+        box-shadow: 0 8px 24px rgba(255,82,0,0.5);
+        opacity: 0.85;
+        transition: all 0.3s ease;
+    }
+    .hero-video-wrapper:hover .hero-play-icon {
+        transform: translate(-50%, -50%) scale(1.08);
+        opacity: 1;
+    }
+    .hero-video-caption {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .hero-video-kicker {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #FF8C42;
+    }
+    .hero-video-title {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    /* SHORTS ROW - 4 video ngang */
+    .shorts-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+    @media (max-width: 900px) {
+        .shorts-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    .short-card {
+        position: relative;
+        aspect-ratio: 9 / 16;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #0F172A;
+        box-shadow: 0 6px 18px rgba(10,31,68,0.15);
+        cursor: pointer;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    .short-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 32px rgba(10,31,68,0.25);
+    }
+    .short-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .short-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.65) 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 10px;
+        pointer-events: none;
+    }
+    .short-play {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.92);
+        color: #0A1F44;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-left: 3px;
+        margin-top: auto;
+        opacity: 0.9;
+        transition: all 0.3s ease;
+    }
+    .short-card:hover .short-play {
+        background: #FF5200;
+        color: #fff;
+        transform: scale(1.1);
+    }
+    .short-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #fff;
+        text-align: center;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    }
     </style>
     """
 
@@ -342,21 +482,34 @@ def render():
     """, unsafe_allow_html=True)
 
     main_video_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780389451/LOGO%20GHN/Action_video_dgq3f7.mp4"
-    
-    # We use Streamlit columns to center or layout the main video
-    col1, col2, col3 = st.columns([1, 10, 1])
-    with col2:
-        st.markdown('<div class="video-container-wrapper">', unsafe_allow_html=True)
-        try:
-            st.video(main_video_url)
-        except Exception:
-            st.error("Không tải được video chính từ Cloudinary")
-        st.markdown('</div>', unsafe_allow_html=True)
 
-    # 3. HORIZONTAL VIDEOS SECTION
-    st.markdown("""
+    # 2. HERO VIDEO SECTION (màn hình lớn với autoplay + overlay)
+    st.markdown(f"""
     <div class="ed-container">
         <div class="ed-section-header" style="margin-top: 20px; margin-bottom: 20px;">
+            <h2 class="ed-section-title">EES 2026 — Highlight Reel</h2>
+            <span class="ed-section-tag">Main Video</span>
+        </div>
+        <div class="hero-video-wrapper">
+            <video class="hero-video" autoplay muted loop playsinline poster="">
+                <source src="{main_video_url}" type="video/mp4">
+                Trình duyệt không hỗ trợ video.
+            </video>
+            <div class="hero-video-overlay">
+                <div class="hero-play-icon">▶</div>
+                <div class="hero-video-caption">
+                    <span class="hero-video-kicker">EES 2026</span>
+                    <span class="hero-video-title">Hành trình gắn kết toàn GHN</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3. HORIZONTAL SHORTS VIDEOS
+    st.markdown("""
+    <div class="ed-container">
+        <div class="ed-section-header" style="margin-top: 40px; margin-bottom: 20px;">
             <h2 class="ed-section-title" style="font-size: 1.5rem;">Khoảnh khắc đáng nhớ</h2>
             <span class="ed-section-tag">Shorts</span>
         </div>
@@ -368,38 +521,56 @@ def render():
     v3_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393954/LOGO%20GHN/IMG_1232_ykz6pz.mp4"
     v4_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393907/LOGO%20GHN/IMG_1723_gdh1gs.mp4"
 
-    # Streamlit horizontal columns
-    cols = st.columns(3)
-    with cols[0]:
-        st.markdown('<div class="video-container-horizontal">', unsafe_allow_html=True)
-        try:
-            st.video(v1_url)
-        except Exception:
-            pass
-        st.markdown('</div>', unsafe_allow_html=True)
-    with cols[1]:
-        st.markdown('<div class="video-container-horizontal">', unsafe_allow_html=True)
-        try:
-            st.video(v2_url)
-        except Exception:
-            pass
-        st.markdown('</div>', unsafe_allow_html=True)
-    with cols[2]:
-        st.markdown('<div class="video-container-horizontal">', unsafe_allow_html=True)
-        try:
-            st.video(v3_url)
-        except Exception:
-            pass
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    cols2 = st.columns(3)
-    with cols2[0]:
-        st.markdown('<div class="video-container-horizontal">', unsafe_allow_html=True)
-        try:
-            st.video(v4_url)
-        except Exception:
-            pass
-        st.markdown('</div>', unsafe_allow_html=True)
+    shorts_html = f"""
+    <div class="ed-container">
+        <div class="shorts-row">
+            <div class="short-card">
+                <video class="short-video" muted loop playsinline preload="metadata">
+                    <source src="{v1_url}" type="video/mp4">
+                </video>
+                <div class="short-overlay">
+                    <div class="short-play">▶</div>
+                    <div class="short-label">Khoảnh khắc 1</div>
+                </div>
+            </div>
+            <div class="short-card">
+                <video class="short-video" muted loop playsinline preload="metadata">
+                    <source src="{v2_url}" type="video/mp4">
+                </video>
+                <div class="short-overlay">
+                    <div class="short-play">▶</div>
+                    <div class="short-label">Khoảnh khắc 2</div>
+                </div>
+            </div>
+            <div class="short-card">
+                <video class="short-video" muted loop playsinline preload="metadata">
+                    <source src="{v3_url}" type="video/mp4">
+                </video>
+                <div class="short-overlay">
+                    <div class="short-play">▶</div>
+                    <div class="short-label">Khoảnh khắc 3</div>
+                </div>
+            </div>
+            <div class="short-card">
+                <video class="short-video" muted loop playsinline preload="metadata">
+                    <source src="{v4_url}" type="video/mp4">
+                </video>
+                <div class="short-overlay">
+                    <div class="short-play">▶</div>
+                    <div class="short-label">Khoảnh khắc 4</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.querySelectorAll('.short-card').forEach(card => {{
+        const video = card.querySelector('video');
+        card.addEventListener('mouseenter', () => video.play().catch(() => {{}}));
+        card.addEventListener('mouseleave', () => {{ video.pause(); video.currentTime = 0; }});
+    }});
+    </script>
+    """
+    st.markdown(shorts_html, unsafe_allow_html=True)
 
     # 4. GALLERY & REMAINDER OF PAGE
     st.markdown(f"""
