@@ -744,7 +744,7 @@ def compute_kpis(df):
         return (w[cond & valid_mask].sum() / w[valid_mask].sum()) * 100
 
     ei_mean = weighted_avg(df['EI']) if 'EI' in df.columns else 0
-    enps_col = df.get('eNPS', pd.Series(dtype=float))
+    enps_col = df.get('eNPS', pd.Series(np.nan, index=df.index))
     n_valid_enps = enps_col.notna()
     
     promoters = w[enps_col >= 9].sum()
@@ -754,14 +754,14 @@ def compute_kpis(df):
     enps_score = weighted_pct(enps_col >= 9, n_valid_enps) - weighted_pct(enps_col <= 6, n_valid_enps)
     
     mei_avg = weighted_avg(df['MEI']) if 'MEI' in df.columns else 0
-    intent_col = df.get('intent', pd.Series(dtype=float))
+    intent_col = df.get('intent', pd.Series(np.nan, index=df.index))
     intent_valid = intent_col.notna()
     intent_pct = weighted_pct(intent_col <= 2, intent_valid)
     intent_pct_high = weighted_pct(intent_col >= 4, intent_valid)
     
     burnout_pct = weighted_pct(df.get('burnout_risk', pd.Series(0, index=df.index)) > 0)
 
-    q22_col = df.get('stay_intention', pd.Series(dtype=float))
+    q22_col = df.get('stay_intention', pd.Series(np.nan, index=df.index))
     q22_valid = q22_col.notna()
     stay_score_avg = round(weighted_avg(q22_col), 2)
     stay_flight_pct = round(weighted_pct(q22_col <= 2, q22_valid), 1)
