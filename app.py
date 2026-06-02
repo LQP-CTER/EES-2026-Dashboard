@@ -54,6 +54,64 @@ except Exception:
 
 st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", layout="wide", initial_sidebar_state="expanded")
 
+# Tắt hoàn toàn hiệu ứng "làm mờ" trang cũ của Streamlit ngay từ đầu
+# Đồng thời biến Spinner mặc định thành Loading Overlay toàn màn hình cực đẹp
+st.markdown("""
+<style>
+    /* Xóa hiệu ứng mờ nhòe kẹt trang cũ */
+    [data-stale="true"], 
+    [data-testid="stale-element-container"], 
+    .stale-element, 
+    .stale {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Biến Spinner thành Loading Overlay siêu mượt */
+    [data-testid="stSpinner"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        z-index: 99999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        backdrop-filter: blur(8px) !important;
+    }
+    
+    [data-testid="stSpinner"] > div {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 15px !important;
+        transform: scale(1.3) !important;
+        background: #FFFFFF !important;
+        padding: 30px 40px !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 40px rgba(10,31,68,0.1) !important;
+        border: 1px solid rgba(255,82,0,0.1) !important;
+    }
+    
+    /* Đổi màu vòng xoay loading sang màu cam GHN */
+    [data-testid="stSpinner"] div[class*="st-"] circle {
+        stroke: #FF5200 !important;
+    }
+    
+    /* Chỉnh chữ loading */
+    [data-testid="stSpinner"] p {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+        color: #0A1F44 !important;
+        margin: 0 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Check Admin Token
 if 'token' in st.query_params:
     if st.query_params['token'] == st.secrets.get("ADMIN_TOKEN", ""):
@@ -747,6 +805,17 @@ footer {visibility: hidden !important;}
 .viewerBadge_container {display: none !important;}
 .viewerBadge_link {display: none !important;}
 [class*="viewerBadge"] {display: none !important;}
+
+/* Fix the blurry loading issue by completely hiding stale elements */
+[data-testid="stale-element-container"], 
+[data-stale="true"], 
+.stale, 
+[data-testid*="stale"],
+div.st-emotion-cache-1kyxreq {
+    opacity: 0 !important;
+    transition: none !important;
+    visibility: hidden !important;
+}
 
 html, body, .stApp {
     font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
