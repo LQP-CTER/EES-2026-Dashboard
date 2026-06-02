@@ -187,22 +187,20 @@ def render():
     """, unsafe_allow_html=True)
 
     # ── 2. VIDEO SECTION (single components.html so JS works) ────────────────
-    shorts_cards = ""
-    for i, (url, label) in enumerate(short_urls):
-        active = "short-thumb-active" if i == 0 else ""
-        shorts_cards += f"""
-        <div class="short-thumb {active}" data-src="{url}" data-label="{label}">
-            <video class="short-video" muted loop playsinline preload="metadata">
+    # Playlist = main highlight reel + 4 shorts. The main reel is the first item.
+    playlist = [(main_video_url, "Highlight Reel")] + short_urls
+
+    dock_cards = ""
+    for i, (url, label) in enumerate(playlist):
+        active = "dock-card-active" if i == 0 else ""
+        dock_cards += f"""
+        <div class="dock-card {active}" data-src="{url}" data-label="{label}">
+            <video class="dock-video" muted loop playsinline preload="metadata">
                 <source src="{url}" type="video/mp4">
             </video>
-            <div class="short-overlay">
-                <div class="short-play">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </div>
-                <div class="short-label">{label}</div>
-            </div>
+            <div class="dock-card-scrim"></div>
+            <div class="dock-eq"><span></span><span></span><span></span></div>
+            <span class="dock-card-title">{label}</span>
         </div>"""
 
     video_html = f"""
@@ -237,7 +235,7 @@ def render():
   .player-shell {{
     position: relative;
     width: 100%;
-    aspect-ratio: 21 / 9;
+    aspect-ratio: 16 / 9;
     border-radius: 20px;
     overflow: hidden;
     background: #000;
@@ -298,11 +296,14 @@ def render():
   /* ── Control bar ── */
   .ctrl-bar {{
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 16px 20px 18px;
+    padding: 16px 164px 18px 20px;   /* right padding clears the playlist dock */
     display: flex; flex-direction: column; gap: 10px;
     opacity: 0; transform: translateY(6px);
     transition: opacity .3s ease, transform .3s ease;
     z-index: 10;
+  }}
+  @media (max-width: 820px) {{
+    .ctrl-bar {{ padding-right: 124px; }}
   }}
 
   /* Progress track */
@@ -357,71 +358,96 @@ def render():
     border-radius: 50%; background: #fff; cursor: pointer;
   }}
 
-  /* Video title */
-  .vid-title {{
-    font-size: .78rem; font-weight: 700; color: rgba(255,255,255,.7);
-    letter-spacing: .06em; text-transform: uppercase;
-  }}
-
-  /* ── Shorts row ── */
-  .shorts-header {{
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: 20px; margin-bottom: 14px;
-  }}
-  .shorts-label {{
-    font-size: .95rem; font-weight: 800; color: #0A1F44; letter-spacing: -.01em;
-  }}
-  .shorts-hint {{
-    font-size: .72rem; font-weight: 600; color: #94A3B8;
-  }}
-
-  .shorts-row {{
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+  /* ── Frosted glass playlist dock (right side, over the player) ── */
+  .dock {{
+    position: absolute;
+    top: 20px; right: 20px; bottom: 20px;
+    width: 124px;
+    display: flex; flex-direction: column;
     gap: 12px;
+    padding: 14px 12px;
+    border-radius: 20px;
+    background: rgba(10,16,32,.38);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    z-index: 12;
+    overflow-y: auto;
+    transition: opacity .35s ease, transform .35s ease;
+  }}
+  .dock::-webkit-scrollbar {{ width: 0; }}
+  .dock-head {{
+    font-size: .58rem; font-weight: 800; letter-spacing: .16em;
+    text-transform: uppercase; color: rgba(255,255,255,.65);
+    text-align: center; padding-bottom: 2px;
   }}
 
-  .short-thumb {{
+  .dock-card {{
     position: relative;
-    aspect-ratio: 9 / 16;
+    width: 100%;
+    aspect-ratio: 1 / 1;        /* square cards */
     border-radius: 14px;
     overflow: hidden;
-    background: #0F172A;
+    flex-shrink: 0;
     cursor: pointer;
-    transition: transform .3s ease, box-shadow .3s ease;
-    outline: 3px solid transparent;
-    outline-offset: 2px;
+    background: #0F172A;
+    border: 2px solid transparent;
+    transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s ease, border-color .3s ease;
   }}
-  .short-thumb:hover {{
-    transform: translateY(-5px);
-    box-shadow: 0 16px 36px rgba(10,31,68,.25);
+  .dock-card:hover {{
+    transform: scale(1.06);
+    box-shadow: 0 10px 24px rgba(0,0,0,.4);
   }}
-  .short-thumb-active {{
-    outline-color: #FF5200;
-    box-shadow: 0 0 0 3px rgba(255,82,0,.25);
+  .dock-card-active {{
+    border-color: #FF5200;
+    box-shadow: 0 0 0 2px rgba(255,82,0,.35), 0 8px 20px rgba(255,82,0,.3);
   }}
-  .short-video {{
+  .dock-video {{
     width: 100%; height: 100%; object-fit: cover; display: block;
+    /* idle cards stay slightly blurred + dimmed; sharpen on hover/active */
+    filter: blur(2px) brightness(.62);
+    transform: scale(1.05);
+    transition: filter .35s ease, transform .35s ease;
   }}
-  .short-overlay {{
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,.7) 100%);
-    display: flex; flex-direction: column;
-    justify-content: space-between; align-items: center;
-    padding: 12px 8px 14px;
+  .dock-card:hover .dock-video,
+  .dock-card-active .dock-video {{
+    filter: blur(0) brightness(1);
+    transform: scale(1);
+  }}
+  .dock-card-scrim {{
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.78) 100%);
+  }}
+  .dock-card-title {{
+    position: absolute; left: 8px; right: 8px; bottom: 7px;
+    font-size: .6rem; font-weight: 700; color: #fff;
+    text-align: center; line-height: 1.2;
+    text-shadow: 0 1px 3px rgba(0,0,0,.8);
     pointer-events: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }}
-  .short-play {{
-    width: 40px; height: 40px; border-radius: 50%;
-    background: rgba(255,255,255,.9); color: #0A1F44;
-    display: flex; align-items: center; justify-content: center;
-    margin-top: auto; transition: all .25s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  /* Now-playing equalizer bars (active card only) */
+  .dock-eq {{
+    position: absolute; top: 7px; left: 7px;
+    display: none; align-items: flex-end; gap: 2px;
+    height: 12px; z-index: 2;
   }}
-  .short-thumb:hover .short-play {{ background: #FF5200; color: #fff; transform: scale(1.1); }}
-  .short-label {{
-    font-size: .72rem; font-weight: 700; color: #fff; text-align: center;
-    text-shadow: 0 1px 4px rgba(0,0,0,.7);
+  .dock-card-active .dock-eq {{ display: flex; }}
+  .dock-eq span {{
+    width: 3px; background: #FF5200; border-radius: 2px;
+    animation: eq 0.9s ease-in-out infinite;
+  }}
+  .dock-eq span:nth-child(1) {{ height: 6px;  animation-delay: 0s;   }}
+  .dock-eq span:nth-child(2) {{ height: 12px; animation-delay: .25s; }}
+  .dock-eq span:nth-child(3) {{ height: 8px;  animation-delay: .5s;  }}
+  @keyframes eq {{
+    0%,100% {{ transform: scaleY(.4); }}
+    50%     {{ transform: scaleY(1); }}
+  }}
+
+  @media (max-width: 820px) {{
+    .dock {{ width: 92px; }}
   }}
 </style>
 </head>
@@ -487,15 +513,12 @@ def render():
       </button>
     </div>
   </div>
-</div>
 
-<!-- Shorts -->
-<div class="shorts-header">
-  <span class="shorts-label">Khoảnh khắc đáng nhớ</span>
-  <span class="shorts-hint">Click để phát · Hover để xem trước</span>
-</div>
-<div class="shorts-row">
-{shorts_cards}
+  <!-- Frosted glass playlist dock -->
+  <div class="dock" id="dock">
+    <div class="dock-head">Danh sách</div>
+    {dock_cards}
+  </div>
 </div>
 
 <script>
@@ -558,7 +581,7 @@ def render():
 
   // Click shell = toggle play
   shell.addEventListener('click', (e) => {{
-    if (e.target.closest('.ctrl-bar') || e.target.closest('.unmute-pill')) return;
+    if (e.target.closest('.ctrl-bar') || e.target.closest('.unmute-pill') || e.target.closest('.dock')) return;
     if (vid.paused) {{ vid.play().catch(()=>{{}}); popCentre(false); }}
     else            {{ vid.pause(); popCentre(true); }}
   }});
@@ -612,29 +635,38 @@ def render():
   vid.volume = 0.8;
   updateMuteUI(true); // starts muted (autoplay requirement)
 
-  // ── Shorts ──
-  document.querySelectorAll('.short-thumb').forEach(card => {{
+  // ── Playlist dock ──
+  document.querySelectorAll('.dock-card').forEach(card => {{
     const sv = card.querySelector('video');
 
-    card.addEventListener('mouseenter', () => sv.play().catch(()=>{{}}));
-    card.addEventListener('mouseleave', () => {{ sv.pause(); sv.currentTime = 0; }});
+    // Hover preview (only for non-active cards)
+    card.addEventListener('mouseenter', () => {{
+      if (!card.classList.contains('dock-card-active')) sv.play().catch(()=>{{}});
+    }});
+    card.addEventListener('mouseleave', () => {{
+      if (!card.classList.contains('dock-card-active')) {{ sv.pause(); sv.currentTime = 0; }}
+    }});
 
     card.addEventListener('click', () => {{
-      const newSrc   = card.dataset.src;
-      const newLabel = card.dataset.label;
+      const newSrc = card.dataset.src;
       const src = vid.querySelector('source');
-      if (src && newSrc) {{
+      if (src && newSrc && src.getAttribute('src') !== newSrc) {{
         const wasMuted = vid.muted;
         vid.pause();
         src.setAttribute('src', newSrc);
         vid.load();
-        vid.muted = wasMuted; // preserve mute state
+        vid.muted = wasMuted;            // preserve mute/unmute choice
         vid.volume = +volSl.value || 0.8;
         vid.play().catch(()=>{{}});
         updateMuteUI(wasMuted);
       }}
-      document.querySelectorAll('.short-thumb').forEach(c => c.classList.remove('short-thumb-active'));
-      card.classList.add('short-thumb-active');
+      // Reset preview state on all cards, mark this active
+      document.querySelectorAll('.dock-card').forEach(c => {{
+        c.classList.remove('dock-card-active');
+        const v = c.querySelector('video');
+        v.pause(); v.currentTime = 0;
+      }});
+      card.classList.add('dock-card-active');
     }});
   }});
 }})();
@@ -643,7 +675,7 @@ def render():
 </html>
 """
 
-    components.html(video_html, height=860, scrolling=False)
+    components.html(video_html, height=760, scrolling=False)
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     st.markdown(f"""
