@@ -814,7 +814,7 @@ from views import (
     view_a_current_state, view_b_problem_groups,
     view_c_key_issues, view_d_root_cause,
     view_e_impact_risk, view_f_action_priority, view_g_kpi_impact,
-    view_h_appendix, view_i_data_trust
+    view_h_appendix
 )
 from shared.codebook import PILLAR_META, PILLAR_ORDER
 
@@ -1520,10 +1520,6 @@ with st.sidebar:
         index_map[curr_idx] = (label, "Xem Báo Cáo")
         curr_idx += 1
 
-    menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
-    index_map[curr_idx] = ("Độ tin cậy dữ liệu", None)
-    curr_idx += 1
-
     menu_items.append(sac.MenuItem("Phụ lục"))
     index_map[curr_idx] = ("Phụ lục", None)
     curr_idx += 1
@@ -1544,14 +1540,13 @@ with st.sidebar:
     is_overview = (sel_dashboard == OVERVIEW_LABEL)
     is_company = (sel_dashboard == COMPANY_LABEL)
     is_appendix = (sel_dashboard == "Phụ lục")
-    is_data_trust = (sel_dashboard == "Độ tin cậy dữ liệu")
 
     # Initialize scope variables
     sel_group   = None
     df_filtered = None
     n_before    = 0
 
-    if is_appendix or is_data_trust or is_overview:
+    if is_appendix or is_overview:
         pass
 
     elif is_company:
@@ -1734,15 +1729,6 @@ if is_overview:
             overview_ees_2026.render()
     except Exception as e:
         st.error(f"Lỗi khi tải Overview EES 2026: {e}")
-        import traceback
-        st.code(traceback.format_exc())
-
-elif is_data_trust:
-    try:
-        with st.spinner("Đang tải trang Độ tin cậy dữ liệu..."):
-            view_i_data_trust.render()
-    except Exception as e:
-        st.error(f"Lỗi khi tải Độ tin cậy dữ liệu: {e}")
         import traceback
         st.code(traceback.format_exc())
 

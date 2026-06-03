@@ -991,3 +991,7 @@ def render():
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── 6. ĐỘ TIN CẬY DỮ LIỆU (subsection mở rộng) ────────────────────────
+    from views import overview_data_reliability
+    overview_data_reliability.render()
