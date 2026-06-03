@@ -5,7 +5,10 @@ import pandas as pd
 import numpy as np
 
 from shared.codebook import get_role_question, get_pillar_questions
-from shared.codebook import EWS_TENURE_THRESHOLD, TENURE_MAP, TENURE_LABELS
+from shared.codebook import (
+    EWS_TENURE_THRESHOLD, TENURE_MAP, TENURE_LABELS,
+    ENPS_PROMOTER_MIN, ENPS_DETRACTOR_MAX
+)
 
 def _safe_mean(series):
     vals = series.dropna()
