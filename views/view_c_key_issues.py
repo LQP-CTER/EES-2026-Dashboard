@@ -15,9 +15,24 @@ from utils.ai_generator import render_ai_insight_card
 
 def render(df, cfg, pillar_filter=None):
     codebook = cfg.get('codebook', {})
-    open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
-
-    q_options = {q: codebook[q]['tên'] for q in open_cols if q in df.columns}
+    
+    # Lấy open_cols từ df.attrs (đã rename thành C24, C25, C26)
+    open_cols = df.attrs.get('open_cols', [])
+    if not open_cols:
+        # Fallback: đọc từ codebook và map Q32→C24, Q33→C25, Q34→C26
+        open_cols_raw = [q for q, info in codebook.items() if info.get('loại') == 'open']
+        q_to_c = {'Q32': 'C24', 'Q33': 'C25', 'Q34': 'C26'}
+        open_cols = [q_to_c.get(q, q) for q in open_cols_raw]
+    
+    # Build options: map C24→tên từ codebook
+    c_to_q = {'C24': 'Q32', 'C25': 'Q33', 'C26': 'Q34'}
+    q_options = {}
+    for c in open_cols:
+        if c in df.columns:
+            q_name = c_to_q.get(c, c)
+            if q_name in codebook:
+                q_options[c] = codebook[q_name]['tên']
+    
     if not q_options:
         st.info("Nhóm này không có câu hỏi mở.")
         return
