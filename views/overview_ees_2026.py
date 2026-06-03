@@ -34,9 +34,18 @@ def render():
     # ── Global page CSS (no video rules here) ────────────────────────────────
     st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap');
+    
+    /* Override for the whole page */
+    html, body, [class*="st-"], .ed-container * {
+        font-family: 'Montserrat', sans-serif !important;
+    }
+    </style>
+
+    <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-    .ed-container { font-family:'Inter',sans-serif; color:#0A1F44; max-width:1200px; }
+    .ed-container { font-family:'Montserrat', sans-serif; color:#0A1F44; max-width:1200px; }
 
     /* Hero */
     .ed-hero { margin-bottom: 52px; }
@@ -211,7 +220,7 @@ def render():
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
-    font-family: 'Inter', -apple-system, sans-serif;
+    font-family: 'Montserrat', sans-serif;
     background: transparent;
     padding: 0;
   }}
@@ -664,7 +673,7 @@ def render():
     ]
 
     gallery_items_html = ""
-    for url, caption in gallery_images:
+    for url, caption in gallery_images * 2:
         gallery_items_html += f'''
         <div class="gl-item">
             <img class="gl-img" src="{url}" alt="{caption}" loading="lazy">
@@ -676,10 +685,13 @@ def render():
 <html>
 <head>
 <meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap" rel="stylesheet">
 <style>
   body {{
     margin: 0; padding: 0;
-    font-family: "Inter", "Helvetica Neue", sans-serif;
+    font-family: "Montserrat", sans-serif;
     background: transparent;
     overflow-x: hidden;
   }}
@@ -702,15 +714,16 @@ def render():
   .gl-wrap {{
     display: flex;
     gap: 24px;
-    overflow-x: auto;
     padding: 24px 12px 60px 12px;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Firefox */
+    width: max-content;
+    animation: autoScroll 30s linear infinite;
   }}
-  .gl-wrap::-webkit-scrollbar {{
-    display: none; /* Chrome/Safari */
+  .gl-wrap:hover {{
+    animation-play-state: paused;
+  }}
+  @keyframes autoScroll {{
+    0% {{ transform: translateX(0); }}
+    100% {{ transform: translateX(calc(-50% - 12px)); }}
   }}
 
   .gl-item {{
@@ -835,6 +848,312 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
+
+
+
+    # ── 4.5. NEXT STEPS TIMELINE ─────────────────────────────────────────────
+    timeline_html = """
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0; padding: 0;
+    font-family: "Montserrat", sans-serif;
+
+    background: transparent;
+  }
+/* ── VERTICAL TIMELINE ── */
+.vt-container {
+    max-width: 1000px;
+    margin: 20px auto 40px auto;
+    padding: 0 20px;
+}
+.vt-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+.vt-title {
+    color: #FF5200;
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+.vt-timeline {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+/* The central line */
+.vt-timeline::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    background-color: #FFD5BF;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    margin-left: -2px;
+    border-radius: 4px;
+}
+
+/* Container for each timeline item */
+.vt-item {
+    padding: 10px 40px;
+    position: relative;
+    background-color: transparent;
+    width: 50%;
+    box-sizing: border-box;
+}
+
+/* Position left and right */
+.vt-left {
+    left: 0;
+}
+.vt-right {
+    left: 50%;
+}
+
+/* The circles on the line */
+.vt-item::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    right: -10px;
+    background-color: #fff;
+    border: 4px solid #0052CC;
+    top: 30px;
+    border-radius: 50%;
+    z-index: 1;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 4px rgba(0,82,204,0.1);
+}
+.vt-right::after {
+    left: -10px;
+}
+
+/* The actual content card */
+.vt-content {
+    padding: 24px 30px;
+    background: #fff;
+    position: relative;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid #E2E8F0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.vt-content:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,82,204,0.15);
+    border-color: #0052CC;
+}
+
+/* Arrows pointing to the line */
+.vt-left .vt-content::after {
+    content: " ";
+    position: absolute;
+    top: 30px;
+    right: -12px;
+    border-width: 12px 0 12px 12px;
+    border-style: solid;
+    border-color: transparent transparent transparent #fff;
+}
+.vt-right .vt-content::after {
+    content: " ";
+    position: absolute;
+    top: 30px;
+    left: -12px;
+    border-width: 12px 12px 12px 0;
+    border-style: solid;
+    border-color: transparent #fff transparent transparent;
+}
+
+/* Typography inside card */
+.vt-date {
+    display: flex;
+    align-items: center;
+    color: #0052CC;
+    font-size: 0.9rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.vt-date svg {
+    margin-right: 6px;
+}
+.vt-step-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #0A1F44;
+    margin: 0 0 16px 0;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+.vt-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.vt-list li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.5;
+}
+.vt-list li::before {
+    content: '❯';
+    position: absolute;
+    left: 0;
+    color: #0052CC;
+    font-size: 0.8rem;
+    top: 2px;
+}
+
+/* Make Step 2 stand out like in the image (but vertical style) */
+.vt-item.vt-highlight::after {
+    border-color: #FF5200;
+    box-shadow: 0 0 0 4px rgba(255,82,0,0.15);
+}
+.vt-item.vt-highlight .vt-content {
+    background: #FF5200;
+    color: #fff;
+    border-color: #FF5200;
+}
+.vt-item.vt-highlight:hover .vt-content {
+    box-shadow: 0 15px 40px rgba(255,82,0,0.25);
+}
+.vt-item.vt-highlight .vt-left .vt-content::after {
+    border-color: transparent transparent transparent #FF5200;
+}
+.vt-item.vt-highlight.vt-right .vt-content::after {
+    border-color: transparent #FF5200 transparent transparent;
+}
+.vt-item.vt-highlight .vt-date,
+.vt-item.vt-highlight .vt-step-title,
+.vt-item.vt-highlight .vt-list li {
+    color: #fff;
+}
+.vt-item.vt-highlight .vt-list li::before {
+    color: #FFD5BF;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+    .vt-timeline::after {
+        left: 24px;
+    }
+    .vt-item {
+        width: 100%;
+        padding-left: 60px;
+        padding-right: 0;
+    }
+    .vt-left, .vt-right {
+        left: 0;
+    }
+    .vt-left::after, .vt-right::after {
+        left: 14px;
+    }
+    .vt-left .vt-content::after, .vt-right .vt-content::after {
+        left: -12px;
+        right: auto;
+        border-width: 12px 12px 12px 0;
+        border-color: transparent #fff transparent transparent;
+    }
+    .vt-item.vt-highlight.vt-left .vt-content::after,
+    .vt-item.vt-highlight.vt-right .vt-content::after {
+        border-color: transparent #FF5200 transparent transparent;
+    }
+}
+</style>
+</head>
+<body>
+<div class="vt-container">
+    <div class="vt-header">
+        <h2 class="vt-title">SAU KHẢO SÁT GHN SẼ LÀM GÌ</h2>
+    </div>
+    
+    <div class="vt-timeline">
+        <!-- Step 1 (Left) -->
+        <div class="vt-item vt-left">
+            <div class="vt-content">
+                <div class="vt-date">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    20/05/2026
+                </div>
+                <h3 class="vt-step-title">Đóng khảo sát</h3>
+                <ul class="vt-list">
+                    <li>Thông báo cảm ơn toàn công ty</li>
+                    <li>Công bố kết quả EES Race (cá nhân, tập thể)</li>
+                    <li>Trao giải</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Step 2 (Right, Highlighted) -->
+        <div class="vt-item vt-right vt-highlight">
+            <div class="vt-content">
+                <div class="vt-date">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    THÁNG 6/2026
+                </div>
+                <h3 class="vt-step-title">Phân tích &amp; Báo cáo</h3>
+                <ul class="vt-list">
+                    <li>Tính các chỉ số gắn kết</li>
+                    <li>Phân loại và phân tích theo nhóm chủ đề</li>
+                    <li>Báo cáo kết quả theo Khối, phòng ban</li>
+                    <li>Kế hoạch và hành động cụ thể</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Step 3 (Left) -->
+        <div class="vt-item vt-left">
+            <div class="vt-content">
+                <div class="vt-date">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    THÁNG 7/2026
+                </div>
+                <h3 class="vt-step-title">Chia sẻ toàn công ty</h3>
+                <ul class="vt-list">
+                    <li>Công bố kết quả tổng quan</li>
+                    <li>Những điểm mà GHN đang làm tốt</li>
+                    <li>Các hành động dự kiến cải tiến từ GHN</li>
+                    <li>Trao đổi cụ thể đối với từng Khối/Phòng ban</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Step 4 (Right) -->
+        <div class="vt-item vt-right">
+            <div class="vt-content">
+                <div class="vt-date">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    T8 - T9/2026
+                </div>
+                <h3 class="vt-step-title">Theo dõi và Đo lường</h3>
+                <ul class="vt-list">
+                    <li>Triển khai kế hoạch hành động</li>
+                    <li>Báo cáo tiến độ cải tiến hàng tháng</li>
+                    <li>Đo lường tiến độ cải tiến</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+"""
+    components.html(timeline_html, height=1300, scrolling=False)
     # ── 5. TEAM ───────────────────────────────────────────────────────────────
     st.markdown("""
     <div class="ed-container">
@@ -851,22 +1170,25 @@ def render():
                     <span class="ed-team-badge">Survey Design &amp; Ops</span>
                 </div>
                 <div class="ed-team-card">
-                    <div class="ed-team-role">Data &amp; Analytics</div>
-                    <div class="ed-team-name">Team People Analytics</div>
-                    <div class="ed-team-desc">Làm sạch, chuẩn hóa và phân tích toàn bộ tập dữ liệu 20,005 mẫu với mô hình NLP và phân nhóm theo EVP.</div>
-                    <span class="ed-team-badge">NLP · HRIS Mapping</span>
-                </div>
-                <div class="ed-team-card">
                     <div class="ed-team-role">Truyền thông &amp; Lan tỏa</div>
                     <div class="ed-team-name">HRBP các vùng &amp; KTC</div>
                     <div class="ed-team-desc">Hỗ trợ truyền thông nội bộ, thúc đẩy nhân viên tham gia khảo sát và đảm bảo tỉ lệ phản hồi đạt mức cao nhất tại từng khu vực.</div>
                     <span class="ed-team-badge">Internal Comms · Engagement Push</span>
+                </div>
+                <div class="ed-team-card">
+                    <div class="ed-team-role">Hạ tầng & Hệ thống</div>
+                    <div class="ed-team-name">Team IT</div>
+                    <div class="ed-team-desc">Đảm bảo hạ tầng server, băng thông mạng và hỗ trợ kỹ thuật liên tục trong suốt quá trình triển khai khảo sát.</div>
+                    <span class="ed-team-badge">System & Infrastructure</span>
+                </div>
+                <div class="ed-team-card">
+                    <div class="ed-team-role">Kỹ thuật Dữ liệu</div>
+                    <div class="ed-team-name">Team BI</div>
+                    <div class="ed-team-desc">Xây dựng kiến trúc cơ sở dữ liệu, tối ưu hóa đường ống xử lý dữ liệu (data pipeline) và kết nối API.</div>
+                    <span class="ed-team-badge">Data Engineering</span>
                 </div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── 6. ĐỘ TIN CẬY DỮ LIỆU (subsection mở rộng) ────────────────────────
-    from views import overview_data_reliability
-    overview_data_reliability.render()

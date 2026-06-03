@@ -231,8 +231,8 @@ def render():
     pct_keep    = round(eff_total / max(raw_total, 1) * 100, 1)
 
     c1, c2, c3, c4 = st.columns(4)
-    for col, label, val, sub, color, bg in zip(
-        c1, c2, c3, c4,
+    for col, (label, val, sub, color, bg) in zip(
+        [c1, c2, c3, c4],
         [("Mẫu thô", f"{raw_total:,}", "từ Supabase · 6 nhóm", NAVY, SLATE_50),
          ("Sau Dedup", f"{dedup_total:,}", "khử trùng lặp", BLUE, "#EFF6FF"),
          ("n hiệu dụng", f"{eff_total:,.1f}", f"~{pct_keep}% mẫu thô", GREEN, "#F0FDF4"),
