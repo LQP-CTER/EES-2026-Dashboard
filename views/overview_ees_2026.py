@@ -127,8 +127,9 @@ def render():
     .ed-timeline-right { display:flex; flex-direction:column; gap:44px; padding-top:8px; }
     .ed-timeline-node { display:flex; gap:32px; align-items:flex-start; }
     .ed-timeline-big-num {
-        font-size:4.5rem; font-weight:900; color:#FF5200; line-height:.85;
-        letter-spacing:-.05em; min-width:130px; text-align:right; flex-shrink:0;
+        font-size:3.8rem; font-weight:900; color:#FF5200; line-height:.85;
+        letter-spacing:-.04em; min-width:130px; text-align:right; flex-shrink:0;
+        word-break:keep-all; white-space:nowrap;
     }
     .ed-timeline-content h4 {
         font-size:1.4rem; font-weight:800; margin:0 0 10px;
@@ -719,17 +720,24 @@ def render():
             </div>
             <div class="ed-timeline-right">
                 <div class="ed-timeline-node">
-                    <div class="ed-timeline-big-num">14</div>
+                    <div class="ed-timeline-big-num">19</div>
                     <div class="ed-timeline-content">
                         <h4>Ngày Khảo Sát Thần Tốc</h4>
-                        <p>Phối hợp với các khối Vận hành trên toàn quốc để thu thập hơn 20,000 mẫu trong thời gian kỷ lục.</p>
+                        <p>Phối hợp với các khối Vận hành trên toàn quốc để thu thập hơn 20,000 phản hồi hợp lệ trong thời gian kỷ lục.</p>
                     </div>
                 </div>
                 <div class="ed-timeline-node">
-                    <div class="ed-timeline-big-num">300+</div>
+                    <div class="ed-timeline-big-num">20k+</div>
                     <div class="ed-timeline-content">
-                        <h4>Giờ Xử Lý &amp; Làm Sạch Data</h4>
-                        <p>Chuẩn hóa dữ liệu thô, map với hệ thống HRIS và thiết lập cấu trúc phân nhóm không tì vết.</p>
+                        <h4>Nhân Viên Đã Lên Tiếng</h4>
+                        <p>Hơn 20,000 nhân viên GHN đã chủ động nói lên tiếng nói của mình — mỗi phản hồi là một tín hiệu quan trọng để tổ chức lắng nghe và thay đổi.</p>
+                    </div>
+                </div>
+                <div class="ed-timeline-node">
+                    <div class="ed-timeline-big-num">∞</div>
+                    <div class="ed-timeline-content">
+                        <h4>Vòng Xử Lý &amp; Làm Sạch Dữ Liệu</h4>
+                        <p>Chuẩn hóa dữ liệu thô qua nhiều vòng kiểm tra, map với hệ thống HRIS và thiết lập cấu trúc phân nhóm (Division/Section) chính xác tuyệt đối.</p>
                     </div>
                 </div>
                 <div class="ed-timeline-node">
@@ -755,7 +763,7 @@ def render():
             <div class="ed-team-grid">
                 <div class="ed-team-card">
                     <div class="ed-team-role">Project Lead</div>
-                    <div class="ed-team-name">Team EX / C&amp;B</div>
+                    <div class="ed-team-name">Team EX &amp; L&amp;D</div>
                     <div class="ed-team-desc">Thiết kế bộ câu hỏi, phối hợp triển khai khảo sát và điều phối thu thập phản hồi toàn GHN.</div>
                     <span class="ed-team-badge">Survey Design &amp; Ops</span>
                 </div>
@@ -766,10 +774,10 @@ def render():
                     <span class="ed-team-badge">NLP · HRIS Mapping</span>
                 </div>
                 <div class="ed-team-card">
-                    <div class="ed-team-role">Dashboard &amp; Storytelling</div>
-                    <div class="ed-team-name">Team Data Visualization</div>
-                    <div class="ed-team-desc">Xây dựng nền tảng dashboard tương tác, trực quan hóa insight và truyền tải câu chuyện dữ liệu đến ban lãnh đạo.</div>
-                    <span class="ed-team-badge">Streamlit · Plotly</span>
+                    <div class="ed-team-role">Truyền thông &amp; Lan tỏa</div>
+                    <div class="ed-team-name">HRBP các vùng &amp; KTC</div>
+                    <div class="ed-team-desc">Hỗ trợ truyền thông nội bộ, thúc đẩy nhân viên tham gia khảo sát và đảm bảo tỉ lệ phản hồi đạt mức cao nhất tại từng khu vực.</div>
+                    <span class="ed-team-badge">Internal Comms · Engagement Push</span>
                 </div>
             </div>
         </div>
