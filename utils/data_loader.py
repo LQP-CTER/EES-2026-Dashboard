@@ -809,12 +809,35 @@ def load_group(group_id: str):
     # Clean / expose open-ended responses for NLP views
     open_cols = [c for c in ['C24', 'C25', 'C26'] if c in df.columns]
     df.attrs['open_cols'] = open_cols
+    
+    # Danh sách các giá trị "không có ý kiến" cần filter
+    NO_OPINION_VALUES = [
+        '', 'None', 'nan', 'NaN', 'none', 'NONE',
+        'Không', 'không', 'Khong', 'khong', 'KO', 'Ko', 'ko',
+        'Không có', 'không có', 'Khong co', 'khong co',
+        'Không ý kiến', 'không ý kiến', 'Khong y kien', 'khong y kien',
+        'Không có ý kiến', 'không có ý kiến',
+        'Ko có ý kiến', 'ko có ý kiến', 'Ko co y kien', 'ko co y kien',
+        'Ko có', 'ko có', 'Ko co', 'ko co',
+        '0', 'N/A', 'n/a', 'NA', 'na', '-', 'null', 'NULL',
+        'Không biết', 'không biết', 'Khong biet', 'khong biet',
+        'Không nhớ', 'không nhớ', 'Khong nho', 'khong nho',
+        'Không có gì', 'không có gì', 'Khong co gi', 'khong co gi',
+        'Không có gì đặc biệt', 'không có gì đặc biệt',
+        'Tất cả', 'tất cả', 'Tat ca', 'tat ca',
+        'Không có gì để nói', 'không có gì để nói',
+    ]
+    
     for c in open_cols:
         cleaned_col = f'{c}_clean'
         df[cleaned_col] = df[c].where(df[c].notna(), None)
         df[cleaned_col] = df[cleaned_col].astype(str).str.strip()
-        df.loc[df[cleaned_col].isin(['', 'None', 'nan', 'NaN']), cleaned_col] = np.nan
-    print(f"  ✓ Đã xử lý {len(open_cols)} cột câu hỏi mở")
+        # Filter các giá trị "không có ý kiến"
+        df.loc[df[cleaned_col].isin(NO_OPINION_VALUES), cleaned_col] = np.nan
+        # Filter các giá trị quá ngắn (< 5 ký tự, có thể là typo hoặc vô nghĩa)
+        df.loc[df[cleaned_col].str.len() < 5, cleaned_col] = np.nan
+    
+    print(f"  ✓ Đã xử lý {len(open_cols)} cột câu hỏi mở (filter 'Không', 'ko', etc.)")
 
     # Backward compatibility for legacy UI variables
     if 'C23' in df.columns:
