@@ -216,7 +216,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         """, unsafe_allow_html=True)
 
     # ── Khối 2: Breakdown theo thâm niên ─────────────────────
-    if 'Q5' in df.columns:
+    if 'D5' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("#### Ai đang bị ảnh hưởng nhất? (Phân tích theo Thâm niên)")
 
@@ -225,7 +225,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
 
         tenure_data = []
         for t in TENURE_ORDER:
-            mask = df_work['Q5'] == t
+            mask = df_work['D5'] == t
             subset = df_work.loc[mask, '_pillar_score'].dropna()
             if len(subset) >= 10:
                 tenure_data.append({'Thâm niên': t, 'Điểm TB': round(subset.mean(), 2), 'N': len(subset)})
@@ -394,7 +394,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                         st.plotly_chart(fig_comp, width='stretch', key=f"comp_paradox_chart_{qA}_{qB}")
                         
                     if gap >= 0.4:
-                        open_cols = df.attrs.get('open_cols', ['Q32', 'Q33', 'Q34', 'Q35', 'Q36'])
+                        open_cols = df.attrs.get('open_cols', ['C24', 'C25', 'C26'])
                         all_texts = []
                         for tc in open_cols:
                             clean_col = f"{tc}_clean"

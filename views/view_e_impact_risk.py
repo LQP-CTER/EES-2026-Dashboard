@@ -6,7 +6,14 @@ from utils.ai_generator import render_ai_insight_card, validate_warning_signals_
 
 def render(df, cfg, pillar_filter=None):
     codebook = cfg.get('codebook', {})
-    open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']
+    
+    # Lấy open_cols từ df.attrs (đã rename thành C24, C25, C26)
+    open_cols = df.attrs.get('open_cols', [])
+    if not open_cols:
+        # Fallback: đọc từ codebook và map Q32→C24, Q33→C25, Q34→C26
+        open_cols_raw = [q for q, info in codebook.items() if info.get('loại') == 'open']
+        q_to_c = {'Q32': 'C24', 'Q33': 'C25', 'Q34': 'C26'}
+        open_cols = [q_to_c.get(q, q) for q in open_cols_raw]
 
     from shared.plotly_theme import section_header
     st.markdown(section_header("Trình Giả Lập Rủi Ro Nghỉ Việc", "Thử kịch bản What-If: Thay đổi điều kiện làm việc → Rủi ro nghỉ thay đổi như thế nào?"), unsafe_allow_html=True)

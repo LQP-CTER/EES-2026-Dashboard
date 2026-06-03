@@ -405,23 +405,23 @@ def _render_regional_breakdown_chart(df, c_id):
     labels = []
     
     if c_id == 'LEADERSHIP_HALO':
-        q_cols = ['Q9', 'Q31']
-        labels = ['Q9: Niềm tin LĐ', 'Q31: eNPS']
+        q_cols = ['C6', 'C23']
+        labels = ['C6: Niềm tin LĐ', 'C23: eNPS']
     elif c_id == 'BURNOUT_TRAP':
-        q_cols = ['Q29', 'Q30', 'Q32', 'Q33']
-        labels = ['Q29: Khối lượng CV', 'Q30: Áp lực', 'Q32: Kiệt sức', 'Q33: Muốn ở lại']
+        q_cols = ['C21', 'C22', 'C24', 'C25']
+        labels = ['C21: Khối lượng CV', 'C22: Áp lực', 'C24: Kiệt sức', 'C25: Muốn ở lại']
     elif c_id == 'PRIDE_PARADOX':
-        q_cols = ['Q28', 'Q33']
-        labels = ['Q28: Tự hào', 'Q33: Muốn ở lại']
+        q_cols = ['C20', 'C25']
+        labels = ['C20: Tự hào', 'C25: Muốn ở lại']
     elif c_id == 'INCOME_PARADOX':
-        q_cols = ['Q21', 'Q33']
-        labels = ['Q21: Thu nhập', 'Q33: Muốn ở lại']
+        q_cols = ['C13', 'C25']
+        labels = ['C13: Thu nhập', 'C25: Muốn ở lại']
     elif c_id == 'SILENT_DISENGAGED':
-        q_cols = ['Q28', 'Q31']
-        labels = ['Q28: Hài lòng chung', 'Q31: eNPS']
+        q_cols = ['C20', 'C23']
+        labels = ['C20: Hài lòng chung', 'C23: eNPS']
     elif c_id == 'MEI_SHIELD_FAIL':
-        q_cols = ['Q12', 'Q33']
-        labels = ['Q12: Hỗ trợ', 'Q33: Muốn ở lại']
+        q_cols = ['C4', 'C25']
+        labels = ['C4: Hỗ trợ', 'C25: Muốn ở lại']
 
     q_cols = [c for c in q_cols if c in df.columns]
     if not q_cols: return
@@ -462,7 +462,7 @@ def _render_regional_breakdown_chart(df, c_id):
 
 def _render_tenure_cliff_chart(df, metrics):
     """Render biểu đồ tenure cliff."""
-    if 'Q5' not in df.columns:
+    if 'D5' not in df.columns:
         return
 
     tenure_order = [
@@ -472,7 +472,7 @@ def _render_tenure_cliff_chart(df, metrics):
     ]
     tenure_data = []
     for t in tenure_order:
-        subset = df[df['Q5'] == t]['EI']
+        subset = df[df['D5'] == t]['EI']
         if len(subset) >= 10:
             tenure_data.append({'Thâm niên': t, 'EI': round(subset.mean(), 1), 'N': len(subset)})
 
@@ -953,9 +953,10 @@ def _render_employee_voice(df, group_id, cfg):
     """
     _BAD_VALS = {None, 'nan', 'none', '', 'n/a', 'na'}
 
-    # Tìm cột open-text cần cải thiện (Q34 ưu tiên, fallback Q33/Q32)
+    # Tìm cột open-text cần cải thiện (C26 ưu tiên, fallback C25/C24)
+    # Ưu tiên cột _clean đã filter "Không"
     open_col = None
-    for cand in ['Q34', 'Q33', 'Q32']:
+    for cand in ['C26_clean', 'C25_clean', 'C24_clean', 'C26', 'C25', 'C24']:
         if cand in df.columns:
             open_col = cand
             break

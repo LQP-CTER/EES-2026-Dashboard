@@ -296,10 +296,10 @@ def render(all_data, available_groups):
     # ══════════════════════════════════════════════════════════════
     st.markdown(section_header("Phân Tích Nhân Khẩu Học", "Phân mảnh mức độ gắn kết theo Thâm niên và Cấp bậc"), unsafe_allow_html=True)
     
-    # Define demographic groups from Q5 if 'Q5' exists
+    # Define demographic groups from D5 if 'D5' exists
     demographics_cols = []
-    if 'Q5' in df_total.columns:
-        demographics_cols.append(('Q5', 'Thâm niên'))
+    if 'D5' in df_total.columns:
+        demographics_cols.append(('D5', 'Thâm niên'))
     
     if demographics_cols:
         for idx, (col, title) in enumerate(demographics_cols):
@@ -313,7 +313,7 @@ def render(all_data, available_groups):
             
             if demo_stats:
                 df_demo = pd.DataFrame(demo_stats)
-                if col == 'Q5':
+                if col == 'D5':
                     order = [
                         'Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng',
                         'Trên 6 đến 9 tháng', 'Trên 9 đến 12 tháng', 'Trên 1 đến 2 năm',

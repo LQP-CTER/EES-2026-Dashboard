@@ -867,7 +867,7 @@ def render(df, cfg, pillar_filter=None):
                 # ── AI Insight for Unit ──
                 st.markdown("---")
                 
-                open_cols = _udf.attrs.get('open_cols', ['Q32', 'Q33', 'Q34', 'Q35', 'Q36'])
+                open_cols = _udf.attrs.get('open_cols', ['C24', 'C25', 'C26'])
                 all_texts = []
                 for tc in open_cols:
                     clean_col = f"{tc}_clean"
@@ -933,8 +933,8 @@ def render(df, cfg, pillar_filter=None):
     st.markdown(section_header("Phân Tích Nhân Khẩu Học & Cấp Bậc", "Chênh lệch gắn kết giữa nhóm cũ/mới và các vai trò Direct vs Indirect"), unsafe_allow_html=True)
     
     demo_cols = []
-    if 'Q5' in df.columns:
-        demo_cols.append(('Q5', 'Thâm niên'))
+    if 'D5' in df.columns:
+        demo_cols.append(('D5', 'Thâm niên'))
     if 'chức_danh' in df.columns:
         demo_cols.append(('chức_danh', 'Chức danh / Vai trò'))
         
@@ -967,7 +967,7 @@ def render(df, cfg, pillar_filter=None):
                     fig.update_layout(barmode='group', xaxis_tickangle=-30)
                     st.plotly_chart(fig, width='stretch', key="view_a_current_state_chart_877")
                     
-                    if col_id == 'Q5':
+                    if col_id == 'D5':
                         prompt = (
                             f"DỰA VÀO DỮ LIỆU THÂM NIÊN SAU (KHÔNG bịa thêm):\n"
                             f"{demo_data}\n\n"
