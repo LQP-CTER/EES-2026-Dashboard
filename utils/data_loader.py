@@ -679,22 +679,26 @@ def load_group(group_id: str):
     cfg = GROUP_REGISTRY[group_id]
     codebook = cfg['codebook']
     
-    local_path = cfg.get('local_file')
-    if local_path and os.path.exists(local_path):
-        print(f"  ✓ Đang đọc từ file local: {local_path}")
-        if local_path.endswith('.xlsx'):
-            df_raw = pd.read_excel(local_path)
+    # Ưu tiên 1: NeonDB (nhanh nhất)
+    try:
+        print(f"  ✓ Đang kết nối NeonDB...")
+        conn = st.connection("supabase", type="sql")
+        table_name = f"survey_{group_id.lower()}"
+        df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
+        print(f"  ✓ Đã lấy dữ liệu từ NeonDB ({len(df_raw):,} dòng)")
+    except Exception as e:
+        print(f"  ⚠ NeonDB lỗi: {e}")
+        # Ưu tiên 2: File local (fallback)
+        local_path = cfg.get('local_file')
+        if local_path and os.path.exists(local_path):
+            print(f"  ✓ Fallback đọc từ file local: {local_path}")
+            if local_path.endswith('.xlsx'):
+                df_raw = pd.read_excel(local_path)
+            else:
+                df_raw = pd.read_csv(local_path)
         else:
-            df_raw = pd.read_csv(local_path)
-    else:
-        try:
-            print(f"  ✓ Đang kết nối Supabase...")
-            conn = st.connection("supabase", type="sql")
-            table_name = f"survey_{group_id.lower()}"
-            df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
-            print(f"  ✓ Đã lấy dữ liệu từ Supabase")
-        except Exception as e:
-            print(f"  ⚠ Supabase lỗi, fallback về Google Sheets: {e}")
+            # Ưu tiên 3: Google Sheets (fallback cuối)
+            print(f"  ⚠ Fallback về Google Sheets...")
             df_raw = pd.read_csv(cfg['url'])
             print(f"  ✓ Đã lấy dữ liệu từ Google Sheets")
     
@@ -921,36 +925,48 @@ def compute_kpis(df):
 
 @st.cache_data(ttl=86400, show_spinner="Đang xử lý dữ liệu HRIS...")
 def load_hris():
-    """Load HRIS from central Google Sheet with local Parquet caching for speed."""
+    """Load HRIS: NeonDB → local Parquet → local Excel → Google Sheets."""
     import os
     import time
     local_cache = "data/hris_cache.parquet"
     
     try:
-        # Tối ưu hóa: Ưu tiên đọc từ file Parquet cục bộ nếu có (tốc độ ánh sáng)
-        if os.path.exists(local_cache) and (time.time() - os.path.getmtime(local_cache) < 86400 * 7):
-            df_hris = pd.read_parquet(local_cache)
-        else:
-            local_hris = "data/HRIS_data.xlsx"
-            if os.path.exists(local_hris):
-                df_hris = pd.read_excel(local_hris)
-            else:
-                try:
-                    hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
-                except Exception:
-                    hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
-                
-                hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
-                df_hris = pd.read_csv(hris_url)
-            
+        # Ưu tiên 1: NeonDB (nhanh nhất)
+        try:
+            print(f"  ✓ [HRIS] Đang kết nối NeonDB...")
+            conn = st.connection("supabase", type="sql")
+            df_hris = conn.query("SELECT * FROM hris_data", ttl=86400)
             df_hris.columns = df_hris.columns.str.strip()
-            
-            # Lưu cache ra file parquet để dùng cho các lần sau
-            os.makedirs("data", exist_ok=True)
-            try:
-                df_hris.to_parquet(local_cache, index=False)
-            except Exception:
-                pass  # Bỏ qua nếu môi trường không hỗ trợ pyarrow/fastparquet
+            print(f"  ✓ [HRIS] Đã lấy từ NeonDB ({len(df_hris):,} dòng)")
+        except Exception as e_db:
+            print(f"  ⚠ [HRIS] NeonDB lỗi: {e_db}")
+            # Ưu tiên 2: Local Parquet cache
+            if os.path.exists(local_cache) and (time.time() - os.path.getmtime(local_cache) < 86400 * 7):
+                df_hris = pd.read_parquet(local_cache)
+                print(f"  ✓ [HRIS] Đọc từ Parquet cache")
+            else:
+                # Ưu tiên 3: Local Excel
+                local_hris = "data/HRIS_data.xlsx"
+                if os.path.exists(local_hris):
+                    print(f"  ✓ [HRIS] Đọc từ file Excel local...")
+                    df_hris = pd.read_excel(local_hris)
+                else:
+                    # Ưu tiên 4: Google Sheets
+                    try:
+                        hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
+                    except Exception:
+                        hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
+                    hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
+                    df_hris = pd.read_csv(hris_url)
+                
+                df_hris.columns = df_hris.columns.str.strip()
+                
+                # Lưu cache ra file parquet
+                os.makedirs("data", exist_ok=True)
+                try:
+                    df_hris.to_parquet(local_cache, index=False)
+                except Exception:
+                    pass
                 
     except Exception as e:
         import streamlit as st
