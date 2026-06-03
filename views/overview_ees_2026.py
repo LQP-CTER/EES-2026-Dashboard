@@ -700,151 +700,205 @@ def render():
     gallery_items_html = ""
     for url, caption in gallery_images:
         gallery_items_html += f"""
-        <div class="gl-item">
+        <div class="gl-item" data-caption="{caption}">
             <img src="{url}" alt="{caption}" loading="lazy">
             <div class="gl-caption">{caption}</div>
         </div>"""
 
-    st.markdown(f"""
-    <style>
-    /* ── Pinterest-style columns gallery (images shown in full, no crop) ── */
-    .gl-grid {{
-        columns: 3;
-        column-gap: 16px;
-        margin-bottom: 72px;
-    }}
-    .gl-item {{
-        break-inside: avoid;
-        margin-bottom: 16px;
-        border-radius: 16px;
-        overflow: hidden;
-        position: relative;
-        background: #F1F5F9;
-        cursor: zoom-in;
-    }}
-    .gl-item img {{
-        width: 100%;
-        height: auto;          /* natural height — NO crop */
-        display: block;
-        transition: transform .6s cubic-bezier(.4,0,.2,1);
-    }}
-    .gl-item:hover img {{
-        transform: scale(1.03);
-    }}
-    .gl-caption {{
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        padding: 28px 16px 14px;
-        background: linear-gradient(to top, rgba(10,31,68,.82) 0%, transparent 100%);
-        color: #fff;
-        font-size: .78rem;
-        font-weight: 700;
-        line-height: 1.35;
-        opacity: 0;
-        transform: translateY(6px);
-        transition: opacity .35s ease, transform .35s ease;
-    }}
-    .gl-item:hover .gl-caption {{
-        opacity: 1;
-        transform: translateY(0);
-    }}
+    # Gallery dùng components.html vì cần <script> cho lightbox
+    # st.markdown sẽ strip <script> tags → HTML bị render thành raw text
+    gallery_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: transparent;
+  }}
 
-    /* Lightbox overlay */
-    #gl-lightbox {{
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(5,10,24,.92);
-        backdrop-filter: blur(12px);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-        padding: 32px;
-        cursor: zoom-out;
-    }}
-    #gl-lightbox.open {{ display: flex; }}
-    #gl-lightbox img {{
-        max-width: 88vw;
-        max-height: 88vh;
-        width: auto;
-        height: auto;
-        border-radius: 16px;
-        box-shadow: 0 32px 80px rgba(0,0,0,.6);
-        object-fit: contain;
-    }}
-    #gl-close {{
-        position: fixed;
-        top: 24px; right: 28px;
-        color: rgba(255,255,255,.7);
-        font-size: 2rem;
-        cursor: pointer;
-        line-height: 1;
-        font-weight: 300;
-        transition: color .2s;
-    }}
-    #gl-close:hover {{ color: #fff; }}
-    #gl-caption-lb {{
-        position: fixed;
-        bottom: 28px; left: 50%;
-        transform: translateX(-50%);
-        color: rgba(255,255,255,.7);
-        font-size: .82rem;
-        font-weight: 600;
-        letter-spacing: .04em;
-        background: rgba(255,255,255,.08);
-        padding: 6px 18px;
-        border-radius: 999px;
-        white-space: nowrap;
-    }}
-    </style>
+  /* ── Section header ── */
+  .gl-section-header {{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }}
+  .gl-section-title {{
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #0A1F44;
+  }}
+  .gl-section-tag {{
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #FF5200;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    background: #FFF4EF;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid #FFD5BF;
+  }}
 
-    <!-- Lightbox -->
-    <div id="gl-lightbox">
-        <span id="gl-close">&#x2715;</span>
-        <img id="gl-lb-img" src="" alt="">
-        <span id="gl-caption-lb"></span>
-    </div>
+  /* ── Pinterest columns — ảnh hiển thị đầy đủ, không crop ── */
+  .gl-grid {{
+    columns: 3;
+    column-gap: 16px;
+    margin-bottom: 32px;
+  }}
+  .gl-item {{
+    break-inside: avoid;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    background: #F1F5F9;
+    cursor: zoom-in;
+  }}
+  .gl-item img {{
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+  }}
+  .gl-item:hover img {{ transform: scale(1.03); }}
+  .gl-caption {{
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 28px 16px 14px;
+    background: linear-gradient(to top, rgba(10,31,68,0.85) 0%, transparent 100%);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }}
+  .gl-item:hover .gl-caption {{
+    opacity: 1;
+    transform: translateY(0);
+  }}
 
-    <div class="ed-container">
-        <div class="ed-section-header">
-            <h2 class="ed-section-title">Góc nhìn hậu trường</h2>
-            <span class="ed-section-tag">Team EX Showcase</span>
-        </div>
-        <div class="gl-grid">
-            {gallery_items_html}
-        </div>
-    </div>
+  /* ── Lightbox ── */
+  #gl-lb {{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5,10,24,0.93);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    cursor: zoom-out;
+  }}
+  #gl-lb.open {{ display: flex; }}
+  #gl-lb img {{
+    max-width: 88vw;
+    max-height: 84vh;
+    width: auto;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.65);
+    object-fit: contain;
+    cursor: default;
+  }}
+  #gl-lb-close {{
+    position: fixed;
+    top: 20px; right: 24px;
+    color: rgba(255,255,255,0.7);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    font-weight: 300;
+    transition: color 0.2s, transform 0.2s;
+    z-index: 10000;
+    user-select: none;
+  }}
+  #gl-lb-close:hover {{ color: #fff; transform: scale(1.2); }}
+  #gl-lb-cap {{
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.75);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    background: rgba(255,255,255,0.1);
+    padding: 6px 20px;
+    border-radius: 999px;
+    white-space: nowrap;
+    z-index: 10000;
+  }}
+</style>
+</head>
+<body>
 
-    <script>
-    (function(){{
-        const lb     = document.getElementById('gl-lightbox');
-        const lbImg  = document.getElementById('gl-lb-img');
-        const lbCap  = document.getElementById('gl-caption-lb');
-        const lbClose= document.getElementById('gl-close');
+<!-- Section header -->
+<div class="gl-section-header">
+  <span class="gl-section-title">Góc nhìn hậu trường</span>
+  <span class="gl-section-tag">Team EX Showcase</span>
+</div>
 
-        document.querySelectorAll('.gl-item').forEach(item => {{
-            item.addEventListener('click', () => {{
-                const src = item.querySelector('img').src;
-                const cap = item.querySelector('.gl-caption').textContent;
-                lbImg.src = src;
-                lbCap.textContent = cap;
-                lb.classList.add('open');
-            }});
-        }});
+<!-- Gallery grid -->
+<div class="gl-grid">
+{gallery_items_html}
+</div>
 
-        lb.addEventListener('click', (e) => {{
-            if (e.target === lb || e.target === lbClose) {{
-                lb.classList.remove('open');
-                lbImg.src = '';
-            }}
-        }});
+<!-- Lightbox -->
+<div id="gl-lb">
+  <span id="gl-lb-close">&#x2715;</span>
+  <img id="gl-lb-img" src="" alt="">
+  <span id="gl-lb-cap"></span>
+</div>
 
-        document.addEventListener('keydown', (e) => {{
-            if (e.key === 'Escape') {{ lb.classList.remove('open'); lbImg.src=''; }}
-        }});
-    }})();
-    </script>
-    """, unsafe_allow_html=True)
+<script>
+(function() {{
+  const lb      = document.getElementById('gl-lb');
+  const lbImg   = document.getElementById('gl-lb-img');
+  const lbCap   = document.getElementById('gl-lb-cap');
+  const lbClose = document.getElementById('gl-lb-close');
+
+  function openLb(src, cap) {{
+    lbImg.src = src;
+    lbCap.textContent = cap;
+    lb.classList.add('open');
+  }}
+  function closeLb() {{
+    lb.classList.remove('open');
+    lbImg.src = '';
+  }}
+
+  document.querySelectorAll('.gl-item').forEach(item => {{
+    item.addEventListener('click', () => {{
+      const src = item.querySelector('img').src;
+      const cap = item.dataset.caption || '';
+      openLb(src, cap);
+    }});
+  }});
+
+  lb.addEventListener('click', e => {{
+    if (e.target === lb) closeLb();
+  }});
+  lbClose.addEventListener('click', closeLb);
+  document.addEventListener('keydown', e => {{
+    if (e.key === 'Escape') closeLb();
+  }});
+}})();
+</script>
+</body>
+</html>
+"""
+    # Tính chiều cao tự động: ~220px mỗi ảnh, 3 cột, 15 ảnh → 5 hàng + header + padding
+    n_rows = -(-len(gallery_images) // 3)   # ceiling division
+    gallery_height = 80 + n_rows * 320      # header ~80px, mỗi hàng ~320px
+    components.html(gallery_html, height=gallery_height, scrolling=True)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
     st.markdown("""

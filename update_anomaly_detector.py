@@ -72,7 +72,9 @@ def detect_pillar_anomalies(df, group_id, pillar_id):
                  'title': 'Lỗi phân tích', 'message': str(e), 'data': {}, 'action': ''}]
 
 def detect_cross_pillar(df, group_id=''):
-    return detect_cross_pillar_patterns(df, group_id)
+    from utils.data_loader import compute_relative_thresholds
+    company_thresholds = compute_relative_thresholds(df, group_id)
+    return detect_cross_pillar_patterns(df, company_thresholds, group_id)
 
 def detect_all_anomalies(df, group_id):
     all_anomalies = []
