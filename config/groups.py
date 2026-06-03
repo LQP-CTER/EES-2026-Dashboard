@@ -57,6 +57,7 @@ GROUP_REGISTRY = {
         'label': '[1A] Nhân viên Giao nhận',
         'short': 'Nhân viên Giao nhận',
         'url': get_secret('SHEET_1A'),
+        'local_file': 'data/EES-2026-Final-1A (Cleaned Responses).xlsx',
         'codebook': CODEBOOK_1A,
         'hris_file': 'EX-2026_Chi tiet thu nhap NVPTTT total_update 28.04.xlsx',
         'color': '#FF5200',
@@ -65,6 +66,7 @@ GROUP_REGISTRY = {
         'label': '[1B] Tài xế xe tải',
         'short': 'Tài xế xe tải',
         'url': get_secret('SHEET_1B'),
+        'local_file': 'data/EES-2026-Final-1B (Cleaned Responses).xlsx',
         'codebook': CODEBOOK_1B,
         'hris_file': None,
         'color': '#006FAD',
@@ -73,6 +75,7 @@ GROUP_REGISTRY = {
         'label': '[2A] Nhân viên Vận hành Kho',
         'short': 'Nhân viên Vận hành Kho',
         'url': get_secret('SHEET_2A'),
+        'local_file': 'data/EES-2026-Final-2A (Responses).xlsx',
         'codebook': CODEBOOK_2A,
         'hris_file': None,
         'color': '#10B981',
@@ -81,6 +84,7 @@ GROUP_REGISTRY = {
         'label': '[2B] Quản lý Vận hành Tuyến đầu',
         'short': 'Quản lý Vận hành Tuyến đầu',
         'url': get_secret('SHEET_2B'),
+        'local_file': 'data/EES-2026-Final-2B (Responses).xlsx',
         'codebook': CODEBOOK_2B,
         'hris_file': None,
         'color': '#8B5CF6',
@@ -89,6 +93,7 @@ GROUP_REGISTRY = {
         'label': '[3A] Nhân viên Văn phòng',
         'short': 'Nhân viên Văn phòng',
         'url': get_secret('SHEET_3A'),
+        'local_file': 'data/EES-2026-Final-3A (Responses).xlsx',
         'codebook': CODEBOOK_3A,
         'hris_file': None,
         'color': '#F59E0B',
@@ -97,6 +102,7 @@ GROUP_REGISTRY = {
         'label': '[3B] Quản lý HQ',
         'short': 'Quản lý HQ',
         'url': get_secret('SHEET_3B'),
+        'local_file': 'data/EES-2026-Final-3B (Responses).xlsx',
         'codebook': CODEBOOK_3B,
         'hris_file': None,
         'color': '#EF4444',
@@ -104,9 +110,9 @@ GROUP_REGISTRY = {
 }
 
 def get_available_groups():
-    """Return all groups from the registry since data is fetched from URLs."""
+    """Return all groups from the registry."""
     available = {}
     for gid, cfg in GROUP_REGISTRY.items():
-        if 'url' in cfg and cfg['url']:
+        if ('url' in cfg and cfg['url']) or ('local_file' in cfg and cfg['local_file']):
             available[gid] = cfg
     return available

@@ -677,12 +677,20 @@ def load_group(group_id: str):
     import pandas as pd
     cfg = GROUP_REGISTRY[group_id]
     codebook = cfg['codebook']
-    try:
-        conn = st.connection("supabase", type="sql")
-        table_name = f"survey_{group_id.lower()}"
-        df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
-    except Exception as e:
-        df_raw = pd.read_csv(cfg['url'])
+    
+    local_path = cfg.get('local_file')
+    if local_path and os.path.exists(local_path):
+        if local_path.endswith('.xlsx'):
+            df_raw = pd.read_excel(local_path)
+        else:
+            df_raw = pd.read_csv(local_path)
+    else:
+        try:
+            conn = st.connection("supabase", type="sql")
+            table_name = f"survey_{group_id.lower()}"
+            df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
+        except Exception as e:
+            df_raw = pd.read_csv(cfg['url'])
     n_before = len(df_raw)
 
     col_rename = {}
@@ -902,13 +910,18 @@ def load_hris():
         if os.path.exists(local_cache) and (time.time() - os.path.getmtime(local_cache) < 86400 * 7):
             df_hris = pd.read_parquet(local_cache)
         else:
-            try:
-                hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
-            except Exception:
-                hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
+            local_hris = "data/HRIS_data.xlsx"
+            if os.path.exists(local_hris):
+                df_hris = pd.read_excel(local_hris)
+            else:
+                try:
+                    hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
+                except Exception:
+                    hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
+                
+                hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
+                df_hris = pd.read_csv(hris_url)
             
-            hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
-            df_hris = pd.read_csv(hris_url)
             df_hris.columns = df_hris.columns.str.strip()
             
             # Lưu cache ra file parquet để dùng cho các lần sau
