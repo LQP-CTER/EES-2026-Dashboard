@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import base64
 import os
 from shared.plotly_theme import apply_theme
@@ -676,7 +675,7 @@ def render():
 </html>
 """
 
-    components.html(video_html, height=760, scrolling=False)
+    st.iframe(video_html, height=760, scrolling=False)
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
@@ -898,7 +897,7 @@ def render():
     # Tính chiều cao tự động: ~220px mỗi ảnh, 3 cột, 15 ảnh → 5 hàng + header + padding
     n_rows = -(-len(gallery_images) // 3)   # ceiling division
     gallery_height = 80 + n_rows * 320      # header ~80px, mỗi hàng ~320px
-    components.html(gallery_html, height=gallery_height, scrolling=True)
+    st.iframe(gallery_html, height=gallery_height, scrolling=True)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
     st.markdown("""

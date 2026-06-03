@@ -1554,7 +1554,9 @@ with st.sidebar:
 
         # Load raw data (for building filter options)
         try:
-            df_raw, n_before = load_group(sel_group)
+            with st.status("Đang tải dữ liệu...", expanded=False) as load_status:
+                df_raw, n_before = load_group(sel_group)
+                load_status.update(label=f"Đã tải {n_before:,} phản hồi", state="complete", expanded=False)
         except Exception as e:
             st.error(f"Không thể tải dữ liệu cho nhóm {sel_group}: {e}")
             import traceback
