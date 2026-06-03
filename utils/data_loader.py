@@ -839,6 +839,19 @@ def load_group(group_id: str):
     
     print(f"  ✓ Đã xử lý {len(open_cols)} cột câu hỏi mở (filter 'Không', 'ko', etc.)")
 
+    # === ÁP DỤNG MEMO CLEANING (Cách 2: giảm trọng số) ===
+    # Theo docs/EES_2026_Memo_Phuong_phap_Lam_sach.pdf
+    # Gán effective_weight (0.2/0.5/0.8/1.0) + tier_v2 (KEEP/DOWNWEIGHT/DROP)
+    # + text_usable + longstring + maha_flag + contradiction + corroboration
+    try:
+        from utils.data_cleaning_memo import apply_memo_cleaning
+        df, memo_report = apply_memo_cleaning(df, group_id)
+        df.attrs['memo_report'] = memo_report
+    except Exception as e:
+        import traceback
+        print(f"  ⚠ Memo cleaning failed: {e}")
+        print(traceback.format_exc())
+
     # Backward compatibility for legacy UI variables
     if 'C23' in df.columns:
         df['eNPS'] = df['C23']
@@ -913,10 +926,15 @@ def compute_kpis(df):
                 'silence_rate': 0, 'jsi_avg': 0, 'ews_red_pct': 0,
                 'quadrant': {}, 'contradiction_pct': 0}
 
-    w = df.get('CompanyRollup_Weight', pd.Series(1.0, index=df.index))
+    # Theo Memo Phương pháp Làm sạch: effective_weight là trọng số chính thức
+    # Fallback: CompanyRollup_Weight (cho backward compat) → 1.0
+    if 'effective_weight' in df.columns and df['effective_weight'].notna().any():
+        w = df['effective_weight']
+    else:
+        w = df.get('CompanyRollup_Weight', pd.Series(1.0, index=df.index))
     if isinstance(w, pd.DataFrame):
         w = w.iloc[:, 0]
-    n = int(w.sum())
+    n = round(float(w.sum()), 2)
 
     def weighted_avg(col):
         if isinstance(col, pd.DataFrame):
@@ -995,7 +1013,8 @@ def compute_kpis(df):
     contradiction_pct = round(weighted_pct(df.get('contradiction_flag', pd.Series(False, index=df.index))), 1)
 
     return {
-        'n': int(n),
+        'n': int(n) if isinstance(n, (int, np.integer)) else round(float(n), 2),
+        'n_effective': round(float(n), 2) if 'effective_weight' in df.columns else None,
         'ei_mean': float(round(ei_mean, 1)),
         'enps_score': float(round(enps_score, 0)),
         'promoters': int(promoters), 'passives': int(passives), 'detractors': int(detractors),
