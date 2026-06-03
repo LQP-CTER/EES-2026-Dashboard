@@ -1836,7 +1836,12 @@ else:
         if sel_nav == "Tổng quan Tổ chức":
             print(f"🎯 Đang render: Tổng quan Tổ chức cho nhóm {sel_group}")
             with st.spinner("Đang phân tích tổng quan tổ chức..."):
-                view_a_current_state.render(df_filtered, cfg)
+                try:
+                    view_a_current_state.render(df_filtered, cfg)
+                except Exception as e:
+                    st.error(f"Lỗi khi render Tổng quan Tổ chức: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
         elif sel_nav == "Xem Báo Cáo":
             print(f"🎯 Đang render: Xem Báo Cáo cho nhóm {sel_group}")
             with st.spinner("Đang tạo báo cáo..."):

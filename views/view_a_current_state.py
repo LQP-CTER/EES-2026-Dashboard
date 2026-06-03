@@ -49,6 +49,19 @@ def render(df, cfg, pillar_filter=None):
 
     # ══ SECTION 1: COMPACT HERO KPI — 1 hàng 6 cột ══
     # ── Data Quality Summary Panel ──
+    # Safety net: nếu app.py không gán attrs (do data cache cũ hoặc path khác),
+    # tự tính từ effective_weight / tier_v2 trong df
+    if 'n_before' not in df.attrs and 'effective_weight' in df.columns and 'tier_v2' in df.columns:
+        _tier_counts = df['tier_v2'].value_counts().to_dict()
+        _n_drop = int(_tier_counts.get('DROP', 0))
+        _n_keep = int(_tier_counts.get('KEEP', 0))
+        _n_down = int(_tier_counts.get('DOWNWEIGHT', 0))
+        df.attrs['n_before']      = len(df)
+        df.attrs['n_removed']     = 0
+        df.attrs['pct_removed']   = 0.0
+        df.attrs['filter_method'] = 'memo_v2'
+        df.attrs['filter_desc']   = f'Memo v2 · KEEP={_n_keep:,} · DOWNWEIGHT={_n_down:,} · DROP={_n_drop:,} (safety net)'
+
     _n_before    = df.attrs.get('n_before', len(df))
     _n_removed   = df.attrs.get('n_removed', 0)
     _pct_removed = df.attrs.get('pct_removed', 0.0)
