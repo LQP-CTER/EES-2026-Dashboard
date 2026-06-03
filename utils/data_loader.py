@@ -194,69 +194,46 @@ def compute_pillar_score(df: pd.DataFrame, group_id: str, pillar: str) -> pd.Ser
 
 def compute_burnout(df: pd.DataFrame, group_id: str) -> pd.DataFrame:
     """
-    Burnout Proxy = trung bình reverse của workload + pressure items.
-    Thang 0–100 (cao = burnout risk cao).
+    Burnout proxy = trung bình reverse của `workload` và `pressure`.
 
-    Công thức: burnout_score = (5 - likert) / 4 × 100
-      • Likert 5 (hoàn toàn đồng ý = ổn) → score = 0   (không có nguy cơ)
-      • Likert 4                          → score = 25
-      • Likert 3 (trung lập)              → score = 50
-      • Likert 2                          → score = 75
-      • Likert 1 (hoàn toàn không đồng ý)→ score = 100  (nguy cơ cao nhất)
+    Thang 0–100 (cao = rủi ro burnout cao):
+      - Likert 5 → 0
+      - Likert 4 → 25
+      - Likert 3 → 50
+      - Likert 2 → 75
+      - Likert 1 → 100
 
-    Ngưỡng burnout_proxy:
-      • >= 75  (Likert ≤ 2 = actively disagree) → proxy = 1
-      • < 75   (Likert ≥ 3, bao gồm neutral)    → proxy = 0
-      • NaN burnout_score                        → proxy = NaN (không bị tính là 0)
-
-    Lý do chọn ngưỡng 75 thay vì 50:
-      Likert 3 (neutral) KHÔNG phải tín hiệu burnout rõ ràng. Dùng ngưỡng 50
-      làm ~50% respondent bị flag trong phân phối bình thường (inflated rate).
-      Ngưỡng 75 (chỉ Likert 1–2) là chuẩn phổ biến trong nghiên cứu wellbeing.
-
-    Cả hai items cần có dữ liệu; nếu chỉ có 1 item → dùng item đó (fallback).
+    `burnout_score` là điểm rủi ro liên tục.
+    `burnout_proxy` là cờ nhị phân, chỉ bật khi score >= 75.
     """
-    BURNOUT_THRESHOLD = 75  # Likert <= 2 = actively disagree = at-risk
+    BURNOUT_THRESHOLD = 75
 
     wl_col = get_item(group_id, 'workload')
     pr_col = get_item(group_id, 'pressure')
 
-    has_wl = wl_col and wl_col in df.columns
-    has_pr = pr_col and pr_col in df.columns
+    has_wl = bool(wl_col and wl_col in df.columns)
+    has_pr = bool(pr_col and pr_col in df.columns)
 
     def _reverse(col):
-        """Reverse Likert 1–5 sang thang burnout 0–100."""
-        return (5 - df[col]) / 4 * 100
+        return ((5 - pd.to_numeric(df[col], errors='coerce')) / 4 * 100).round(1)
 
     def _proxy(score_series):
-        """
-        Tính burnout_proxy giữ nguyên NaN thay vì convert thành 0.
-        NaN score → NaN proxy (không phải 0 = not-at-risk).
-        """
-        return np.where(
-            score_series.isna(),
-            np.nan,
-            (score_series >= BURNOUT_THRESHOLD).astype(float)
-        )
+        return np.where(score_series.isna(), np.nan, (score_series >= BURNOUT_THRESHOLD).astype(float))
 
     if has_wl and has_pr and wl_col != pr_col:
         burnout_wl = _reverse(wl_col)
         burnout_pr = _reverse(pr_col)
-        # mean chỉ dùng valid values (NaN tự bỏ qua)
         score = pd.concat([burnout_wl, burnout_pr], axis=1).mean(axis=1).round(1)
-        df['burnout_score'] = score
-        df['burnout_proxy'] = _proxy(score)
-
     elif has_wl:
-        score = _reverse(wl_col).round(1)
-        df['burnout_score'] = score
-        df['burnout_proxy'] = _proxy(score)
-
+        score = _reverse(wl_col)
+    elif has_pr:
+        score = _reverse(pr_col)
     else:
-        df['burnout_score'] = np.nan
-        df['burnout_proxy'] = np.nan
+        score = pd.Series(np.nan, index=df.index)
 
-    # 3B: pressure = workload = C18 (1 item duy nhất trong TC5)
+    df['burnout_score'] = score
+    df['burnout_proxy'] = _proxy(score)
+
     if group_id == '3B':
         df['burnout_note'] = 'Single-item burnout proxy (3B: pressure=workload=C18, TC5)'
 
@@ -335,63 +312,59 @@ def validate_pillar_reliability(df: pd.DataFrame, group_id: str) -> dict:
 def compute_all_indices(df: pd.DataFrame, group_id: str,
                         weights: dict = None) -> pd.DataFrame:
     """
-    Tính toàn bộ derived indices. Chạy trên FULL dataset (không filter theo unit).
-    Trả về df với các cột mới.
+    Tính toàn bộ derived indices.
+    - Pillar scores luôn là thang 0–100.
+    - EI là weighted average của 5 pillar scores.
+    - MEI là proxy từ TC2 score.
+    - Burnout và JSI dùng mapping theo group để tránh hard-code sai cột.
     """
     if weights is None:
         weights = CALIBRATED_WEIGHTS.get(group_id, DEFAULT_WEIGHTS)
 
     pillars = ['TC1', 'TC2', 'TC3', 'TC4', 'TC5']
 
-    # 1. Pillar Scores
     for p in pillars:
         df[f'{p}_score'] = compute_pillar_score(df, group_id, p)
         df[f'{p}_pct'] = df[f'{p}_score']
 
-    # 2. Engagement Index
     available = [p for p in pillars if f'{p}_score' in df.columns]
-    w_sum = sum(weights[p] for p in available)
-    df['EI'] = sum(df[f'{p}_score'] * (weights[p] / w_sum) for p in available).round(2)
+    valid_weights = {p: weights.get(p, 0) for p in available}
+    w_sum = sum(valid_weights.values()) or 1.0
+    df['EI'] = sum(df[f'{p}_score'] * (valid_weights[p] / w_sum) for p in available).round(2)
 
-    # 3. Manager Effectiveness Index (proxy)
-    df['MEI'] = df['TC2_score']
-    # Nota: MEI = TC2_score là proxy. Lý tưởng cần 360 feedback riêng.
+    df['MEI'] = df.get('TC2_score', pd.Series(np.nan, index=df.index))
 
-    # 4. Burnout
     df = compute_burnout(df, group_id)
 
-    # 5. Attrition / eNPS
-    if 'C22' in df.columns:
-        df['attrition_score'] = df['C22']
-        df['attrition_risk']  = (6 - df['C22'])   # reverse: 5=high risk
-        df['is_flight_risk']  = (df['C22'] <= 2).astype(int)
+    attrition_col = 'C22' if 'C22' in df.columns else get_item(group_id, 'attrition')
+    enps_col = 'C23' if 'C23' in df.columns else get_item(group_id, 'eNPS')
 
-    if 'C23' in df.columns:
-        df['eNPS_raw'] = df['C23']
-        df['eNPS_cat'] = pd.cut(df['C23'], bins=ENPS_BINS, labels=ENPS_LABELS)
+    if attrition_col and attrition_col in df.columns:
+        df['attrition_score'] = df[attrition_col]
+        df['attrition_risk'] = (6 - df[attrition_col])
+        df['is_flight_risk'] = (df[attrition_col] <= 2).astype(int)
 
-    # 6. Career Growth Index
+    if enps_col and enps_col in df.columns:
+        df['eNPS_raw'] = df[enps_col]
+        df['eNPS_cat'] = pd.cut(df[enps_col], bins=ENPS_BINS, labels=ENPS_LABELS)
+
     career_col = get_item(group_id, 'career')
     if career_col and career_col in df.columns:
-        df['career_index'] = ((df[career_col] - 1) / 4 * 100).round(1)
+        df['career_index'] = ((pd.to_numeric(df[career_col], errors='coerce') - 1) / 4 * 100).round(1)
 
-    # 7. Psychological Safety Score
     ps_col = get_item(group_id, 'psych_safety')
     if ps_col and ps_col in df.columns:
-        df['psych_safety_score'] = ((df[ps_col] - 1) / 4 * 100).round(1)
+        df['psych_safety_score'] = ((pd.to_numeric(df[ps_col], errors='coerce') - 1) / 4 * 100).round(1)
 
-    # 8. Respect Index
     resp_col = get_item(group_id, 'respect')
     if resp_col and resp_col in df.columns:
-        df['respect_index'] = ((df[resp_col] - 1) / 4 * 100).round(1)
+        df['respect_index'] = ((pd.to_numeric(df[resp_col], errors='coerce') - 1) / 4 * 100).round(1)
 
-    # 9. JSI Proxy
-    # FIX #10: workload item per group được lấy qua get_item() — đúng cho 3B (C18/TC5)
     tc4_s = df.get('TC4_score', pd.Series(np.nan, index=df.index))
     wl_col = get_item(group_id, 'workload')
-    wl_s   = ((df[wl_col] - 1) / 4 * 100) if wl_col and wl_col in df.columns else pd.Series(np.nan, index=df.index)
+    wl_s = ((pd.to_numeric(df[wl_col], errors='coerce') - 1) / 4 * 100) if wl_col and wl_col in df.columns else pd.Series(np.nan, index=df.index)
     bl_col = get_item(group_id, 'belonging') or get_item(group_id, 'pride') or get_item(group_id, 'respect')
-    bl_s   = ((df[bl_col] - 1) / 4 * 100) if bl_col and bl_col in df.columns else pd.Series(np.nan, index=df.index)
+    bl_s = ((pd.to_numeric(df[bl_col], errors='coerce') - 1) / 4 * 100) if bl_col and bl_col in df.columns else pd.Series(np.nan, index=df.index)
     df['JSI'] = (0.4 * tc4_s + 0.3 * wl_s + 0.3 * bl_s).round(2)
     if group_id == '3B':
         df['JSI_note'] = 'JSI workload component = C18 (TC5) cho 3B — cross-pillar'
@@ -648,6 +621,36 @@ def run_data_quality_pipeline(df: pd.DataFrame, group_id: str) -> tuple:
     df_clean = df[~excl].copy()
     return df_clean, report
 
+
+def _apply_quality_flags(df: pd.DataFrame, group_id: str,
+                         modes: list = None) -> pd.DataFrame:
+    """
+    Áp dụng bộ lọc chất lượng nhẹ (subset của run_data_quality_pipeline).
+    modes: list các flag cần loại, mặc định ['straight_liners', 'excessive_missing'].
+    Dùng cho filter_method='straight_and_empty' ở app.py.
+    """
+    if modes is None:
+        modes = ['straight_liners', 'excessive_missing']
+
+    content_cols = [f'C{i}' for i in range(1, 22) if f'C{i}' in df.columns]
+    excl = pd.Series(False, index=df.index)
+
+    if 'straight_liners' in modes:
+        def _is_sl(row):
+            vals = row[content_cols].dropna()
+            return len(vals) >= 10 and vals.value_counts(normalize=True).max() >= 0.80
+        excl |= df.apply(_is_sl, axis=1)
+
+    if 'excessive_missing' in modes and content_cols:
+        miss_rate = df[content_cols].isna().mean(axis=1)
+        excl |= (miss_rate > 0.30)
+
+    if 'speeders' in modes and 'completion_time_sec' in df.columns:
+        excl |= (df['completion_time_sec'] < 180)
+
+    return df[~excl].copy()
+
+
 def analyze_tenure_cohorts(df, group_id):
     """Phân tích EI theo cohort thâm niên → phát hiện Tenure Cliff và EWS."""
     if 'tenure' not in df.columns or 'EI' not in df.columns:
@@ -725,17 +728,26 @@ def load_group(group_id: str):
             df[c] = df[c].apply(decode_likert)
 
     df = compute_all_indices(df, group_id)
-    
+
+    # Clean / expose open-ended responses for NLP views
+    open_cols = [c for c in ['C24', 'C25', 'C26'] if c in df.columns]
+    df.attrs['open_cols'] = open_cols
+    for c in open_cols:
+        cleaned_col = f'{c}_clean'
+        df[cleaned_col] = df[c].where(df[c].notna(), None)
+        df[cleaned_col] = df[cleaned_col].astype(str).str.strip()
+        df.loc[df[cleaned_col].isin(['', 'None', 'nan', 'NaN']), cleaned_col] = np.nan
+
     # Backward compatibility for legacy UI variables
     if 'C23' in df.columns:
         df['eNPS'] = df['C23']
     if 'C22' in df.columns:
         df['intent'] = df['C22']
+    elif get_item(group_id, 'attrition') and get_item(group_id, 'attrition') in df.columns:
+        df['intent'] = df[get_item(group_id, 'attrition')]
     if 'C14' in df.columns:
         df['stay_intention'] = df['C14']
-    
     df.attrs['group_id'] = group_id
-    df.attrs['open_cols'] = ['C24', 'C25', 'C26']
     df.attrs['codebook'] = codebook
     
     vung_col = None
@@ -777,54 +789,64 @@ def compute_kpis(df):
                 'quadrant': {}, 'contradiction_pct': 0}
 
     w = df.get('CompanyRollup_Weight', pd.Series(1.0, index=df.index))
-    if isinstance(w, pd.DataFrame): w = w.iloc[:, 0]
-    n = int(w.sum()) # effective n
-    
+    if isinstance(w, pd.DataFrame):
+        w = w.iloc[:, 0]
+    n = int(w.sum())
+
     def weighted_avg(col):
-        if isinstance(col, pd.DataFrame): col = col.iloc[:, 0]
+        if isinstance(col, pd.DataFrame):
+            col = col.iloc[:, 0]
         mask = col.notna().to_numpy(dtype=bool)
-        if not mask.any(): return 0
+        if not mask.any():
+            return 0
         return np.average(col.to_numpy()[mask], weights=w.to_numpy()[mask])
-        
+
     def weighted_pct(condition_mask, valid_mask=None):
-        if isinstance(condition_mask, pd.DataFrame): condition_mask = condition_mask.iloc[:, 0]
+        if isinstance(condition_mask, pd.DataFrame):
+            condition_mask = condition_mask.iloc[:, 0]
         cond_arr = condition_mask.to_numpy(dtype=bool, na_value=False)
-        
-        if valid_mask is None: 
+
+        if valid_mask is None:
             valid_mask_arr = np.ones(len(df), dtype=bool)
         else:
-            if isinstance(valid_mask, pd.DataFrame): valid_mask = valid_mask.iloc[:, 0]
+            if isinstance(valid_mask, pd.DataFrame):
+                valid_mask = valid_mask.iloc[:, 0]
             valid_mask_arr = valid_mask.to_numpy(dtype=bool, na_value=False)
-            
+
         w_arr = w.to_numpy()
-        
-        if not valid_mask_arr.any() or w_arr[valid_mask_arr].sum() == 0: return 0
+
+        if not valid_mask_arr.any() or w_arr[valid_mask_arr].sum() == 0:
+            return 0
         return (w_arr[cond_arr & valid_mask_arr].sum() / w_arr[valid_mask_arr].sum()) * 100
 
     ei_mean = weighted_avg(df['EI']) if 'EI' in df.columns else 0
     enps_col = df.get('eNPS', pd.Series(np.nan, index=df.index))
-    if isinstance(enps_col, pd.DataFrame): enps_col = enps_col.iloc[:, 0]
+    if isinstance(enps_col, pd.DataFrame):
+        enps_col = enps_col.iloc[:, 0]
     n_valid_enps = enps_col.notna()
-    
+
     w_series = pd.Series(w.to_numpy(), index=df.index)
-    
+
     promoters = w_series[enps_col >= 9].sum()
     passives = w_series[(enps_col >= 7) & (enps_col <= 8)].sum()
     detractors = w_series[enps_col <= 6].sum()
-    
+
     enps_score = weighted_pct(enps_col >= 9, n_valid_enps) - weighted_pct(enps_col <= 6, n_valid_enps)
-    
+
     mei_avg = weighted_avg(df['MEI']) if 'MEI' in df.columns else 0
     intent_col = df.get('intent', pd.Series(np.nan, index=df.index))
-    if isinstance(intent_col, pd.DataFrame): intent_col = intent_col.iloc[:, 0]
+    if isinstance(intent_col, pd.DataFrame):
+        intent_col = intent_col.iloc[:, 0]
     intent_valid = intent_col.notna()
     intent_pct = weighted_pct(intent_col <= 2, intent_valid)
     intent_pct_high = weighted_pct(intent_col >= 4, intent_valid)
-    
-    burnout_pct = weighted_pct(df.get('burnout_proxy', pd.Series(0, index=df.index)) > 0)
+
+    burnout_col = df.get('burnout_proxy', pd.Series(np.nan, index=df.index))
+    burnout_pct = weighted_pct(burnout_col > 0, burnout_col.notna())
 
     q22_col = df.get('stay_intention', pd.Series(np.nan, index=df.index))
-    if isinstance(q22_col, pd.DataFrame): q22_col = q22_col.iloc[:, 0]
+    if isinstance(q22_col, pd.DataFrame):
+        q22_col = q22_col.iloc[:, 0]
     q22_valid = q22_col.notna()
     stay_score_avg = round(weighted_avg(q22_col), 2)
     stay_flight_pct = round(weighted_pct(q22_col <= 2, q22_valid), 1)
@@ -848,7 +870,7 @@ def compute_kpis(df):
     contradiction_pct = round(weighted_pct(df.get('contradiction_flag', pd.Series(False, index=df.index))), 1)
 
     return {
-        'n': int(n), 
+        'n': int(n),
         'ei_mean': float(round(ei_mean, 1)),
         'enps_score': float(round(enps_score, 0)),
         'promoters': int(promoters), 'passives': int(passives), 'detractors': int(detractors),

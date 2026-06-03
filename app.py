@@ -1600,6 +1600,65 @@ with st.sidebar:
         if sel_dept != 'Tất cả Phòng ban': df_filtered = df_filtered[df_filtered['department']  == sel_dept]
         if sel_sec  != 'Tất cả Section':   df_filtered = df_filtered[df_filtered['section']     == sel_sec]
 
+        # ── Chạy bộ lọc chất lượng và gán attrs cho df_filtered ──
+        # attrs được đọc bởi view_a_current_state để hiển thị panel "Xử lý dữ liệu"
+        try:
+            from utils.data_loader import run_data_quality_pipeline
+
+            _filter_method = st.session_state.get('quality_filter_method', 'standard')
+            _n_before_q = len(df_filtered)
+
+            if _filter_method == 'none':
+                # Không lọc — giữ nguyên toàn bộ
+                df_filtered.attrs.update({
+                    'n_before':      _n_before_q,
+                    'n_removed':     0,
+                    'pct_removed':   0.0,
+                    'filter_method': 'none',
+                    'filter_desc':   'Không áp dụng bộ lọc chất lượng',
+                })
+            else:
+                df_clean, q_report = run_data_quality_pipeline(df_filtered, sel_group)
+                _n_removed = _n_before_q - len(df_clean)
+                _pct_removed = round(_n_removed / max(_n_before_q, 1) * 100, 1)
+
+                if _filter_method == 'straight_and_empty':
+                    # Chỉ loại straight-liner + excessive missing (không loại speeder)
+                    _sl   = q_report['flags'].get('straight_liners', 0)
+                    _miss = q_report['flags'].get('excessive_missing', 0)
+                    _removed_light = _sl + _miss
+                    _pct_light = round(_removed_light / max(_n_before_q, 1) * 100, 1)
+                    df_filtered.attrs.update({
+                        'n_before':      _n_before_q,
+                        'n_removed':     _removed_light,
+                        'pct_removed':   _pct_light,
+                        'filter_method': 'straight_and_empty',
+                        'filter_desc':   f'Loại {_sl} straight-liner · {_miss} thiếu >30% câu',
+                    })
+                    # Áp dụng lọc nhẹ vào df
+                    from utils.data_loader import _apply_quality_flags
+                    df_filtered = _apply_quality_flags(df_filtered, sel_group, modes=['straight_liners', 'excessive_missing'])
+                else:
+                    # standard — dùng toàn bộ kết quả pipeline
+                    df_filtered = df_clean
+                    df_filtered.attrs.update({
+                        'n_before':      _n_before_q,
+                        'n_removed':     _n_removed,
+                        'pct_removed':   _pct_removed,
+                        'filter_method': 'standard',
+                        'filter_desc':   'Áp dụng bộ lọc chất lượng tiêu chuẩn',
+                        'quality_warnings': q_report.get('warnings', []),
+                    })
+        except Exception:
+            # Nếu pipeline lỗi → vẫn hiển thị đúng n, không crash view
+            _nb = len(df_filtered)
+            df_filtered.attrs.update({
+                'n_before': _nb, 'n_removed': 0,
+                'pct_removed': 0.0,
+                'filter_method': 'standard',
+                'filter_desc': 'Áp dụng bộ lọc chất lượng tiêu chuẩn',
+            })
+
     # Spacer
     st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
     
