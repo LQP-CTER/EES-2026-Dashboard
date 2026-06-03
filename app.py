@@ -1776,14 +1776,18 @@ else:
                 break
 
         if sel_nav == "Tổng quan Tổ chức":
+            print(f"🎯 Đang render: Tổng quan Tổ chức cho nhóm {sel_group}")
             view_a_current_state.render(df_filtered, cfg)
         elif sel_nav == "Xem Báo Cáo":
+            print(f"🎯 Đang render: Xem Báo Cáo cho nhóm {sel_group}")
             from views import narrative_flow
             narrative_flow.render_narrative(df_filtered, cfg, sel_group)
         elif sel_pillar:
+            print(f"🎯 Đang render: Pillar {sel_pillar} cho nhóm {sel_group}")
             from views import pillar_renderer
             pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
         elif sel_nav and "Đo lường Impact" in sel_nav:
+            print(f"🎯 Đang render: Đo lường Impact cho nhóm {sel_group}")
             view_g_kpi_impact.render(df_filtered, cfg)
         else:
             st.info("Chọn một trụ cột từ sidebar bên trái.")

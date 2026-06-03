@@ -672,6 +672,7 @@ def analyze_tenure_cohorts(df, group_id):
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_group(group_id: str):
     """Load & clean a single survey group using v3 playbook pipeline. Returns (df_clean, n_before)."""
+    print(f"📊 [load_group] Bắt đầu tải nhóm {group_id}...")
     from config.groups import GROUP_REGISTRY
     import streamlit as st
     import pandas as pd
@@ -680,18 +681,25 @@ def load_group(group_id: str):
     
     local_path = cfg.get('local_file')
     if local_path and os.path.exists(local_path):
+        print(f"  ✓ Đang đọc từ file local: {local_path}")
         if local_path.endswith('.xlsx'):
             df_raw = pd.read_excel(local_path)
         else:
             df_raw = pd.read_csv(local_path)
     else:
         try:
+            print(f"  ✓ Đang kết nối Supabase...")
             conn = st.connection("supabase", type="sql")
             table_name = f"survey_{group_id.lower()}"
             df_raw = conn.query(f"SELECT * FROM {table_name}", ttl=3600)
+            print(f"  ✓ Đã lấy dữ liệu từ Supabase")
         except Exception as e:
+            print(f"  ⚠ Supabase lỗi, fallback về Google Sheets: {e}")
             df_raw = pd.read_csv(cfg['url'])
+            print(f"  ✓ Đã lấy dữ liệu từ Google Sheets")
+    
     n_before = len(df_raw)
+    print(f"  📈 Tổng số phản hồi: {n_before:,}")
 
     col_rename = {}
     for q_id, q_info in codebook.items():
@@ -699,6 +707,7 @@ def load_group(group_id: str):
         if idx < len(df_raw.columns):
             col_rename[df_raw.columns[idx]] = q_id
     df = df_raw.rename(columns=col_rename).copy()
+    print(f"  ✓ Đã rename {len(col_rename)} cột theo codebook")
     
     # Hash ID nhân viên để join với HRIS (bảo mật)
     from shared.security import hash_id
@@ -724,6 +733,7 @@ def load_group(group_id: str):
     if 'Q5_legacy' in df.columns:
         df['Q5'] = df['Q5_legacy']
 
+    print(f"  ✓ Đang chuẩn hóa dữ liệu (tenure, gen, prev_company)...")
     df = normalize_raw_data(df, group_id)
     
     from shared.codebook import decode_intent, decode_enps, decode_likert
@@ -734,7 +744,9 @@ def load_group(group_id: str):
         c = f'C{i}'
         if c in df.columns:
             df[c] = df[c].apply(decode_likert)
+    print(f"  ✓ Đã decode Likert/eNPS/intent")
 
+    print(f"  ✓ Đang tính các chỉ số (EI, MEI, burnout, JSI)...")
     df = compute_all_indices(df, group_id)
 
     # Clean / expose open-ended responses for NLP views
@@ -745,6 +757,7 @@ def load_group(group_id: str):
         df[cleaned_col] = df[c].where(df[c].notna(), None)
         df[cleaned_col] = df[cleaned_col].astype(str).str.strip()
         df.loc[df[cleaned_col].isin(['', 'None', 'nan', 'NaN']), cleaned_col] = np.nan
+    print(f"  ✓ Đã xử lý {len(open_cols)} cột câu hỏi mở")
 
     # Backward compatibility for legacy UI variables
     if 'C23' in df.columns:
@@ -753,8 +766,8 @@ def load_group(group_id: str):
         df['intent'] = df['C22']
     elif get_item(group_id, 'attrition') and get_item(group_id, 'attrition') in df.columns:
         df['intent'] = df[get_item(group_id, 'attrition')]
-    if 'C22' in df.columns:
-        df['stay_intention'] = df['C22']
+    if 'C14' in df.columns:
+        df['stay_intention'] = df['C14']
     df.attrs['group_id'] = group_id
     df.attrs['codebook'] = codebook
     
@@ -763,26 +776,32 @@ def load_group(group_id: str):
         if 'vùng' in str(c).lower(): vung_col = c; break
     if vung_col is None and 'D10' in df.columns: vung_col = 'D10'
     
+    print(f"  ✓ Đang map cơ cấu tổ chức (division/department/section)...")
     try:
         from shared.workforce_mapper import map_survey_to_org
         df = map_survey_to_org(df, group=group_id, vung_col=vung_col, id_col=df.columns[1], raw_df=df_raw)
+        print(f"  ✓ Đã map cơ cấu tổ chức")
     except Exception as e:
         import traceback
-        print(f"⚠️ Org mapping failed for {group_id}: {e}")
+        print(f"  ⚠ Org mapping failed for {group_id}: {e}")
         print(traceback.format_exc())
-        
+    
+    print(f"✅ [load_group] Hoàn thành nhóm {group_id}: {len(df):,} phản hồi sau xử lý")
     return df, n_before
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_all_available():
     """Load all groups that have data. Returns dict {group_id: (df, n_before)}."""
+    print(f"📊 [load_all_available] Bắt đầu tải tất cả nhóm...")
     from config.groups import get_available_groups
     results = {}
     for gid in get_available_groups():
         try:
             results[gid] = load_group(gid)
         except Exception as e:
+            print(f"  ⚠ Không load được nhóm {gid}: {e}")
             st.warning(f"Không load được nhóm {gid}: {e}")
+    print(f"✅ [load_all_available] Đã tải {len(results)}/{len(get_available_groups())} nhóm")
     return results
 
 
