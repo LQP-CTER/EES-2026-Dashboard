@@ -782,6 +782,32 @@ if announcement.get("active") and announcement.get("text"):
 # Import loaders and views
 from utils.data_loader import load_group, load_all_available
 from config.groups import get_available_groups
+
+# ── PRELOAD ALL DATA (Cách 1: Load 1 lần khi app start) ──
+@st.cache_resource(show_spinner="Đang tải toàn bộ dữ liệu khảo sát...")
+def preload_all_data():
+    """Load TẤT CẢ data 1 lần duy nhất khi app start, cache vĩnh viễn."""
+    print("🚀 [preload_all_data] Bắt đầu preload tất cả nhóm...")
+    import time as _time
+    _t0 = _time.perf_counter()
+    
+    all_data = {}
+    available = get_available_groups()
+    total = len(available)
+    
+    for i, gid in enumerate(available, 1):
+        try:
+            print(f"  [{i}/{total}] Đang load nhóm {gid}...")
+            all_data[gid] = load_group(gid)
+        except Exception as e:
+            print(f"  ⚠ Không load được nhóm {gid}: {e}")
+    
+    _elapsed = _time.perf_counter() - _t0
+    print(f"✅ [preload_all_data] Đã preload {len(all_data)}/{total} nhóm ({_elapsed:.2f}s)")
+    return all_data
+
+# Load tất cả data khi app start
+ALL_DATA = preload_all_data()
 from views import (
     overview_ees_2026,
     company_overview, hris_linkage,
@@ -1552,16 +1578,12 @@ with st.sidebar:
         # Filters
         st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
 
-        # Load raw data (for building filter options)
-        try:
-            with st.status("Đang tải dữ liệu...", expanded=False) as load_status:
-                df_raw, n_before = load_group(sel_group)
-                load_status.update(label=f"Đã tải {n_before:,} phản hồi", state="complete", expanded=False)
-        except Exception as e:
-            st.error(f"Không thể tải dữ liệu cho nhóm {sel_group}: {e}")
-            import traceback
-            st.code(traceback.format_exc())
+        # Load raw data from preloaded cache (instant)
+        if sel_group not in ALL_DATA:
+            st.error(f"Không tìm thấy dữ liệu cho nhóm {sel_group}")
             st.stop()
+        
+        df_raw, n_before = ALL_DATA[sel_group]
 
         sel_tenure_sb = st.selectbox(
             "Thâm niên", tenure_opts,
@@ -1708,7 +1730,8 @@ with st.sidebar:
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
 if is_overview:
     try:
-        overview_ees_2026.render()
+        with st.spinner("Đang tải trang Overview..."):
+            overview_ees_2026.render()
     except Exception as e:
         st.error(f"Lỗi khi tải Overview EES 2026: {e}")
         import traceback
@@ -1716,7 +1739,8 @@ if is_overview:
 
 elif is_data_trust:
     try:
-        view_i_data_trust.render()
+        with st.spinner("Đang tải trang Độ tin cậy dữ liệu..."):
+            view_i_data_trust.render()
     except Exception as e:
         st.error(f"Lỗi khi tải Độ tin cậy dữ liệu: {e}")
         import traceback
@@ -1724,7 +1748,8 @@ elif is_data_trust:
 
 elif is_appendix:
     try:
-        view_h_appendix.render()
+        with st.spinner("Đang tải trang Phụ lục..."):
+            view_h_appendix.render()
     except Exception as e:
         st.error(f"Lỗi khi tải Phụ lục: {e}")
         import traceback
@@ -1732,9 +1757,10 @@ elif is_appendix:
 
 elif is_company:
     try:
-        all_data = load_all_available()
-        filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}
-        company_overview.render(filtered_all_data, available)
+        with st.spinner("Đang tải trang Tổng quan GHN..."):
+            all_data = ALL_DATA  # Dùng preloaded data (instant)
+            filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}
+            company_overview.render(filtered_all_data, available)
     except Exception as e:
         st.error(f"Lỗi khi tải view Tổng quan: {e}")
         import traceback
@@ -1777,18 +1803,23 @@ else:
 
         if sel_nav == "Tổng quan Tổ chức":
             print(f"🎯 Đang render: Tổng quan Tổ chức cho nhóm {sel_group}")
-            view_a_current_state.render(df_filtered, cfg)
+            with st.spinner("Đang phân tích tổng quan tổ chức..."):
+                view_a_current_state.render(df_filtered, cfg)
         elif sel_nav == "Xem Báo Cáo":
             print(f"🎯 Đang render: Xem Báo Cáo cho nhóm {sel_group}")
-            from views import narrative_flow
-            narrative_flow.render_narrative(df_filtered, cfg, sel_group)
+            with st.spinner("Đang tạo báo cáo..."):
+                from views import narrative_flow
+                narrative_flow.render_narrative(df_filtered, cfg, sel_group)
         elif sel_pillar:
             print(f"🎯 Đang render: Pillar {sel_pillar} cho nhóm {sel_group}")
-            from views import pillar_renderer
-            pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
+            pillar_name = PILLAR_META[sel_pillar]['name']
+            with st.spinner(f"Đang phân tích {pillar_name}..."):
+                from views import pillar_renderer
+                pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
         elif sel_nav and "Đo lường Impact" in sel_nav:
             print(f"🎯 Đang render: Đo lường Impact cho nhóm {sel_group}")
-            view_g_kpi_impact.render(df_filtered, cfg)
+            with st.spinner("Đang tính toán tác động..."):
+                view_g_kpi_impact.render(df_filtered, cfg)
         else:
             st.info("Chọn một trụ cột từ sidebar bên trái.")
     except Exception as e:
