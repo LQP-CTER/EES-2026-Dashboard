@@ -669,7 +669,7 @@ def analyze_tenure_cohorts(df, group_id):
     return result
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner="Đang tải dữ liệu khảo sát... vui lòng chờ trong giây lát ⏳")
 def load_group(group_id: str):
     """Load & clean a single survey group using v3 playbook pipeline. Returns (df_clean, n_before)."""
     print(f"📊 [load_group] Bắt đầu tải nhóm {group_id}...")
@@ -799,7 +799,7 @@ def load_group(group_id: str):
     print(f"✅ [load_group] Hoàn thành nhóm {group_id}: {len(df):,} phản hồi sau xử lý")
     return df, n_before
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner="Đang tổng hợp dữ liệu toàn cầu... vui lòng chờ trong giây lát ⏳")
 def load_all_available():
     """Load all groups that have data. Returns dict {group_id: (df, n_before)}."""
     print(f"📊 [load_all_available] Bắt đầu tải tất cả nhóm...")
