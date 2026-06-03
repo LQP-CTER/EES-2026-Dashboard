@@ -669,7 +669,7 @@ def analyze_tenure_cohorts(df, group_id):
     return result
 
 
-@st.cache_data(ttl=3600, show_spinner=" Đang tải dữ liệu...")
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_group(group_id: str):
     """Load & clean a single survey group using v3 playbook pipeline. Returns (df_clean, n_before)."""
     from config.groups import GROUP_REGISTRY
@@ -753,8 +753,8 @@ def load_group(group_id: str):
         df['intent'] = df['C22']
     elif get_item(group_id, 'attrition') and get_item(group_id, 'attrition') in df.columns:
         df['intent'] = df[get_item(group_id, 'attrition')]
-    if 'C14' in df.columns:
-        df['stay_intention'] = df['C14']
+    if 'C22' in df.columns:
+        df['stay_intention'] = df['C22']
     df.attrs['group_id'] = group_id
     df.attrs['codebook'] = codebook
     
@@ -766,12 +766,14 @@ def load_group(group_id: str):
     try:
         from shared.workforce_mapper import map_survey_to_org
         df = map_survey_to_org(df, group=group_id, vung_col=vung_col, id_col=df.columns[1], raw_df=df_raw)
-    except:
-        pass
+    except Exception as e:
+        import traceback
+        print(f"⚠️ Org mapping failed for {group_id}: {e}")
+        print(traceback.format_exc())
         
     return df, n_before
 
-@st.cache_data(ttl=3600, show_spinner="Đang tải toàn bộ dữ liệu...")
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_all_available():
     """Load all groups that have data. Returns dict {group_id: (df, n_before)}."""
     from config.groups import get_available_groups

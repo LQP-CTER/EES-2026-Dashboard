@@ -1596,9 +1596,12 @@ with st.sidebar:
 
         # Apply all filters
         df_filtered = df_filtered_tenure.copy()
-        if sel_div  != 'Tất cả Khối':      df_filtered = df_filtered[df_filtered['division']    == sel_div]
-        if sel_dept != 'Tất cả Phòng ban': df_filtered = df_filtered[df_filtered['department']  == sel_dept]
-        if sel_sec  != 'Tất cả Section':   df_filtered = df_filtered[df_filtered['section']     == sel_sec]
+        if sel_div != 'Tất cả Khối' and 'division' in df_filtered.columns:
+            df_filtered = df_filtered[df_filtered['division'] == sel_div]
+        if sel_dept != 'Tất cả Phòng ban' and 'department' in df_filtered.columns:
+            df_filtered = df_filtered[df_filtered['department'] == sel_dept]
+        if sel_sec != 'Tất cả Section' and 'section' in df_filtered.columns:
+            df_filtered = df_filtered[df_filtered['section'] == sel_sec]
 
         # ── Chạy bộ lọc chất lượng và gán attrs cho df_filtered ──
         # attrs được đọc bởi view_a_current_state để hiển thị panel "Xử lý dữ liệu"
@@ -1649,14 +1652,18 @@ with st.sidebar:
                         'filter_desc':   'Áp dụng bộ lọc chất lượng tiêu chuẩn',
                         'quality_warnings': q_report.get('warnings', []),
                     })
-        except Exception:
+        except Exception as e:
             # Nếu pipeline lỗi → vẫn hiển thị đúng n, không crash view
+            # Nhưng log lỗi để debug
+            import traceback
+            print(f"⚠️ Data quality pipeline failed for {sel_group}: {e}")
+            print(traceback.format_exc())
             _nb = len(df_filtered)
             df_filtered.attrs.update({
                 'n_before': _nb, 'n_removed': 0,
                 'pct_removed': 0.0,
                 'filter_method': 'standard',
-                'filter_desc': 'Áp dụng bộ lọc chất lượng tiêu chuẩn',
+                'filter_desc': 'Áp dụng bộ lọc chất lượng tiêu chuẩn (có lỗi)',
             })
 
     # Spacer
@@ -1749,6 +1756,16 @@ else:
     """, unsafe_allow_html=True)
 
     try:
+        # Debug: Check df_filtered status
+        if df_filtered is None:
+            st.error("❌ df_filtered is None - không thể hiển thị dữ liệu")
+            st.stop()
+        
+        if df_filtered.empty:
+            st.warning("⚠️ Không có dữ liệu sau khi lọc. Vui lòng thử bộ lọc khác.")
+            st.info(f"Thông tin debug: Nhóm {sel_group}, Filter: {sel_nav}")
+            st.stop()
+        
         # Detect which pillar is selected
         sel_pillar = None
         for p_id in PILLAR_ORDER:
