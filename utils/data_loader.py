@@ -196,30 +196,69 @@ def compute_burnout(df: pd.DataFrame, group_id: str) -> pd.DataFrame:
     """
     Burnout Proxy = trung bình reverse của workload + pressure items.
     Thang 0–100 (cao = burnout risk cao).
-    Cả hai items cần có dữ liệu; nếu chỉ có 1 → dùng item đó.
+
+    Công thức: burnout_score = (5 - likert) / 4 × 100
+      • Likert 5 (hoàn toàn đồng ý = ổn) → score = 0   (không có nguy cơ)
+      • Likert 4                          → score = 25
+      • Likert 3 (trung lập)              → score = 50
+      • Likert 2                          → score = 75
+      • Likert 1 (hoàn toàn không đồng ý)→ score = 100  (nguy cơ cao nhất)
+
+    Ngưỡng burnout_proxy:
+      • >= 75  (Likert ≤ 2 = actively disagree) → proxy = 1
+      • < 75   (Likert ≥ 3, bao gồm neutral)    → proxy = 0
+      • NaN burnout_score                        → proxy = NaN (không bị tính là 0)
+
+    Lý do chọn ngưỡng 75 thay vì 50:
+      Likert 3 (neutral) KHÔNG phải tín hiệu burnout rõ ràng. Dùng ngưỡng 50
+      làm ~50% respondent bị flag trong phân phối bình thường (inflated rate).
+      Ngưỡng 75 (chỉ Likert 1–2) là chuẩn phổ biến trong nghiên cứu wellbeing.
+
+    Cả hai items cần có dữ liệu; nếu chỉ có 1 item → dùng item đó (fallback).
     """
+    BURNOUT_THRESHOLD = 75  # Likert <= 2 = actively disagree = at-risk
+
     wl_col = get_item(group_id, 'workload')
     pr_col = get_item(group_id, 'pressure')
 
     has_wl = wl_col and wl_col in df.columns
     has_pr = pr_col and pr_col in df.columns
 
+    def _reverse(col):
+        """Reverse Likert 1–5 sang thang burnout 0–100."""
+        return (5 - df[col]) / 4 * 100
+
+    def _proxy(score_series):
+        """
+        Tính burnout_proxy giữ nguyên NaN thay vì convert thành 0.
+        NaN score → NaN proxy (không phải 0 = not-at-risk).
+        """
+        return np.where(
+            score_series.isna(),
+            np.nan,
+            (score_series >= BURNOUT_THRESHOLD).astype(float)
+        )
+
     if has_wl and has_pr and wl_col != pr_col:
-        # FIX: (5 - x) / 4 * 100 → 1→100%, 5→0% — không clip, không mất info
-        burnout_wl = (5 - df[wl_col]) / 4 * 100
-        burnout_pr = (5 - df[pr_col]) / 4 * 100
-        df['burnout_score'] = ((burnout_wl + burnout_pr) / 2).round(1)
-        df['burnout_proxy'] = (df['burnout_score'] >= 50).astype(int)
+        burnout_wl = _reverse(wl_col)
+        burnout_pr = _reverse(pr_col)
+        # mean chỉ dùng valid values (NaN tự bỏ qua)
+        score = pd.concat([burnout_wl, burnout_pr], axis=1).mean(axis=1).round(1)
+        df['burnout_score'] = score
+        df['burnout_proxy'] = _proxy(score)
+
     elif has_wl:
-        df['burnout_score'] = ((5 - df[wl_col]) / 4 * 100).round(1)
-        df['burnout_proxy'] = (df['burnout_score'] >= 50).astype(int)
+        score = _reverse(wl_col).round(1)
+        df['burnout_score'] = score
+        df['burnout_proxy'] = _proxy(score)
+
     else:
         df['burnout_score'] = np.nan
         df['burnout_proxy'] = np.nan
 
-    # NOTE 3B: pressure = workload (cùng câu C18), burnout_score sẽ chỉ dùng 1 item
+    # 3B: pressure = workload = C18 (1 item duy nhất trong TC5)
     if group_id == '3B':
-        df['burnout_note'] = 'Single-item burnout proxy (3B pressure=workload=C18)'
+        df['burnout_note'] = 'Single-item burnout proxy (3B: pressure=workload=C18, TC5)'
 
     return df
 
@@ -600,7 +639,7 @@ def run_data_quality_pipeline(df: pd.DataFrame, group_id: str) -> tuple:
     # Summary
     report['excluded_n'] = int(excl.sum())
     report['clean_n']    = int((~excl).sum())
-    report['excl_rate']  = round(report['excluded_n'] / report['original_n'] * 100, 1)
+    report['excl_rate']  = round(report['excluded_n'] / max(report['original_n'], 1) * 100, 1)
     if report['excl_rate'] > 15:
         report['warnings'].append(
             f"🔴 Tỷ lệ loại cao ({report['excl_rate']}%) — kiểm tra quy trình thu thập dữ liệu"

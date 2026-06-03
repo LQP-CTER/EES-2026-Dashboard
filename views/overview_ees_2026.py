@@ -679,35 +679,171 @@ def render():
     components.html(video_html, height=760, scrolling=False)
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
+    gallery_images = [
+        (img1,  "Truyền thông EES 2026 — CPO gửi thông điệp"),
+        (img2,  "CPO Kick-off — Khởi động chiến dịch"),
+        (img3,  "Giám đốc vùng — GDV anh Vũ"),
+        (img4,  "Giám đốc vùng — Mr. Nguyễn Văn Tân"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392212/LOGO%20GHN/EES_GDV_A_Doanh_jj76dm.png", "GDV anh Doanh"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392695/LOGO%20GHN/IMG_1493_ldeq70.jpg",        "Khoảnh khắc hậu trường"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392653/LOGO%20GHN/IMG_1490_mky43b.jpg",        "Team tại sự kiện"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392298/LOGO%20GHN/IMG_0453_jxkhnh.jpg",        "Không khí khảo sát"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392211/LOGO%20GHN/IMG_0311_lu2fro.jpg",        "Hiện trường triển khai"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392211/LOGO%20GHN/IMG_0441_sc2m68.jpg",        "Nhân viên tham gia khảo sát"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392211/LOGO%20GHN/IMG_0314_yedkhg.jpg",        "Góc nhìn thực địa"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392210/LOGO%20GHN/IMG_0309_igcbg1.jpg",        "Khoảnh khắc ghi lại"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392210/LOGO%20GHN/IMG_0308_erbljv.jpg",        "Đội ngũ tại hiện trường"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392209/LOGO%20GHN/IMG_0306_gfcxjk.jpg",        "Triển khai toàn quốc"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392212/LOGO%20GHN/IMG_0452_rmbjyf.jpg",        "Chiến dịch EES RACE"),
+    ]
+
+    gallery_items_html = ""
+    for url, caption in gallery_images:
+        gallery_items_html += f"""
+        <div class="gl-item">
+            <img src="{url}" alt="{caption}" loading="lazy">
+            <div class="gl-caption">{caption}</div>
+        </div>"""
+
     st.markdown(f"""
+    <style>
+    /* ── Pinterest-style columns gallery (images shown in full, no crop) ── */
+    .gl-grid {{
+        columns: 3;
+        column-gap: 16px;
+        margin-bottom: 72px;
+    }}
+    .gl-item {{
+        break-inside: avoid;
+        margin-bottom: 16px;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        background: #F1F5F9;
+        cursor: zoom-in;
+    }}
+    .gl-item img {{
+        width: 100%;
+        height: auto;          /* natural height — NO crop */
+        display: block;
+        transition: transform .6s cubic-bezier(.4,0,.2,1);
+    }}
+    .gl-item:hover img {{
+        transform: scale(1.03);
+    }}
+    .gl-caption {{
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        padding: 28px 16px 14px;
+        background: linear-gradient(to top, rgba(10,31,68,.82) 0%, transparent 100%);
+        color: #fff;
+        font-size: .78rem;
+        font-weight: 700;
+        line-height: 1.35;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity .35s ease, transform .35s ease;
+    }}
+    .gl-item:hover .gl-caption {{
+        opacity: 1;
+        transform: translateY(0);
+    }}
+
+    /* Lightbox overlay */
+    #gl-lightbox {{
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(5,10,24,.92);
+        backdrop-filter: blur(12px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        cursor: zoom-out;
+    }}
+    #gl-lightbox.open {{ display: flex; }}
+    #gl-lightbox img {{
+        max-width: 88vw;
+        max-height: 88vh;
+        width: auto;
+        height: auto;
+        border-radius: 16px;
+        box-shadow: 0 32px 80px rgba(0,0,0,.6);
+        object-fit: contain;
+    }}
+    #gl-close {{
+        position: fixed;
+        top: 24px; right: 28px;
+        color: rgba(255,255,255,.7);
+        font-size: 2rem;
+        cursor: pointer;
+        line-height: 1;
+        font-weight: 300;
+        transition: color .2s;
+    }}
+    #gl-close:hover {{ color: #fff; }}
+    #gl-caption-lb {{
+        position: fixed;
+        bottom: 28px; left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255,255,255,.7);
+        font-size: .82rem;
+        font-weight: 600;
+        letter-spacing: .04em;
+        background: rgba(255,255,255,.08);
+        padding: 6px 18px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }}
+    </style>
+
+    <!-- Lightbox -->
+    <div id="gl-lightbox">
+        <span id="gl-close">&#x2715;</span>
+        <img id="gl-lb-img" src="" alt="">
+        <span id="gl-caption-lb"></span>
+    </div>
+
     <div class="ed-container">
         <div class="ed-section-header">
             <h2 class="ed-section-title">Góc nhìn hậu trường</h2>
             <span class="ed-section-tag">Team EX Showcase</span>
         </div>
-        <div class="ed-masonry">
-            <div class="ed-masonry-item ed-masonry-item-large">
-                <img src="{img1}" alt="CPO ngang">
-                <div class="ed-masonry-overlay"></div>
-                <div class="ed-masonry-caption">Thảo luận chiến lược — CPO Kick-off</div>
-            </div>
-            <div class="ed-masonry-item">
-                <img src="{img2}" alt="Không khí làm việc">
-                <div class="ed-masonry-overlay"></div>
-                <div class="ed-masonry-caption">Không khí làm việc</div>
-            </div>
-            <div class="ed-masonry-item ed-masonry-item-tall">
-                <img src="{img3}" alt="GDV">
-                <div class="ed-masonry-overlay"></div>
-                <div class="ed-masonry-caption">Chia sẻ từ Lãnh đạo</div>
-            </div>
-            <div class="ed-masonry-item ed-masonry-item-wide">
-                <img src="{img4}" alt="Chiến dịch EES RACE">
-                <div class="ed-masonry-overlay"></div>
-                <div class="ed-masonry-caption">Chiến dịch EES RACE</div>
-            </div>
+        <div class="gl-grid">
+            {gallery_items_html}
         </div>
     </div>
+
+    <script>
+    (function(){{
+        const lb     = document.getElementById('gl-lightbox');
+        const lbImg  = document.getElementById('gl-lb-img');
+        const lbCap  = document.getElementById('gl-caption-lb');
+        const lbClose= document.getElementById('gl-close');
+
+        document.querySelectorAll('.gl-item').forEach(item => {{
+            item.addEventListener('click', () => {{
+                const src = item.querySelector('img').src;
+                const cap = item.querySelector('.gl-caption').textContent;
+                lbImg.src = src;
+                lbCap.textContent = cap;
+                lb.classList.add('open');
+            }});
+        }});
+
+        lb.addEventListener('click', (e) => {{
+            if (e.target === lb || e.target === lbClose) {{
+                lb.classList.remove('open');
+                lbImg.src = '';
+            }}
+        }});
+
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') {{ lb.classList.remove('open'); lbImg.src=''; }}
+        }});
+    }})();
+    </script>
     """, unsafe_allow_html=True)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────

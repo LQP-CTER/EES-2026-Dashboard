@@ -926,24 +926,53 @@ _ROLES_1B = {
     'peer': 'Q26', 'pride': 'Q27', 'pressure': 'Q28',
 }
 
-# Layout back office / quản lý (2A/2B/3A/3B)
-# TC5 = Q26-Q29 (generic). Quy ước: Q26 môi trường/đồng nghiệp, Q27 đồng nghiệp/
-# phối hợp, Q28 tự hào/thuộc về, Q29 áp lực kiểm soát được.
-_ROLES_BACKOFFICE = {
-    'info_trust': 'Q9',  'info_timely': 'Q10',
-    'mgr_support': 'Q13', 'mgr_fairness': 'Q14', 'mgr_feedback': 'Q17',
-    'tool': 'Q18', 'workload': 'Q21', 'career': 'Q21', 'change_guide': 'Q20',
-    'income_fair': 'Q22', 'transparency': 'Q23', 'incident_support': 'Q25',
-    'peer': 'Q27', 'pride': 'Q28', 'pressure': 'Q29',
+# Layout 2A — NV Vận hành Kho (dùng C-column names khớp với QUESTION_MAP)
+_ROLES_2A = {
+    'info_trust':   'C1',  'info_timely':  'C2',
+    'mgr_support':  'C4',  'mgr_fairness': 'C3',  'mgr_feedback': 'C4',
+    'tool':         'C7',  'workload':     'C9',  'career':       'C10',
+    'income_fair':  'C12', 'transparency': 'C13',
+    'peer':         'C19', 'pride':        None,   'pressure':     'C20',
+    'respect':      'C21', 'belonging':    'C21',
+}
+
+# Layout 2B — Quản lý Tuyến đầu (dùng C-column names khớp với QUESTION_MAP)
+_ROLES_2B = {
+    'info_trust':   'C1',  'info_timely':  'C4',
+    'mgr_support':  'C6',  'mgr_fairness': 'C7',  'mgr_feedback': 'C9',
+    'tool':         'C10', 'workload':     'C12', 'career':       'C13',
+    'income_fair':  'C15', 'transparency': 'C17',
+    'peer':         'C18', 'pride':        'C19', 'pressure':     'C20',
+    'respect':      'C21', 'belonging':    'C19',
+}
+
+# Layout 3A — NV Văn phòng / Hỗ trợ HO (dùng C-column names khớp với QUESTION_MAP)
+_ROLES_3A = {
+    'info_trust':   'C1',  'info_timely':  'C3',
+    'mgr_support':  'C8',  'mgr_fairness': 'C7',  'mgr_feedback': 'C8',
+    'tool':         'C10', 'workload':     'C14', 'career':       'C13',
+    'income_fair':  'C15', 'transparency': 'C17',
+    'peer':         'C18', 'pride':        'C20', 'pressure':     'C19',
+    'respect':      None,  'belonging':    'C21',
+}
+
+# Layout 3B — Manager / Senior Manager / Director HO (dùng C-column names)
+_ROLES_3B = {
+    'info_trust':   'C1',  'info_timely':  None,
+    'mgr_support':  'C6',  'mgr_fairness': 'C5',  'mgr_feedback': 'C6',
+    'tool':         'C9',  'workload':     'C18', 'career':       'C13',
+    'income_fair':  'C14', 'transparency': 'C16',
+    'peer':         'C21', 'pride':        'C20', 'pressure':     'C18',
+    'respect':      None,  'belonging':    'C20',
 }
 
 PILLAR_QUESTION_ROLES = {
     '1A': _ROLES_1A,
     '1B': _ROLES_1B,
-    '2A': _ROLES_BACKOFFICE,
-    '2B': _ROLES_BACKOFFICE,
-    '3A': _ROLES_BACKOFFICE,
-    '3B': _ROLES_BACKOFFICE,
+    '2A': _ROLES_2A,
+    '2B': _ROLES_2B,
+    '3A': _ROLES_3A,
+    '3B': _ROLES_3B,
 }
 
 
