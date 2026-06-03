@@ -186,7 +186,7 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── 2. VIDEO SECTION (single components.html so JS works) ────────────────
+    # ── 2. VIDEO SECTION ─────────────────────────────────────────────────────
     # Playlist = main highlight reel + 4 shorts. The main reel is the first item.
     playlist = [(main_video_url, "Highlight Reel")] + short_urls
 
@@ -296,14 +296,11 @@ def render():
   /* ── Control bar ── */
   .ctrl-bar {{
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 16px 164px 18px 20px;   /* right padding clears the playlist dock */
+    padding: 16px 20px 18px 20px;
     display: flex; flex-direction: column; gap: 10px;
     opacity: 0; transform: translateY(6px);
     transition: opacity .3s ease, transform .3s ease;
     z-index: 10;
-  }}
-  @media (max-width: 820px) {{
-    .ctrl-bar {{ padding-right: 124px; }}
   }}
 
   /* Progress track */
@@ -358,46 +355,31 @@ def render():
     border-radius: 50%; background: #fff; cursor: pointer;
   }}
 
-  /* ── Frosted glass playlist dock (right side, over the player) ── */
+  /* ── Playlist dock BELOW player ── */
   .dock {{
-    position: absolute;
-    top: 20px; right: 20px; bottom: 20px;
-    width: 124px;
-    display: flex; flex-direction: column;
-    gap: 12px;
-    padding: 14px 12px;
-    border-radius: 20px;
-    background: rgba(10,16,32,.38);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    border: 1px solid rgba(255,255,255,.16);
-    box-shadow: 0 12px 40px rgba(0,0,0,.35);
-    z-index: 12;
-    overflow-y: auto;
-    transition: opacity .35s ease, transform .35s ease;
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
   }}
-  .dock::-webkit-scrollbar {{ width: 0; }}
-  .dock-head {{
-    font-size: .58rem; font-weight: 800; letter-spacing: .16em;
-    text-transform: uppercase; color: rgba(255,255,255,.65);
-    text-align: center; padding-bottom: 2px;
+  @media (max-width: 820px) {{
+    .dock {{ grid-template-columns: repeat(3, 1fr); }}
   }}
 
   .dock-card {{
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;        /* square cards */
+    aspect-ratio: 16 / 10;
     border-radius: 14px;
     overflow: hidden;
-    flex-shrink: 0;
     cursor: pointer;
     background: #0F172A;
     border: 2px solid transparent;
     transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s ease, border-color .3s ease;
   }}
   .dock-card:hover {{
-    transform: scale(1.06);
-    box-shadow: 0 10px 24px rgba(0,0,0,.4);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(10,31,68,.25);
   }}
   .dock-card-active {{
     border-color: #FF5200;
@@ -405,33 +387,30 @@ def render():
   }}
   .dock-video {{
     width: 100%; height: 100%; object-fit: cover; display: block;
-    /* idle cards stay slightly blurred + dimmed; sharpen on hover/active */
-    filter: blur(2px) brightness(.62);
-    transform: scale(1.05);
+    filter: brightness(.7);
     transition: filter .35s ease, transform .35s ease;
   }}
   .dock-card:hover .dock-video,
   .dock-card-active .dock-video {{
-    filter: blur(0) brightness(1);
-    transform: scale(1);
+    filter: brightness(1);
+    transform: scale(1.05);
   }}
   .dock-card-scrim {{
     position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.78) 100%);
+    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,.85) 100%);
   }}
   .dock-card-title {{
-    position: absolute; left: 8px; right: 8px; bottom: 7px;
-    font-size: .6rem; font-weight: 700; color: #fff;
-    text-align: center; line-height: 1.2;
-    text-shadow: 0 1px 3px rgba(0,0,0,.8);
+    position: absolute; left: 10px; right: 10px; bottom: 10px;
+    font-size: .72rem; font-weight: 700; color: #fff;
+    line-height: 1.3;
+    text-shadow: 0 1px 4px rgba(0,0,0,.8);
     pointer-events: none;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }}
   /* Now-playing equalizer bars (active card only) */
   .dock-eq {{
-    position: absolute; top: 7px; left: 7px;
+    position: absolute; top: 10px; left: 10px;
     display: none; align-items: flex-end; gap: 2px;
-    height: 12px; z-index: 2;
+    height: 14px; z-index: 2;
   }}
   .dock-card-active .dock-eq {{ display: flex; }}
   .dock-eq span {{
@@ -439,15 +418,11 @@ def render():
     animation: eq 0.9s ease-in-out infinite;
   }}
   .dock-eq span:nth-child(1) {{ height: 6px;  animation-delay: 0s;   }}
-  .dock-eq span:nth-child(2) {{ height: 12px; animation-delay: .25s; }}
-  .dock-eq span:nth-child(3) {{ height: 8px;  animation-delay: .5s;  }}
+  .dock-eq span:nth-child(2) {{ height: 14px; animation-delay: .25s; }}
+  .dock-eq span:nth-child(3) {{ height: 9px;  animation-delay: .5s;  }}
   @keyframes eq {{
     0%,100% {{ transform: scaleY(.4); }}
     50%     {{ transform: scaleY(1); }}
-  }}
-
-  @media (max-width: 820px) {{
-    .dock {{ width: 92px; }}
   }}
 </style>
 </head>
@@ -513,12 +488,11 @@ def render():
       </button>
     </div>
   </div>
+</div>
 
-  <!-- Frosted glass playlist dock -->
-  <div class="dock" id="dock">
-    <div class="dock-head">Danh sách</div>
-    {dock_cards}
-  </div>
+<!-- Playlist dock BELOW player -->
+<div class="dock" id="dock">
+  {dock_cards}
 </div>
 
 <script>
@@ -581,7 +555,7 @@ def render():
 
   // Click shell = toggle play
   shell.addEventListener('click', (e) => {{
-    if (e.target.closest('.ctrl-bar') || e.target.closest('.unmute-pill') || e.target.closest('.dock')) return;
+    if (e.target.closest('.ctrl-bar') || e.target.closest('.unmute-pill')) return;
     if (vid.paused) {{ vid.play().catch(()=>{{}}); popCentre(false); }}
     else            {{ vid.pause(); popCentre(true); }}
   }});
@@ -655,7 +629,7 @@ def render():
         vid.pause();
         src.setAttribute('src', newSrc);
         vid.load();
-        vid.muted = wasMuted;            // preserve mute/unmute choice
+        vid.muted = wasMuted;
         vid.volume = +volSl.value || 0.8;
         vid.play().catch(()=>{{}});
         updateMuteUI(wasMuted);
@@ -675,7 +649,7 @@ def render():
 </html>
 """
 
-    st.iframe(video_html, height=760)
+    st.iframe(video_html, height=680)
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
