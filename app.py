@@ -1456,6 +1456,20 @@ with st.sidebar:
             st.rerun()
         st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
+    # Nút Refresh cache (xóa cả Parquet trên disk + Streamlit in-memory cache)
+    if st.button("🔄 Refresh cache dữ liệu", width='stretch', help="Xóa Parquet cache + reload từ Supabase + áp dụng lại Memo v2"):
+        with st.spinner("Đang xóa cache..."):
+            try:
+                from utils.data_cache import invalidate_cache
+                invalidate_cache()
+                st.cache_data.clear()
+                st.cache_resource.clear()
+                st.success("✓ Đã xóa toàn bộ cache. Đang reload...")
+                import time; time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Lỗi khi xóa cache: {e}")
+
     # Brand block
     st.markdown("""
     <div class="sb-brand">
@@ -1627,10 +1641,42 @@ with st.sidebar:
         try:
             from utils.data_loader import run_data_quality_pipeline
 
-            _filter_method = st.session_state.get('quality_filter_method', 'standard')
+            _filter_method = st.session_state.get('quality_filter_method', 'memo_v2')
             _n_before_q = len(df_filtered)
 
-            if _filter_method == 'none':
+            # ── Ưu tiên: Nếu load_group đã áp dụng Memo v2 (effective_weight có sẵn) ──
+            # → KHÔNG hard-delete, set attrs dựa trên tier_v2
+            if 'effective_weight' in df_filtered.columns and 'tier_v2' in df_filtered.columns:
+                _tier_counts = df_filtered['tier_v2'].value_counts().to_dict()
+                _n_keep   = int(_tier_counts.get('KEEP', 0))
+                _n_down   = int(_tier_counts.get('DOWNWEIGHT', 0))
+                _n_drop   = int(_tier_counts.get('DROP', 0))
+                _n_eff    = float(df_filtered['effective_weight'].sum())
+
+                # Nếu user chọn memo_v2_drop → thực sự drop tier=DROP khỏi df
+                if _filter_method == 'memo_v2_drop' and _n_drop > 0:
+                    df_filtered = df_filtered[df_filtered['tier_v2'] != 'DROP'].copy()
+                    df_filtered.attrs.update({
+                        'n_before':      _n_before_q,
+                        'n_removed':     _n_drop,
+                        'pct_removed':   round(_n_drop / max(_n_before_q, 1) * 100, 1),
+                        'filter_method': 'memo_v2_drop',
+                        'filter_desc':   f'Memo v2 + DROP · KEEP={_n_keep:,} · DOWNWEIGHT={_n_down:,} (đã loại {_n_drop:,})',
+                        'n_effective':   _n_eff,
+                        'tier_counts':   _tier_counts,
+                    })
+                else:
+                    # memo_v2 (mặc định) — giữ toàn bộ, giảm trọng số
+                    df_filtered.attrs.update({
+                        'n_before':      _n_before_q,
+                        'n_removed':     0,  # không drop
+                        'pct_removed':   0.0,
+                        'filter_method': 'memo_v2',
+                        'filter_desc':   f'Memo v2 · KEEP={_n_keep:,} · DOWNWEIGHT={_n_down:,} · DROP={_n_drop:,} (tham chiếu, không loại)',
+                        'n_effective':   _n_eff,
+                        'tier_counts':   _tier_counts,
+                    })
+            elif _filter_method == 'none':
                 # Không lọc — giữ nguyên toàn bộ
                 df_filtered.attrs.update({
                     'n_before':      _n_before_q,

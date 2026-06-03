@@ -56,8 +56,8 @@ def render(df, cfg, pillar_filter=None):
     _n_final     = len(df)
     _keep_pct    = round(_n_final / _n_before * 100, 1) if _n_before > 0 else 100
 
-    _meth_color = {"none": "#0EA5E9", "straight_and_empty": "#8B5CF6", "standard": "#10B981"}.get(_filter_meth, "#64748B")
-    _meth_label = {"none": "Không lọc", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn"}.get(_filter_meth, "Lọc chuẩn")
+    _meth_color = {"none": "#0EA5E9", "memo_v2": "#FF5200", "memo_v2_drop": "#DC2626", "straight_and_empty": "#8B5CF6", "standard": "#10B981"}.get(_filter_meth, "#64748B")
+    _meth_label = {"none": "Không lọc", "memo_v2": "Memo v2 · Trọng số tin cậy", "memo_v2_drop": "Memo v2 + DROP", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn"}.get(_filter_meth, "Lọc chuẩn")
 
     st.markdown(f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 18px;margin-bottom:14px;">
