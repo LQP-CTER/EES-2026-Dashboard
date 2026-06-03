@@ -19,6 +19,7 @@ import plotly.express as px
 from shared.codebook import (
     PILLAR_META, PILLAR_ORDER, get_pillar_description,
     get_codebook, get_pillar_questions, get_question_label, PILLAR_WEIGHTS,
+    get_tenure_column,
 )
 from shared.plotly_theme import fig_card, COLORS
 from utils.anomaly_detector import detect_pillar_anomalies, detect_cross_pillar
@@ -216,7 +217,8 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         """, unsafe_allow_html=True)
 
     # ── Khối 2: Breakdown theo thâm niên ─────────────────────
-    if 'D5' in df.columns:
+    _tenure_col_pr = get_tenure_column(df)
+    if _tenure_col_pr:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("#### Ai đang bị ảnh hưởng nhất? (Phân tích theo Thâm niên)")
 
@@ -225,7 +227,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
 
         tenure_data = []
         for t in TENURE_ORDER:
-            mask = df_work['D5'] == t
+            mask = df_work[_tenure_col_pr] == t
             subset = df_work.loc[mask, '_pillar_score'].dropna()
             if len(subset) >= 10:
                 tenure_data.append({'Thâm niên': t, 'Điểm TB': round(subset.mean(), 2), 'N': len(subset)})

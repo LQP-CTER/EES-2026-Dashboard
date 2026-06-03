@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 
-from shared.codebook import PILLAR_META, PILLAR_ORDER, get_pillar_questions, get_question_label
+from shared.codebook import PILLAR_META, PILLAR_ORDER, get_pillar_questions, get_question_label, get_tenure_column
 from shared.plotly_theme import fig_card, COLORS, make_html_kpi, section_header
 from utils.contradiction_engine import detect_contradictions, get_top_contradictions
 from utils.ai_generator import render_ai_insight_card
@@ -462,7 +462,8 @@ def _render_regional_breakdown_chart(df, c_id):
 
 def _render_tenure_cliff_chart(df, metrics):
     """Render biểu đồ tenure cliff."""
-    if 'D5' not in df.columns:
+    _tenure_col_nf = get_tenure_column(df)
+    if not _tenure_col_nf:
         return
 
     tenure_order = [
@@ -472,7 +473,7 @@ def _render_tenure_cliff_chart(df, metrics):
     ]
     tenure_data = []
     for t in tenure_order:
-        subset = df[df['D5'] == t]['EI']
+        subset = df[df[_tenure_col_nf] == t]['EI']
         if len(subset) >= 10:
             tenure_data.append({'Thâm niên': t, 'EI': round(subset.mean(), 1), 'N': len(subset)})
 

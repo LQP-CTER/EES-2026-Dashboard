@@ -5,6 +5,7 @@ import pandas as pd
 from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from utils.ai_generator import render_ai_insight_card
+from shared.codebook import get_tenure_column, get_role_column, get_gender_column, get_generation_column
 
 def render(df, cfg, pillar_filter=None):
     apply_theme()
@@ -933,11 +934,13 @@ def render(df, cfg, pillar_filter=None):
     st.markdown(section_header("Phân Tích Nhân Khẩu Học & Cấp Bậc", "Chênh lệch gắn kết giữa nhóm cũ/mới và các vai trò Direct vs Indirect"), unsafe_allow_html=True)
     
     demo_cols = []
-    if 'D5' in df.columns:
-        demo_cols.append(('D5', 'Thâm niên'))
-    if 'chức_danh' in df.columns:
-        demo_cols.append(('chức_danh', 'Chức danh / Vai trò'))
-        
+    _tenure_col = get_tenure_column(df)
+    if _tenure_col:
+        demo_cols.append((_tenure_col, 'Thâm niên'))
+    _role_col = get_role_column(df)
+    if _role_col:
+        demo_cols.append((_role_col, 'Chức danh / Cấp bậc'))
+
     if demo_cols:
         cols = st.columns(len(demo_cols))
         for idx, (col_id, col_name) in enumerate(demo_cols):
@@ -948,26 +951,26 @@ def render(df, cfg, pillar_filter=None):
                     # Clean up empty or weird names
                     if pd.isna(name) or str(name).strip() == '': continue
                     if len(g) < 1: continue
-                    
+
                     kpi = compute_kpis(g)
                     demo_data.append({'Nhóm': str(name), 'N': kpi['n'], 'EI (%)': kpi['ei_mean'], 'eNPS': kpi['enps_score']})
-                    
+
                 if demo_data:
                     df_demo = pd.DataFrame(demo_data).sort_values('N', ascending=False).head(8) # Top 8 most populous groups to avoid clutter
                     fig = go.Figure()
                     fig.add_trace(go.Bar(
-                        x=df_demo['Nhóm'], y=df_demo['EI (%)'], name='EI (%)', 
+                        x=df_demo['Nhóm'], y=df_demo['EI (%)'], name='EI (%)',
                         text=[f'{v:.1f}%' for v in df_demo['EI (%)']], textposition='outside', marker_color=COLORS['blue']
                     ))
                     fig.add_trace(go.Bar(
-                        x=df_demo['Nhóm'], y=df_demo['eNPS'], name='eNPS', 
+                        x=df_demo['Nhóm'], y=df_demo['eNPS'], name='eNPS',
                         text=[f'{v:+.0f}' for v in df_demo['eNPS']], textposition='outside', marker_color=COLORS['green']
                     ))
                     fig = fig_card(fig, f'Gắn kết theo {col_name}', f'Phân tích nhóm {col_name.lower()} đông nhất')
                     fig.update_layout(barmode='group', xaxis_tickangle=-30)
                     st.plotly_chart(fig, width='stretch', key="view_a_current_state_chart_877")
-                    
-                    if col_id == 'D5':
+
+                    if col_id == _tenure_col and 'Trên 3 đến 5 năm' in str(df_demo['Nhóm'].tolist()):
                         prompt = (
                             f"DỰA VÀO DỮ LIỆU THÂM NIÊN SAU (KHÔNG bịa thêm):\n"
                             f"{demo_data}\n\n"
@@ -983,7 +986,14 @@ def render(df, cfg, pillar_filter=None):
                             custom_style="margin-top: 15px;"
                         )
     else:
-        st.info("Dữ liệu hiện tại không chứa các cột về Thâm niên (Q5) hoặc Chức danh.")
+        _tenure_candidates = [c for c in df.columns if any(k in c.lower() for k in ['tenure', 'q5', 'thâm niên', 'năm'])]
+        _role_candidates = [c for c in df.columns if any(k in c.lower() for k in ['chức', 'cấp bậc', 'role', 'position', 'title'])]
+        st.warning(
+            "Dữ liệu hiện tại không chứa cột Thâm niên / Chức danh mà hệ thống nhận diện được.\n\n"
+            f"- Cột Thâm niên khả dĩ: `{_tenure_candidates or 'không có'}`\n"
+            f"- Cột Chức danh khả dĩ: `{_role_candidates or 'không có'}`\n\n"
+            "Vui lòng kiểm tra lại codebook hoặc liên hệ team People Analytics."
+        )
 
     # =========================================================================
     # LATE RENDER: Kích hoạt AI SAU khi toàn bộ UI đã được hiển thị xong

@@ -985,6 +985,75 @@ def get_role_question(group_id, role):
     return PILLAR_QUESTION_ROLES.get(group_id, _ROLES_1A).get(role)
 
 
+# ============================================================================
+# DEMOGRAPHIC COLUMN DETECTORS — tự động tìm cột Thâm niên / Chức danh
+# ============================================================================
+# Lý do: code cũ hard-code 'D5' / 'chức_danh' nhưng data thực tế đặt tên khác
+# theo từng nhóm (Q5 / tenure_label / "Chức danh" / "Cấp bậc hiện tại...").
+# Hàm này fallback linh hoạt cho cả 6 nhóm khảo sát.
+
+def get_tenure_column(df):
+    """Tìm cột Thâm niên trong DataFrame.
+
+    Ưu tiên: `tenure_label` (đã được normalize từ load_group)
+    Fallback: `Q5` > `Q5_legacy` > `tenure`
+
+    Returns tên cột, hoặc None nếu không tìm thấy.
+    """
+    if df is None or df.empty:
+        return None
+    for cand in ['tenure_label', 'Q5', 'Q5_legacy', 'tenure', 'D5']:
+        if cand in df.columns:
+            return cand
+    return None
+
+
+def get_role_column(df):
+    """Tìm cột Chức danh / Cấp bậc trong DataFrame.
+
+    Tên cột thay đổi theo từng nhóm:
+      - 1A, 1B: 'Chức danh'
+      - 2A:    'Cấp bậc hiện tại của bạn'
+      - 2B:    'Cấp bậc hiện tại của bạn?'
+      - 3A:    'Cấp bậc hiện tại của bạn?'
+      - 3B:    'Cấp bậc hiện tại của bạn?' (có cả biến thể 'Bạn' viết hoa)
+
+    Returns tên cột, hoặc None nếu không tìm thấy.
+    """
+    if df is None or df.empty:
+        return None
+    # 1. Exact match trước
+    for cand in ['Chức danh', 'chức_danh', 'chuc_danh', 'role', 'position', 'title']:
+        if cand in df.columns:
+            return cand
+    # 2. Pattern match "Cấp bậc hiện tại" (có thể có dấu hỏi + viết hoa/thường)
+    for c in df.columns:
+        cl = c.lower().replace('?', '').strip()
+        if 'cấp bậc hiện tại của bạn' in cl or 'cap bac hien tai cua ban' in cl:
+            return c
+    return None
+
+
+def get_gender_column(df):
+    """Tìm cột Giới tính. Trả về tên cột hoặc None."""
+    if df is None or df.empty:
+        return None
+    for cand in ['gender', 'Gender', 'GENDER', 'gioi_tinh', 'Giới tính', 'D3']:
+        if cand in df.columns:
+            return cand
+    return None
+
+
+def get_generation_column(df):
+    """Tìm cột Thế hệ. Trả về tên cột hoặc None."""
+    if df is None or df.empty:
+        return None
+    for cand in ['gen3', 'gen', 'generation', 'thế hệ', 'the_he', 'D2']:
+        if cand in df.columns:
+            return cand
+    return None
+
+
 def get_pillar_description(pillar_id, group_id=None):
     """Return the context-specific pillar description based on the user group."""
     meta = PILLAR_META.get(pillar_id)

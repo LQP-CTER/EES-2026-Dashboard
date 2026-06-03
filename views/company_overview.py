@@ -6,6 +6,7 @@ from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025
 from utils.ai_generator import render_ai_insight_card
+from shared.codebook import get_tenure_column, get_role_column
 
 def render(all_data, available_groups):
     if not all_data:
@@ -296,10 +297,14 @@ def render(all_data, available_groups):
     # ══════════════════════════════════════════════════════════════
     st.markdown(section_header("Phân Tích Nhân Khẩu Học", "Phân mảnh mức độ gắn kết theo Thâm niên và Cấp bậc"), unsafe_allow_html=True)
     
-    # Define demographic groups from D5 if 'D5' exists
+    # Define demographic groups from tenure column if exists
     demographics_cols = []
-    if 'D5' in df_total.columns:
-        demographics_cols.append(('D5', 'Thâm niên'))
+    _tenure_col_co = get_tenure_column(df_total)
+    if _tenure_col_co:
+        demographics_cols.append((_tenure_col_co, 'Thâm niên'))
+    _role_col_co = get_role_column(df_total)
+    if _role_col_co:
+        demographics_cols.append((_role_col_co, 'Chức danh / Cấp bậc'))
     
     if demographics_cols:
         for idx, (col, title) in enumerate(demographics_cols):
@@ -313,7 +318,7 @@ def render(all_data, available_groups):
             
             if demo_stats:
                 df_demo = pd.DataFrame(demo_stats)
-                if col == 'D5':
+                if col == _tenure_col_co:
                     order = [
                         'Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng',
                         'Trên 6 đến 9 tháng', 'Trên 9 đến 12 tháng', 'Trên 1 đến 2 năm',
