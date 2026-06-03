@@ -59,10 +59,10 @@ def render_anomaly_card(anomaly: dict, show_action: bool = True):
         <div style="flex: 1; min-width: 0;">
             <div style="font-size: 0.92rem; font-weight: 700; color: #0A1F44; margin-bottom: 8px;
                         letter-spacing: -0.01em;">
-                {anomaly.get('title', '')}
+                {anomaly.get('title', anomaly.get('name', anomaly.get('pattern', '')))}
             </div>
             <div style="font-size: 0.85rem; color: #475569; line-height: 1.7;">
-                {anomaly.get('message', '')}
+                {anomaly.get('message', anomaly.get('note', anomaly.get('interpretation', '')))}
             </div>
             {action_html}
         </div>
@@ -151,8 +151,8 @@ def render_anomaly_tab(anomalies: list, pillar_id: str = None, show_cross: bool 
     # AI synthesis
     if all_shown:
         st.markdown("---")
-        critical_titles = [a['title'] for a in all_shown if a['severity'] == 'critical']
-        warning_titles  = [a['title'] for a in all_shown if a['severity'] == 'warning']
+        critical_titles = [a.get('title', a.get('name', a.get('pattern', ''))) for a in all_shown if a.get('severity') == 'critical']
+        warning_titles  = [a.get('title', a.get('name', a.get('pattern', ''))) for a in all_shown if a.get('severity') == 'warning']
 
         p_name = PILLAR_META.get(pillar_id, {}).get('name', 'trụ cột này') if pillar_id else 'toàn nhóm'
         prompt = (
