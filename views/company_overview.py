@@ -34,6 +34,8 @@ def render(all_data, available_groups):
     except Exception:
         total_headcount = 21353
 
+    has_open_text = any(c.endswith('_clean') for c in df_total.columns)
+
     # Tổng số phản hồi hợp lệ sau làm sạch ở cấp công ty
     total_participants = total_n
     total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 0
@@ -442,6 +444,9 @@ def render(all_data, available_groups):
                 )
                 render_ai_insight_card("AI NLP Insight: Định Vị Thương Hiệu (EVP)", nlp_ai_data, prompt, badge="NLP Engine", custom_style="height: 100%; margin-bottom: 0; padding: 24px;")
     else:
-        st.info("Chưa có dữ liệu câu hỏi mở (NLP) để phân tích EVP.")
+        if has_open_text:
+            st.warning("Đã phát hiện cột câu hỏi mở nhưng chưa có phản hồi hợp lệ sau khi làm sạch dữ liệu.")
+        else:
+            st.info("Chưa có dữ liệu câu hỏi mở (NLP) để phân tích EVP.")
 
 

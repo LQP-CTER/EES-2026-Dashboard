@@ -42,7 +42,11 @@ def render(df, cfg, pillar_filter=None):
         if pillar_filter and f"{pillar_filter}_pct" in g.columns:
             kpi[f'{pillar_filter} (%)'] = g[f"{pillar_filter}_pct"].mean()
         metrics.append(kpi)
-    df_met = pd.DataFrame(metrics).sort_values('ei_mean', ascending=False)
+    df_met = pd.DataFrame(metrics)
+    if df_met.empty:
+        st.info(f"Không có dữ liệu đủ để tổng hợp theo {level}.")
+        return
+    df_met = df_met.sort_values('ei_mean', ascending=False)
 
     tab1, tab2 = st.tabs(["Bảng tổng hợp", "Heatmap"])
 
@@ -140,8 +144,9 @@ def render(df, cfg, pillar_filter=None):
                 if col in g.columns:
                     row[label] = round(g[col].mean(), 1)
             heat_data.append(row)
-        df_heat = pd.DataFrame(heat_data).set_index('Section')
-        if len(df_heat) > 0:
+        df_heat = pd.DataFrame(heat_data)
+        if not df_heat.empty:
+            df_heat = df_heat.set_index('Section')
             fig = px.imshow(df_heat, color_continuous_scale='RdYlGn', aspect='auto', text_auto='.1f')
             fig = fig_card(fig, 'HEATMAP: Section × Trụ cột EI', 'Đánh giá điểm mạnh/yếu của từng đơn vị')
             fig.update_layout(height=max(400, len(df_heat) * 25 + 150))
@@ -159,3 +164,5 @@ def render(df, cfg, pillar_filter=None):
             )
             render_ai_insight_card("AI Heatmap Analysis", ai_data_heat, prompt_heat, custom_style="margin-top: 16px; margin-bottom: 24px;")
             
+        else:
+            st.info("Chưa đủ dữ liệu để dựng heatmap theo section.")

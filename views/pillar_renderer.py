@@ -70,12 +70,12 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
         pillar_mean, fav_pct = None, 0
 
     color = meta['color']
-    score_str = f"{pillar_mean:.2f}" if pillar_mean else "N/A"
+    score_str = f"{pillar_mean:.2f}" if pillar_mean is not None else "N/A"
     fav_str = f"{fav_pct:.1f}%"
     weight_str = f"{PILLAR_WEIGHTS.get(pillar_id, 0)*100:.0f}%"
 
     # Pillar score color
-    if pillar_mean:
+    if pillar_mean is not None:
         score_color = '#10B981' if pillar_mean >= 4.0 else '#F59E0B' if pillar_mean >= 3.7 else '#EF4444'
     else:
         score_color = color
