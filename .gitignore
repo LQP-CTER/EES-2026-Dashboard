@@ -8,10 +8,10 @@ ENV/
 env/
 
 # Project Specific
-Data/
+# Data/
 Data_Clean/
-*.xlsx
-*.csv
+# *.xlsx
+# *.csv
 .DS_Store
 
 # Secrets
