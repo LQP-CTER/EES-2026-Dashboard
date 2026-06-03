@@ -649,7 +649,8 @@ def render():
 </html>
 """
 
-    st.iframe(video_html, height=780)
+    import streamlit.components.v1 as components
+    components.html(video_html, height=1050, scrolling=False)
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
@@ -915,7 +916,7 @@ def render():
 </body>
 </html>
 """
-    st.iframe(gallery_html, height=720)
+    components.html(gallery_html, height=850, scrolling=False)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
     st.markdown("""
