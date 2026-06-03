@@ -654,47 +654,39 @@ def render():
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392695/LOGO%20GHN/IMG_1493_ldeq70.jpg",        "Khoảnh khắc hậu trường"),
         (img1,  "Truyền thông EES 2026 — CPO gửi thông điệp"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392212/LOGO%20GHN/EES_GDV_A_Doanh_jj76dm.png", "GDV anh Doanh"),
         (img2,  "CPO Kick-off — Khởi động chiến dịch"),
         (img3,  "Giám đốc vùng — GDV anh Vũ"),
-        (img4,  "Giám đốc vùng — Mr. Nguyễn Văn Tân"),
-        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392212/LOGO%20GHN/EES_GDV_A_Doanh_jj76dm.png", "GDV anh Doanh"),
-        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392695/LOGO%20GHN/IMG_1493_ldeq70.jpg",        "Khoảnh khắc hậu trường"),
         ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392653/LOGO%20GHN/IMG_1490_mky43b.jpg",        "Team tại sự kiện"),
+        (img4,  "Giám đốc vùng — Mr. Nguyễn Văn Tân"),
     ]
 
-    # Build column HTML for 3-column editorial scroll gallery
-    col1_items, col2_items, col3_items = "", "", ""
-    for i, (url, caption) in enumerate(gallery_images):
-        item_html = f"""
-        <figure class="cs-item">
-            <img class="cs-img" src="{url}" alt="{caption}" loading="lazy">
-            <figcaption class="cs-caption">{caption}</figcaption>
-        </figure>"""
-        if i % 3 == 0:
-            col1_items += item_html
-        elif i % 3 == 1:
-            col2_items += item_html
-        else:
-            col3_items += item_html
+    gallery_items_html = ""
+    for url, caption in gallery_images:
+        gallery_items_html += f'''
+        <div class="gl-item">
+            <img class="gl-img" src="{url}" alt="{caption}" loading="lazy">
+            <div class="gl-caption">{caption}</div>
+        </div>'''
 
-    gallery_html = f"""
+    gallery_html = f'''
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <style>
-  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
-    font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0; padding: 0;
+    font-family: "Inter", "Helvetica Neue", sans-serif;
     background: transparent;
     overflow-x: hidden;
   }}
-
   /* ── Section header ── */
   .gl-header {{
     display: flex; align-items: baseline; justify-content: space-between;
-    margin-bottom: 28px; padding: 0 4px;
+    margin-bottom: 24px; padding: 0 12px;
   }}
   .gl-title {{
     font-size: 2rem; font-weight: 900; letter-spacing: -0.03em; color: #0A1F44;
@@ -706,158 +698,80 @@ def render():
     border: 1px solid #FFD5BF;
   }}
 
-  /* ── 3-column scroll layout ── */
-  .cs-wrap {{
+  /* ── Premium Horizontal Scroll Gallery ── */
+  .gl-wrap {{
     display: flex;
-    gap: 16px;
-    padding: 0 4px;
+    gap: 24px;
+    overflow-x: auto;
+    padding: 24px 12px 60px 12px;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
   }}
-  .cs-col {{
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }}
-  /* Column 2 reversed for visual rhythm */
-  .cs-col:nth-child(2) {{
-    flex-direction: column-reverse;
+  .gl-wrap::-webkit-scrollbar {{
+    display: none; /* Chrome/Safari */
   }}
 
-  /* ── Gallery item ── */
-  .cs-item {{
+  .gl-item {{
     position: relative;
-    border-radius: 16px;
-    overflow: hidden;
-    cursor: zoom-in;
-    background: #F1F5F9;
-    margin: 0;
-    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1), box-shadow 0.5s ease;
+    flex: 0 0 auto;
+    height: 550px; /* Cố định chiều cao, chiều ngang tự giãn không giới hạn khung */
+    scroll-snap-align: center;
+    border-radius: 12px;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
   }}
-  .cs-item:hover {{
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 50px rgba(10,31,68,0.18);
-    z-index: 2;
+  .gl-item:hover {{
+    transform: translateY(-8px);
+    box-shadow: 0 30px 60px rgba(10,31,68,0.25);
+    z-index: 10;
   }}
-
-  .cs-img {{
-    width: 100%;
-    height: auto;
+  
+  .gl-img {{
+    height: 100%;       /* Phủ kín chiều cao của khung gl-item */
+    width: auto;        /* Tự động kéo ngang theo TỶ LỆ GỐC, KHÔNG CẮT HÌNH */
     display: block;
-    object-fit: cover;
-    transition: transform 0.7s cubic-bezier(0.4,0,0.2,1), filter 0.5s ease;
-  }}
-  .cs-item:hover .cs-img {{
-    transform: scale(1.06);
-    filter: brightness(0.85);
+    border-radius: 12px;
+    object-fit: contain; /* KHÔNG bao giờ bị khuất hình */
   }}
 
-  /* ── Caption overlay ── */
-  .cs-caption {{
+  /* Minimalist hover caption */
+  .gl-caption {{
     position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 40px 18px 16px;
-    background: linear-gradient(to top, rgba(10,31,68,0.92) 0%, rgba(10,31,68,0.4) 60%, transparent 100%);
-    color: #fff;
-    font-size: 0.82rem;
+    bottom: 24px;
+    left: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #0A1F44;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
     font-weight: 700;
-    line-height: 1.4;
-    letter-spacing: 0.01em;
     opacity: 0;
-    transform: translateY(12px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transform: translateY(15px);
+    transition: all 0.4s ease;
+    pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    max-width: 85%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }}
-  .cs-item:hover .cs-caption {{
+  .gl-item:hover .gl-caption {{
     opacity: 1;
     transform: translateY(0);
   }}
 
-  /* ── Decorative corner accent ── */
-  .cs-item::before {{
-    content: '';
-    position: absolute;
-    top: 12px; left: 12px;
-    width: 32px; height: 32px;
-    border-top: 2px solid rgba(255,82,0,0.7);
-    border-left: 2px solid rgba(255,82,0,0.7);
-    border-radius: 4px 0 0 0;
-    opacity: 0;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    transform: translate(-4px, -4px);
-    z-index: 3;
-  }}
-  .cs-item:hover::before {{
-    opacity: 1;
-    transform: translate(0, 0);
-  }}
-
-  /* ── Lightbox ── */
-  .lb-overlay {{
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(5,10,24,0.95);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    z-index: 9999;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    cursor: zoom-out;
-    animation: lbFadeIn 0.3s ease;
-  }}
-  .lb-overlay.open {{ display: flex; }}
-  @keyframes lbFadeIn {{
-    from {{ opacity: 0; }}
-    to {{ opacity: 1; }}
-  }}
-  .lb-overlay img {{
-    max-width: 90vw;
-    max-height: 85vh;
-    width: auto;
-    height: auto;
-    border-radius: 12px;
-    box-shadow: 0 40px 100px rgba(0,0,0,0.7);
-    object-fit: contain;
-    cursor: default;
-    animation: lbZoomIn 0.35s cubic-bezier(0.4,0,0.2,1);
-  }}
-  @keyframes lbZoomIn {{
-    from {{ transform: scale(0.9); opacity: 0; }}
-    to {{ transform: scale(1); opacity: 1; }}
-  }}
-  .lb-close {{
-    position: fixed;
-    top: 24px; right: 28px;
-    color: rgba(255,255,255,0.7);
-    font-size: 2.2rem;
-    cursor: pointer;
-    line-height: 1;
-    font-weight: 300;
-    transition: color 0.2s, transform 0.2s;
-    z-index: 10000;
-    user-select: none;
-  }}
-  .lb-close:hover {{ color: #FF5200; transform: scale(1.2) rotate(90deg); }}
-  .lb-caption {{
-    position: fixed;
-    bottom: 28px; left: 50%;
-    transform: translateX(-50%);
-    color: rgba(255,255,255,0.85);
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    background: rgba(255,82,0,0.15);
-    border: 1px solid rgba(255,82,0,0.3);
-    padding: 8px 24px;
-    border-radius: 999px;
-    white-space: nowrap;
-    z-index: 10000;
-  }}
-
   /* ── Responsive ── */
   @media (max-width: 768px) {{
-    .cs-wrap {{ flex-direction: column; }}
-    .cs-col:nth-child(2) {{ flex-direction: column; }}
+    .gl-item {{ height: 400px; }}
+    .gl-wrap {{ gap: 16px; }}
+  }}
+  @media (max-width: 480px) {{
+    .gl-item {{ height: 300px; }}
+    .gl-wrap {{ gap: 12px; }}
+    .gl-caption {{ bottom: 12px; left: 12px; font-size: 0.85rem; padding: 8px 16px; }}
   }}
 </style>
 </head>
@@ -869,54 +783,15 @@ def render():
   <span class="gl-tag">Team EX Showcase</span>
 </div>
 
-<!-- 3-column editorial scroll -->
-<div class="cs-wrap">
-  <div class="cs-col">{col1_items}</div>
-  <div class="cs-col">{col2_items}</div>
-  <div class="cs-col">{col3_items}</div>
+<!-- Horizontal scroll container -->
+<div class="gl-wrap">
+  {gallery_items_html}
 </div>
 
-<!-- Lightbox -->
-<div class="lb-overlay" id="lb">
-  <span class="lb-close" id="lbClose">&#x2715;</span>
-  <img id="lbImg" src="" alt="">
-  <span class="lb-caption" id="lbCap"></span>
-</div>
-
-<script>
-(function() {{
-  const lb = document.getElementById('lb');
-  const lbImg = document.getElementById('lbImg');
-  const lbCap = document.getElementById('lbCap');
-  const lbClose = document.getElementById('lbClose');
-
-  function openLb(src, cap) {{
-    lbImg.src = src;
-    lbCap.textContent = cap;
-    lb.classList.add('open');
-  }}
-  function closeLb() {{
-    lb.classList.remove('open');
-    lbImg.src = '';
-  }}
-
-  document.querySelectorAll('.cs-item').forEach(item => {{
-    item.addEventListener('click', () => {{
-      const src = item.querySelector('img').src;
-      const cap = item.querySelector('figcaption')?.textContent || '';
-      openLb(src, cap);
-    }});
-  }});
-
-  lb.addEventListener('click', e => {{ if (e.target === lb) closeLb(); }});
-  lbClose.addEventListener('click', closeLb);
-  document.addEventListener('keydown', e => {{ if (e.key === 'Escape') closeLb(); }});
-}})();
-</script>
 </body>
 </html>
-"""
-    components.html(gallery_html, height=850, scrolling=False)
+'''
+    components.html(gallery_html, height=750, scrolling=False)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
     st.markdown("""
