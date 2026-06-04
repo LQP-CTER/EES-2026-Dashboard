@@ -533,6 +533,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                         return [f'color:{"#10B981" if v >= 4.0 else "#F59E0B" if v >= 3.7 else "#EF4444"};font-weight:700' for v in s]
                     styled = (
                         tbl.style
+                        .format({'TB': '{:.2f}', 'N': '{:,}'})
                         .apply(_color_tb, subset=['TB'])
                         .apply(lambda s: ['text-align: center'] * len(s), subset=tbl.columns[2:])
                         .set_table_styles([
