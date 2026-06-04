@@ -518,7 +518,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                     styled = (
                         tbl.style
                         .apply(_color_tb, subset=['TB'])
-                        .set_properties(**{'text-align': 'center'}, subset=tbl.columns[2:])
+                        .apply(lambda s: ['text-align: center'] * len(s), subset=tbl.columns[2:])
                         .set_table_styles([
                             {'selector': 'th', 'props': [('background-color', '#F8FAFC'), ('color', '#475569'), ('font-size', '0.75rem')]},
                             {'selector': 'td', 'props': [('font-size', '0.78rem')]},
