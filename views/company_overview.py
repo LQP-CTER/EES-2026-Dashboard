@@ -294,6 +294,190 @@ def render(all_data, available_groups):
             render_ai_insight_card("AI Organization Insight", org_ai_data, prompt, custom_style="margin-top: 24px; padding: 20px;")
 
     # ══════════════════════════════════════════════════════════════
+    # SECTION 2b: DRILLDOWN – PHÒNG BAN & SECTION
+    # ══════════════════════════════════════════════════════════════
+    st.markdown(section_header("Phân Tích Chi Tiết — Phòng Ban & Section",
+                               "So sánh EI, eNPS và 5 trụ cột theo từng phòng ban / section"), unsafe_allow_html=True)
+
+    def _build_drilldown_table(df_src, group_col, label):
+        rows = []
+        for grp_val, grp_df in df_src.groupby(group_col):
+            if len(grp_df) < 10:
+                continue
+            kpis = compute_kpis(grp_df)
+            row = {
+                label: grp_val,
+                'N': kpis['n'],
+                'EI (%)': round(kpis['ei_mean'], 1),
+                'eNPS': round(kpis['enps_score'], 0),
+                'Attrition Risk (%)': round(kpis['intent_pct_low'], 1),
+            }
+            for p, plabel in PILLAR_LABELS.items():
+                col = f'{p}_pct'
+                if col in grp_df.columns:
+                    row[plabel] = round(grp_df[col].mean(), 1)
+            rows.append(row)
+        if not rows:
+            return pd.DataFrame()
+        tbl = pd.DataFrame(rows).sort_values('EI (%)', ascending=False).reset_index(drop=True)
+        return tbl
+
+    def _color_ei(s):
+        def _get_val(v):
+            try:
+                v = float(v)
+                c = '#10B981' if v >= 75 else '#F59E0B' if v >= 65 else '#EF4444'
+                return f'color:{c};font-weight:700'
+            except Exception: return ''
+        return [_get_val(x) for x in s]
+
+    def _color_enps(s):
+        def _get_val(v):
+            try:
+                v = float(v)
+                c = '#10B981' if v >= 20 else '#F59E0B' if v >= 0 else '#EF4444'
+                return f'color:{c};font-weight:700'
+            except Exception: return ''
+        return [_get_val(x) for x in s]
+
+    def _heatmap_pillar(s):
+        def _get_val(v):
+            try:
+                v = float(v)
+                if v >= 78:   return 'background-color:#D1FAE5;color:#065F46'
+                elif v >= 72: return 'background-color:#FEF3C7;color:#92400E'
+                else:          return 'background-color:#FEE2E2;color:#991B1B'
+            except Exception: return ''
+        return [_get_val(x) for x in s]
+
+    pillar_cols = [lbl for lbl in PILLAR_LABELS.values()]
+
+    tab_dept, tab_section = st.tabs(["📂 Theo Phòng Ban (Department)", "🗂️ Theo Section"])
+
+    with tab_dept:
+        if 'department' in df_total.columns:
+            tbl_dept = _build_drilldown_table(df_total, 'department', 'Phòng Ban')
+            if not tbl_dept.empty:
+                # Summary KPI row
+                kd1, kd2, kd3 = st.columns(3)
+                kd1.metric("Số phòng ban phân tích", len(tbl_dept))
+                kd2.metric("EI cao nhất", f"{tbl_dept['EI (%)'].max():.1f}%", delta=tbl_dept.iloc[0]['Phòng Ban'])
+                kd3.metric("EI thấp nhất", f"{tbl_dept['EI (%)'].iloc[-1]:.1f}%", delta=tbl_dept.iloc[-1]['Phòng Ban'], delta_color="inverse")
+
+                # Bar chart EI by department
+                fig_dept = go.Figure(go.Bar(
+                    y=tbl_dept['Phòng Ban'], x=tbl_dept['EI (%)'],
+                    orientation='h',
+                    marker=dict(
+                        color=[
+                            '#10B981' if v >= 75 else '#F59E0B' if v >= 65 else '#EF4444'
+                            for v in tbl_dept['EI (%)']
+                        ],
+                        cornerradius=4,
+                    ),
+                    text=[f"{v:.1f}%" for v in tbl_dept['EI (%)']],
+                    textposition='outside',
+                ))
+                fig_dept.add_vline(x=75, line_dash='dot', line_color='#10B981', line_width=1.5,
+                                   annotation_text='75% target', annotation_position='top right')
+                fig_dept = fig_card(fig_dept, 'EI theo Phòng Ban', 'Mức độ gắn kết trung bình')
+                fig_dept.update_layout(
+                    height=max(300, len(tbl_dept) * 28 + 80),
+                    xaxis=dict(range=[0, 100]),
+                    yaxis=dict(autorange='reversed'),
+                )
+                st.plotly_chart(fig_dept, width='stretch', key="dept_ei_bar")
+
+                # Detailed table with pillar heatmap
+                st.markdown("##### Bảng chi tiết — EI, eNPS & 5 Trụ Cột theo Phòng Ban")
+                avail_pillar_cols = [c for c in pillar_cols if c in tbl_dept.columns]
+                style_cols_ei    = ['EI (%)']
+                style_cols_enps  = ['eNPS']
+                style_cols_pillar = avail_pillar_cols
+
+                styled_dept = (
+                    tbl_dept.style
+                    .apply(_color_ei, subset=style_cols_ei)
+                    .apply(_color_enps, subset=style_cols_enps)
+                    .apply(_heatmap_pillar, subset=style_cols_pillar)
+                    .format({c: '{:.1f}' for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols})
+                    .format({'eNPS': '{:+.0f}'})
+                    .apply(lambda s: ['text-align: center'] * len(s), subset=tbl_dept.columns[1:])
+                    .set_table_styles([
+                        {'selector': 'th', 'props': [('background-color', '#F8FAFC'), ('color', '#475569'),
+                                                      ('font-size', '0.73rem'), ('font-weight', '700')]},
+                        {'selector': 'td', 'props': [('font-size', '0.78rem')]},
+                    ])
+                )
+                st.dataframe(styled_dept, use_container_width=True, hide_index=True)
+            else:
+                st.info("Không đủ mẫu theo phòng ban (tối thiểu 10 người / phòng ban).")
+        else:
+            st.info("Dữ liệu chưa có cột 'department'.")
+
+    with tab_section:
+        if 'section' in df_total.columns:
+            tbl_section = _build_drilldown_table(df_total, 'section', 'Section')
+            if not tbl_section.empty:
+                ks1, ks2, ks3 = st.columns(3)
+                ks1.metric("Số section phân tích", len(tbl_section))
+                ks2.metric("EI cao nhất", f"{tbl_section['EI (%)'].max():.1f}%", delta=tbl_section.iloc[0]['Section'])
+                ks3.metric("EI thấp nhất", f"{tbl_section['EI (%)'].iloc[-1]:.1f}%", delta=tbl_section.iloc[-1]['Section'], delta_color="inverse")
+
+                # Bar chart – paginated nếu nhiều section
+                n_show = st.slider("Số section hiển thị (sắp xếp theo EI)", min_value=10,
+                                   max_value=min(len(tbl_section), 60), value=min(30, len(tbl_section)),
+                                   step=5, key="section_slider")
+                tbl_section_show = pd.concat([
+                    tbl_section.head(n_show // 2),
+                    tbl_section.tail(n_show - n_show // 2)
+                ]).drop_duplicates()
+
+                fig_sec = go.Figure(go.Bar(
+                    y=tbl_section_show['Section'], x=tbl_section_show['EI (%)'],
+                    orientation='h',
+                    marker=dict(
+                        color=[
+                            '#10B981' if v >= 75 else '#F59E0B' if v >= 65 else '#EF4444'
+                            for v in tbl_section_show['EI (%)']
+                        ],
+                        cornerradius=4,
+                    ),
+                    text=[f"{v:.1f}%" for v in tbl_section_show['EI (%)']],
+                    textposition='outside',
+                ))
+                fig_sec.add_vline(x=75, line_dash='dot', line_color='#10B981', line_width=1.5)
+                fig_sec = fig_card(fig_sec, 'EI theo Section', f'Top & Bottom {n_show} section')
+                fig_sec.update_layout(
+                    height=max(350, len(tbl_section_show) * 26 + 80),
+                    xaxis=dict(range=[0, 100]),
+                    yaxis=dict(autorange='reversed'),
+                )
+                st.plotly_chart(fig_sec, width='stretch', key="section_ei_bar")
+
+                st.markdown("##### Bảng đầy đủ — EI, eNPS & 5 Trụ Cột theo Section")
+                avail_pillar_cols_s = [c for c in pillar_cols if c in tbl_section.columns]
+                styled_section = (
+                    tbl_section.style
+                    .apply(_color_ei, subset=['EI (%)'])
+                    .apply(_color_enps, subset=['eNPS'])
+                    .apply(_heatmap_pillar, subset=avail_pillar_cols_s)
+                    .format({c: '{:.1f}' for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols_s})
+                    .format({'eNPS': '{:+.0f}'})
+                    .apply(lambda s: ['text-align: center'] * len(s), subset=tbl_section.columns[1:])
+                    .set_table_styles([
+                        {'selector': 'th', 'props': [('background-color', '#F8FAFC'), ('color', '#475569'),
+                                                      ('font-size', '0.73rem'), ('font-weight', '700')]},
+                        {'selector': 'td', 'props': [('font-size', '0.78rem')]},
+                    ])
+                )
+                st.dataframe(styled_section, use_container_width=True, hide_index=True)
+            else:
+                st.info("Không đủ mẫu theo section (tối thiểu 10 người / section).")
+        else:
+            st.info("Dữ liệu chưa có cột 'section'.")
+
+    # ══════════════════════════════════════════════════════════════
     # SECTION 3: DEMOGRAPHICS (THÂM NIÊN & CẤP BẬC)
     # ══════════════════════════════════════════════════════════════
     st.markdown(section_header("Phân Tích Nhân Khẩu Học", "Phân mảnh mức độ gắn kết theo Thâm niên và Cấp bậc"), unsafe_allow_html=True)
