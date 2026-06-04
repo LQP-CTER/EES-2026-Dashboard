@@ -393,6 +393,7 @@ def load_group(group_id: str):
 @st.cache_data(ttl=3600, show_spinner="Đang tải toàn bộ dữ liệu...")
 def load_all_available():
     """Load all groups that have data. Returns dict {group_id: (df, n_before)}."""
+    # Force cache invalidation for n_before update
     from config.groups import get_available_groups
     results = {}
     for gid in get_available_groups():
