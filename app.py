@@ -242,7 +242,7 @@ def _render_login_page():
     except Exception:
         _logo_src = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png"
 
-    _ghn_logo = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778161/LOGO%20GHN/LOGO_CHUAN_hviaug.png"
+    _ghn_logo = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1772773708/LOGO%20GHN/Logo/LOGO_INAN_sep2os.png"
 
     st.markdown("""
 <style>
@@ -757,7 +757,7 @@ if is_admin and not st.session_state.preview_mode:
 if is_locked and not is_admin:
     st.markdown("""
     <div style='text-align: center; margin-top: 100px;'>
-        <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png' width='200'>
+        <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772773708/LOGO%20GHN/Logo/LOGO_INAN_sep2os.png' width='200'>
         <h1 style='color: #0A1F44; margin-top: 30px;'>Hệ Thống Đang Bảo Trì</h1>
         <p style='color: #64748B; font-size: 1.1rem;'>Dashboard hiện đang tạm khóa để cập nhật dữ liệu. Vui lòng quay lại sau.</p>
     </div>
@@ -1433,7 +1433,7 @@ with st.sidebar:
     # Brand block
     st.markdown("""
     <div class="sb-brand">
-        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772778208/LOGO%20GHN/LOGO_INAN_1_lghbnf.png" class="sb-logo" alt="GHN Logo">
+        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772773708/LOGO%20GHN/Logo/LOGO_INAN_sep2os.png" class="sb-logo" alt="GHN Logo">
         <span class="sb-title">EES 2026 Dashboard</span>
         <span class="sb-sub">Employee Engagement Survey · 2026</span>
     </div>
