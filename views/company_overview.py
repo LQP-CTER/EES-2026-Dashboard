@@ -322,33 +322,30 @@ def render(all_data, available_groups):
         tbl = pd.DataFrame(rows).sort_values('EI (%)', ascending=False).reset_index(drop=True)
         return tbl
 
-    def _color_ei(s):
-        def _get_val(v):
-            try:
-                v = float(v)
-                c = '#10B981' if v >= 75 else '#F59E0B' if v >= 65 else '#EF4444'
-                return f'color:{c};font-weight:700'
-            except Exception: return ''
-        return [_get_val(x) for x in s]
+    def _color_ei(v):
+        try:
+            v = float(v)
+            c = '#10B981' if v >= 75 else '#F59E0B' if v >= 65 else '#EF4444'
+            return f'color:{c};font-weight:700'
+        except Exception:
+            return ''
 
-    def _color_enps(s):
-        def _get_val(v):
-            try:
-                v = float(v)
-                c = '#10B981' if v >= 20 else '#F59E0B' if v >= 0 else '#EF4444'
-                return f'color:{c};font-weight:700'
-            except Exception: return ''
-        return [_get_val(x) for x in s]
+    def _color_enps(v):
+        try:
+            v = float(v)
+            c = '#10B981' if v >= 20 else '#F59E0B' if v >= 0 else '#EF4444'
+            return f'color:{c};font-weight:700'
+        except Exception:
+            return ''
 
-    def _heatmap_pillar(s):
-        def _get_val(v):
-            try:
-                v = float(v)
-                if v >= 78:   return 'background-color:#D1FAE5;color:#065F46'
-                elif v >= 72: return 'background-color:#FEF3C7;color:#92400E'
-                else:          return 'background-color:#FEE2E2;color:#991B1B'
-            except Exception: return ''
-        return [_get_val(x) for x in s]
+    def _heatmap_pillar(v):
+        try:
+            v = float(v)
+            if v >= 78:   return 'background-color:#D1FAE5;color:#065F46'
+            elif v >= 72: return 'background-color:#FEF3C7;color:#92400E'
+            else:          return 'background-color:#FEE2E2;color:#991B1B'
+        except Exception:
+            return ''
 
     pillar_cols = [lbl for lbl in PILLAR_LABELS.values()]
 
