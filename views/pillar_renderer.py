@@ -486,6 +486,48 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
             )
             st.plotly_chart(fig, width='stretch', key=f"dist_chart_{i}")
 
+        # ── Breakdown table by segment ──────────────────────────
+        seg_col = next((c for c in ['region', 'division', 'department'] if c in df.columns), None)
+        if seg_col:
+            seg_label = {'region': 'Vùng', 'division': 'Khối', 'department': 'Phòng ban'}.get(seg_col, seg_col)
+            with st.expander(f"🔍 Phân tích {q} theo {seg_label}", expanded=False):
+                likert_labels = {
+                    1: '1-Rất không ĐY',
+                    2: '2-Không ĐY',
+                    3: '3-Trung lập',
+                    4: '4-Đồng ý',
+                    5: '5-Rất đồng ý',
+                }
+                rows = []
+                df_q = df[[seg_col, q]].dropna()
+                for seg_val, grp in df_q.groupby(seg_col):
+                    if len(grp) < 5:
+                        continue
+                    n = len(grp)
+                    vcnt = grp[q].value_counts()
+                    row = {seg_label: seg_val, 'N': n, 'TB': round(grp[q].mean(), 2)}
+                    for k, lbl in likert_labels.items():
+                        row[lbl] = f"{vcnt.get(k, 0) / n * 100:.1f}%"
+                    rows.append(row)
+                if rows:
+                    import pandas as pd
+                    tbl = pd.DataFrame(rows).sort_values('TB', ascending=False).reset_index(drop=True)
+                    # color TB column
+                    def _color_tb(s):
+                        return [f'color:{"#10B981" if v >= 4.0 else "#F59E0B" if v >= 3.7 else "#EF4444"};font-weight:700' for v in s]
+                    styled = (
+                        tbl.style
+                        .apply(_color_tb, subset=['TB'])
+                        .set_properties(**{'text-align': 'center'}, subset=tbl.columns[2:])
+                        .set_table_styles([
+                            {'selector': 'th', 'props': [('background-color', '#F8FAFC'), ('color', '#475569'), ('font-size', '0.75rem')]},
+                            {'selector': 'td', 'props': [('font-size', '0.78rem')]},
+                        ])
+                    )
+                    st.dataframe(styled, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Không đủ mẫu để phân tách.")
+
         st.markdown("<hr style='margin:6px 0;border:none;border-top:1px solid #F1F5F9;'>", unsafe_allow_html=True)
 
     # NLP open-text
