@@ -381,7 +381,7 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
     # Dùng raw_df để extract nếu có
     source_df = raw_df if raw_df is not None else df_result
     
-    divs, depts, secs = [], [], []
+    divs, depts, secs, sv_labels = [], [], [], []
     for i in range(len(df_result)):
         row_raw = source_df.iloc[i].to_dict()
         
@@ -529,10 +529,12 @@ def map_survey_to_org(df, group='1A', vung_col=None, id_col=None, raw_df=None):
         divs.append(div_val if div_val and str(div_val).lower() not in ["", "nan", "none"] else 'Chưa xác định')
         depts.append(dept_val if dept_val and str(dept_val).lower() not in ["", "nan", "none"] else 'Chưa xác định')
         secs.append(sec_val if sec_val and str(sec_val).lower() not in ["", "nan", "none"] else 'Chưa xác định')
+        sv_labels.append(sv_val if sv_val else '')
         
     df_result['division'] = divs
     df_result['department'] = depts
     df_result['section'] = secs
+    df_result['sv_label'] = sv_labels
 
     # ── Post-process: chuẩn hóa section theo từng nhóm ──
 

@@ -53,7 +53,7 @@ def create_vietnam_map():
     )
 
     fig.update_layout(
-        height=750,
+        height=700,
         margin={"r":0,"t":0,"l":0,"b":0},
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",

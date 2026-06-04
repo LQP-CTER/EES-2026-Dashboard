@@ -190,8 +190,10 @@ def load_group(group_id: str):
             m_exclude = (
                 df_clean["division"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
                 df_clean["department"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
-                df_clean["section"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS)
+                df_clean["section"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
+                df_clean["sv_label"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS)
             )
+            n_before -= m_exclude.sum()
             df_clean = df_clean[~m_exclude].copy()
     except Exception as e:
         print(f"Lỗi map data: {e}")
