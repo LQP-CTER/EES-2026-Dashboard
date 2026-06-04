@@ -487,9 +487,25 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
             st.plotly_chart(fig, width='stretch', key=f"dist_chart_{i}")
 
         # ── Breakdown table by segment ──────────────────────────
-        seg_col = next((c for c in ['region', 'division', 'department'] if c in df.columns), None)
+        seg_col = None
+        seg_label = ""
+        if group_id in ['1A', '1B', '2A']:
+            for c in df.columns:
+                if 'Vùng' in str(c) or 'vùng' in str(c):
+                    seg_col = c
+                    seg_label = 'Vùng'
+                    break
+        else:
+            if 'department' in df.columns:
+                seg_col = 'department'
+                seg_label = 'Phòng ban'
+        
+        if not seg_col:
+            seg_col = next((c for c in ['division', 'department'] if c in df.columns), None)
+            if seg_col:
+                seg_label = {'division': 'Khối', 'department': 'Phòng ban'}.get(seg_col, seg_col)
+
         if seg_col:
-            seg_label = {'region': 'Vùng', 'division': 'Khối', 'department': 'Phòng ban'}.get(seg_col, seg_col)
             with st.expander(f"🔍 Phân tích {q} theo {seg_label}", expanded=False):
                 likert_labels = {
                     1: '1-Rất không ĐY',
