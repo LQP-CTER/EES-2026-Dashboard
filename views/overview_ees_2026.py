@@ -660,7 +660,7 @@ def render():
 """
 
     import streamlit.components.v1 as components
-    components.html(video_html, height=1050, scrolling=False)
+    components.html(video_html, height=820, scrolling=False)
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
@@ -780,53 +780,238 @@ def render():
 </div>
 </div>
 '''
-    components.html(gallery_html, height=720, scrolling=False)
+    components.html(gallery_html, height=580, scrolling=False)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
-    st.markdown("<div style='padding-top: 72px; border-top: 2px solid #F1F5F9; margin-bottom: 72px; width: 100%;'></div>", unsafe_allow_html=True)
-    col1, col2 = st.columns([2.2, 1], gap="large")
-    
-    with col1:
-        st.markdown('''
-            <h2 style='font-size:3rem; font-weight:900; line-height:1.08; margin:0 0 20px; letter-spacing:-.04em; color:#0A1F44; font-family: "Montserrat", sans-serif;'>Nhìn lại<br>Hành trình</h2>
-            <p style='color:#64748B; font-size:1.05rem; line-height:1.7; font-weight:500; margin:0; font-family: "Montserrat", sans-serif;'>Những con số và dấu mốc đại diện cho khối lượng công việc khổng lồ mà Team đã thực hiện để biến dữ liệu thô thành các nhóm hành động chiến lược.</p>
-        ''', unsafe_allow_html=True)
-        
-        st.plotly_chart(create_vietnam_map(), use_container_width=True)
-        
-    with col2:
-        st.markdown('''
-<div class="ed-timeline-right">
-                <div class="ed-timeline-node">
-                    <div class="ed-timeline-big-num">19</div>
-                    <div class="ed-timeline-content">
-                        <h4>Ngày Khảo Sát Thần Tốc</h4>
-                        <p>Phối hợp với các khối Vận hành trên toàn quốc để thu thập hơn 20,000 phản hồi hợp lệ trong thời gian kỷ lục.</p>
-                    </div>
-                </div>
-                <div class="ed-timeline-node">
-                    <div class="ed-timeline-big-num">20k+</div>
-                    <div class="ed-timeline-content">
-                        <h4>Nhân Viên Đã Lên Tiếng</h4>
-                        <p>Hơn 20,000 nhân viên GHN đã chủ động nói lên tiếng nói của mình — mỗi phản hồi là một tín hiệu quan trọng để tổ chức lắng nghe và thay đổi.</p>
-                    </div>
-                </div>
-                <div class="ed-timeline-node">
-                    <div class="ed-timeline-big-num">∞</div>
-                    <div class="ed-timeline-content">
-                        <h4>Vòng Xử Lý &amp; Làm Sạch Dữ Liệu</h4>
-                        <p>Chuẩn hóa dữ liệu thô qua nhiều vòng kiểm tra, map với hệ thống HRIS và thiết lập cấu trúc phân nhóm (Division/Section) chính xác tuyệt đối.</p>
-                    </div>
-                </div>
-                <div class="ed-timeline-node">
-                    <div class="ed-timeline-big-num">01</div>
-                    <div class="ed-timeline-content">
-                        <h4>Nền Tảng Dashboard Duy Nhất</h4>
-                        <p>Hội tụ toàn bộ báo cáo, phân tích chéo và câu chuyện dữ liệu vào chung một giao diện thông minh.</p>
-                    </div>
-                </div>
-            </div>
-        ''', unsafe_allow_html=True)
+    st.markdown("<hr style='border:none;border-top:2px solid #F1F5F9;margin:8px 0 0 0;'>", unsafe_allow_html=True)
+    journey_html = """
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat', sans-serif; background: transparent; }
+
+.jt-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    padding: 16px 4px 48px 4px;
+    align-items: start;
+}
+
+/* ── LEFT: Title + stat cards ── */
+.jt-left {}
+.jt-kicker {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #FF5200; margin-bottom: 14px; display: block;
+}
+.jt-heading {
+    font-size: 3rem; font-weight: 900; line-height: 1.08;
+    letter-spacing: -0.04em; color: #0A1F44; margin-bottom: 18px;
+}
+.jt-sub {
+    color: #64748B; font-size: 0.95rem; line-height: 1.75;
+    font-weight: 500; margin-bottom: 36px;
+}
+
+/* 2×2 stat grid */
+.jt-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.jt-stat {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 18px;
+    padding: 24px 22px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.jt-stat:hover {
+    box-shadow: 0 12px 32px rgba(10,31,68,0.10);
+    transform: translateY(-3px);
+}
+.jt-stat::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #FF5200, #FF8C42);
+    border-radius: 18px 18px 0 0;
+}
+.jt-stat-num {
+    font-size: 2.6rem; font-weight: 900; color: #FF5200;
+    line-height: 1; letter-spacing: -0.04em; margin-bottom: 8px;
+}
+.jt-stat-label {
+    font-size: 0.8rem; font-weight: 700; color: #0A1F44; margin-bottom: 4px;
+}
+.jt-stat-desc {
+    font-size: 0.75rem; color: #94A3B8; line-height: 1.5; font-weight: 500;
+}
+
+/* ── RIGHT: Timeline milestones ── */
+.jt-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 8px;
+    position: relative;
+}
+/* Vertical line */
+.jt-right::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(180deg, #FFD5BF 0%, #FF5200 50%, #FFD5BF 100%);
+    border-radius: 2px;
+}
+
+.jt-node {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    padding: 0 0 40px 0;
+    position: relative;
+}
+.jt-node:last-child { padding-bottom: 0; }
+
+/* Dot on the line */
+.jt-dot {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #FF5200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 5px rgba(255,82,0,0.10);
+    transition: transform 0.3s ease;
+}
+.jt-node:hover .jt-dot { transform: scale(1.15); }
+
+.jt-body {
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 20px 22px;
+    flex: 1;
+    transition: box-shadow 0.3s ease;
+}
+.jt-node:hover .jt-body {
+    box-shadow: 0 8px 24px rgba(10,31,68,0.09);
+}
+.jt-milestone {
+    font-size: 2rem; font-weight: 900; color: #FF5200;
+    line-height: 1; letter-spacing: -0.03em; margin-bottom: 8px;
+}
+.jt-title {
+    font-size: 0.95rem; font-weight: 800; color: #0A1F44; margin-bottom: 6px;
+}
+.jt-desc {
+    font-size: 0.82rem; color: #64748B; line-height: 1.65; font-weight: 500;
+}
+</style>
+<script>
+  // Auto-resize iframe to fit content height
+  window.addEventListener('load', function() {
+    const h = document.body.scrollHeight;
+    window.parent.postMessage({type: 'streamlit:setFrameHeight', height: h}, '*');
+  });
+</script>
+</head>
+<body>
+<div class="jt-section">
+
+  <!-- LEFT -->
+  <div class="jt-left">
+    <span class="jt-kicker">EES 2026 · Hành trình</span>
+    <h2 class="jt-heading">Nhìn lại<br>Hành trình</h2>
+    <p class="jt-sub">Những con số và dấu mốc đại diện cho khối lượng công việc khổng lồ mà Team đã thực hiện để biến dữ liệu thô thành các nhóm hành động chiến lược.</p>
+
+    <div class="jt-stats">
+      <div class="jt-stat">
+        <div class="jt-stat-num">19</div>
+        <div class="jt-stat-label">Ngày Khảo Sát</div>
+        <div class="jt-stat-desc">Thu thập hơn 20,000 phản hồi hợp lệ trên toàn quốc</div>
+      </div>
+      <div class="jt-stat">
+        <div class="jt-stat-num">20k+</div>
+        <div class="jt-stat-label">Nhân Viên Lên Tiếng</div>
+        <div class="jt-stat-desc">Tỷ lệ tham gia kỷ lục 93.7% — cao nhất lịch sử GHN</div>
+      </div>
+      <div class="jt-stat">
+        <div class="jt-stat-num">5</div>
+        <div class="jt-stat-label">Trụ Cột Phân Tích</div>
+        <div class="jt-stat-desc">Lãnh đạo · MEI · Công việc · Thu nhập · Môi trường</div>
+      </div>
+      <div class="jt-stat">
+        <div class="jt-stat-num">01</div>
+        <div class="jt-stat-label">Dashboard Hợp Nhất</div>
+        <div class="jt-stat-desc">Toàn bộ báo cáo & phân tích chéo trong một nền tảng duy nhất</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Timeline -->
+  <div class="jt-right">
+
+    <div class="jt-node">
+      <div class="jt-dot">🚀</div>
+      <div class="jt-body">
+        <div class="jt-milestone">Kick-off</div>
+        <div class="jt-title">Phát Động Chiến Dịch</div>
+        <div class="jt-desc">CPO trực tiếp gửi thông điệp đến toàn bộ nhân sự GHN. Các Giám đốc Vùng tiếp lửa và dẫn dắt team tham gia khảo sát đồng loạt.</div>
+      </div>
+    </div>
+
+    <div class="jt-node">
+      <div class="jt-dot">📋</div>
+      <div class="jt-body">
+        <div class="jt-milestone">19 ngày</div>
+        <div class="jt-title">Thu Thập Thần Tốc</div>
+        <div class="jt-desc">Phối hợp với các khối Vận hành trên toàn quốc, đạt 20,005 phản hồi hợp lệ — vượt mọi kỳ vọng ban đầu về quy mô lẫn tốc độ.</div>
+      </div>
+    </div>
+
+    <div class="jt-node">
+      <div class="jt-dot">⚙️</div>
+      <div class="jt-body">
+        <div class="jt-milestone">∞ vòng</div>
+        <div class="jt-title">Xử Lý & Làm Sạch Dữ Liệu</div>
+        <div class="jt-desc">Chuẩn hóa dữ liệu thô qua nhiều vòng kiểm tra, map với HRIS và thiết lập cấu trúc phân nhóm Division/Section chính xác tuyệt đối.</div>
+      </div>
+    </div>
+
+    <div class="jt-node">
+      <div class="jt-dot">📊</div>
+      <div class="jt-body">
+        <div class="jt-milestone">Now</div>
+        <div class="jt-title">Dashboard & Executive Report</div>
+        <div class="jt-desc">Hội tụ toàn bộ báo cáo, phân tích chéo và câu chuyện dữ liệu vào một giao diện thông minh — sẵn sàng cho cuộc họp điều hành.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
+"""
+    components.html(journey_html, height=900, scrolling=False)
+
+    # ── Vietnam Map (standalone, full-width) ─────────────────────────────────
+    st.plotly_chart(create_vietnam_map(), use_container_width=True)
 
 
 
