@@ -352,7 +352,7 @@ def render(all_data, available_groups):
 
     pillar_cols = [lbl for lbl in PILLAR_LABELS.values()]
 
-    tab_dept, tab_section = st.tabs(["📂 Theo Phòng Ban (Department)", "🗂️ Theo Section"])
+    tab_dept, tab_section = st.tabs(["Theo Phòng Ban (Department)", "Theo Section"])
 
     with tab_dept:
         if 'department' in df_total.columns:
@@ -391,24 +391,44 @@ def render(all_data, available_groups):
                 # Detailed table with pillar heatmap
                 st.markdown("##### Bảng chi tiết — EI, eNPS & 5 Trụ Cột theo Phòng Ban")
                 avail_pillar_cols = [c for c in pillar_cols if c in tbl_dept.columns]
-                style_cols_ei    = ['EI (%)']
-                style_cols_enps  = ['eNPS']
-                style_cols_pillar = avail_pillar_cols
 
-                styled_dept = (
-                    tbl_dept.style
-                    .apply(_color_ei, subset=style_cols_ei)
-                    .apply(_color_enps, subset=style_cols_enps)
-                    .apply(_heatmap_pillar, subset=style_cols_pillar)
-                    .format({c: '{:.1f}' for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols})
-                    .format({'eNPS': '{:+.0f}'})
-                    .apply(lambda s: ['text-align: center'] * len(s), subset=tbl_dept.columns[1:])
-                    .set_table_styles([
+                # Format numbers into strings before styling
+                tbl_dept_fmt = tbl_dept.copy()
+                for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols:
+                    if c in tbl_dept_fmt.columns:
+                        tbl_dept_fmt[c] = tbl_dept_fmt[c].apply(lambda v: f"{v:.1f}")
+                if 'eNPS' in tbl_dept_fmt.columns:
+                    tbl_dept_fmt['eNPS'] = tbl_dept_fmt['eNPS'].apply(lambda v: f"{v:+.0f}")
+
+                # Re-use raw numeric cols for coloring via the original tbl_dept
+                def _style_dept_row(row_idx, col, raw_df, fmt_df):
+                    pass  # not used
+
+                # Build style using original numeric tbl for color logic, display fmt df
+                def _make_styler(fmt_df, raw_df, ei_col, enps_col, pillar_col_list):
+                    def _ei_style(col_series):
+                        return [_color_ei(raw_df.loc[i, ei_col]) for i in raw_df.index]
+                    def _enps_style(col_series):
+                        return [_color_enps(raw_df.loc[i, enps_col]) for i in raw_df.index]
+                    def _pillar_style(col_series, col_name):
+                        return [_heatmap_pillar(raw_df.loc[i, col_name]) for i in raw_df.index]
+
+                    s = fmt_df.style.set_table_styles([
                         {'selector': 'th', 'props': [('background-color', '#F8FAFC'), ('color', '#475569'),
-                                                      ('font-size', '0.73rem'), ('font-weight', '700')]},
-                        {'selector': 'td', 'props': [('font-size', '0.78rem')]},
+                                                      ('font-size', '0.73rem'), ('font-weight', '700'),
+                                                      ('text-align', 'center')]},
+                        {'selector': 'td', 'props': [('font-size', '0.78rem'), ('text-align', 'center')]},
+                        {'selector': 'td:first-child', 'props': [('text-align', 'left')]},
                     ])
-                )
+                    s = s.apply(_ei_style, subset=[ei_col], axis=0)
+                    s = s.apply(_enps_style, subset=[enps_col], axis=0)
+                    for pc in pillar_col_list:
+                        if pc in fmt_df.columns:
+                            s = s.apply(lambda col, _pc=pc: _pillar_style(col, _pc), subset=[pc], axis=0)
+                    return s
+
+                styled_dept = _make_styler(tbl_dept_fmt, tbl_dept.reset_index(drop=True),
+                                           'EI (%)', 'eNPS', avail_pillar_cols)
                 st.dataframe(styled_dept, use_container_width=True, hide_index=True)
             else:
                 st.info("Không đủ mẫu theo phòng ban (tối thiểu 10 người / phòng ban).")
@@ -457,20 +477,16 @@ def render(all_data, available_groups):
 
                 st.markdown("##### Bảng đầy đủ — EI, eNPS & 5 Trụ Cột theo Section")
                 avail_pillar_cols_s = [c for c in pillar_cols if c in tbl_section.columns]
-                styled_section = (
-                    tbl_section.style
-                    .apply(_color_ei, subset=['EI (%)'])
-                    .apply(_color_enps, subset=['eNPS'])
-                    .apply(_heatmap_pillar, subset=avail_pillar_cols_s)
-                    .format({c: '{:.1f}' for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols_s})
-                    .format({'eNPS': '{:+.0f}'})
-                    .apply(lambda s: ['text-align: center'] * len(s), subset=tbl_section.columns[1:])
-                    .set_table_styles([
-                        {'selector': 'th', 'props': [('background-color', '#F8FAFC'), ('color', '#475569'),
-                                                      ('font-size', '0.73rem'), ('font-weight', '700')]},
-                        {'selector': 'td', 'props': [('font-size', '0.78rem')]},
-                    ])
-                )
+
+                tbl_section_fmt = tbl_section.copy()
+                for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols_s:
+                    if c in tbl_section_fmt.columns:
+                        tbl_section_fmt[c] = tbl_section_fmt[c].apply(lambda v: f"{v:.1f}")
+                if 'eNPS' in tbl_section_fmt.columns:
+                    tbl_section_fmt['eNPS'] = tbl_section_fmt['eNPS'].apply(lambda v: f"{v:+.0f}")
+
+                styled_section = _make_styler(tbl_section_fmt, tbl_section.reset_index(drop=True),
+                                              'EI (%)', 'eNPS', avail_pillar_cols_s)
                 st.dataframe(styled_section, use_container_width=True, hide_index=True)
             else:
                 st.info("Không đủ mẫu theo section (tối thiểu 10 người / section).")
