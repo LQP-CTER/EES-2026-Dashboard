@@ -64,7 +64,7 @@ def render(df, cfg, pillar_filter=None):
 
     # Dùng AI hoặc rule-based tùy theo lựa chọn người dùng
     if use_ai:
-        with st.spinner("🤖 Đang phân tích bằng AI... (có thể mất 10-30s)"):
+        with st.spinner("Đang phân tích bằng AI... (có thể mất 10-30s)"):
             topic_tone_data = extract_topic_stats_with_tone_ai(texts, batch_size=20)
     else:
         topic_tone_data = extract_topic_stats_with_tone(texts)

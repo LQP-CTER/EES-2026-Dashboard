@@ -885,7 +885,7 @@ def render(df, cfg, pillar_filter=None):
                     sampled = random.sample(all_texts, sample_size)
                     sample_texts = "\n- ".join(sampled)
                     
-                    with st.expander("💬 Xem nhanh các bình luận / ý kiến mở của bộ phận này (Dữ liệu thô)"):
+                    with st.expander("Xem nhanh các bình luận / ý kiến mở của bộ phận này (Dữ liệu thô)"):
                         st.markdown(sample_texts)
                         
                 ai_data = {

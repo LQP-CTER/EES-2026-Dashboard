@@ -288,7 +288,7 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
         return (
             f'<div class="ai-insight-container" style="{custom_style}">'
             f'<div class="ai-header">'
-            f'<div class="ai-icon"><img src="{_AI_LOGO_B64}" width="20" height="20" style="border-radius:4px; margin-right:4px;"></div>'
+
             f'<h4 class="ai-title">{title}</h4>'
             f'<div class="ai-badge">{badge}</div>'
             f'</div>'

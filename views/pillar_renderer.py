@@ -361,7 +361,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                     if gap >= 0.4:
                         st.markdown(f"""
                         <div style="background:#FFFBEB; border-left:4px solid #D97706; padding:12px; border-radius:6px; margin-bottom:12px;">
-                            <span style="color:#D97706; font-weight:700;">⚠️ Nghịch lý phát hiện:</span> 
+                            <span style="color:#D97706; font-weight:700;">Nghịch lý phát hiện:</span> 
                             Khoảng cách <strong>{gap:.2f} điểm</strong> giữa hai yếu tố này. Dù nhân viên đánh giá cao một mặt ({qA if mA > mB else qB}), nhưng lại rất bất mãn ở mặt kia ({qB if mA > mB else qA}). Sự chênh lệch này là nguyên nhân chính gây ức chế tâm lý.
                         </div>
                         """, unsafe_allow_html=True)
@@ -506,7 +506,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                 seg_label = {'division': 'Khối', 'department': 'Phòng ban'}.get(seg_col, seg_col)
 
         if seg_col:
-            with st.expander(f"🔍 Phân tích {q} theo {seg_label}", expanded=False):
+            with st.expander(f"Phân tích {q} theo {seg_label}", expanded=False):
                 likert_labels = {
                     1: '1-Rất không ĐY',
                     2: '2-Không ĐY',
