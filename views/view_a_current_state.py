@@ -6,6 +6,31 @@ from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from utils.ai_generator import render_ai_insight_card
 
+# Tên viết tắt cho header cột bảng (tránh bị cắt chữ)
+_PILLAR_SHORT = {
+    'Niềm tin lãnh đạo':     'Lãnh đạo',
+    'Quản lý trực tiếp (MEI)': 'Quản lý TT',
+    'Công việc & phát triển': 'CV & PT',
+    'Thu nhập & minh bạch':   'Thu nhập',
+    'Môi trường & gắn kết':   'Môi trường',
+}
+
+def _make_table_col_cfg(row_label_key, pillars_seen):
+    """Trả về column_config cho st.dataframe — cột tên rộng, cột KPI vừa, cột trụ cột medium."""
+    cfg = {
+        row_label_key: st.column_config.TextColumn(row_label_key, width='large'),
+        'N':           st.column_config.NumberColumn('N', format='%d', width='small'),
+        'EI (%)':      st.column_config.NumberColumn('EI', format='%.1f%%', width='small'),
+        'eNPS':        st.column_config.NumberColumn('eNPS', format='%+.0f', width='small'),
+        'MEI':         st.column_config.NumberColumn('MEI', format='%.1f', width='small'),
+        'Burnout (%)': st.column_config.NumberColumn('Burnout', format='%.1f%%', width='small'),
+        '% Muốn nghỉ':st.column_config.NumberColumn('% Nghỉ', format='%.1f%%', width='small'),
+    }
+    for pl in pillars_seen:
+        short = _PILLAR_SHORT.get(pl, pl)
+        cfg[pl] = st.column_config.NumberColumn(short, format='%.1f%%', width='medium')
+    return cfg
+
 def render(df, cfg, pillar_filter=None):
     apply_theme()
     kpis = compute_kpis(df)
@@ -627,19 +652,8 @@ def render(df, cfg, pillar_filter=None):
                         ) \
                         .format(precision=1)
 
-                    col_cfg = {
-                        _ROW_LBL: st.column_config.TextColumn(_ROW_LBL, width='medium'),
-                        'N': st.column_config.NumberColumn('Mẫu (N)', format='%d', width='small'),
-                        'EI (%)': st.column_config.NumberColumn('EI (%)', format='%.1f%%', width='small'),
-                        'eNPS': st.column_config.NumberColumn('eNPS', format='%+.0f', width='small'),
-                        'MEI': st.column_config.NumberColumn('MEI', format='%.1f', width='small'),
-                        'Burnout (%)': st.column_config.NumberColumn('Burnout (%)', format='%.1f%%', width='small'),
-                        '% Muốn nghỉ': st.column_config.NumberColumn('% Muốn nghỉ', format='%.1f%%', width='small'),
-                    }
-                    for pl in dept_pillars_seen:
-                        col_cfg[pl] = st.column_config.NumberColumn(pl, format='%.1f%%', width='small')
-
-                    st.dataframe(styled, width='stretch', hide_index=True, column_config=col_cfg)
+                    st.dataframe(styled, width='stretch', hide_index=True,
+                                 column_config=_make_table_col_cfg(_ROW_LBL, dept_pillars_seen))
                 else:
                     st.caption("  ↳ Chưa đủ dữ liệu để phân rã.")
             elif dept_col and dept_col in df_div.columns:
@@ -675,18 +689,8 @@ def render(df, cfg, pillar_filter=None):
                         .background_gradient(cmap='RdYlGn', subset=[c for c in _grad if c in df_dept_tbl.columns], vmin=50, vmax=90) \
                         .background_gradient(cmap='RdYlGn_r', subset=[c for c in _red if c in df_dept_tbl.columns], vmin=0, vmax=20) \
                         .format(precision=1)
-                    col_cfg = {
-                        _ROW_LBL: st.column_config.TextColumn(_ROW_LBL, width='medium'),
-                        'N': st.column_config.NumberColumn('Mẫu (N)', format='%d', width='small'),
-                        'EI (%)': st.column_config.NumberColumn('EI (%)', format='%.1f%%', width='small'),
-                        'eNPS': st.column_config.NumberColumn('eNPS', format='%+.0f', width='small'),
-                        'MEI': st.column_config.NumberColumn('MEI', format='%.1f', width='small'),
-                        'Burnout (%)': st.column_config.NumberColumn('Burnout (%)', format='%.1f%%', width='small'),
-                        '% Muốn nghỉ': st.column_config.NumberColumn('% Muốn nghỉ', format='%.1f%%', width='small'),
-                    }
-                    for pl in dept_pillars_seen:
-                        col_cfg[pl] = st.column_config.NumberColumn(pl, format='%.1f%%', width='small')
-                    st.dataframe(styled, width='stretch', hide_index=True, column_config=col_cfg)
+                    st.dataframe(styled, width='stretch', hide_index=True,
+                                 column_config=_make_table_col_cfg(_ROW_LBL, dept_pillars_seen))
                 else:
                     st.caption("  ↳ Chưa đủ dữ liệu để phân rã.")
             else:
@@ -722,16 +726,8 @@ def render(df, cfg, pillar_filter=None):
             styled_df = df_summary.style.background_gradient(
                 cmap='RdYlGn', subset=subset_cols, vmin=50, vmax=90
             ).format(precision=1)
-            col_config = {
-                dept_name: st.column_config.TextColumn(dept_name, width="medium"),
-                'N': st.column_config.NumberColumn('Mẫu (N)', format="%d", width="small"),
-                'EI (%)': st.column_config.NumberColumn('EI (%)', format="%.1f%%", width="small"),
-                'eNPS': st.column_config.NumberColumn('eNPS', format="%+d", width="small"),
-                '% Muốn nghỉ': st.column_config.NumberColumn('% Muốn nghỉ', format="%.1f%%", width="small")
-            }
-            for p in valid_pillars:
-                col_config[p] = st.column_config.NumberColumn(p, format="%.1f%%", width="small")
-            st.dataframe(styled_df, width='stretch', hide_index=True, column_config=col_config)
+            st.dataframe(styled_df, width='stretch', hide_index=True,
+                         column_config=_make_table_col_cfg(dept_name, valid_pillars))
     else:
         st.info("Không tìm thấy trường dữ liệu để phân rã tổ chức (Khối/Phòng/Vùng).")
 
