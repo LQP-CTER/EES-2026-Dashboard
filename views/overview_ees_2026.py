@@ -1,4 +1,5 @@
 import streamlit as st
+from views.map_helper import create_vietnam_map
 import base64
 import os
 from shared.plotly_theme import apply_theme
@@ -663,6 +664,8 @@ def render():
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780541184/LOGO%20GHN/EES_2026_-_Thie%CC%A3%CC%82p_ca%CC%89m_o%CC%9Bn_Final_1_kiihrk.png",        "Thư cảm ơn"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780541185/LOGO%20GHN/EES_2026_-_Thie%CC%A3%CC%82p_ca%CC%89m_o%CC%9Bn_Final_hzxztu.png",        "Thư cảm ơn"),
         ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392695/LOGO%20GHN/IMG_1493_ldeq70.jpg",        "Khoảnh khắc hậu trường"),
         (img1,  "Truyền thông EES 2026 — CPO gửi thông điệp"),
         ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392212/LOGO%20GHN/EES_GDV_A_Doanh_jj76dm.png", "GDV anh Doanh"),
@@ -675,26 +678,13 @@ def render():
     gallery_items_html = ""
     for url, caption in gallery_images * 2:
         gallery_items_html += f'''
-        <div class="gl-item">
-            <img class="gl-img" src="{url}" alt="{caption}" loading="lazy">
-            <div class="gl-caption">{caption}</div>
-        </div>'''
+<div class="gl-item">
+<img class="gl-img" src="{url}" alt="{caption}" loading="lazy">
+<div class="gl-caption">{caption}</div>
+</div>'''
 
     gallery_html = f'''
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap" rel="stylesheet">
 <style>
-  body {{
-    margin: 0; padding: 0;
-    font-family: "Montserrat", sans-serif;
-    background: transparent;
-    overflow-x: hidden;
-  }}
   /* ── Section header ── */
   .gl-header {{
     display: flex; align-items: baseline; justify-content: space-between;
@@ -711,6 +701,11 @@ def render():
   }}
 
   /* ── Premium Horizontal Scroll Gallery ── */
+  .gl-wrap-container {{
+    overflow-x: hidden;
+    width: 100%;
+    margin-bottom: 32px;
+  }}
   .gl-wrap {{
     display: flex;
     gap: 24px;
@@ -729,66 +724,48 @@ def render():
   .gl-item {{
     position: relative;
     flex: 0 0 auto;
-    height: 550px; /* Cố định chiều cao, chiều ngang tự giãn không giới hạn khung */
+    height: 550px; 
     scroll-snap-align: center;
     border-radius: 12px;
     transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
   }}
   .gl-item:hover {{
-    transform: translateY(-8px);
-    box-shadow: 0 30px 60px rgba(10,31,68,0.25);
+    transform: scale(1.02) translateY(-10px);
+    box-shadow: 0 30px 60px -12px rgba(10, 31, 68, 0.25);
     z-index: 10;
   }}
-  
   .gl-img {{
-    height: 100%;       /* Phủ kín chiều cao của khung gl-item */
-    width: auto;        /* Tự động kéo ngang theo TỶ LỆ GỐC, KHÔNG CẮT HÌNH */
-    display: block;
+    width: auto;
+    height: 100%;
+    object-fit: cover;
     border-radius: 12px;
-    object-fit: contain; /* KHÔNG bao giờ bị khuất hình */
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
   }}
-
-  /* Minimalist hover caption */
   .gl-caption {{
     position: absolute;
-    bottom: 24px;
-    left: 24px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: #0A1F44;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
+    bottom: 24px; left: 24px;
+    background: rgba(10, 31, 68, 0.85);
+    backdrop-filter: blur(8px);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-size: 0.95rem; font-weight: 600;
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(10px);
     transition: all 0.4s ease;
     pointer-events: none;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    max-width: 85%;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }}
   .gl-item:hover .gl-caption {{
     opacity: 1;
     transform: translateY(0);
   }}
-
-  /* ── Responsive ── */
   @media (max-width: 768px) {{
     .gl-item {{ height: 400px; }}
-    .gl-wrap {{ gap: 16px; }}
-  }}
-  @media (max-width: 480px) {{
-    .gl-item {{ height: 300px; }}
-    .gl-wrap {{ gap: 12px; }}
+    .gl-wrap {{ gap: 16px; padding-bottom: 40px; }}
     .gl-caption {{ bottom: 12px; left: 12px; font-size: 0.85rem; padding: 8px 16px; }}
   }}
 </style>
-</head>
-<body>
 
 <!-- Section header -->
 <div class="gl-header">
@@ -797,24 +774,30 @@ def render():
 </div>
 
 <!-- Horizontal scroll container -->
+<div class="gl-wrap-container">
 <div class="gl-wrap">
-  {gallery_items_html}
+{gallery_items_html}
 </div>
-
-</body>
-</html>
+</div>
 '''
-    components.html(gallery_html, height=750, scrolling=False)
+    components.html(gallery_html, height=720, scrolling=False)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
-    st.markdown("""
-    <div class="ed-container">
-        <div class="ed-timeline-section">
-            <div class="ed-timeline-left">
-                <h2>Nhìn lại<br>Hành trình</h2>
-                <p>Những con số và dấu mốc đại diện cho khối lượng công việc khổng lồ mà Team đã thực hiện để biến dữ liệu thô thành các nhóm hành động chiến lược.</p>
-            </div>
-            <div class="ed-timeline-right">
+    st.markdown("<div style='padding-top: 72px; border-top: 2px solid #F1F5F9; margin-bottom: 72px; width: 100%;'></div>", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns([1, 2], gap="large")
+    
+    with col1:
+        st.markdown('''
+            <h2 style='font-size:3rem; font-weight:900; line-height:1.08; margin:0 0 20px; letter-spacing:-.04em; color:#0A1F44; font-family: "Montserrat", sans-serif;'>Nhìn lại<br>Hành trình</h2>
+            <p style='color:#64748B; font-size:1.05rem; line-height:1.7; font-weight:500; margin:0; font-family: "Montserrat", sans-serif;'>Những con số và dấu mốc đại diện cho khối lượng công việc khổng lồ mà Team đã thực hiện để biến dữ liệu thô thành các nhóm hành động chiến lược.</p>
+        ''', unsafe_allow_html=True)
+        
+        st.plotly_chart(create_vietnam_map(), use_container_width=True)
+        
+    with col2:
+        st.markdown('''
+<div class="ed-timeline-right">
                 <div class="ed-timeline-node">
                     <div class="ed-timeline-big-num">19</div>
                     <div class="ed-timeline-content">
@@ -844,9 +827,8 @@ def render():
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        ''', unsafe_allow_html=True)
+
 
 
 

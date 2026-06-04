@@ -34,9 +34,12 @@ def render(all_data, available_groups):
     except Exception:
         total_headcount = 21353
 
-    # Tổng số phản hồi hợp lệ sau làm sạch ở cấp công ty
-    total_participants = total_n
+    # total_n_before = raw submissions (tham gia khảo sát)
+    # total_n        = sau lọc memo (mẫu phân tích hợp lệ)
+    total_participants = total_n_before  # dùng raw count cho tỷ lệ tham gia
+    total_cleaned = total_n              # mẫu sau lọc dùng cho phân tích
     total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 0
+    cleaned_rr = round((total_cleaned / total_headcount) * 100, 1) if total_headcount > 0 else 0
     bm = get_company_benchmark_2025()
     ei_delta = total_ei - bm['ei_mean']
     enps_delta = total_enps - bm['enps_score']
@@ -125,8 +128,8 @@ def render(all_data, available_groups):
             </p>
             <div class="overview-kpi-grid">
                 <div class="overview-kpi"><div class="label">Nhân sự</div><div class="value">{total_headcount:,}</div><div class="sub">Quy mô toàn tổ chức</div></div>
-                <div class="overview-kpi"><div class="label">Phản hồi</div><div class="value">{total_participants:,}</div><div class="sub">Mẫu khảo sát hợp lệ</div></div>
-                <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">Phản hồi hợp lệ / Headcount</div></div>
+                <div class="overview-kpi"><div class="label">Phản hồi</div><div class="value">{total_participants:,}</div><div class="sub">Tổng lượt tham gia khảo sát</div></div>
+                <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">Lượt tham gia / Headcount</div></div>
                 <div class="overview-kpi"><div class="label">Mức gắn kết</div><div class="value">{total_ei:.1f}</div><div class="sub">EI tổng thể · {ei_delta:+.1f} so với 2025</div></div>
             </div>
         </div>
@@ -147,6 +150,7 @@ def render(all_data, available_groups):
     <div class="cov-container">
         <div class="cov-card"><div class="cov-label">Tổng nhân sự</div><div class="cov-value" style="color:#0A1F44;">{total_headcount:,}</div><div class="cov-sub">Headcount toàn tổ chức GHN</div></div>
         <div class="cov-card"><div class="cov-label">Đã tham gia khảo sát</div><div class="cov-value" style="color:#006FAD;">{total_participants:,}</div><div class="cov-sub"><span class="cov-badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;"><span class="cov-badge-dot" style="background:#3B82F6;"></span>{total_rr}% tỷ lệ phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(total_rr, 100):.1f}%; background: linear-gradient(90deg, #3B82F6, #006FAD);"></div></div></div>
+        <div class="cov-card"><div class="cov-label">Mẫu phân tích (sau lọc memo)</div><div class="cov-value" style="color:#7C3AED;">{total_cleaned:,}</div><div class="cov-sub"><span class="cov-badge" style="background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE;"><span class="cov-badge-dot" style="background:#7C3AED;"></span>{cleaned_rr}% / headcount</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(cleaned_rr, 100):.1f}%; background: linear-gradient(90deg, #A78BFA, #7C3AED);"></div></div></div>
         <div class="cov-card"><div class="cov-label">Chưa tham gia</div><div class="cov-value" style="color:#94A3B8;">{max(total_headcount - total_participants, 0):,}</div><div class="cov-sub"><span class="cov-badge" style="background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;"><span class="cov-badge-dot" style="background:#CBD5E1;"></span>{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(max(round((1 - total_participants / total_headcount) * 100, 1), 0), 100):.1f}%; background: #E2E8F0;"></div></div></div>
     </div>
     ''', unsafe_allow_html=True)
