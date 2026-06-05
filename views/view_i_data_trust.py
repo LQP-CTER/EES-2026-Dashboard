@@ -42,23 +42,299 @@ def _info_box(body: str) -> str:
     </div>"""
 
 
-def render():
-    # ── Page header ────────────────────────────────────────────────
-    st.markdown("""
-    <div class="pg-header">
-        <div>
-            <p class="pg-eyebrow">EES 2026 · Phương pháp luận</p>
-            <h1 class="pg-title">Thẩm định &amp; Độ tin cậy dữ liệu</h1>
-            <p class="pg-subtitle">Cách xử lý, làm sạch và đánh giá chất lượng dữ liệu trước khi phân tích</p>
+def _metric_tile(label: str, value: str, note: str, accent: str, bg: str) -> str:
+    return f"""
+    <div style="background:{bg};border:1px solid {accent}33;border-radius:18px;
+                padding:18px 18px 20px;box-shadow:0 16px 30px rgba(10,31,68,.08);
+                position:relative;overflow:hidden;min-width:0;">
+        <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,{accent},#FFB38B);"></div>
+        <div style="font-size:.68rem;font-weight:800;color:{accent};text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">
+            {label}
         </div>
-        <span class="pg-badge"><span class="pg-badge-dot"></span>Phần 1 · Data Quality</span>
+        <div style="font-size:clamp(1.7rem, 2vw, 2.25rem);font-weight:900;color:#0A1F44;line-height:.95;letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap;">
+            {value}
+        </div>
+        <div style="font-size:.78rem;color:#64748B;line-height:1.45;margin-top:8px;">
+            {note}
+        </div>
+    </div>
+    """
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _compute_reliability_table():
+    from utils.data_loader import load_group
+
+    GROUPS = [
+        ('1A', 'Shipper',       12955),
+        ('1B', 'Tài xế',         801),
+        ('2A', 'NV Kho',         4892),
+        ('2B', 'QL Tuyến đầu',   425),
+        ('3A', 'NV Văn phòng',   917),
+        ('3B', 'Manager HO',     109),
+    ]
+
+    rows = []
+    for gid, label, raw_expected in GROUPS:
+        try:
+            df, n_raw = load_group(gid)
+            if df is None or df.empty:
+                continue
+            report = df.attrs.get('memo_report', {})
+            rows.append({
+                'Nhóm': f'{gid} · {label}',
+                'Mẫu thô (Supabase)': n_raw,
+                'Sau Dedup': int(report.get('n_after_dedup', n_raw)),
+                'Maha flag': int(report.get('flags', {}).get('maha_flag_n', 0)),
+                'Contradiction': int(report.get('flags', {}).get('contradiction_n', 0)),
+                '0 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('0_evidence', 0)),
+                '1 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('1_evidence', 0)),
+                '2 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('2_evidence', 0)),
+                'KEEP': int(report.get('tier_counts', {}).get('KEEP', 0)),
+                'DOWNWEIGHT': int(report.get('tier_counts', {}).get('DOWNWEIGHT', 0)),
+                'DROP': int(report.get('tier_counts', {}).get('DROP', 0)),
+                'n hiệu dụng': float(report.get('n_effective', 0)),
+                '% giữ': float(report.get('effective_pct', 0)),
+            })
+        except Exception as e:
+            st.warning(f"Không tải được nhóm {gid}: {e}")
+            continue
+    return pd.DataFrame(rows)
+
+
+def render():
+    st.markdown("""
+    <style>
+    .dt-shell {
+        border-radius: 28px;
+        padding: 32px;
+        margin: 20px 0 28px;
+        background:
+            radial-gradient(circle at 10% 0%, rgba(255,82,0,.10), transparent 28%),
+            radial-gradient(circle at 90% 14%, rgba(29,78,216,.08), transparent 30%),
+            linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 54%, #EEF6FF 100%);
+        border: 1px solid rgba(226,232,240,.95);
+        box-shadow: 0 24px 64px rgba(10,31,68,.11), inset 0 1px 0 rgba(255,255,255,.96);
+    }
+    .dt-hero {
+        display:grid;
+        grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);
+        gap:24px;
+        align-items:stretch;
+    }
+    .dt-kicker {
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:7px 12px;
+        border-radius:999px;
+        background:#FFF4EF;
+        border:1px solid #FFD5BF;
+        color:#FF5200;
+        font-size:.72rem;
+        font-weight:800;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+        margin-bottom:14px;
+    }
+    .dt-kicker::before {
+        content:'';
+        width:8px;
+        height:8px;
+        border-radius:50%;
+        background:#10B981;
+        box-shadow:0 0 0 5px rgba(16,185,129,.14);
+    }
+    .dt-title {
+        font-size:clamp(2.1rem, 3.4vw, 3.4rem);
+        line-height:1.04;
+        letter-spacing:-.04em;
+        font-weight:900;
+        color:#0A1F44;
+        margin:0 0 14px;
+    }
+    .dt-subtitle {
+        color:#475569;
+        font-size:1rem;
+        line-height:1.72;
+        font-weight:500;
+        margin:0;
+        max-width:760px;
+    }
+    .dt-hero-panel {
+        border-radius:24px;
+        padding:22px;
+        background:linear-gradient(145deg, rgba(10,31,68,.96), rgba(29,78,216,.88));
+        box-shadow:0 24px 52px rgba(10,31,68,.22);
+        color:#fff;
+        position:relative;
+        overflow:hidden;
+        min-height:220px;
+    }
+    .dt-hero-panel::before {
+        content:'';
+        position:absolute;
+        inset:0;
+        background:
+            linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+        background-size:30px 30px;
+        opacity:.55;
+        pointer-events:none;
+    }
+    .dt-hero-panel::after {
+        content:'';
+        position:absolute;
+        width:220px;
+        height:220px;
+        right:-70px;
+        bottom:-100px;
+        background:radial-gradient(circle, rgba(255,82,0,.42) 0%, transparent 65%);
+        pointer-events:none;
+    }
+    .dt-hero-panel-inner {
+        position:relative;
+        z-index:1;
+        display:flex;
+        flex-direction:column;
+        gap:18px;
+        height:100%;
+    }
+    .dt-hero-label {
+        font-size:.72rem;
+        font-weight:800;
+        letter-spacing:.18em;
+        text-transform:uppercase;
+        color:#FFDBCC;
+    }
+    .dt-hero-score {
+        font-size:clamp(2.5rem, 4vw, 4.4rem);
+        line-height:.9;
+        font-weight:900;
+        letter-spacing:-.05em;
+    }
+    .dt-hero-mini {
+        color:rgba(255,255,255,.82);
+        font-size:.84rem;
+        line-height:1.55;
+        max-width:280px;
+    }
+    .dt-hero-pills {
+        margin-top:auto;
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+    }
+    .dt-pill {
+        display:inline-flex;
+        align-items:center;
+        padding:7px 11px;
+        border-radius:999px;
+        background:rgba(255,255,255,.12);
+        border:1px solid rgba(255,255,255,.18);
+        color:#fff;
+        font-size:.68rem;
+        font-weight:800;
+        backdrop-filter:blur(10px);
+    }
+    .dt-metrics {
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:16px;
+        margin-top:18px;
+    }
+    .dt-card {
+        background:#fff;
+        border:1px solid #E2E8F0;
+        border-radius:18px;
+        padding:18px 20px;
+        box-shadow:0 14px 30px rgba(10,31,68,.06);
+    }
+    .dt-tabs-shell {
+        margin-top:18px;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap:8px;
+        background:#F8FAFC;
+        padding:8px;
+        border-radius:18px;
+        border:1px solid #E2E8F0;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background:transparent;
+        border-radius:12px;
+        padding:10px 14px;
+        font-weight:700;
+        color:#64748B;
+    }
+    .stTabs [aria-selected="true"] {
+        background:#fff;
+        color:#0A1F44;
+        box-shadow:0 8px 22px rgba(10,31,68,.10);
+    }
+    @media (max-width: 1080px) {
+        .dt-hero { grid-template-columns:1fr; }
+        .dt-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 760px) {
+        .dt-shell { padding:20px; border-radius:22px; }
+        .dt-metrics { grid-template-columns:1fr; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Load data first so the hero can summarize the actual reliability pipeline
+    with st.spinner("Đang tính toán độ tin cậy cho 6 nhóm..."):
+        summary_df = _compute_reliability_table()
+
+    if summary_df.empty:
+        st.error("Không tải được dữ liệu. Vui lòng thử lại sau.")
+        return
+
+    raw_total   = int(summary_df['Mẫu thô (Supabase)'].sum())
+    dedup_total = int(summary_df['Sau Dedup'].sum())
+    eff_total   = float(summary_df['n hiệu dụng'].sum())
+    keep_total  = int(summary_df['KEEP'].sum())
+    down_total  = int(summary_df['DOWNWEIGHT'].sum())
+    drop_total  = int(summary_df['DROP'].sum())
+    pct_keep    = round(eff_total / max(raw_total, 1) * 100, 1)
+
+    st.markdown(f"""
+    <div class="dt-shell">
+        <div class="dt-hero">
+            <div>
+                <span class="dt-kicker">EES 2026 · Phương pháp luận</span>
+                <h1 class="dt-title">Thẩm định &amp; Độ tin cậy dữ liệu</h1>
+                <p class="dt-subtitle">Khung xử lý dữ liệu được thiết kế để giữ lại tín hiệu hữu ích, giảm nhiễu do trả lời thiếu chú tâm, và đưa ra base phân tích có thể đọc được một cách nhất quán.</p>
+            </div>
+            <div class="dt-hero-panel">
+                <div class="dt-hero-panel-inner">
+                    <span class="dt-hero-label">Data Quality Engine</span>
+                    <div>
+                        <div class="dt-hero-score">0.3 - 1.0</div>
+                        <div class="dt-hero-mini">Thang trọng số tin cậy áp dụng cho từng phản hồi trước khi tính các chỉ số tổng hợp.</div>
+                    </div>
+                    <div class="dt-hero-pills">
+                        <span class="dt-pill">Straight-lining</span>
+                        <span class="dt-pill">Inconsistency</span>
+                        <span class="dt-pill">Open-ended evidence</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Intro callout ───────────────────────────────────────────────
     st.markdown(f"""
-    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-left:4px solid #0A1F44;
-                border-radius:10px;padding:20px 24px;margin-bottom:28px;">
+    <div class="dt-metrics">
+        {_metric_tile("Mẫu thô", f"{raw_total:,}", "6 nhóm khảo sát từ Supabase", "#0A1F44", "#F8FAFC")}
+        {_metric_tile("Sau Dedup", f"{dedup_total:,}", "đã khử trùng lặp trước khi gán trọng số", "#1D4ED8", "#EFF6FF")}
+        {_metric_tile("n hiệu dụng", f"{eff_total:,.1f}", f"xấp xỉ {pct_keep}% so với mẫu thô", "#10B981", "#F0FDF4")}
+        {_metric_tile("Phân tầng", f"{keep_total:,} / {down_total:,} / {drop_total:,}", "KEEP / DOWNWEIGHT / DROP", "#7C3AED", "#F5F3FF")}
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="dt-card" style="margin:18px 0 26px;">
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin:0">
             Trước khi diễn giải bất kỳ con số nào, dữ liệu được thẩm định độ tin cậy.
             Cách tiếp cận: <strong>không xóa phản hồi theo một đầu hiệu đơn lẻ</strong>, mà gán nhiều

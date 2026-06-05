@@ -147,13 +147,36 @@ def render():
     .ed-timeline-content p { font-size:1rem; color:#64748B; line-height:1.65; margin:0; }
 
     /* Team */
-    .ed-team-section { padding-bottom:100px; }
+    .ed-team-section {
+        padding:34px;
+        margin-bottom:90px;
+        border-radius:28px;
+        background:
+            radial-gradient(circle at 10% 0%, rgba(255,82,0,.12), transparent 32%),
+            linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 58%, #EEF6FF 100%);
+        border:1px solid rgba(226,232,240,.95);
+        box-shadow:0 24px 64px rgba(10,31,68,.11), inset 0 1px 0 rgba(255,255,255,.96);
+    }
     .ed-team-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:28px; perspective:1100px; }
     .ed-team-card {
-        background:#fff; border:1.5px solid #E2E8F0; border-radius:20px;
-        padding:28px 28px 24px; transition:box-shadow .3s ease, transform .3s ease;
+        background:rgba(255,255,255,.84); backdrop-filter:blur(14px);
+        border:1.5px solid #E2E8F0; border-radius:22px;
+        padding:24px; transition:box-shadow .3s ease, transform .3s ease, border-color .3s ease;
+        position:relative; overflow:hidden;
     }
-    .ed-team-card:hover { box-shadow:0 18px 44px rgba(10,31,68,.13); transform:translateY(-7px) translateZ(28px) rotateX(2deg); }
+    .ed-team-card::before {
+        content:''; position:absolute; inset:0 0 auto 0; height:4px;
+        background:linear-gradient(90deg,#FF5200,#0052CC);
+    }
+    .ed-team-card:hover { box-shadow:0 20px 48px rgba(10,31,68,.14); transform:translateY(-8px) translateZ(32px) rotateX(2deg); border-color:rgba(255,82,0,.32); }
+    .ed-team-avatar {
+        width:46px; height:46px; border-radius:16px;
+        display:flex; align-items:center; justify-content:center;
+        color:#fff; font-weight:900; font-size:.95rem;
+        background:linear-gradient(145deg,#0A1F44,#0052CC);
+        box-shadow:0 14px 24px rgba(10,31,68,.18);
+        margin-bottom:18px;
+    }
     .ed-team-role { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.14em; color:#FF5200; margin-bottom:8px; }
     .ed-team-name { font-size:1.25rem; font-weight:800; color:#0A1F44; letter-spacing:-.02em; margin-bottom:10px; }
     .ed-team-desc { font-size:.9rem; color:#64748B; line-height:1.6; }
@@ -251,17 +274,42 @@ def render():
     .ed-metrics-grid {
         border-top:0;
         padding-top:0;
+        grid-column:1 / -1;
+        position:relative;
+        z-index:4;
         grid-template-columns:repeat(4,minmax(0,1fr));
-        gap:14px;
+        gap:18px;
+        max-width:none;
+        width:100%;
     }
     .ed-metric-item {
         background:rgba(255,255,255,.78);
         backdrop-filter:blur(16px);
         border:1px solid rgba(226,232,240,.95);
         border-radius:18px;
+        min-width:0;
+        padding:20px 24px 22px;
+        overflow:visible;
         box-shadow:0 18px 34px rgba(10,31,68,.10);
         transform:translateZ(28px);
         transition:transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+    }
+    .ed-metric-label {
+        min-height:32px;
+        line-height:1.35;
+    }
+    .ed-metric-val {
+        display:block;
+        white-space:nowrap;
+        word-break:keep-all;
+        overflow-wrap:normal;
+        font-size:clamp(2rem, 2.45vw, 2.55rem);
+        line-height:.95;
+        letter-spacing:-.04em;
+        font-variant-numeric:tabular-nums;
+    }
+    .ed-metric-sub {
+        line-height:1.45;
     }
     .ed-metric-item:hover {
         transform:translateY(-6px) translateZ(52px) rotateX(2deg);
@@ -405,12 +453,13 @@ def render():
     @media (max-width: 1080px) {
         .ed-hero-shell { grid-template-columns:1fr; padding:32px; }
         .ed-command-panel { transform:translateZ(24px); min-height:320px; }
+        .ed-metrics-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
         .ed-team-grid { grid-template-columns:repeat(2,1fr); }
     }
     @media (max-width: 760px) {
         .ed-hero-shell { padding:24px; border-radius:22px; }
         .ed-headline { font-size:2.35rem; }
-        .ed-metrics-grid { grid-template-columns:repeat(2,1fr); }
+        .ed-metrics-grid { grid-template-columns:1fr; max-width:none; }
         .ed-command-panel { display:none; }
         .ed-team-grid { grid-template-columns:1fr; }
     }
@@ -426,28 +475,6 @@ def render():
                     <span class="ed-kicker">Employee Engagement Survey 2026</span>
                     <h1 class="ed-headline">Dấu ấn hành trình EES 2026<br>&amp; những nỗ lực từ phía sau</h1>
                     <p class="ed-hero-sub">Một lớp tổng quan điều hành cho thấy quy mô tham gia, chất lượng dữ liệu và câu chuyện triển khai phía sau bộ báo cáo gắn kết toàn GHN.</p>
-                    <div class="ed-metrics-grid">
-                        <div class="ed-metric-item">
-                            <span class="ed-metric-label">Quy mô</span>
-                            <span class="ed-metric-val">21,353</span>
-                            <span class="ed-metric-sub">Nhân sự toàn GHN</span>
-                        </div>
-                        <div class="ed-metric-item">
-                            <span class="ed-metric-label">Phản hồi</span>
-                            <span class="ed-metric-val">20,005</span>
-                            <span class="ed-metric-sub">Mẫu hợp lệ</span>
-                        </div>
-                        <div class="ed-metric-item">
-                            <span class="ed-metric-label">Tỷ lệ tham gia</span>
-                            <span class="ed-metric-val">93.7%</span>
-                            <span class="ed-metric-sub positive">▲ +17.8% so với 2025</span>
-                        </div>
-                        <div class="ed-metric-item">
-                            <span class="ed-metric-label">Mức gắn kết</span>
-                            <span class="ed-metric-val">72.3</span>
-                            <span class="ed-metric-sub">Điểm EI tổng thể</span>
-                        </div>
-                    </div>
                 </div>
                 <div class="ed-command-panel">
                     <div class="ed-command-top">
@@ -470,6 +497,28 @@ def render():
                     </div>
                     <div class="ed-command-bars">
                         <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="ed-metrics-grid">
+                    <div class="ed-metric-item">
+                        <span class="ed-metric-label">Quy mô</span>
+                        <span class="ed-metric-val">21,353</span>
+                        <span class="ed-metric-sub">Nhân sự toàn GHN</span>
+                    </div>
+                    <div class="ed-metric-item">
+                        <span class="ed-metric-label">Phản hồi</span>
+                        <span class="ed-metric-val">20,005</span>
+                        <span class="ed-metric-sub">Mẫu hợp lệ</span>
+                    </div>
+                    <div class="ed-metric-item">
+                        <span class="ed-metric-label">Tỷ lệ tham gia</span>
+                        <span class="ed-metric-val">93.7%</span>
+                        <span class="ed-metric-sub positive">▲ +17.8% so với 2025</span>
+                    </div>
+                    <div class="ed-metric-item">
+                        <span class="ed-metric-label">Mức gắn kết</span>
+                        <span class="ed-metric-val">72.3</span>
+                        <span class="ed-metric-sub">Điểm EI tổng thể</span>
                     </div>
                 </div>
             </div>
@@ -504,13 +553,35 @@ def render():
   body {{
     font-family: 'Montserrat', sans-serif;
     background: transparent;
-    padding: 0;
+    padding: 4px 8px 28px;
+  }}
+
+  .video-stage {{
+    position: relative;
+    padding: 28px;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 88% 20%, rgba(255,82,0,.16), transparent 28%),
+      linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 54%, #EEF6FF 100%);
+    border: 1px solid rgba(148,163,184,.28);
+    box-shadow: 0 24px 64px rgba(10,31,68,.12), inset 0 1px 0 rgba(255,255,255,.95);
+    overflow: visible;
+  }}
+  .video-stage::before {{
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,.72);
+    pointer-events: none;
   }}
 
   /* ── Section header ── */
   .section-header {{
+    position: relative;
+    z-index: 2;
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
   }}
   .section-title {{
     font-size: 1.6rem; font-weight: 900; color: #0A1F44; letter-spacing: -0.03em;
@@ -526,14 +597,15 @@ def render():
   .player-shell {{
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
-    border-radius: 20px;
+    aspect-ratio: 21 / 9;
+    border-radius: 24px;
     overflow: hidden;
     background: #000;
     box-shadow: 0 30px 74px rgba(10,31,68,.30);
     cursor: pointer;
     transform: perspective(1200px) rotateX(1.2deg);
     transform-origin: center top;
+    z-index: 2;
   }}
   .player-shell:hover .ctrl-bar {{ opacity: 1; transform: translateY(0); }}
   .player-shell:hover .unmute-pill {{ opacity: 1; }}
@@ -650,10 +722,13 @@ def render():
 
   /* ── Playlist dock BELOW player ── */
   .dock {{
-    margin-top: 20px;
+    position: relative;
+    z-index: 3;
+    margin-top: 24px;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
+    gap: 16px;
+    padding-bottom: 4px;
   }}
   @media (max-width: 820px) {{
     .dock {{ grid-template-columns: repeat(3, 1fr); }}
@@ -663,11 +738,12 @@ def render():
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 10;
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
     cursor: pointer;
     background: #0F172A;
-    border: 2px solid transparent;
+    border: 1px solid rgba(255,255,255,.75);
+    box-shadow: 0 14px 30px rgba(10,31,68,.12);
     transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s ease, border-color .3s ease;
   }}
   .dock-card:hover {{
@@ -676,7 +752,7 @@ def render():
   }}
   .dock-card-active {{
     border-color: #FF5200;
-    box-shadow: 0 0 0 2px rgba(255,82,0,.35), 0 8px 20px rgba(255,82,0,.3);
+    box-shadow: 0 0 0 3px rgba(255,82,0,.18), 0 16px 34px rgba(255,82,0,.22);
   }}
   .dock-video {{
     width: 100%; height: 100%; object-fit: cover; display: block;
@@ -717,10 +793,17 @@ def render():
     0%,100% {{ transform: scaleY(.4); }}
     50%     {{ transform: scaleY(1); }}
   }}
+
+  @media (max-width: 900px) {{
+    .video-stage {{ padding: 20px; }}
+    .player-shell {{ aspect-ratio: 16 / 9; }}
+    .dock {{ grid-template-columns: repeat(2, 1fr); }}
+  }}
 </style>
 </head>
 <body>
 
+<div class="video-stage">
 <!-- Section header -->
 <div class="section-header">
   <span class="section-title">EES 2026 — Highlight Reel</span>
@@ -786,6 +869,7 @@ def render():
 <!-- Playlist dock BELOW player -->
 <div class="dock" id="dock">
   {dock_cards}
+</div>
 </div>
 
 <script>
@@ -943,7 +1027,7 @@ def render():
 """
 
     import streamlit.components.v1 as components
-    components.html(video_html, height=820, scrolling=False)
+    components.html(video_html, height=920, scrolling=False)
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
@@ -971,7 +1055,7 @@ def render():
   /* ── Section header ── */
   .gl-header {{
     display: flex; align-items: baseline; justify-content: space-between;
-    margin-bottom: 24px; padding: 0 12px;
+    margin-bottom: 24px; padding: 0 6px;
   }}
   .gl-title {{
     font-size: 2rem; font-weight: 900; letter-spacing: -0.03em; color: #0A1F44;
@@ -987,13 +1071,20 @@ def render():
   .gl-wrap-container {{
     overflow-x: hidden;
     width: 100%;
-    margin-bottom: 32px;
+    margin-bottom: 36px;
+    padding: 18px 0 8px;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 18% 0%, rgba(255,82,0,.12), transparent 30%),
+      linear-gradient(135deg, rgba(255,255,255,.94), rgba(248,250,252,.92));
+    border: 1px solid rgba(226,232,240,.9);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 22px 58px rgba(10,31,68,.10);
     perspective: 1400px;
   }}
   .gl-wrap {{
     display: flex;
     gap: 24px;
-    padding: 24px 12px 60px 12px;
+    padding: 24px 18px 62px 18px;
     width: max-content;
     animation: autoScroll 30s linear infinite;
   }}
@@ -1008,9 +1099,9 @@ def render():
   .gl-item {{
     position: relative;
     flex: 0 0 auto;
-    height: 550px; 
+    height: 500px; 
     scroll-snap-align: center;
-    border-radius: 16px;
+    border-radius: 20px;
     transform: rotateY(-7deg) translateZ(0);
     transform-style: preserve-3d;
     transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease, filter 0.5s ease;
@@ -1024,18 +1115,29 @@ def render():
     width: auto;
     height: 100%;
     object-fit: cover;
-    border-radius: 16px;
-    box-shadow: 0 18px 36px -14px rgba(0,0,0,0.24);
+    border-radius: 20px;
+    box-shadow: 0 22px 44px -16px rgba(0,0,0,0.28);
     border: 1px solid rgba(255,255,255,0.55);
+  }}
+  .gl-item::after {{
+    content: '';
+    position: absolute;
+    inset: auto 16px -18px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(10,31,68,.20);
+    filter: blur(16px);
+    z-index: -1;
   }}
   .gl-caption {{
     position: absolute;
     bottom: 24px; left: 24px;
-    background: rgba(10, 31, 68, 0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(10, 31, 68, 0.78);
+    backdrop-filter: blur(12px);
     color: white;
     padding: 12px 24px;
-    border-radius: 999px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.18);
     font-size: 0.95rem; font-weight: 600;
     opacity: 0;
     transform: translateY(10px);
@@ -1067,7 +1169,7 @@ def render():
 </div>
 </div>
 '''
-    components.html(gallery_html, height=580, scrolling=False)
+    components.html(gallery_html, height=640, scrolling=False)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
     st.markdown("<hr style='border:none;border-top:2px solid #F1F5F9;margin:8px 0 0 0;'>", unsafe_allow_html=True)
@@ -1081,11 +1183,22 @@ def render():
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Montserrat', sans-serif; background: transparent; }
 
+.jt-shell {
+    border-radius: 28px;
+    padding: 34px;
+    background:
+        radial-gradient(circle at 8% 0%, rgba(255,82,0,.12), transparent 30%),
+        radial-gradient(circle at 92% 12%, rgba(0,82,204,.10), transparent 34%),
+        linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 56%, #EEF6FF 100%);
+    border: 1px solid rgba(226,232,240,.95);
+    box-shadow: 0 24px 64px rgba(10,31,68,.11), inset 0 1px 0 rgba(255,255,255,.98);
+    overflow: hidden;
+}
 .jt-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 60px;
-    padding: 16px 4px 48px 4px;
+    padding: 4px 4px 10px 4px;
     align-items: start;
 }
 
@@ -1093,7 +1206,9 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 .jt-left {}
 .jt-kicker {
     font-size: 0.7rem; font-weight: 800; letter-spacing: 0.18em;
-    text-transform: uppercase; color: #FF5200; margin-bottom: 14px; display: block;
+    text-transform: uppercase; color: #FF5200; margin-bottom: 14px; display: inline-flex;
+    background: #FFF4EF; border: 1px solid #FFD5BF; border-radius: 999px;
+    padding: 7px 12px;
 }
 .jt-heading {
     font-size: 3rem; font-weight: 900; line-height: 1.08;
@@ -1111,9 +1226,10 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     gap: 16px;
 }
 .jt-stat {
-    background: #F8FAFC;
+    background: rgba(255,255,255,.82);
+    backdrop-filter: blur(14px);
     border: 1px solid #E2E8F0;
-    border-radius: 18px;
+    border-radius: 20px;
     padding: 24px 22px 20px;
     position: relative;
     overflow: hidden;
@@ -1189,9 +1305,10 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 .jt-node:hover .jt-dot { transform: scale(1.15); }
 
 .jt-body {
-    background: white;
+    background: rgba(255,255,255,.86);
+    backdrop-filter: blur(12px);
     border: 1px solid #E2E8F0;
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 20px 22px;
     flex: 1;
     transition: box-shadow 0.3s ease;
@@ -1273,6 +1390,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 </script>
 </head>
 <body>
+<div class="jt-shell">
 <div class="jt-section">
 
   <!-- LEFT -->
@@ -1346,10 +1464,11 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 
   </div>
 </div>
+</div>
 </body>
 </html>
 """
-    components.html(journey_html, height=900, scrolling=False)
+    components.html(journey_html, height=860, scrolling=False)
 
     # ── Vietnam Map (standalone, full-width) ─────────────────────────────────
     st.plotly_chart(create_vietnam_map(), use_container_width=True)
@@ -1376,21 +1495,40 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
   }
 /* ── VERTICAL TIMELINE ── */
 .vt-container {
-    max-width: 1000px;
-    margin: 20px auto 40px auto;
-    padding: 0 20px;
+    max-width: 1080px;
+    margin: 28px auto 42px auto;
+    padding: 34px;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 85% 0%, rgba(255,82,0,.14), transparent 32%),
+      linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 58%, #EEF6FF 100%);
+    border: 1px solid rgba(226,232,240,.95);
+    box-shadow: 0 24px 64px rgba(10,31,68,.11), inset 0 1px 0 rgba(255,255,255,.96);
 }
 .vt-header {
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: 54px;
 }
 .vt-title {
-    color: #FF5200;
-    font-size: 2.2rem;
+    color: #0A1F44;
+    font-size: 2.35rem;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.03em;
     margin: 0;
+}
+.vt-kicker {
+    display: inline-flex;
+    color: #FF5200;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    background: #FFF4EF;
+    border: 1px solid #FFD5BF;
+    border-radius: 999px;
+    padding: 7px 12px;
+    margin-bottom: 14px;
 }
 .vt-timeline {
     position: relative;
@@ -1403,7 +1541,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     content: '';
     position: absolute;
     width: 4px;
-    background-color: #FFD5BF;
+    background: linear-gradient(180deg, rgba(255,213,191,.5), #FF5200 45%, rgba(0,82,204,.6));
     top: 0;
     bottom: 0;
     left: 50%;
@@ -1450,10 +1588,11 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 /* The actual content card */
 .vt-content {
     padding: 24px 30px;
-    background: #fff;
+    background: rgba(255,255,255,.88);
+    backdrop-filter: blur(14px);
     position: relative;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-radius: 20px;
+    box-shadow: 0 18px 38px rgba(10,31,68,0.09);
     border: 1px solid #E2E8F0;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     transform-style: preserve-3d;
@@ -1589,6 +1728,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 <body>
 <div class="vt-container">
     <div class="vt-header">
+        <span class="vt-kicker">Action Roadmap</span>
         <h2 class="vt-title">SAU KHẢO SÁT GHN SẼ LÀM GÌ</h2>
     </div>
     
@@ -1674,24 +1814,28 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
             </div>
             <div class="ed-team-grid">
                 <div class="ed-team-card">
+                    <div class="ed-team-avatar">EX</div>
                     <div class="ed-team-role">Project Lead</div>
                     <div class="ed-team-name">Team EX &amp; L&amp;D</div>
                     <div class="ed-team-desc">Thiết kế bộ câu hỏi, phối hợp triển khai khảo sát và điều phối thu thập phản hồi toàn GHN.</div>
                     <span class="ed-team-badge">Survey Design &amp; Ops</span>
                 </div>
                 <div class="ed-team-card">
+                    <div class="ed-team-avatar">HR</div>
                     <div class="ed-team-role">Truyền thông &amp; Lan tỏa</div>
                     <div class="ed-team-name">HRBP các vùng &amp; KTC</div>
                     <div class="ed-team-desc">Hỗ trợ truyền thông nội bộ, thúc đẩy nhân viên tham gia khảo sát và đảm bảo tỉ lệ phản hồi đạt mức cao nhất tại từng khu vực.</div>
                     <span class="ed-team-badge">Internal Comms · Engagement Push</span>
                 </div>
                 <div class="ed-team-card">
-                    <div class="ed-team-role">Hạ tầng & Hệ thống</div>
+                    <div class="ed-team-avatar">IT</div>
+                    <div class="ed-team-role">Hạ tầng &amp; Hệ thống</div>
                     <div class="ed-team-name">Team IT</div>
                     <div class="ed-team-desc">Đảm bảo hạ tầng server, băng thông mạng và hỗ trợ kỹ thuật liên tục trong suốt quá trình triển khai khảo sát.</div>
                     <span class="ed-team-badge">System & Infrastructure</span>
                 </div>
                 <div class="ed-team-card">
+                    <div class="ed-team-avatar">BI</div>
                     <div class="ed-team-role">Kỹ thuật Dữ liệu</div>
                     <div class="ed-team-name">Team BI</div>
                     <div class="ed-team-desc">Xây dựng kiến trúc cơ sở dữ liệu, tối ưu hóa đường ống xử lý dữ liệu (data pipeline) và kết nối API.</div>
