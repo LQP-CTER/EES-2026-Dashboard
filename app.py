@@ -1451,6 +1451,10 @@ with st.sidebar:
     index_map[curr_idx] = (OVERVIEW_LABEL, None)
     curr_idx += 1
 
+    menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
+    index_map[curr_idx] = ("Độ tin cậy dữ liệu", None)
+    curr_idx += 1
+
     menu_items.append(sac.MenuItem(COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
     index_map[curr_idx] = (COMPANY_LABEL, None)
     curr_idx += 1
@@ -1493,10 +1497,6 @@ with st.sidebar:
         
         index_map[curr_idx] = (label, "Xem Báo Cáo")
         curr_idx += 1
-
-    menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
-    index_map[curr_idx] = ("Độ tin cậy dữ liệu", None)
-    curr_idx += 1
 
     menu_items.append(sac.MenuItem("Phụ lục"))
     index_map[curr_idx] = ("Phụ lục", None)

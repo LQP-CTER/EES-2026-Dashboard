@@ -148,18 +148,271 @@ def render():
 
     /* Team */
     .ed-team-section { padding-bottom:100px; }
-    .ed-team-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:28px; }
+    .ed-team-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:28px; perspective:1100px; }
     .ed-team-card {
         background:#fff; border:1.5px solid #E2E8F0; border-radius:20px;
         padding:28px 28px 24px; transition:box-shadow .3s ease, transform .3s ease;
     }
-    .ed-team-card:hover { box-shadow:0 12px 40px rgba(10,31,68,.1); transform:translateY(-4px); }
+    .ed-team-card:hover { box-shadow:0 18px 44px rgba(10,31,68,.13); transform:translateY(-7px) translateZ(28px) rotateX(2deg); }
     .ed-team-role { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.14em; color:#FF5200; margin-bottom:8px; }
     .ed-team-name { font-size:1.25rem; font-weight:800; color:#0A1F44; letter-spacing:-.02em; margin-bottom:10px; }
     .ed-team-desc { font-size:.9rem; color:#64748B; line-height:1.6; }
     .ed-team-badge {
         display:inline-block; margin-top:14px; font-size:.72rem; font-weight:700;
         color:#0A1F44; background:#F1F5F9; padding:3px 10px; border-radius:999px;
+    }
+
+    /* 3D Overview refresh */
+    .ed-container {
+        margin:0 auto;
+        perspective:1200px;
+    }
+    .ed-hero {
+        margin-bottom:52px;
+        position:relative;
+    }
+    .ed-hero-shell {
+        position:relative;
+        overflow:hidden;
+        border-radius:28px;
+        padding:42px;
+        min-height:430px;
+        background:
+            radial-gradient(circle at 86% 18%, rgba(255,82,0,.20), transparent 30%),
+            linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 46%, #EEF6FF 100%);
+        border:1px solid rgba(148,163,184,.30);
+        box-shadow:
+            0 28px 70px rgba(10,31,68,.16),
+            inset 0 1px 0 rgba(255,255,255,.95);
+        display:grid;
+        grid-template-columns:minmax(0,1.1fr) minmax(360px,.9fr);
+        gap:34px;
+        transform-style:preserve-3d;
+    }
+    .ed-hero-shell::before {
+        content:'';
+        position:absolute;
+        inset:18px;
+        border:1px solid rgba(255,255,255,.72);
+        border-radius:22px;
+        pointer-events:none;
+    }
+    .ed-hero-shell::after {
+        content:'';
+        position:absolute;
+        width:420px;
+        height:420px;
+        right:-160px;
+        bottom:-190px;
+        background:conic-gradient(from 160deg, rgba(255,82,0,.34), rgba(0,82,204,.20), rgba(16,185,129,.18), rgba(255,82,0,.34));
+        filter:blur(8px);
+        opacity:.78;
+        border-radius:50%;
+        transform:translateZ(-40px);
+    }
+    .ed-hero-copy {
+        position:relative;
+        z-index:2;
+        transform:translateZ(44px);
+    }
+    .ed-kicker {
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        width:max-content;
+        padding:7px 12px;
+        border-radius:999px;
+        background:#FFF4EF;
+        border:1px solid #FFD5BF;
+        box-shadow:0 10px 24px rgba(255,82,0,.10);
+    }
+    .ed-kicker::before {
+        content:'';
+        width:8px;
+        height:8px;
+        border-radius:50%;
+        background:#10B981;
+        box-shadow:0 0 0 5px rgba(16,185,129,.14);
+    }
+    .ed-headline {
+        max-width:760px;
+        margin-top:22px;
+        margin-bottom:18px;
+        font-size:3.45rem;
+    }
+    .ed-hero-sub {
+        max-width:620px;
+        color:#475569;
+        font-size:1.02rem;
+        line-height:1.72;
+        font-weight:600;
+        margin:0 0 28px;
+    }
+    .ed-metrics-grid {
+        border-top:0;
+        padding-top:0;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:14px;
+    }
+    .ed-metric-item {
+        background:rgba(255,255,255,.78);
+        backdrop-filter:blur(16px);
+        border:1px solid rgba(226,232,240,.95);
+        border-radius:18px;
+        box-shadow:0 18px 34px rgba(10,31,68,.10);
+        transform:translateZ(28px);
+        transition:transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+    }
+    .ed-metric-item:hover {
+        transform:translateY(-6px) translateZ(52px) rotateX(2deg);
+        box-shadow:0 26px 52px rgba(10,31,68,.16);
+        border-color:rgba(255,82,0,.34);
+    }
+    .ed-command-panel {
+        position:relative;
+        z-index:2;
+        min-height:340px;
+        align-self:stretch;
+        border-radius:24px;
+        padding:26px;
+        background:linear-gradient(145deg, rgba(10,31,68,.96), rgba(0,82,204,.82));
+        box-shadow:
+            0 28px 58px rgba(10,31,68,.28),
+            inset 0 1px 0 rgba(255,255,255,.18);
+        overflow:hidden;
+        transform:rotateY(-8deg) rotateX(4deg) translateZ(36px);
+        transform-origin:center;
+    }
+    .ed-command-panel::before {
+        content:'';
+        position:absolute;
+        inset:0;
+        background:
+            linear-gradient(rgba(255,255,255,.065) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+        background-size:32px 32px;
+        mask-image:linear-gradient(to bottom, black, transparent 92%);
+    }
+    .ed-command-top {
+        position:relative;
+        z-index:2;
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        color:#fff;
+    }
+    .ed-command-label {
+        display:block;
+        font-size:.68rem;
+        font-weight:800;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+        color:#FFD5BF;
+        margin-bottom:10px;
+    }
+    .ed-command-score {
+        font-size:4.3rem;
+        line-height:.9;
+        font-weight:900;
+        letter-spacing:-.05em;
+    }
+    .ed-command-unit {
+        font-size:.78rem;
+        color:rgba(255,255,255,.68);
+        font-weight:700;
+        margin-top:8px;
+    }
+    .ed-command-chip {
+        color:#fff;
+        border:1px solid rgba(255,255,255,.24);
+        background:rgba(255,255,255,.10);
+        border-radius:999px;
+        padding:7px 11px;
+        font-size:.72rem;
+        font-weight:800;
+        backdrop-filter:blur(12px);
+    }
+    .ed-orbit {
+        position:absolute;
+        left:50%;
+        bottom:28px;
+        width:280px;
+        height:190px;
+        transform:translateX(-50%);
+        transform-style:preserve-3d;
+    }
+    .ed-orbit-ring {
+        position:absolute;
+        inset:22px 12px 28px;
+        border:1px solid rgba(255,255,255,.24);
+        border-radius:50%;
+        transform:rotateX(64deg);
+    }
+    .ed-orbit-ring:nth-child(2) {
+        inset:44px 42px 48px;
+        border-color:rgba(255,213,191,.42);
+    }
+    .ed-orbit-core {
+        position:absolute;
+        left:50%;
+        top:48%;
+        width:86px;
+        height:86px;
+        border-radius:50%;
+        transform:translate(-50%,-50%) translateZ(42px);
+        background:radial-gradient(circle at 35% 28%, #FFFFFF 0%, #FFD5BF 22%, #FF5200 66%, #B93800 100%);
+        box-shadow:0 0 34px rgba(255,82,0,.62);
+    }
+    .ed-orbit-pill {
+        position:absolute;
+        padding:7px 10px;
+        border-radius:999px;
+        color:#fff;
+        background:rgba(255,255,255,.12);
+        border:1px solid rgba(255,255,255,.20);
+        font-size:.68rem;
+        font-weight:800;
+        backdrop-filter:blur(10px);
+        box-shadow:0 12px 22px rgba(0,0,0,.16);
+    }
+    .ed-orbit-pill.p1 { left:8px; top:28px; }
+    .ed-orbit-pill.p2 { right:10px; top:22px; }
+    .ed-orbit-pill.p3 { left:38px; bottom:20px; }
+    .ed-orbit-pill.p4 { right:34px; bottom:18px; }
+    .ed-orbit-pill.p5 { left:50%; top:0; transform:translateX(-50%); }
+    .ed-command-bars {
+        position:absolute;
+        right:28px;
+        bottom:28px;
+        z-index:2;
+        display:flex;
+        align-items:end;
+        gap:8px;
+        height:94px;
+    }
+    .ed-command-bars span {
+        width:16px;
+        border-radius:999px 999px 4px 4px;
+        background:linear-gradient(180deg,#FFFFFF,#FFD5BF 42%,#FF5200);
+        opacity:.92;
+        box-shadow:0 12px 18px rgba(0,0,0,.18);
+    }
+    .ed-command-bars span:nth-child(1) { height:38px; }
+    .ed-command-bars span:nth-child(2) { height:64px; }
+    .ed-command-bars span:nth-child(3) { height:48px; }
+    .ed-command-bars span:nth-child(4) { height:82px; }
+
+    @media (max-width: 1080px) {
+        .ed-hero-shell { grid-template-columns:1fr; padding:32px; }
+        .ed-command-panel { transform:translateZ(24px); min-height:320px; }
+        .ed-team-grid { grid-template-columns:repeat(2,1fr); }
+    }
+    @media (max-width: 760px) {
+        .ed-hero-shell { padding:24px; border-radius:22px; }
+        .ed-headline { font-size:2.35rem; }
+        .ed-metrics-grid { grid-template-columns:repeat(2,1fr); }
+        .ed-command-panel { display:none; }
+        .ed-team-grid { grid-template-columns:1fr; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -168,28 +421,56 @@ def render():
     st.markdown("""
     <div class="ed-container">
         <div class="ed-hero">
-            <span class="ed-kicker">Employee Engagement Survey 2026</span>
-            <h1 class="ed-headline">Dấu ấn hành trình EES 2026<br>&amp; Những nỗ lực từ phía sau</h1>
-            <div class="ed-metrics-grid">
-                <div class="ed-metric-item">
-                    <span class="ed-metric-label">Quy mô</span>
-                    <span class="ed-metric-val">21,353</span>
-                    <span class="ed-metric-sub">Nhân sự toàn GHN</span>
+            <div class="ed-hero-shell">
+                <div class="ed-hero-copy">
+                    <span class="ed-kicker">Employee Engagement Survey 2026</span>
+                    <h1 class="ed-headline">Dấu ấn hành trình EES 2026<br>&amp; những nỗ lực từ phía sau</h1>
+                    <p class="ed-hero-sub">Một lớp tổng quan điều hành cho thấy quy mô tham gia, chất lượng dữ liệu và câu chuyện triển khai phía sau bộ báo cáo gắn kết toàn GHN.</p>
+                    <div class="ed-metrics-grid">
+                        <div class="ed-metric-item">
+                            <span class="ed-metric-label">Quy mô</span>
+                            <span class="ed-metric-val">21,353</span>
+                            <span class="ed-metric-sub">Nhân sự toàn GHN</span>
+                        </div>
+                        <div class="ed-metric-item">
+                            <span class="ed-metric-label">Phản hồi</span>
+                            <span class="ed-metric-val">20,005</span>
+                            <span class="ed-metric-sub">Mẫu hợp lệ</span>
+                        </div>
+                        <div class="ed-metric-item">
+                            <span class="ed-metric-label">Tỷ lệ tham gia</span>
+                            <span class="ed-metric-val">93.7%</span>
+                            <span class="ed-metric-sub positive">▲ +17.8% so với 2025</span>
+                        </div>
+                        <div class="ed-metric-item">
+                            <span class="ed-metric-label">Mức gắn kết</span>
+                            <span class="ed-metric-val">72.3</span>
+                            <span class="ed-metric-sub">Điểm EI tổng thể</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="ed-metric-item">
-                    <span class="ed-metric-label">Phản hồi</span>
-                    <span class="ed-metric-val">20,005</span>
-                    <span class="ed-metric-sub">Mẫu hợp lệ</span>
-                </div>
-                <div class="ed-metric-item">
-                    <span class="ed-metric-label">Tỷ lệ tham gia</span>
-                    <span class="ed-metric-val">93.7%</span>
-                    <span class="ed-metric-sub positive">▲ +17.8% so với 2025</span>
-                </div>
-                <div class="ed-metric-item">
-                    <span class="ed-metric-label">Mức gắn kết</span>
-                    <span class="ed-metric-val">72.3</span>
-                    <span class="ed-metric-sub">Điểm EI tổng thể</span>
+                <div class="ed-command-panel">
+                    <div class="ed-command-top">
+                        <div>
+                            <span class="ed-command-label">Engagement Intelligence</span>
+                            <div class="ed-command-score">72.3</div>
+                            <div class="ed-command-unit">EI score · Validated dataset</div>
+                        </div>
+                        <span class="ed-command-chip">Live Overview</span>
+                    </div>
+                    <div class="ed-orbit">
+                        <div class="ed-orbit-ring"></div>
+                        <div class="ed-orbit-ring"></div>
+                        <div class="ed-orbit-core"></div>
+                        <span class="ed-orbit-pill p1">Lãnh đạo</span>
+                        <span class="ed-orbit-pill p2">MEI</span>
+                        <span class="ed-orbit-pill p3">Công việc</span>
+                        <span class="ed-orbit-pill p4">Thu nhập</span>
+                        <span class="ed-orbit-pill p5">Môi trường</span>
+                    </div>
+                    <div class="ed-command-bars">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -249,8 +530,10 @@ def render():
     border-radius: 20px;
     overflow: hidden;
     background: #000;
-    box-shadow: 0 24px 64px rgba(10,31,68,.28);
+    box-shadow: 0 30px 74px rgba(10,31,68,.30);
     cursor: pointer;
+    transform: perspective(1200px) rotateX(1.2deg);
+    transform-origin: center top;
   }}
   .player-shell:hover .ctrl-bar {{ opacity: 1; transform: translateY(0); }}
   .player-shell:hover .unmute-pill {{ opacity: 1; }}
@@ -388,7 +671,7 @@ def render():
     transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s ease, border-color .3s ease;
   }}
   .dock-card:hover {{
-    transform: translateY(-4px);
+    transform: perspective(900px) translateY(-7px) rotateX(4deg);
     box-shadow: 0 12px 28px rgba(10,31,68,.25);
   }}
   .dock-card-active {{
@@ -705,6 +988,7 @@ def render():
     overflow-x: hidden;
     width: 100%;
     margin-bottom: 32px;
+    perspective: 1400px;
   }}
   .gl-wrap {{
     display: flex;
@@ -726,11 +1010,13 @@ def render():
     flex: 0 0 auto;
     height: 550px; 
     scroll-snap-align: center;
-    border-radius: 12px;
-    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
+    border-radius: 16px;
+    transform: rotateY(-7deg) translateZ(0);
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease, filter 0.5s ease;
   }}
   .gl-item:hover {{
-    transform: scale(1.02) translateY(-10px);
+    transform: scale(1.025) translateY(-12px) rotateY(0deg) translateZ(48px);
     box-shadow: 0 30px 60px -12px rgba(10, 31, 68, 0.25);
     z-index: 10;
   }}
@@ -738,8 +1024,9 @@ def render():
     width: auto;
     height: 100%;
     object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
+    border-radius: 16px;
+    box-shadow: 0 18px 36px -14px rgba(0,0,0,0.24);
+    border: 1px solid rgba(255,255,255,0.55);
   }}
   .gl-caption {{
     position: absolute;
@@ -922,6 +1209,60 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 .jt-desc {
     font-size: 0.82rem; color: #64748B; line-height: 1.65; font-weight: 500;
 }
+
+/* ── 3D Data Journey polish ── */
+.jt-section {
+    perspective: 1300px;
+}
+.jt-left {
+    transform: translateZ(26px);
+}
+.jt-stat {
+    box-shadow: 0 16px 34px rgba(10,31,68,0.08);
+    transform-style: preserve-3d;
+}
+.jt-stat:hover {
+    transform: translateY(-7px) translateZ(36px) rotateX(3deg);
+    box-shadow: 0 22px 44px rgba(10,31,68,0.14);
+}
+.jt-right {
+    padding-left: 6px;
+    transform: rotateY(-3deg) translateZ(18px);
+    transform-origin: left center;
+}
+.jt-right::before {
+    width: 4px;
+    left: 18px;
+    background: linear-gradient(180deg, rgba(255,213,191,.25) 0%, #FF5200 45%, rgba(0,82,204,.72) 100%);
+    box-shadow: 0 0 24px rgba(255,82,0,.28);
+}
+.jt-dot {
+    background: linear-gradient(145deg, #FFFFFF, #FFF4EF);
+    box-shadow: 0 0 0 6px rgba(255,82,0,0.10), 0 14px 28px rgba(10,31,68,.14);
+}
+.jt-body {
+    background: linear-gradient(145deg, #FFFFFF, #F8FAFC);
+    box-shadow: 0 18px 36px rgba(10,31,68,.08);
+    transform-style: preserve-3d;
+}
+.jt-node:hover .jt-body {
+    transform: translateY(-6px) translateZ(32px);
+    box-shadow: 0 24px 48px rgba(10,31,68,0.14);
+    border-color: rgba(255,82,0,.28);
+}
+.jt-node:hover .jt-milestone {
+    text-shadow: 0 12px 28px rgba(255,82,0,.24);
+}
+
+@media (max-width: 900px) {
+    .jt-section {
+        grid-template-columns: 1fr;
+        gap: 34px;
+    }
+    .jt-right {
+        transform: none;
+    }
+}
 </style>
 <script>
   // Auto-resize iframe to fit content height
@@ -1055,6 +1396,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     position: relative;
     max-width: 1000px;
     margin: 0 auto;
+    perspective: 1300px;
 }
 /* The central line */
 .vt-timeline::after {
@@ -1114,9 +1456,10 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     border: 1px solid #E2E8F0;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform-style: preserve-3d;
 }
 .vt-content:hover {
-    transform: translateY(-5px);
+    transform: translateY(-7px) translateZ(34px) rotateX(2deg);
     box-shadow: 0 15px 40px rgba(0,82,204,0.15);
     border-color: #0052CC;
 }
@@ -1194,6 +1537,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     background: #FF5200;
     color: #fff;
     border-color: #FF5200;
+    box-shadow: 0 18px 46px rgba(255,82,0,0.24);
 }
 .vt-item.vt-highlight:hover .vt-content {
     box-shadow: 0 15px 40px rgba(255,82,0,0.25);
