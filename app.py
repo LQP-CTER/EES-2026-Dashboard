@@ -8,6 +8,7 @@ import json
 import re
 import time
 from datetime import datetime
+from typing import Optional
 
 import secrets
 import threading
@@ -133,6 +134,7 @@ if os.path.exists(APP_STATE_FILE):
 
 # --- AUTHENTICATION FLOW ---
 from utils.auth import get_google_auth_url, get_user_info
+from utils.authorization import get_authorized_user
 
 # Load client secrets
 GOOGLE_CLIENT_ID     = st.secrets.get("GOOGLE_CLIENT_ID", "")
@@ -149,8 +151,6 @@ def _get_redirect_uri() -> str:
     return "http://localhost:8501/"
 
 REDIRECT_URI = _get_redirect_uri()
-_domains_raw = st.secrets.get("ALLOWED_DOMAINS", "ghn.vn,scommerce.asia")
-ALLOWED_DOMAINS = [d.strip().lower() for d in _domains_raw.split(",")] if isinstance(_domains_raw, str) else [d.lower() for d in _domains_raw]
 
 # --- SERVER-SIDE SESSION REGISTRY ---
 def _load_active_sessions() -> dict:
@@ -225,11 +225,30 @@ def get_sessions_lock():
 
 is_admin = st.session_state.get("is_admin", False)
 
-def _is_allowed_email(email: str) -> bool:
-    if not email:
-        return False
-    domain = email.split("@")[-1].lower()
-    return domain in [d.lower() for d in ALLOWED_DOMAINS]
+def _get_authorization(email: str) -> Optional[dict]:
+    try:
+        return get_authorized_user(email)
+    except Exception as exc:
+        st.error(
+            "Không đọc được Google Sheet phân quyền.\n\n"
+            f"Chi tiết lỗi: `{exc}`"
+        )
+        _render_login_page()
+        st.stop()
+
+
+def _clear_user_session():
+    for _k in ["user_email", "user_name", "user_picture", "current_token", "user_authorization"]:
+        st.session_state.pop(_k, None)
+
+
+def _render_authorization_denied(email: str):
+    st.error(
+        f"Email **{email}** chưa được cấp quyền truy cập dashboard.\n\n"
+        "Vui lòng kiểm tra tab `Authorization` trong Google Sheet phân quyền và đảm bảo email có `status = ACTIVE`."
+    )
+    _render_login_page()
+    st.stop()
 
 def _render_login_page():
     auth_url = get_google_auth_url(GOOGLE_CLIENT_ID, REDIRECT_URI)
@@ -531,6 +550,9 @@ animation: pulse-dot 2s ease-in-out infinite;
                 st.error("Vui lòng nhập mã đăng nhập.")
             elif code == st.secrets.get("ACCESS_CODE", "EX-TEAM-EES-2026"):
                 email = "ex-team@ghn.vn"
+                authorization = _get_authorization(email)
+                if authorization is None:
+                    _render_authorization_denied(email)
                 name = "Thành viên EX-TEAM"
                 picture = ""
                 secure_token = secrets.token_urlsafe(32)
@@ -543,6 +565,7 @@ animation: pulse-dot 2s ease-in-out infinite;
                         "email": email,
                         "name": name,
                         "picture": picture,
+                        "authorization": authorization,
                         "streamlit_session_id": current_sid,
                         "last_seen": now,
                         "created_at": now
@@ -552,6 +575,7 @@ animation: pulse-dot 2s ease-in-out infinite;
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 st.session_state.current_token = secure_token
+                st.session_state.user_authorization = authorization
                 _set_remember_cookie(secure_token)
                 st.query_params.clear()
                 st.query_params["s"] = secure_token
@@ -622,7 +646,8 @@ if not is_admin:
 
         if user_info and "email" in user_info:
             email = user_info["email"]
-            if _is_allowed_email(email):
+            authorization = _get_authorization(email)
+            if authorization is not None:
                 name = user_info.get("name", "User")
                 picture = user_info.get("picture", "")
                 
@@ -636,6 +661,7 @@ if not is_admin:
                         "email": email,
                         "name": name,
                         "picture": picture,
+                        "authorization": authorization,
                         "streamlit_session_id": current_sid,
                         "last_seen": now,
                         "created_at": now
@@ -646,6 +672,7 @@ if not is_admin:
                 st.session_state.user_name = name
                 st.session_state.user_picture = picture
                 st.session_state.current_token = secure_token
+                st.session_state.user_authorization = authorization
                 _set_remember_cookie(secure_token)
                 
                 st.query_params.clear()
@@ -654,13 +681,8 @@ if not is_admin:
             else:
                 st.query_params.clear()
                 st.query_params["error"] = "1"  # Tránh tự động redirect loop
-                st.session_state.pop("user_email", None)
-                st.error(
-                    f"Email **{email}** không được phép truy cập.\n\n"
-                    "Chỉ email `@ghn.vn` hoặc `@scommerce.asia` mới có quyền vào hệ thống."
-                )
-                _render_login_page()
-                st.stop()
+                _clear_user_session()
+                _render_authorization_denied(email)
         else:
             st.query_params.clear()
             st.query_params["error"] = "1"  # Tránh tự động redirect loop
@@ -673,17 +695,31 @@ if not is_admin:
     current_token = st.session_state.get("current_token") or _get_remember_cookie()
 
     if user_email and current_token:
+        authorization = _get_authorization(user_email)
+        if authorization is None:
+            with _sessions_lock:
+                sessions = _load_active_sessions()
+                sessions.pop(current_token, None)
+                _save_active_sessions(sessions)
+            _clear_user_session()
+            _clear_remember_cookie()
+            st.query_params.clear()
+            st.query_params["error"] = "1"
+            _render_authorization_denied(user_email)
+
+        st.session_state.user_authorization = authorization
+
         # User đã đăng nhập trong session này, cập nhật last_seen
         with _sessions_lock:
             sessions = _load_active_sessions()
             if current_token in sessions:
                 sessions[current_token]["last_seen"] = time.time()
                 sessions[current_token]["streamlit_session_id"] = current_sid
+                sessions[current_token]["authorization"] = authorization
                 _save_active_sessions(sessions)
             else:
                 # Token không còn tồn tại trên server (hết hạn hoặc bị xóa)
-                for _k in ["user_email", "user_name", "user_picture", "current_token"]:
-                    st.session_state.pop(_k, None)
+                _clear_user_session()
                 st.query_params.clear()
                 st.rerun()
                 
@@ -701,6 +737,16 @@ if not is_admin:
                 
                 if query_token in sessions:
                     data = sessions[query_token]
+                    authorization = _get_authorization(data.get("email", ""))
+                    if authorization is None:
+                        sessions.pop(query_token, None)
+                        _save_active_sessions(sessions)
+                        _clear_user_session()
+                        _clear_remember_cookie()
+                        st.query_params.clear()
+                        st.query_params["error"] = "1"
+                        _render_authorization_denied(data.get("email", ""))
+
                     old_sid = data.get("streamlit_session_id")
                     
                     # Kiểm tra xem session cũ có thực sự còn active (WebSocket kết nối) không
@@ -717,6 +763,7 @@ if not is_admin:
                             "email": data["email"],
                             "name": data["name"],
                             "picture": data["picture"],
+                            "authorization": authorization,
                             "streamlit_session_id": current_sid,
                             "last_seen": now,
                             "created_at": now
@@ -728,6 +775,7 @@ if not is_admin:
                         st.session_state.user_name = data["name"]
                         st.session_state.user_picture = data["picture"]
                         st.session_state.current_token = new_token
+                        st.session_state.user_authorization = authorization
                         
                         st.query_params.clear()
                         st.query_params["s"] = new_token
@@ -1638,8 +1686,7 @@ with st.sidebar:
                         _save_active_sessions(sessions)
                 
                 # Dọn sạch session state, cookie và query parameters
-                for _k in ["user_email", "user_name", "user_picture", "current_token"]:
-                    st.session_state.pop(_k, None)
+                _clear_user_session()
                 _clear_remember_cookie()
                 st.query_params.clear()
                 st.query_params["logout"] = "1"
