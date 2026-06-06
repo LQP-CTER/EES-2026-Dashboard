@@ -791,6 +791,7 @@ from views import (
     view_h_appendix, view_i_data_trust
 )
 from shared.codebook import PILLAR_META, PILLAR_ORDER
+from shared.loading import TerminalLoader
 
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""<style>
@@ -1421,6 +1422,7 @@ def apply_global_filters(df):
 
 OVERVIEW_LABEL = "EES 2026 Overview"
 COMPANY_LABEL = "Tổng quan GHN"
+main_loading_slot = st.empty()
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -1553,8 +1555,14 @@ with st.sidebar:
         st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
 
         # Load raw data (for building filter options)
+        loader = TerminalLoader(main_loading_slot, f"Đang tải dữ liệu nhóm {sel_group}")
         try:
+            loader.add(f"Đang tải dữ liệu khảo sát nhóm {sel_group}...")
             df_raw, n_before = load_group(sel_group)
+            loader.add(f"Đã tải dữ liệu khảo sát nhóm {sel_group} ({len(df_raw):,} mẫu hợp lệ).", "ok")
+            loader.add("Đang chuẩn bị bộ lọc phòng ban / section...")
+            loader.done()
+            loader.clear()
         except Exception as e:
             st.error(f"Không thể tải dữ liệu cho nhóm {sel_group}: {e}")
             import traceback
@@ -1664,8 +1672,14 @@ elif is_appendix:
 
 elif is_company:
     try:
-        all_data = load_all_available()
+        loader = TerminalLoader(main_loading_slot, "Đang tải dữ liệu toàn công ty")
+        loader.add("Đang tải dữ liệu EES 2026...")
+        all_data = load_all_available(log_callback=loader.add)
+        loader.add("Đang áp dụng bộ lọc thâm niên...")
         filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}
+        loader.add("Đang tính toán KPI và dựng giao diện Tổng quan GHN...")
+        loader.done()
+        loader.clear()
         company_overview.render(filtered_all_data, available)
     except Exception as e:
         st.error(f"Lỗi khi tải view Tổng quan: {e}")

@@ -258,7 +258,7 @@ def build_memo_report(df_all: pd.DataFrame, df_clean: pd.DataFrame, n_before: in
     }
 
 
-@st.cache_data(ttl=3600, show_spinner=" Đang tải dữ liệu...")
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_group(group_id: str):
     """Load & clean a single survey group. Returns (df_clean, n_before)."""
     from config.groups import GROUP_REGISTRY
@@ -646,17 +646,27 @@ def load_group(group_id: str):
     return df_clean, n_before
 
 
-@st.cache_data(ttl=3600, show_spinner="Đang tải toàn bộ dữ liệu...")
-def load_all_available():
+def load_all_available(log_callback=None):
     """Load all groups that have data. Returns dict {group_id: (df, n_before)}."""
     # Force cache invalidation for n_before update
     from config.groups import get_available_groups
+    from config.groups import GROUP_REGISTRY
     results = {}
     for gid in get_available_groups():
         try:
+            if log_callback:
+                label = GROUP_REGISTRY.get(gid, {}).get("short", gid)
+                log_callback(f"Đang tải dữ liệu khảo sát nhóm {gid} - {label}...")
             results[gid] = load_group(gid)
+            if log_callback:
+                rows = len(results[gid][0])
+                log_callback(f"Đã tải dữ liệu khảo sát nhóm {gid} ({rows:,} mẫu hợp lệ).", "ok")
         except Exception as e:
             st.warning(f"Không load được nhóm {gid}: {e}")
+            if log_callback:
+                log_callback(f"Không tải được nhóm {gid}: {e}")
+    if log_callback:
+        log_callback("Đang tổng hợp dữ liệu toàn công ty...")
     return results
 
 
