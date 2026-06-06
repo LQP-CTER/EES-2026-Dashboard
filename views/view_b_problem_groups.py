@@ -2,10 +2,11 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from utils.data_loader import compute_kpis, PILLAR_LABELS
+from utils.segment_risk import MIN_SEGMENT_N, build_segment_driver_profile, scan_risk_segments
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from utils.ai_generator import render_ai_insight_card
 
-def render(df, cfg, pillar_filter=None):
+def render(df, cfg, group_id=None, pillar_filter=None):
     apply_theme()
 
     from utils.anomaly_detector import detect_cross_pillar
@@ -31,22 +32,197 @@ def render(df, cfg, pillar_filter=None):
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("#### Segment Risk Scan")
+    risk_df = scan_risk_segments(df, pillar_filter=pillar_filter, min_n=MIN_SEGMENT_N, top_n=20)
+    if risk_df.empty:
+        st.info("Chưa có segment nào đủ mẫu để scan rủi ro. Dashboard chỉ ẩn segment có N < 5.")
+    else:
+        st.caption("Chỉ ẩn segment có N < 5. Segment nhỏ từ 5-29 nên đọc như tín hiệu định hướng, không kết luận tuyệt đối.")
+        risk_cols = [
+            'Segment Type', 'Segment', 'N', 'Risk Level', 'Risk Score',
+            'EI (%)', '% Muốn nghỉ', '% Burnout', 'eNPS', 'Primary Driver'
+        ]
+        if pillar_filter and f'Điểm {pillar_filter} (%)' in risk_df.columns:
+            risk_cols.insert(6, f'Điểm {pillar_filter} (%)')
+        risk_cols = [c for c in risk_cols if c in risk_df.columns]
+
+        def _risk_style(row):
+            level = row.get('Risk Level')
+            if level == 'Critical':
+                bg = '#FEF2F2'
+                color = '#B91C1C'
+            elif level == 'Warning':
+                bg = '#FFF7ED'
+                color = '#C2410C'
+            else:
+                bg = '#F8FAFC'
+                color = '#475569'
+            return [f'background-color:{bg};color:{color};font-weight:700' if c == 'Risk Level' else '' for c in row.index]
+
+        st.dataframe(
+            risk_df[risk_cols].style.apply(_risk_style, axis=1).format(precision=1),
+            width='stretch',
+            hide_index=True,
+            column_config={
+                'Segment Type': st.column_config.TextColumn('Loại segment', width='small'),
+                'Segment': st.column_config.TextColumn('Segment', width='medium'),
+                'N': st.column_config.NumberColumn('N', format='%d', width='small'),
+                'Risk Level': st.column_config.TextColumn('Mức rủi ro', width='small'),
+                'Risk Score': st.column_config.NumberColumn('Risk Score', format='%.1f', width='small'),
+                'EI (%)': st.column_config.NumberColumn('EI (%)', format='%.1f%%', width='small'),
+                '% Muốn nghỉ': st.column_config.NumberColumn('% Muốn nghỉ', format='%.1f%%', width='small'),
+                '% Burnout': st.column_config.NumberColumn('% Burnout', format='%.1f%%', width='small'),
+                'eNPS': st.column_config.NumberColumn('eNPS', format='%+d', width='small'),
+                'Primary Driver': st.column_config.TextColumn('Driver chính', width='medium'),
+            }
+        )
+
+        group_id = group_id or cfg.get('group_id') or cfg.get('id') or '1A'
+        option_map = {
+            f"{row['Segment Type']} · {row['Segment']} · {row['Risk Level']} · N={int(row['N'])}": idx
+            for idx, row in risk_df.iterrows()
+        }
+        selected_label = st.selectbox(
+            "Chọn segment để xem driver",
+            list(option_map.keys()),
+            index=0,
+            key=f"segment_driver_{pillar_filter or 'all'}",
+        )
+        selected = risk_df.iloc[option_map[selected_label]]
+        profile = build_segment_driver_profile(
+            df,
+            group_id,
+            selected['_segment_col'],
+            selected['_segment_value'],
+            min_n=MIN_SEGMENT_N,
+        )
+        if profile.get("enabled"):
+            pillar_df = profile.get("pillar_df", pd.DataFrame())
+            question_df = profile.get("question_df", pd.DataFrame())
+            lowest_pillar = pillar_df.iloc[0] if not pillar_df.empty else None
+            weakest_q = question_df.iloc[0] if not question_df.empty else None
+
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric("Segment đang xem", selected['Segment'], f"N={int(selected['N'])}")
+            with c2:
+                st.metric(
+                    "Trụ cột yếu nhất",
+                    lowest_pillar['Trụ cột'] if lowest_pillar is not None else "N/A",
+                    f"{lowest_pillar['Điểm segment']:.1f}%" if lowest_pillar is not None else None,
+                )
+            with c3:
+                st.metric(
+                    "Câu yếu nhất",
+                    weakest_q['Câu hỏi'] if weakest_q is not None else "N/A",
+                    f"{weakest_q['Điểm TB']:.2f}/5" if weakest_q is not None else None,
+                )
+
+            left, right = st.columns([1.05, 1.25])
+            with left:
+                if not pillar_df.empty:
+                    fig_driver = px.bar(
+                        pillar_df.sort_values("Điểm segment", ascending=True),
+                        x="Điểm segment",
+                        y="Trụ cột",
+                        orientation="h",
+                        color="Điểm segment",
+                        color_continuous_scale="RdYlGn",
+                        range_color=[40, 90],
+                        text="Điểm segment",
+                        hover_data=["Điểm toàn nhóm", "Chênh lệch"],
+                    )
+                    fig_driver = fig_card(
+                        fig_driver,
+                        "Driver theo trụ cột",
+                        "Trụ cột thấp nhất là nơi nên đào sâu trước",
+                    )
+                    fig_driver.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                    fig_driver.update_layout(height=320, xaxis_title="Điểm (%)", yaxis_title=None, coloraxis_showscale=False)
+                    st.plotly_chart(fig_driver, width='stretch', key=f"segment_driver_pillar_{pillar_filter or 'all'}")
+            with right:
+                if not question_df.empty:
+                    q_show = question_df.head(8)[[
+                        "Trụ cột", "Câu hỏi", "Nhãn", "Điểm TB", "% Tích cực", "% Tiêu cực", "Chênh toàn nhóm", "N"
+                    ]]
+                    st.dataframe(
+                        q_show.style.format({
+                            "Điểm TB": "{:.2f}",
+                            "% Tích cực": "{:.1f}%",
+                            "% Tiêu cực": "{:.1f}%",
+                            "Chênh toàn nhóm": "{:+.2f}",
+                            "N": "{:,}",
+                        }),
+                        width='stretch',
+                        hide_index=True,
+                        height=320,
+                    )
+            voice = profile.get("voice_signals", {})
+            if voice.get("enabled"):
+                st.markdown("##### Tín hiệu open-text của segment")
+                v1, v2, v3 = st.columns(3)
+                with v1:
+                    st.metric("Phản hồi mở có nội dung", f"{voice.get('text_n', 0):,}")
+                with v2:
+                    st.metric("NLP tiêu cực", f"{voice.get('negative_pct', 0):.1f}%", f"{voice.get('negative_n', 0):,} phản hồi")
+                with v3:
+                    st.metric("Warning signals", f"{voice.get('warning_n', 0):,}")
+
+                topic_rows = []
+                for label, count in (voice.get("top_topics") or {}).items():
+                    topic_rows.append({"Loại": "Topic", "Tín hiệu": label, "Số lần": count})
+                for label, count in (voice.get("top_warnings") or {}).items():
+                    topic_rows.append({"Loại": "Warning", "Tín hiệu": label, "Số lần": count})
+                if topic_rows:
+                    st.dataframe(
+                        pd.DataFrame(topic_rows),
+                        width='stretch',
+                        hide_index=True,
+                        height=210,
+                    )
+
+            driver = selected.get("Primary Driver", "")
+            action_map = {
+                "Muốn nghỉ cao": "Ưu tiên phỏng vấn giữ chân nhóm mẫu 10-15 người trong segment này; hỏi rõ điểm nghẽn trong 30 ngày gần nhất và owner xử lý.",
+                "Burnout cao": "Kiểm tra tải công việc, lịch/ca và hỗ trợ trực tiếp; giảm áp lực vận hành ngắn hạn trước khi mở chương trình dài hạn.",
+                "eNPS âm": "Dùng phản hồi mở để gom 3 nguyên nhân bất mãn chính; tránh truyền thông rộng trước khi xử lý vấn đề cụ thể.",
+                "Điểm trụ cột thấp": "Đi thẳng vào trụ cột yếu nhất và top câu hỏi yếu; chọn 1 hành động cấp quản lý có thể hoàn tất trong 2-4 tuần.",
+                "EI thấp": "Chạy pulse check ngắn theo segment này, sau đó so sánh với nhóm cùng cấp để xác định đây là vấn đề cục bộ hay hệ thống.",
+            }
+            st.markdown(f"""
+            <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-left:4px solid #0A1F44;border-radius:12px;padding:14px 16px;margin-top:14px;">
+                <div style="font-size:.72rem;font-weight:900;color:#64748B;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px;">Next action</div>
+                <div style="font-size:.9rem;color:#0A1F44;font-weight:800;margin-bottom:4px;">Driver chính: {driver}</div>
+                <div style="font-size:.82rem;color:#475569;line-height:1.65;">{action_map.get(driver, action_map["EI thấp"])}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("Segment được chọn không đủ N >= 5 để dựng driver profile.")
+
+    st.markdown("<hr style='border:1px dashed rgba(0,0,0,0.08);margin:22px 0;'>", unsafe_allow_html=True)
+
     level = st.radio("Cấp độ phân tích", ['Division', 'Department', 'Section'], horizontal=True)
     col_map = {'Division': 'division', 'Department': 'department', 'Section': 'section'}
     grp_col = col_map[level]
 
     metrics = []
     for name, g in df.groupby(grp_col):
+        if len(g) < MIN_SEGMENT_N:
+            continue
         kpi = compute_kpis(g)
         kpi['name'] = name
         if pillar_filter and f"{pillar_filter}_pct" in g.columns:
             kpi[f'{pillar_filter} (%)'] = g[f"{pillar_filter}_pct"].mean()
         metrics.append(kpi)
-    df_met = pd.DataFrame(metrics).sort_values('ei_mean', ascending=False)
+    df_met = pd.DataFrame(metrics).sort_values('ei_mean', ascending=False) if metrics else pd.DataFrame()
 
     tab1, tab2 = st.tabs(["Bảng tổng hợp", "Heatmap"])
 
     with tab1:
+        if df_met.empty:
+            st.info("Không có nhóm nào đủ N >= 5 để phân tích ở cấp độ này.")
+            return
+
         metric_opts = ['EI (%)', 'eNPS', 'MEI (%)', '% Muốn nghỉ', '% Burnout']
         metric_map = {'EI (%)': 'ei_mean', 'eNPS': 'enps_score', 'MEI (%)': 'mei_avg',
                       '% Muốn nghỉ': 'intent_pct_low', '% Burnout': 'burnout_pct'}
@@ -134,6 +310,8 @@ def render(df, cfg, pillar_filter=None):
     with tab2:
         heat_data = []
         for sec, g in df.groupby('section'):
+            if len(g) < MIN_SEGMENT_N:
+                continue
             row = {'Section': sec}
             for p, label in PILLAR_LABELS.items():
                 col = f'{p}_pct'

@@ -2,6 +2,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+from textwrap import dedent
 from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025
@@ -47,125 +48,293 @@ def render(all_data, available_groups):
 
     st.markdown('''
     <style>
-    .overview-hero {
-        background: linear-gradient(135deg, #0A1F44 0%, #14345E 55%, #1B4A7A 100%);
-        color: white;
-        border-radius: 20px;
-        padding: 28px 30px;
-        margin-bottom: 24px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 18px 40px rgba(10,31,68,0.16);
+    .ghn-shell {
+        border-radius:28px;
+        padding:32px;
+        margin:20px 0 28px;
+        background:
+            radial-gradient(circle at 8% 0%, rgba(255,82,0,.12), transparent 28%),
+            radial-gradient(circle at 92% 12%, rgba(29,78,216,.10), transparent 30%),
+            linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 54%, #EEF6FF 100%);
+        border:1px solid rgba(226,232,240,.95);
+        box-shadow:0 24px 64px rgba(10,31,68,.11), inset 0 1px 0 rgba(255,255,255,.96);
+        overflow:hidden;
     }
-    .overview-hero::after {
-        content: '';
-        position: absolute;
-        inset: auto -120px -140px auto;
-        width: 320px;
-        height: 320px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(255,82,0,0.3) 0%, transparent 70%);
-        filter: blur(18px);
-        pointer-events: none;
+    .ghn-hero {
+        display:grid;
+        grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr);
+        gap:26px;
+        align-items:stretch;
     }
-    .overview-kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-        margin-top: 18px;
+    .ghn-kicker {
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:7px 12px;
+        border-radius:999px;
+        background:#FFF4EF;
+        border:1px solid #FFD5BF;
+        color:#FF5200;
+        font-size:.72rem;
+        font-weight:850;
+        letter-spacing:.15em;
+        text-transform:uppercase;
+        margin-bottom:14px;
     }
-    .overview-kpi {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 14px;
-        padding: 16px 18px;
-        backdrop-filter: blur(8px);
+    .ghn-kicker::before {
+        content:'';
+        width:8px;
+        height:8px;
+        border-radius:50%;
+        background:#10B981;
+        box-shadow:0 0 0 5px rgba(16,185,129,.14);
     }
-    .overview-kpi .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #BFDBFE; font-weight: 700; }
-    .overview-kpi .value { font-size: 2rem; font-weight: 900; line-height: 1; margin-top: 10px; }
-    .overview-kpi .sub { font-size: 0.8rem; color: #DBEAFE; margin-top: 8px; }
-    .overview-section { margin-top: 24px; }
-    .background-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 14px;
+    .ghn-title {
+        font-size:clamp(2.25rem,3.45vw,3.65rem);
+        line-height:1.03;
+        letter-spacing:-.04em;
+        font-weight:950;
+        color:#0A1F44;
+        margin:0 0 14px;
     }
-    .bg-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        min-height: 140px;
+    .ghn-subtitle {
+        color:#475569;
+        font-size:1rem;
+        line-height:1.72;
+        font-weight:550;
+        margin:0;
+        max-width:760px;
     }
-    .bg-card h4 { margin: 0 0 8px; font-size: 0.92rem; color: #0A1F44; }
-    .bg-card p { margin: 0; color: #64748B; font-size: 0.84rem; line-height: 1.7; }
-    .bg-chip {
-        display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;
-        background:#FFF3EE;color:#FF5200;font-size:0.72rem;font-weight:700;margin-bottom:10px;
+    .ghn-command {
+        position:relative;
+        min-height:285px;
+        border-radius:24px;
+        padding:24px;
+        overflow:hidden;
+        color:#fff;
+        background:
+            linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px),
+            linear-gradient(145deg, rgba(10,31,68,.98), rgba(29,78,216,.88));
+        background-size:34px 34px,34px 34px,auto;
+        box-shadow:0 24px 54px rgba(10,31,68,.24);
+        transform:perspective(1200px) rotateY(-3deg) rotateX(1deg);
     }
-    .cov-container { display:flex; gap:0; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:28px; overflow:hidden; }
-    .cov-card { flex:1; padding:24px 28px; position:relative; }
-    .cov-card + .cov-card { border-left:1px solid #F1F5F9; }
-    .cov-label { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#94A3B8; margin-bottom:10px; }
-    .cov-value { font-size:2.4rem; font-weight:800; line-height:1; letter-spacing:-0.03em; margin-bottom:8px; }
-    .cov-sub { font-size:0.8rem; color:#64748B; font-weight:500; line-height:1.5; }
-    .cov-progress-track { width:100%; height:6px; background:#F1F5F9; border-radius:3px; margin-top:12px; overflow:hidden; }
-    .cov-progress-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
-    .cov-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; }
-    .cov-badge-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+    .ghn-command::after {
+        content:'';
+        position:absolute;
+        width:210px;
+        height:210px;
+        right:-72px;
+        bottom:-86px;
+        background:radial-gradient(circle, rgba(255,82,0,.44), transparent 66%);
+        pointer-events:none;
+    }
+    .ghn-command-label {
+        position:relative;
+        z-index:1;
+        font-size:.72rem;
+        font-weight:850;
+        letter-spacing:.17em;
+        text-transform:uppercase;
+        color:#FFDBCC;
+    }
+    .ghn-command-score {
+        position:relative;
+        z-index:1;
+        margin-top:18px;
+        font-size:clamp(3rem,5.3vw,5rem);
+        line-height:.9;
+        font-weight:950;
+        letter-spacing:-.06em;
+    }
+    .ghn-command-sub {
+        position:relative;
+        z-index:1;
+        color:rgba(255,255,255,.82);
+        font-size:.86rem;
+        line-height:1.55;
+        margin-top:10px;
+    }
+    .ghn-mini-grid {
+        position:relative;
+        z-index:1;
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+        margin-top:28px;
+    }
+    .ghn-mini {
+        border-radius:14px;
+        padding:12px 13px;
+        background:rgba(255,255,255,.12);
+        border:1px solid rgba(255,255,255,.18);
+        backdrop-filter:blur(10px);
+    }
+    .ghn-mini span { display:block; font-size:.66rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#BFDBFE; margin-bottom:6px; }
+    .ghn-mini strong { display:block; font-size:1.2rem; line-height:1; font-weight:900; color:#fff; }
+    .ghn-metrics {
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:16px;
+        margin-top:22px;
+    }
+    .ghn-metric {
+        position:relative;
+        overflow:hidden;
+        min-width:0;
+        border-radius:18px;
+        padding:18px 18px 20px;
+        background:rgba(255,255,255,.86);
+        border:1px solid rgba(226,232,240,.95);
+        box-shadow:0 16px 30px rgba(10,31,68,.08);
+    }
+    .ghn-metric::before {
+        content:'';
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        height:4px;
+        background:linear-gradient(90deg,var(--accent),#FFB38B);
+    }
+    .ghn-metric-label {
+        color:var(--accent);
+        font-size:.68rem;
+        font-weight:850;
+        text-transform:uppercase;
+        letter-spacing:.11em;
+        margin-bottom:10px;
+    }
+    .ghn-metric-value {
+        font-size:clamp(1.7rem,2.35vw,2.55rem);
+        font-weight:950;
+        line-height:.95;
+        color:#0A1F44;
+        letter-spacing:-.04em;
+        font-variant-numeric:tabular-nums;
+        white-space:nowrap;
+    }
+    .ghn-metric-sub {
+        font-size:.78rem;
+        color:#64748B;
+        line-height:1.45;
+        margin-top:8px;
+        font-weight:550;
+    }
+    .ghn-context {
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:14px;
+        margin-top:20px;
+    }
+    .ghn-context-card {
+        background:#fff;
+        border:1px solid #E2E8F0;
+        border-radius:16px;
+        padding:16px 17px;
+        box-shadow:0 14px 30px rgba(10,31,68,.06);
+        min-height:130px;
+    }
+    .ghn-context-chip {
+        display:inline-flex;
+        align-items:center;
+        padding:5px 10px;
+        border-radius:999px;
+        background:#FFF4EF;
+        border:1px solid #FFD5BF;
+        color:#FF5200;
+        font-size:.68rem;
+        font-weight:850;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+        margin-bottom:10px;
+    }
+    .ghn-context-card h4 { margin:0 0 7px; font-size:.94rem; color:#0A1F44; font-weight:850; letter-spacing:-.01em; }
+    .ghn-context-card p { margin:0; color:#64748B; font-size:.82rem; line-height:1.6; font-weight:520; }
+    .ghn-band {
+        border-radius:22px;
+        padding:20px;
+        margin:0 0 26px;
+        background:#fff;
+        border:1px solid #E2E8F0;
+        box-shadow:0 18px 42px rgba(10,31,68,.08);
+    }
+    @media (max-width:1080px) {
+        .ghn-hero { grid-template-columns:1fr; }
+        .ghn-command { transform:none; }
+        .ghn-metrics, .ghn-context { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width:720px) {
+        .ghn-shell { padding:20px; border-radius:22px; }
+        .ghn-metrics, .ghn-context, .ghn-mini-grid { grid-template-columns:1fr; }
+    }
     </style>
     ''', unsafe_allow_html=True)
 
-    st.markdown(f'''
-    <div class="overview-hero">
-        <div style="position:relative; z-index:2;">
-            <div style="font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:#BFDBFE; font-weight:800;">EES 2026 · Executive Overview</div>
-            <h2 style="margin:10px 0 8px; font-size:2rem; line-height:1.15; font-weight:900; color:white;">Bức tranh tổng quan EES 2026</h2>
-            <p style="margin:0; max-width:860px; color:#DBEAFE; line-height:1.75; font-size:0.92rem;">
-                Trang này là một mặt phẳng truyền thông nội bộ dành cho team EX: kể lại team đã làm gì cho EES 2026,
-                cách team biến dữ liệu thành câu chuyện điều hành, và các lớp phân tích chéo đã được dựng lên cho toàn công ty.
-            </p>
-            <div class="overview-kpi-grid">
-                <div class="overview-kpi"><div class="label">Nhân sự</div><div class="value">{total_headcount:,}</div><div class="sub">Quy mô toàn tổ chức</div></div>
-                <div class="overview-kpi"><div class="label">Phản hồi</div><div class="value">{total_participants:,}</div><div class="sub">Tổng lượt tham gia khảo sát</div></div>
-                <div class="overview-kpi"><div class="label">Tỷ lệ phản hồi</div><div class="value">{total_rr:.1f}%</div><div class="sub">Lượt tham gia / Headcount</div></div>
-                <div class="overview-kpi"><div class="label">Mức gắn kết</div><div class="value">{total_ei:.1f}</div><div class="sub">EI tổng thể · {ei_delta:+.1f} so với 2025</div></div>
+    hero_html = dedent(f'''
+    <div class="ghn-shell">
+        <div class="ghn-hero">
+            <div>
+                <span class="ghn-kicker">GHN · Tổng quan tổ chức</span>
+                <h1 class="ghn-title">Tổng quan GHN<br/>trên nền dữ liệu EES 2026</h1>
+                <p class="ghn-subtitle">
+                    Một lớp điều hành tổng hợp cho thấy quy mô tham gia, sức khỏe gắn kết,
+                    khoảng cách giữa các đơn vị và các điểm cần ưu tiên trước khi đi sâu vào từng nhóm khảo sát.
+                </p>
+            </div>
+            <div class="ghn-command">
+                <div class="ghn-command-label">Trung tâm điều hành gắn kết</div>
+                <div class="ghn-command-score">{total_ei:.1f}</div>
+                <div class="ghn-command-sub">EI tổng thể · eNPS {total_enps:+.0f} · Rủi ro nghỉ việc {total_intent:.1f}%</div>
+                <div class="ghn-mini-grid">
+                    <div class="ghn-mini"><span>Tỷ lệ phản hồi</span><strong>{total_rr:.1f}%</strong></div>
+                    <div class="ghn-mini"><span>EI so với 2025</span><strong>{ei_delta:+.1f}</strong></div>
+                    <div class="ghn-mini"><span>Mẫu hợp lệ</span><strong>{total_cleaned:,}</strong></div>
+                    <div class="ghn-mini"><span>Độ phủ dữ liệu</span><strong>{cleaned_rr:.1f}%</strong></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="overview-section">
-        <div class="background-grid">
-            <div class="bg-card"><div class="bg-chip">Phân tích chéo</div><h4>Cross-check theo nhiều lớp</h4><p>Đọc đồng thời theo phòng ban, thâm niên, khối, và trụ cột để tránh kết luận từ một lát cắt đơn lẻ.</p></div>
-            <div class="bg-card"><div class="bg-chip">Chiến lược</div><h4>Executive narrative</h4><p>Không chỉ hiển thị số liệu, mà còn gom thành câu chuyện điều hành: tín hiệu chính, rủi ro và ưu tiên hành động.</p></div>
-            <div class="bg-card"><div class="bg-chip">Nội dung sắp fill</div><h4>Roadmap & team contributions</h4><p>Khu vực này sẽ dùng để ghi lại team đã làm gì cho EES 2026, ai phụ trách phần nào và các deliverable quan trọng.</p></div>
-            <div class="bg-card"><div class="bg-chip">Tối ưu</div><h4>Nhanh hơn & gọn hơn</h4><p>Dữ liệu đang được cache theo nhóm để giảm thời gian tải và giúp dashboard phản hồi nhanh hơn.</p></div>
+        <div class="ghn-metrics">
+            <div class="ghn-metric" style="--accent:#0A1F44"><div class="ghn-metric-label">Tổng nhân sự</div><div class="ghn-metric-value">{total_headcount:,}</div><div class="ghn-metric-sub">Headcount toàn tổ chức GHN</div></div>
+            <div class="ghn-metric" style="--accent:#1D4ED8"><div class="ghn-metric-label">Đã tham gia</div><div class="ghn-metric-value">{total_participants:,}</div><div class="ghn-metric-sub">{total_rr:.1f}% tỷ lệ phản hồi</div></div>
+            <div class="ghn-metric" style="--accent:#10B981"><div class="ghn-metric-label">Mẫu phân tích</div><div class="ghn-metric-value">{total_cleaned:,}</div><div class="ghn-metric-sub">{cleaned_rr:.1f}% / headcount sau lọc memo</div></div>
+            <div class="ghn-metric" style="--accent:#64748B"><div class="ghn-metric-label">Chưa tham gia</div><div class="ghn-metric-value">{max(total_headcount - total_participants, 0):,}</div><div class="ghn-metric-sub">{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</div></div>
+        </div>
+
+        <div class="ghn-context">
+            <div class="ghn-context-card"><div class="ghn-context-chip">Đối chiếu</div><h4>Nhiều lớp dữ liệu</h4><p>Đọc đồng thời theo phòng ban, section, thâm niên và 5 trụ cột để tránh kết luận từ một lát cắt đơn lẻ.</p></div>
+            <div class="ghn-context-card"><div class="ghn-context-chip">Chiến lược</div><h4>Câu chuyện điều hành</h4><p>Gom tín hiệu chính, rủi ro và ưu tiên hành động thành câu chuyện điều hành có thể triển khai.</p></div>
+            <div class="ghn-context-card"><div class="ghn-context-chip">Ưu tiên</div><h4>Góc nhìn sẵn sàng hành động</h4><p>Các tầng phân tích mới hỗ trợ nhìn ra segment, lifecycle và cross-pillar risk trước khi quyết định.</p></div>
+            <div class="ghn-context-card"><div class="ghn-context-chip">Hiệu năng</div><h4>Cache theo nhóm</h4><p>Dữ liệu được cache theo nhóm khảo sát để dashboard tải gọn hơn khi đi sâu vào từng cấp tổ chức.</p></div>
         </div>
     </div>
-    ''', unsafe_allow_html=True)
-
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-    st.markdown(f'''
-    <div class="cov-container">
-        <div class="cov-card"><div class="cov-label">Tổng nhân sự</div><div class="cov-value" style="color:#0A1F44;">{total_headcount:,}</div><div class="cov-sub">Headcount toàn tổ chức GHN</div></div>
-        <div class="cov-card"><div class="cov-label">Đã tham gia khảo sát</div><div class="cov-value" style="color:#006FAD;">{total_participants:,}</div><div class="cov-sub"><span class="cov-badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;"><span class="cov-badge-dot" style="background:#3B82F6;"></span>{total_rr}% tỷ lệ phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(total_rr, 100):.1f}%; background: linear-gradient(90deg, #3B82F6, #006FAD);"></div></div></div>
-        <div class="cov-card"><div class="cov-label">Mẫu phân tích (sau lọc memo)</div><div class="cov-value" style="color:#7C3AED;">{total_cleaned:,}</div><div class="cov-sub"><span class="cov-badge" style="background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE;"><span class="cov-badge-dot" style="background:#7C3AED;"></span>{cleaned_rr}% / headcount</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(cleaned_rr, 100):.1f}%; background: linear-gradient(90deg, #A78BFA, #7C3AED);"></div></div></div>
-        <div class="cov-card"><div class="cov-label">Chưa tham gia</div><div class="cov-value" style="color:#94A3B8;">{max(total_headcount - total_participants, 0):,}</div><div class="cov-sub"><span class="cov-badge" style="background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;"><span class="cov-badge-dot" style="background:#CBD5E1;"></span>{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</span></div><div class="cov-progress-track"><div class="cov-progress-fill" style="width: {min(max(round((1 - total_participants / total_headcount) * 100, 1), 0), 100):.1f}%; background: #E2E8F0;"></div></div></div>
-    </div>
-    ''', unsafe_allow_html=True)
+    ''')
+    st.html(hero_html)
 
     # Executive company overview section
     from shared.plotly_theme import make_html_kpi
+    st.html(dedent("""
+    <div class="ghn-band">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+            <div>
+                <div style="font-size:.72rem;font-weight:850;color:#FF5200;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">Tín hiệu điều hành</div>
+                <div style="font-size:1.35rem;font-weight:900;color:#0A1F44;letter-spacing:-.02em;">Bốn chỉ số điều hành chính</div>
+            </div>
+            <div style="font-size:.82rem;color:#64748B;font-weight:550;">So sánh với baseline 2025 và trạng thái hiện tại của toàn tổ chức.</div>
+        </div>
+    </div>
+    """))
     kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
     with kpi_c1:
-        st.markdown(make_html_kpi("Engagement Index", f"{total_ei:.1f}", delta=f"{ei_delta:+.1f}", color="blue", icon="", progress_val=total_ei), unsafe_allow_html=True)
+        st.markdown(make_html_kpi("EI - Chỉ số gắn kết", f"{total_ei:.1f}", delta=f"{ei_delta:+.1f}", color="blue", icon="", progress_val=total_ei), unsafe_allow_html=True)
     with kpi_c2:
-        st.markdown(make_html_kpi("eNPS Score", f"{total_enps:+.0f}", delta=f"{enps_delta:+.0f}", color="orange", icon="", progress_val=(total_enps+100)/2), unsafe_allow_html=True)
+        st.markdown(make_html_kpi("eNPS - Mức sẵn sàng giới thiệu", f"{total_enps:+.0f}", delta=f"{enps_delta:+.0f}", color="orange", icon="", progress_val=(total_enps+100)/2), unsafe_allow_html=True)
     with kpi_c3:
-        st.markdown(make_html_kpi("Attrition Risk", f"{total_intent:.1f}%", delta="N/A", color="red", icon="", progress_val=total_intent), unsafe_allow_html=True)
+        st.markdown(make_html_kpi("Attrition Risk - Rủi ro nghỉ việc", f"{total_intent:.1f}%", delta="N/A", color="red", icon="", progress_val=total_intent), unsafe_allow_html=True)
     with kpi_c4:
-        st.markdown(make_html_kpi("Response Rate", f"{total_rr:.1f}%", delta=f"{rr_delta:+.1f}%", color="green", icon="", progress_val=total_rr), unsafe_allow_html=True)
+        st.markdown(make_html_kpi("Response Rate - Tỷ lệ phản hồi", f"{total_rr:.1f}%", delta=f"{rr_delta:+.1f}%", color="green", icon="", progress_val=total_rr), unsafe_allow_html=True)
 
     # Calculate dynamic insights across divisions
     div_stats = []
@@ -310,7 +479,7 @@ def render(all_data, available_groups):
                 'N': kpis['n'],
                 'EI (%)': round(kpis['ei_mean'], 1),
                 'eNPS': round(kpis['enps_score'], 0),
-                'Attrition Risk (%)': round(kpis['intent_pct_low'], 1),
+                'Rủi ro nghỉ việc (%)': round(kpis['intent_pct_low'], 1),
             }
             for p, plabel in PILLAR_LABELS.items():
                 col = f'{p}_pct'
@@ -391,7 +560,7 @@ def render(all_data, available_groups):
 
                 # Format numbers into strings before styling
                 tbl_dept_fmt = tbl_dept.copy()
-                for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols:
+                for c in ['EI (%)', 'Rủi ro nghỉ việc (%)'] + avail_pillar_cols:
                     if c in tbl_dept_fmt.columns:
                         tbl_dept_fmt[c] = tbl_dept_fmt[c].apply(lambda v: f"{v:.1f}")
                 if 'eNPS' in tbl_dept_fmt.columns:
@@ -426,7 +595,7 @@ def render(all_data, available_groups):
 
                 styled_dept = _make_styler(tbl_dept_fmt, tbl_dept.reset_index(drop=True),
                                            'EI (%)', 'eNPS', avail_pillar_cols)
-                st.dataframe(styled_dept, use_container_width=True, hide_index=True)
+                st.dataframe(styled_dept, width='stretch', hide_index=True)
             else:
                 st.info("Không đủ mẫu theo phòng ban (tối thiểu 10 người / phòng ban).")
         else:
@@ -476,7 +645,7 @@ def render(all_data, available_groups):
                 avail_pillar_cols_s = [c for c in pillar_cols if c in tbl_section.columns]
 
                 tbl_section_fmt = tbl_section.copy()
-                for c in ['EI (%)', 'Attrition Risk (%)'] + avail_pillar_cols_s:
+                for c in ['EI (%)', 'Rủi ro nghỉ việc (%)'] + avail_pillar_cols_s:
                     if c in tbl_section_fmt.columns:
                         tbl_section_fmt[c] = tbl_section_fmt[c].apply(lambda v: f"{v:.1f}")
                 if 'eNPS' in tbl_section_fmt.columns:
@@ -484,7 +653,7 @@ def render(all_data, available_groups):
 
                 styled_section = _make_styler(tbl_section_fmt, tbl_section.reset_index(drop=True),
                                               'EI (%)', 'eNPS', avail_pillar_cols_s)
-                st.dataframe(styled_section, use_container_width=True, hide_index=True)
+                st.dataframe(styled_section, width='stretch', hide_index=True)
             else:
                 st.info("Không đủ mẫu theo section (tối thiểu 10 người / section).")
         else:

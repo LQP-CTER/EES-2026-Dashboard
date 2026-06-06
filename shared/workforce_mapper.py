@@ -68,12 +68,17 @@ def load_workforce_and_mapping() -> tuple[pd.DataFrame, dict, dict]:
             if attempt == 2: print(f"Lỗi tải Mapping: {e}")
             else: time.sleep(2)
 
-    # 2. Tải Workforce (Ưu tiên Supabase vì siêu nặng)
+    # 2. Tải Workforce (Ưu tiên NeonDB vì bảng này nặng)
     try:
-        conn = st.connection("supabase", type="sql")
-        df_wf = conn.query("SELECT * FROM workforce_data", ttl=3600)
+        try:
+            conn = st.connection("neondb", type="sql")
+            df_wf = conn.query("SELECT * FROM workforce_data", ttl=3600)
+        except Exception as e_neon:
+            print(f"Lỗi đọc NeonDB ({e_neon}), thử Supabase...")
+            conn = st.connection("supabase", type="sql")
+            df_wf = conn.query("SELECT * FROM workforce_data", ttl=3600)
     except Exception as db_err:
-        print(f"Lỗi đọc Neon ({db_err}), fallback Workforce về Google Sheets...")
+        print(f"Lỗi đọc cả Supabase và NeonDB ({db_err}), fallback Workforce về Google Sheets...")
         for attempt in range(3):
             try:
                 try:

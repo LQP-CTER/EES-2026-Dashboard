@@ -466,6 +466,15 @@ def render():
     </style>
     """, unsafe_allow_html=True)
 
+    def _jt_icon(kind: str) -> str:
+        icons = {
+            "kickoff": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 4.5 19 10l-5.5 5.5"/><path d="M19 10H5"/><path d="M8 14.5 5 18v-3.5"/></svg>',
+            "scan": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5h10a1.5 1.5 0 0 1 1.5 1.5v12A1.5 1.5 0 0 1 17 19.5H7A1.5 1.5 0 0 1 5.5 18V6A1.5 1.5 0 0 1 7 4.5Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
+            "gear": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M12 3.5v2.2M12 18.3v2.2M4.7 12H2.5M21.5 12h-2.2M6.1 6.1 4.6 4.6M19.4 19.4l-1.5-1.5M17.9 6.1l1.5-1.5M6.1 17.9l-1.5 1.5"/><path d="M12 5.7a6.3 6.3 0 1 1 0 12.6 6.3 6.3 0 0 1 0-12.6Z"/></svg>',
+            "report": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l3.5 3.5V20.5H7z"/><path d="M14 3.5V7h3.5"/><path d="M9 11h6M9 14.5h6M9 18h4"/></svg>',
+        }
+        return icons.get(kind, icons["report"])
+
     # ── 1. HERO (stats) ──────────────────────────────────────────────────────
     st.markdown("""
     <div class="ed-container">
@@ -1196,8 +1205,8 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 }
 .jt-section {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+    gap: 44px;
     padding: 4px 4px 10px 4px;
     align-items: start;
 }
@@ -1263,68 +1272,79 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     gap: 0;
     padding-top: 8px;
     position: relative;
+    padding-left: 0;
 }
 /* Vertical line */
 .jt-right::before {
     content: '';
     position: absolute;
-    left: 19px;
+    left: 22px;
     top: 8px;
     bottom: 8px;
     width: 2px;
-    background: linear-gradient(180deg, #FFD5BF 0%, #FF5200 50%, #FFD5BF 100%);
+    background: linear-gradient(180deg, rgba(255,213,191,.35) 0%, #FF5200 45%, rgba(29,78,216,.72) 100%);
     border-radius: 2px;
 }
 
 .jt-node {
     display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    padding: 0 0 40px 0;
+    gap: 18px;
+    align-items: center;
+    padding: 0 0 28px 0;
     position: relative;
 }
 .jt-node:last-child { padding-bottom: 0; }
 
 /* Dot on the line */
 .jt-dot {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     border-radius: 50%;
-    background: white;
-    border: 3px solid #FF5200;
+    background: linear-gradient(145deg, #FFFFFF, #FFF4EF);
+    border: 1px solid rgba(255,82,0,.22);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1rem;
     position: relative;
     z-index: 1;
-    box-shadow: 0 0 0 5px rgba(255,82,0,0.10);
-    transition: transform 0.3s ease;
+    box-shadow: 0 0 0 6px rgba(255,82,0,0.10), 0 12px 24px rgba(10,31,68,.10);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.jt-node:hover .jt-dot { transform: scale(1.15); }
+.jt-node:hover .jt-dot { transform: scale(1.08); box-shadow: 0 0 0 7px rgba(255,82,0,0.14), 0 16px 28px rgba(10,31,68,.14); }
+.jt-dot svg {
+    width: 18px;
+    height: 18px;
+    stroke: #FF5200;
+    stroke-width: 2.2;
+    fill: none;
+}
 
 .jt-body {
     background: rgba(255,255,255,.86);
     backdrop-filter: blur(12px);
     border: 1px solid #E2E8F0;
-    border-radius: 18px;
-    padding: 20px 22px;
+    border-radius: 20px;
+    padding: 18px 22px;
     flex: 1;
-    transition: box-shadow 0.3s ease;
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 14px 30px rgba(10,31,68,.07);
 }
 .jt-node:hover .jt-body {
-    box-shadow: 0 8px 24px rgba(10,31,68,0.09);
+    box-shadow: 0 20px 40px rgba(10,31,68,0.11);
+    transform: translateY(-3px);
+    border-color: rgba(255,82,0,.22);
 }
 .jt-milestone {
-    font-size: 2rem; font-weight: 900; color: #FF5200;
+    font-size: 1.7rem; font-weight: 900; color: #FF5200;
     line-height: 1; letter-spacing: -0.03em; margin-bottom: 8px;
 }
 .jt-title {
-    font-size: 0.95rem; font-weight: 800; color: #0A1F44; margin-bottom: 6px;
+    font-size: 0.92rem; font-weight: 800; color: #0A1F44; margin-bottom: 6px;
 }
 .jt-desc {
-    font-size: 0.82rem; color: #64748B; line-height: 1.65; font-weight: 500;
+    font-size: 0.84rem; color: #64748B; line-height: 1.65; font-weight: 500;
 }
 
 /* ── 3D Data Journey polish ── */
@@ -1343,13 +1363,12 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     box-shadow: 0 22px 44px rgba(10,31,68,0.14);
 }
 .jt-right {
-    padding-left: 6px;
-    transform: rotateY(-3deg) translateZ(18px);
+    transform: none;
     transform-origin: left center;
 }
 .jt-right::before {
     width: 4px;
-    left: 18px;
+    left: 22px;
     background: linear-gradient(180deg, rgba(255,213,191,.25) 0%, #FF5200 45%, rgba(0,82,204,.72) 100%);
     box-shadow: 0 0 24px rgba(255,82,0,.28);
 }
@@ -1378,7 +1397,9 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     }
     .jt-right {
         transform: none;
+        padding-left: 0;
     }
+    .jt-right::before { left: 22px; }
 }
 </style>
 <script>
@@ -1390,7 +1411,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 </script>
 </head>
 <body>
-<div class="jt-shell">
+    <div class="jt-shell">
 <div class="jt-section">
 
   <!-- LEFT -->
@@ -1424,11 +1445,12 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
   </div>
 
   <!-- RIGHT: Timeline -->
-  <div class="jt-right">
+    <div class="jt-right">
 
     <div class="jt-node">
-      <div class="jt-dot">🚀</div>
+      <div class="jt-dot">{_jt_icon("kickoff")}</div>
       <div class="jt-body">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 01</div>
         <div class="jt-milestone">Kick-off</div>
         <div class="jt-title">Phát Động Chiến Dịch</div>
         <div class="jt-desc">CPO trực tiếp gửi thông điệp đến toàn bộ nhân sự GHN. Các Giám đốc Vùng tiếp lửa và dẫn dắt team tham gia khảo sát đồng loạt.</div>
@@ -1436,8 +1458,9 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     </div>
 
     <div class="jt-node">
-      <div class="jt-dot">📋</div>
+      <div class="jt-dot">{_jt_icon("scan")}</div>
       <div class="jt-body">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 02</div>
         <div class="jt-milestone">19 ngày</div>
         <div class="jt-title">Thu Thập Thần Tốc</div>
         <div class="jt-desc">Phối hợp với các khối Vận hành trên toàn quốc, đạt 20,005 phản hồi hợp lệ — vượt mọi kỳ vọng ban đầu về quy mô lẫn tốc độ.</div>
@@ -1445,8 +1468,9 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     </div>
 
     <div class="jt-node">
-      <div class="jt-dot">⚙️</div>
+      <div class="jt-dot">{_jt_icon("gear")}</div>
       <div class="jt-body">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 03</div>
         <div class="jt-milestone">∞ vòng</div>
         <div class="jt-title">Xử Lý & Làm Sạch Dữ Liệu</div>
         <div class="jt-desc">Chuẩn hóa dữ liệu thô qua nhiều vòng kiểm tra, map với HRIS và thiết lập cấu trúc phân nhóm Division/Section chính xác tuyệt đối.</div>
@@ -1454,8 +1478,9 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     </div>
 
     <div class="jt-node">
-      <div class="jt-dot">📊</div>
+      <div class="jt-dot">{_jt_icon("report")}</div>
       <div class="jt-body">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 04</div>
         <div class="jt-milestone">Now</div>
         <div class="jt-title">Dashboard & Executive Report</div>
         <div class="jt-desc">Hội tụ toàn bộ báo cáo, phân tích chéo và câu chuyện dữ liệu vào một giao diện thông minh — sẵn sàng cho cuộc họp điều hành.</div>
@@ -1468,7 +1493,14 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 </body>
 </html>
 """
-    components.html(journey_html, height=860, scrolling=False)
+    journey_html = (
+        journey_html
+        .replace('{_jt_icon("kickoff")}', _jt_icon("kickoff"))
+        .replace('{_jt_icon("scan")}', _jt_icon("scan"))
+        .replace('{_jt_icon("gear")}', _jt_icon("gear"))
+        .replace('{_jt_icon("report")}', _jt_icon("report"))
+    )
+    components.html(journey_html, height=820, scrolling=False)
 
     # ── Vietnam Map (standalone, full-width) ─────────────────────────────────
     st.plotly_chart(create_vietnam_map(), use_container_width=True)

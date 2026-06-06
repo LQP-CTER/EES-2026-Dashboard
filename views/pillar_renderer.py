@@ -21,7 +21,11 @@ from shared.codebook import (
     get_codebook, get_pillar_questions, get_question_label, PILLAR_WEIGHTS,
 )
 from shared.plotly_theme import fig_card, COLORS
-from utils.anomaly_detector import detect_pillar_anomalies, detect_cross_pillar
+from utils.anomaly_detector import detect_pillar_anomalies, detect_cross_pillar, run_full_anomaly_scan
+from utils.action_queue import build_priority_action_queue
+from utils.executive_brief import build_executive_brief
+from utils.lifecycle_analysis import build_lifecycle_risk
+from utils.pillar_interaction import build_cross_pillar_priority
 from views.anomaly_cards import render_anomaly_tab
 from utils.ai_generator import render_ai_insight_card
 
@@ -572,11 +576,274 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
     df_work = df.copy()
     df_work['_pillar_score'] = df_work[q_cols].mean(axis=1)
 
+    lifecycle = build_lifecycle_risk(df, group_id, pillar_id=pillar_id)
+    cross_priority = build_cross_pillar_priority(df, pillar_id)
+    action_queue = build_priority_action_queue(
+        df,
+        group_id,
+        pillar_id=pillar_id,
+        lifecycle=lifecycle,
+        cross_priority=cross_priority,
+    )
+    if not action_queue.empty:
+        st.markdown("##### Priority Action Queue")
+        q1, q2, q3 = st.columns(3)
+        with q1:
+            st.metric("Hành động ưu tiên", f"{len(action_queue):,}")
+        with q2:
+            immediate_n = int((action_queue['Ưu tiên'] == 'Immediate').sum())
+            st.metric("Immediate", f"{immediate_n:,}")
+        with q3:
+            top_owner = action_queue['Owner gợi ý'].mode().iloc[0] if not action_queue['Owner gợi ý'].mode().empty else "N/A"
+            st.metric("Owner xuất hiện nhiều", top_owner)
+
+        show_queue_cols = [
+            'Nguồn', 'Đối tượng', 'N', 'Risk Score', 'Ưu tiên',
+            'Vấn đề chính', 'Owner gợi ý', 'Thời hạn'
+        ]
+        st.dataframe(
+            action_queue[show_queue_cols].style.format({'Risk Score': '{:.1f}', 'N': '{:,}'}),
+            width='stretch',
+            hide_index=True,
+            height=330,
+        )
+        source_summary = (
+            action_queue.groupby('Nguồn')
+            .agg(action_count=('Đối tượng', 'count'), avg_risk=('Risk Score', 'mean'))
+            .reset_index()
+            .sort_values('avg_risk', ascending=False)
+        )
+        fig_queue = px.bar(
+            source_summary,
+            x='Nguồn',
+            y='avg_risk',
+            color='action_count',
+            color_continuous_scale='OrRd',
+            text='action_count',
+            hover_data=['avg_risk'],
+        )
+        fig_queue = fig_card(
+            fig_queue,
+            'Nguồn rủi ro cần hành động',
+            'Risk trung bình theo nhóm phát hiện',
+        )
+        fig_queue.update_traces(textposition='outside')
+        fig_queue.update_layout(height=260, xaxis_title=None, yaxis_title='Risk trung bình', coloraxis_showscale=False)
+        st.plotly_chart(fig_queue, width='stretch', key=f"priority_action_queue_{pillar_id}")
+
+        with st.expander("Chi tiết hành động đề xuất", expanded=False):
+            st.dataframe(
+                action_queue[['Nguồn', 'Đối tượng', 'Vấn đề chính', 'Hành động']],
+                width='stretch',
+                hide_index=True,
+            )
+
+        brief = build_executive_brief(action_queue, lifecycle, cross_priority)
+        if brief.get('enabled'):
+            with st.expander("Executive brief & 30-60-90 plan", expanded=False):
+                st.markdown(f"**{brief.get('headline', '')}**")
+                for bullet in brief.get('bullets', []):
+                    st.markdown(f"- {bullet}")
+
+                owner_summary = brief.get('owner_summary', pd.DataFrame())
+                plan_df = brief.get('plan_df', pd.DataFrame())
+                b1, b2 = st.columns([0.85, 1.25])
+                with b1:
+                    if not owner_summary.empty:
+                        st.markdown("**Owner load**")
+                        st.dataframe(
+                            owner_summary.style.format({'avg_risk': '{:.1f}'}),
+                            width='stretch',
+                            hide_index=True,
+                            height=220,
+                        )
+                with b2:
+                    if not plan_df.empty:
+                        st.markdown("**30-60-90 plan**")
+                        st.dataframe(
+                            plan_df.style.format({'Risk Score': '{:.1f}', 'N': '{:,}'}),
+                            width='stretch',
+                            hide_index=True,
+                            height=260,
+                        )
+                        csv_data = plan_df.to_csv(index=False).encode('utf-8-sig')
+                        st.download_button(
+                            "Tải 30-60-90 plan CSV",
+                            data=csv_data,
+                            file_name=f"ees_2026_{group_id}_{pillar_id}_30_60_90_plan.csv",
+                            mime="text/csv",
+                            key=f"download_plan_{group_id}_{pillar_id}",
+                        )
+
+        st.markdown("<hr style='border:1px dashed rgba(0,0,0,0.08);margin:22px 0;'>", unsafe_allow_html=True)
+
+    if lifecycle.get('enabled'):
+        st.markdown("##### Lifecycle Risk theo thâm niên")
+        worst = lifecycle.get('worst', {})
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric("Cohort rủi ro nhất", worst.get('Thâm niên', 'N/A'), f"N={worst.get('N', 0):,}")
+        with c2:
+            gap = lifecycle.get('early_gap')
+            st.metric("Early gap", f"{gap:+.1f} điểm" if gap is not None and not pd.isna(gap) else "N/A", lifecycle.get('ews_window', ''))
+        with c3:
+            cliff = lifecycle.get('cliff')
+            st.metric("Tenure cliff", cliff.get('label', 'Không phát hiện') if cliff else "Không phát hiện",
+                      f"{cliff.get('drop'):+.1f} điểm" if cliff else None)
+
+        cohort_df = lifecycle.get('cohort_df', pd.DataFrame())
+        if not cohort_df.empty:
+            y_col = f"Điểm {pillar_id} (%)" if f"Điểm {pillar_id} (%)" in cohort_df.columns else "EI (%)"
+            fig_life = go.Figure()
+            fig_life.add_trace(go.Scatter(
+                x=cohort_df['Thâm niên'],
+                y=cohort_df[y_col],
+                mode='lines+markers+text',
+                marker=dict(size=11, color=meta['color'], line=dict(width=2, color='white')),
+                line=dict(color=meta['color'], width=3),
+                text=[f"{v:.1f}" for v in cohort_df[y_col]],
+                textposition='top center',
+                customdata=cohort_df[['N', 'Risk Score']],
+                hovertemplate='%{x}<br>Điểm: %{y:.1f}%<br>N=%{customdata[0]}<br>Risk=%{customdata[1]:.1f}<extra></extra>',
+            ))
+            fig_life.add_hline(y=65, line_dash="dot", line_color="#F59E0B", line_width=1)
+            fig_life.update_layout(
+                height=320,
+                margin=dict(l=10, r=20, t=10, b=75),
+                xaxis=dict(tickangle=-25, gridcolor='rgba(226,232,240,0.35)'),
+                yaxis=dict(title=y_col, range=[max(0, cohort_df[y_col].min() - 8), min(100, cohort_df[y_col].max() + 10)],
+                           gridcolor='rgba(226,232,240,0.6)'),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(family='Inter'),
+            )
+            st.plotly_chart(fig_life, width='stretch', key=f"lifecycle_risk_{pillar_id}")
+
+            table_cols = ['Thâm niên', 'N', y_col, 'EI (%)', '% Muốn nghỉ', '% Burnout', 'eNPS', 'Risk Score']
+            for extra in ['Câu yếu nhất', 'Điểm câu yếu', '% tiêu cực câu yếu']:
+                if extra in cohort_df.columns:
+                    table_cols.append(extra)
+            table_cols = [c for c in table_cols if c in cohort_df.columns]
+            with st.expander("Bảng lifecycle diagnostics", expanded=False):
+                st.dataframe(
+                    cohort_df[table_cols].style.format(precision=1),
+                    width='stretch',
+                    hide_index=True,
+                )
+
+            playbook = lifecycle.get('playbook', {})
+            if playbook:
+                st.markdown(f"""
+                <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-left:4px solid {meta['color']};
+                            border-radius:12px;padding:14px 16px;margin-top:12px;">
+                    <div style="font-size:.72rem;font-weight:900;color:#64748B;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px;">Lifecycle playbook</div>
+                    <div style="font-size:.92rem;color:#0A1F44;font-weight:850;margin-bottom:4px;">{playbook.get('label', 'Cohort rủi ro')} · {playbook.get('focus', '')}</div>
+                    <div style="font-size:.82rem;color:#475569;line-height:1.65;">{playbook.get('action', '')}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            voice = lifecycle.get('voice_signals', {})
+            if voice.get('enabled'):
+                with st.expander("Tín hiệu open-text của cohort rủi ro nhất", expanded=False):
+                    v1, v2, v3 = st.columns(3)
+                    with v1:
+                        st.metric("Phản hồi mở có nội dung", f"{voice.get('text_n', 0):,}")
+                    with v2:
+                        st.metric("NLP tiêu cực", f"{voice.get('negative_pct', 0):.1f}%", f"{voice.get('negative_n', 0):,} phản hồi")
+                    with v3:
+                        st.metric("Warning signals", f"{voice.get('warning_n', 0):,}")
+                    signal_rows = []
+                    for label, count in (voice.get('top_topics') or {}).items():
+                        signal_rows.append({'Loại': 'Topic', 'Tín hiệu': label, 'Số lần': count})
+                    for label, count in (voice.get('top_warnings') or {}).items():
+                        signal_rows.append({'Loại': 'Warning', 'Tín hiệu': label, 'Số lần': count})
+                    if signal_rows:
+                        st.dataframe(pd.DataFrame(signal_rows), width='stretch', hide_index=True)
+
+            hotspots = lifecycle.get('hotspots', pd.DataFrame())
+            if isinstance(hotspots, pd.DataFrame) and not hotspots.empty:
+                with st.expander("Hotspot đơn vị trong cohort rủi ro nhất", expanded=False):
+                    st.caption("Chỉ hiện đơn vị có N >= 5 trong cohort thâm niên rủi ro nhất.")
+                    st.dataframe(
+                        hotspots.style.format(precision=1),
+                        width='stretch',
+                        hide_index=True,
+                    )
+
+        st.markdown("<hr style='border:1px dashed rgba(0,0,0,0.08);margin:22px 0;'>", unsafe_allow_html=True)
+
+    if cross_priority.get('enabled'):
+        st.markdown("##### Cross-Pillar Priority")
+        top_cross = cross_priority.get('top', {})
+        p1, p2, p3 = st.columns(3)
+        with p1:
+            st.metric("Hotspot liên trụ cột", top_cross.get('Đơn vị', 'N/A'), top_cross.get('Cấp', ''))
+        with p2:
+            st.metric("Trụ cột đi kèm", top_cross.get('Trụ cột đi kèm', 'N/A'), f"{top_cross.get('Điểm đi kèm', 0):.1f}%")
+        with p3:
+            st.metric("Risk score", f"{top_cross.get('Risk Score', 0):.1f}", f"{top_cross.get('Số trụ cột <65', 0)} trụ cột <65")
+
+        companion_df = cross_priority.get('companion_df', pd.DataFrame())
+        risk_df = cross_priority.get('risk_df', pd.DataFrame())
+        c_left, c_right = st.columns([0.9, 1.35])
+        with c_left:
+            if not companion_df.empty:
+                fig_pair = px.bar(
+                    companion_df,
+                    x='unit_count',
+                    y='Tên trụ cột',
+                    orientation='h',
+                    color='avg_risk',
+                    color_continuous_scale='OrRd',
+                    text='unit_count',
+                    hover_data=['Trụ cột đi kèm', 'avg_risk'],
+                )
+                fig_pair = fig_card(
+                    fig_pair,
+                    'Trụ cột đi kèm thường gặp',
+                    'Các trụ cột thường đồng thời yếu với trụ cột đang xem',
+                )
+                fig_pair.update_traces(textposition='outside')
+                fig_pair.update_layout(height=300, xaxis_title='Số đơn vị', yaxis_title=None, coloraxis_showscale=False)
+                st.plotly_chart(fig_pair, width='stretch', key=f"cross_pillar_companion_{pillar_id}")
+        with c_right:
+            if not risk_df.empty:
+                show_cols = [
+                    'Cấp', 'Đơn vị', 'N', 'Điểm trụ cột', 'Trụ cột đi kèm',
+                    'Điểm đi kèm', 'Số trụ cột <65', '% Muốn nghỉ', '% Burnout',
+                    'Risk Score', 'Pattern'
+                ]
+                show_cols = [c for c in show_cols if c in risk_df.columns]
+                st.dataframe(
+                    risk_df[show_cols].style.format(precision=1),
+                    width='stretch',
+                    hide_index=True,
+                    height=300,
+                )
+
+        top_action = top_cross.get('Next action')
+        if top_action:
+            st.markdown(f"""
+            <div style="background:#FFF7ED;border:1px solid #FDBA7433;border-left:4px solid #FF5200;
+                        border-radius:12px;padding:14px 16px;margin-top:12px;">
+                <div style="font-size:.72rem;font-weight:900;color:#FF5200;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px;">Cross-pillar playbook</div>
+                <div style="font-size:.92rem;color:#0A1F44;font-weight:850;margin-bottom:4px;">{top_cross.get('Pattern', 'Cross-pillar risk')}</div>
+                <div style="font-size:.82rem;color:#475569;line-height:1.65;">{top_action}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with st.expander("Chi tiết next action theo từng hotspot", expanded=False):
+            action_cols = ['Cấp', 'Đơn vị', 'N', 'Pattern', 'Next action']
+            action_cols = [c for c in action_cols if c in risk_df.columns]
+            st.dataframe(risk_df[action_cols], width='stretch', hide_index=True)
+
+        st.markdown("<hr style='border:1px dashed rgba(0,0,0,0.08);margin:22px 0;'>", unsafe_allow_html=True)
+
     # By Region
     if 'region' in df_work.columns:
         st.markdown("##### Điểm trụ cột theo Vùng vận hành")
         region_agg = df_work.groupby('region')['_pillar_score'].agg(['mean', 'count']).reset_index()
-        region_agg = region_agg[region_agg['count'] >= 10].sort_values('mean', ascending=True)
+        region_agg = region_agg[region_agg['count'] >= 5].sort_values('mean', ascending=True)
         region_agg.columns = ['Vùng', 'Điểm TB', 'N']
         if not region_agg.empty:
             fig = go.Figure(go.Bar(
@@ -607,7 +874,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
     # Division/Dept/Section breakdown
     from views import view_b_problem_groups
     try:
-        view_b_problem_groups.render(df, cfg, pillar_filter=pillar_id)
+        view_b_problem_groups.render(df, cfg, group_id=group_id, pillar_filter=pillar_id)
     except TypeError:
         view_b_problem_groups.render(df, cfg)
 
@@ -639,9 +906,64 @@ def _render_tab_root_cause(df, cfg, group_id, pillar_id):
 
 def _render_tab_anomaly(df, cfg, group_id, pillar_id):
     """Tab Bất thường — per-pillar anomalies + cross-pillar patterns."""
-    pillar_anomalies = detect_pillar_anomalies(df, group_id, pillar_id)
-    cross_anomalies  = detect_cross_pillar(df, group_id)
-    all_anomalies    = pillar_anomalies + cross_anomalies
+    scan = run_full_anomaly_scan(df, group_id)
+    health = scan.get('health_score', {})
+    priority_actions = scan.get('priority_actions', [])
+    deep_dive = scan.get('deep_dive_plan', {})
+    tenure = scan.get('tenure_cohorts', {})
+    pillar_anomalies = scan.get('pillar_anomalies', {}).get(pillar_id, [])
+    cross_anomalies = scan.get('cross_pillar_patterns', [])
+    all_anomalies = pillar_anomalies + cross_anomalies
+
+    st.markdown(f"""
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+            <div>
+                <div style="font-size:.68rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.08em;">Health snapshot</div>
+                <div style="font-size:1.35rem;font-weight:900;color:#0A1F44;line-height:1.1;">{health.get('score', 'N/A')} · {health.get('label', 'N/A')}</div>
+            </div>
+            <div style="font-size:.8rem;color:#475569;line-height:1.55;">
+                EI {health.get('EI', 'N/A')} · Burnout {health.get('burnout_score', 'N/A')} · Flight risk {health.get('flight_risk_pct', 'N/A')}%
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if deep_dive:
+        trigger_txt = ", ".join(deep_dive.get('matched_triggers') or []) or "Chưa match trigger đặc thù"
+        questions = deep_dive.get('questions') or []
+        question_html = "".join([f"<li>{q}</li>" for q in questions[:3]])
+        st.markdown(f"""
+        <div style="background:#FFF7ED;border:1px solid #FDBA7433;border-left:4px solid #FF5200;border-radius:12px;padding:16px 18px;margin-bottom:16px;">
+            <div style="font-size:.72rem;font-weight:900;color:#FF5200;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px;">Deep-dive trọng tâm · {deep_dive.get('urgency', 'LOW')}</div>
+            <div style="font-size:1rem;font-weight:800;color:#0A1F44;margin-bottom:6px;">{deep_dive.get('focus', 'Đi sâu vào trụ cột thấp nhất')}</div>
+            <div style="font-size:.82rem;color:#475569;line-height:1.6;margin-bottom:8px;">
+                Trigger: <strong>{trigger_txt}</strong> · Trụ cột thấp nhất: <strong>{deep_dive.get('lowest_pillar', 'N/A')}</strong>
+                ({deep_dive.get('lowest_pillar_score', 'N/A')}%)
+            </div>
+            <ul style="font-size:.82rem;color:#475569;line-height:1.65;margin:0 0 0 18px;">{question_html}</ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    if tenure.get('enabled'):
+        with st.expander("Tenure cohort diagnostics", expanded=False):
+            cliff = tenure.get('cliff')
+            early_gap = tenure.get('early_gap')
+            st.caption(f"EWS window: {tenure.get('ews_window', 'N/A')} · Early gap: {early_gap if early_gap is not None else 'N/A'} điểm")
+            if cliff:
+                st.warning(f"Tenure cliff tại {cliff.get('label')}: EI giảm {cliff.get('drop')} điểm.")
+            tenure_df = pd.DataFrame(tenure.get('records', []))
+            if not tenure_df.empty:
+                st.dataframe(tenure_df, width='stretch', hide_index=True)
+
+    if priority_actions:
+        st.markdown("#### Hành động ưu tiên từ full scan")
+        for item in priority_actions[:3]:
+            st.markdown(
+                f"- **{item.get('id')} · {item.get('title')}**: {item.get('action')}"
+            )
+        st.markdown("---")
+
     render_anomaly_tab(all_anomalies, pillar_id=pillar_id, show_cross=True)
 
 

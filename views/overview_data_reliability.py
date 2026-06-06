@@ -49,12 +49,18 @@ def _compute_reliability_table():
             if df is None or df.empty:
                 continue
             report = df.attrs.get('memo_report', {})
+            nlp = report.get('nlp', {})
+            calibration = df.attrs.get('calibration_report', {})
             rows.append({
                 'Nhóm': f'{gid} · {label}',
                 'Mẫu thô (Supabase)': n_raw,
                 'Sau Dedup': int(report.get('n_after_dedup', n_raw)),
                 'Maha flag': int(report.get('flags', {}).get('maha_flag_n', 0)),
                 'Contradiction': int(report.get('flags', {}).get('contradiction_n', 0)),
+                'NLP tiêu cực': int(nlp.get('negative_n', 0)),
+                'NLP cảnh báo': int(nlp.get('warning_signal_n', 0)),
+                'Ridge AUC': calibration.get('cv_auc') if calibration.get('cv_auc') is not None else float('nan'),
+                'VIF cao': len(calibration.get('high_vif', {})) if calibration.get('enabled') else 0,
                 '0 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('0_evidence', 0)),
                 '1 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('1_evidence', 0)),
                 '2 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('2_evidence', 0)),
@@ -397,6 +403,10 @@ def render():
             'Sau Dedup': '{:,}',
             'Maha flag': '{:,}',
             'Contradiction': '{:,}',
+            'NLP tiêu cực': '{:,}',
+            'NLP cảnh báo': '{:,}',
+            'Ridge AUC': '{:.3f}',
+            'VIF cao': '{:,}',
             '0 bằng chứng': '{:,}',
             '1 bằng chứng': '{:,}',
             '2 bằng chứng': '{:,}',
@@ -473,8 +483,9 @@ def render():
          "Hệ số quá cao có thể phản ánh hiệu ứng halo (đồng ý/toàn bộ) chứ không hẳn nhất quán tâm lý. "
          "Báo cáo <strong>luôn đính kèm phân phối điểm</strong> và <strong>phân tích open-text</strong> để tam giác hóa."),
         ("Lát cắt nhỏ cần biên tin cậy", PURPLE, "#F5F3FF",
-         "Đơn vị con có n &lt; 30 (section) cần thêm biên tin cậy ±. "
-         "Dashboard chỉ hiển thị lát cắt khi n ≥ 15, tốt nhất nên n ≥ 30 để kết luận có ý nghĩa."),
+         "Dashboard chỉ ẩn lát cắt có n &lt; 5 để tránh kết luận từ mẫu quá nhỏ. "
+         "Segment từ n=5 đến n=29 vẫn được hiển thị, nhưng nên đọc như tín hiệu định hướng "
+         "và cần kiểm tra thêm trước khi ra quyết định cấp cao."),
     ]
     for title, color, bg, body in notes:
         st.markdown(f"""

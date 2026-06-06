@@ -26,6 +26,11 @@ from shared.codebook import get_role_question, get_pillar_questions
 
 TENURE_EARLY = ['Dưới 1 tháng', 'Trên 1 đến 3 tháng', 'Trên 3 đến 6 tháng']
 TENURE_SENIOR = ['Trên 2 đến 3 năm', 'Trên 3 đến 5 năm', 'Trên 5 năm']
+EWS_TENURE_THRESHOLD = {'1A': 1, '1B': 1, '2A': 2, '2B': 2, '3A': 2, '3B': 2}
+TENURE_MONTH_MAP = {
+    0: 0.5, 1: 2, 2: 4.5, 3: 7.5, 4: 10.5,
+    5: 18, 6: 30, 7: 48, 8: 72,
+}
 
 
 def _safe_mean(series):
@@ -63,6 +68,50 @@ def _pillar_pct(df, pillar_id):
     if col in df.columns:
         return df[col].mean()
     return None
+
+
+def _flight_risk_pct(df):
+    if 'intent' not in df.columns:
+        return None
+    valid = df['intent'].dropna()
+    return (valid <= 2).sum() / len(valid) * 100 if len(valid) > 0 else None
+
+
+def _burnout_pct(df):
+    if 'burnout_proxy' in df.columns:
+        valid = df['burnout_proxy'].dropna()
+        return valid.astype(bool).sum() / len(valid) * 100 if len(valid) > 0 else None
+    if 'burnout_score' in df.columns:
+        valid = df['burnout_score'].dropna()
+        return (valid >= 50).sum() / len(valid) * 100 if len(valid) > 0 else None
+    if 'burnout_risk' in df.columns:
+        valid = df['burnout_risk'].dropna()
+        return (valid > 0).sum() / len(valid) * 100 if len(valid) > 0 else None
+    return None
+
+
+def _infer_gen3(series):
+    """Infer Gen X/Y/Z from either label text or birth year values."""
+    def _one(v):
+        if pd.isna(v):
+            return None
+        text = str(v).strip().lower()
+        if 'gen x' in text or 'trước 1980' in text:
+            return 'Gen X'
+        if 'gen z' in text or '1997' in text or '2001' in text:
+            return 'Gen Z'
+        if 'gen y' in text or '1981' in text or '1990' in text:
+            return 'Gen Y'
+        try:
+            year = int(float(text[:4]))
+            if year < 1981:
+                return 'Gen X'
+            if year >= 1997:
+                return 'Gen Z'
+            return 'Gen Y'
+        except Exception:
+            return None
+    return series.apply(_one)
 
 
 def _severity_badge(s):
@@ -396,15 +445,8 @@ def detect_TC5(df, group_id=''):
     pressure_q, q29 = _role_mean(df, group_id, 'pressure')  # 1A: Q29 | 1B: Q28 | 2A-3B: Q29
     ei = df['EI'].mean() if 'EI' in df.columns else None
 
-    burnout_pct = None
-    if 'burnout_risk' in df.columns:
-        valid = df['burnout_risk'].dropna()
-        burnout_pct = (valid > 0).sum() / len(valid) * 100 if len(valid) > 0 else None
-
-    intent_pct = None
-    if 'intent' in df.columns:
-        valid = df['intent'].dropna()
-        intent_pct = (valid <= 2).sum() / len(valid) * 100 if len(valid) > 0 else None
+    burnout_pct = _burnout_pct(df)
+    intent_pct = _flight_risk_pct(df)
 
     # TC5_A1: Tự hào nhưng kiệt sức
     if q28 is not None and q29 is not None and q28 > 3.9 and q29 < 3.2 and pride_q and pressure_q:
@@ -535,8 +577,13 @@ def detect_cross_pillar(df, group_id=''):
         })
 
     # XP_6: Onboarding Shock
-    if 'Q5' in df.columns:
+    if 'tenure' in df.columns:
+        early_mask = df['tenure'].notna() & (df['tenure'] <= EWS_TENURE_THRESHOLD.get(group_id, 2))
+    elif 'Q5' in df.columns:
         early_mask = df['Q5'].isin(TENURE_EARLY)
+    else:
+        early_mask = None
+    if early_mask is not None:
         if early_mask.sum() >= 10:
             early_df = df[early_mask]
             early_ei = early_df['EI'].mean() if 'EI' in early_df.columns else None
@@ -555,14 +602,19 @@ def detect_cross_pillar(df, group_id=''):
                 })
 
     # XP_7: Tenure Cliff
-    if 'Q5' in df.columns and 'EI' in df.columns:
+    if 'EI' in df.columns and ('tenure' in df.columns or 'Q5' in df.columns):
         tenure_map = {
             'Dưới 1 tháng': 0.5, 'Trên 1 đến 3 tháng': 2, 'Trên 3 đến 6 tháng': 4.5,
             'Trên 6 đến 9 tháng': 7.5, 'Trên 9 đến 12 tháng': 10.5, 'Trên 1 đến 2 năm': 18,
             'Trên 2 đến 3 năm': 30, 'Trên 3 đến 5 năm': 48, 'Trên 5 năm': 72
         }
-        df_work = df[['Q5', 'EI']].copy()
-        df_work['tenure_month'] = df_work['Q5'].map(tenure_map)
+        source_col = 'tenure' if 'tenure' in df.columns else 'Q5'
+        df_work = df[[source_col, 'EI']].copy()
+        df_work['tenure_month'] = (
+            df_work[source_col].map(TENURE_MONTH_MAP)
+            if source_col == 'tenure'
+            else df_work[source_col].map(tenure_map)
+        )
         tenure_ei = df_work.dropna().groupby('tenure_month')['EI'].mean().reset_index()
         tenure_ei = tenure_ei.sort_values('tenure_month')
         if len(tenure_ei) >= 4:
@@ -583,6 +635,121 @@ def detect_cross_pillar(df, group_id=''):
                     'data': {'cliff_at_month': round(cliff_tenure, 0), 'ei_drop': round(cliff_drop, 1)},
                     'action': f'Tạo "milestone intervention" tại mốc {cliff_tenure:.0f} tháng: 1-1 với HR, cập nhật lộ trình phát triển, ghi nhận đóng góp.'
                 })
+
+    # XP_8: Generation Gap
+    gen_col = 'gen3' if 'gen3' in df.columns else ('Q1' if 'Q1' in df.columns else None)
+    pillar_cols = [f'{p}_pct' for p in ['TC1', 'TC2', 'TC3', 'TC4', 'TC5'] if f'{p}_pct' in df.columns]
+    if gen_col and len(pillar_cols) >= 2:
+        df_gen = df[[gen_col, *pillar_cols]].copy()
+        df_gen['gen3_norm'] = df_gen[gen_col] if gen_col == 'gen3' else _infer_gen3(df_gen[gen_col])
+        gen_counts = df_gen['gen3_norm'].value_counts()
+        if gen_counts.get('Gen Z', 0) >= 10 and gen_counts.get('Gen X', 0) >= 10:
+            gen_scores = df_gen.groupby('gen3_norm')[pillar_cols].mean()
+            gap_series = gen_scores.loc['Gen X'] - gen_scores.loc['Gen Z']
+            sig = gap_series[gap_series > 12]
+            if len(sig) >= 2:
+                anomalies.append({
+                    'id': 'XP_8', 'pillar': 'CROSS', 'severity': 'warning',
+                    'title': 'Generation Gap — Khoảng cách thế hệ có tính hệ thống',
+                    'message': (
+                        f'Gen Z thấp hơn Gen X trên {len(sig)} trụ cột, với khoảng cách lớn nhất '
+                        f'{sig.max():.1f} điểm. Đây không phải khác biệt cá nhân mà là khác biệt kỳ vọng '
+                        f'giữa thế hệ: cách truyền thông, công cụ, cơ hội phát triển hoặc công bằng có thể đang không hợp với nhóm trẻ.'
+                    ),
+                    'data': {
+                        'gap_pillars': {k.replace('_pct', ''): round(float(v), 1) for k, v in sig.items()},
+                        'gen_z_n': int(gen_counts.get('Gen Z', 0)),
+                        'gen_x_n': int(gen_counts.get('Gen X', 0)),
+                    },
+                    'action': 'Tách pulse follow-up cho Gen Z: hỏi 3 chủ đề ngắn về phát triển, công cụ và phản hồi quản lý. Không dùng cùng thông điệp cho mọi thế hệ.'
+                })
+
+    # XP_9: Engagement Quadrant distribution (EI x eNPS)
+    if 'engagement_quadrant' in df.columns:
+        quad = df['engagement_quadrant'].dropna()
+    elif 'EI' in df.columns and 'eNPS' in df.columns:
+        ei_median = df['EI'].median()
+        conditions = [
+            (df['EI'] >= ei_median) & (df['eNPS'] >= 9),
+            (df['EI'] >= ei_median) & (df['eNPS'] <= 6),
+            (df['EI'] < ei_median) & (df['eNPS'] >= 9),
+        ]
+        choices = ['Champions', 'Trapped Loyalists', 'Confused Leavers']
+        quad = pd.Series(np.select(conditions, choices, default='Flight Risk'), index=df.index).dropna()
+    else:
+        quad = pd.Series(dtype=object)
+    if len(quad) >= 30:
+        dist = quad.value_counts()
+        flight_like = dist.get('Flight Risk', 0) + dist.get('Confused Leavers', 0)
+        flight_like_pct = flight_like / len(quad) * 100
+        trapped_pct = dist.get('Trapped Loyalists', 0) / len(quad) * 100
+        if flight_like_pct >= 25 or trapped_pct >= 35:
+            anomalies.append({
+                'id': 'XP_9', 'pillar': 'CROSS', 'severity': 'warning' if flight_like_pct < 35 else 'critical',
+                'title': 'Engagement Quadrant — Cơ cấu gắn kết lệch rủi ro',
+                'message': (
+                    f'Nhóm rủi ro/đang rời bỏ về mặt tâm lý chiếm {flight_like_pct:.1f}%, '
+                    f'Trapped Loyalists chiếm {trapped_pct:.1f}%. Phân bố này cho thấy EI trung bình có thể che mất '
+                    f'các nhóm nhân viên có hành vi rất khác nhau.'
+                ),
+                'data': {'distribution': dist.to_dict(), 'risk_like_pct': round(flight_like_pct, 1), 'trapped_pct': round(trapped_pct, 1)},
+                'action': 'Tách hành động theo quadrant: Champions giữ vai trò đại sứ, Trapped Loyalists cần tháo nút thắt, Flight Risk cần phỏng vấn giữ chân có chọn lọc.'
+            })
+
+    # XP_10: Contradiction Index — EI cao nhưng im lặng/tiêu cực.
+    silence_rate = None
+    if 'is_silent' in df.columns:
+        silence_rate = df['is_silent'].dropna().astype(bool).mean() * 100
+    negative_rate = None
+    if 'nlp_sentiment_label' in df.columns:
+        valid_sent = df['nlp_sentiment_label'].dropna()
+        if len(valid_sent) >= 20:
+            negative_rate = (valid_sent == 'tiêu_cực').sum() / len(valid_sent) * 100
+    contradiction_pct = None
+    if 'contradiction_flag' in df.columns:
+        contradiction_pct = df['contradiction_flag'].dropna().astype(bool).mean() * 100
+    if ei is not None and ei >= 70 and (
+        (silence_rate is not None and silence_rate >= 55) or
+        (negative_rate is not None and negative_rate >= 35) or
+        (contradiction_pct is not None and contradiction_pct >= 8)
+    ):
+        silence_txt = f'{silence_rate:.1f}%' if silence_rate is not None else 'N/A'
+        negative_txt = f'{negative_rate:.1f}%' if negative_rate is not None else 'N/A'
+        anomalies.append({
+            'id': 'XP_10', 'pillar': 'CROSS', 'severity': 'warning',
+            'title': 'Contradiction Index — Sức khỏe gắn kết có dấu hiệu giả',
+            'message': (
+                f'EI đang cao ({ei:.1f}%) nhưng tín hiệu hành vi không đồng thuận: '
+                f'Silence {silence_txt}, sentiment tiêu cực {negative_txt}. '
+                f'Đây là dấu hiệu cần kiểm tra fear-based compliance hoặc tâm lý ngại nói thật.'
+            ),
+            'data': {
+                'EI': round(ei, 1),
+                'silence_rate': round(silence_rate, 1) if silence_rate is not None else None,
+                'negative_rate': round(negative_rate, 1) if negative_rate is not None else None,
+                'contradiction_pct': round(contradiction_pct, 1) if contradiction_pct is not None else None,
+            },
+            'action': 'Chạy focus group ẩn danh với câu hỏi mở: "Điều gì mọi người ngại nói ra trong khảo sát?". Không dùng quản lý trực tiếp điều phối phiên này.'
+        })
+
+    # XP_11: Quiet Exodus — không kiệt sức nhưng vẫn muốn đi.
+    burnout_mean = df['burnout_score'].dropna().mean() if 'burnout_score' in df.columns and df['burnout_score'].notna().any() else None
+    if intent_pct is not None and intent_pct >= 10 and burnout_mean is not None and burnout_mean < 35:
+        pillar_scores = {p: v for p, v in {'TC1': tc1, 'TC2': tc2, 'TC3': tc3, 'TC4': tc4, 'TC5': tc5}.items() if v is not None}
+        root = min(pillar_scores, key=pillar_scores.get) if pillar_scores else 'Unknown'
+        root_score = pillar_scores.get(root)
+        root_score_txt = f'{root_score:.1f}%' if root_score is not None else 'N/A'
+        anomalies.append({
+            'id': 'XP_11', 'pillar': 'CROSS', 'severity': 'critical' if intent_pct >= 18 else 'warning',
+            'title': 'Quiet Exodus — Muốn rời đi dù không phải vì kiệt sức',
+            'message': (
+                f'Flight risk đạt {intent_pct:.1f}% trong khi burnout trung bình chỉ {burnout_mean:.1f}/100. '
+                f'Nhân viên không đi vì quá tải; họ đang rời đi vì một nút thắt khác. Trụ cột thấp nhất hiện là {root} '
+                f'({root_score_txt}).'
+            ),
+            'data': {'flight_risk_pct': round(intent_pct, 1), 'burnout_score': round(burnout_mean, 1), 'likely_root': root, 'root_score': round(root_score, 1) if root_score else None},
+            'action': f'Ưu tiên phỏng vấn giữ chân theo root cause {root}. Hỏi trực tiếp: "Điều gì không liên quan đến tải việc nhưng khiến bạn muốn rời GHN?"'
+        })
 
     return anomalies
 
@@ -621,3 +788,282 @@ def detect_all_anomalies(df, group_id):
     # Sort: critical first
     order = {'critical': 0, 'warning': 1, 'watch': 2}
     return sorted(all_anomalies, key=lambda x: order.get(x.get('severity', 'watch'), 3))
+
+
+def _percentile_rank(value, values, higher_is_better=True):
+    if values is None:
+        return None
+    vals = pd.Series(values).dropna().astype(float)
+    if value is None or pd.isna(value) or len(vals) < 10:
+        return None
+    pct = (vals <= value).mean() * 100
+    return round(float(pct if higher_is_better else 100 - pct), 1)
+
+
+def compute_relative_thresholds(df):
+    """Distribution thresholds for current group/reference data."""
+    metrics = ['EI', 'MEI', 'JSI', 'burnout_score', 'TC1_pct', 'TC2_pct', 'TC3_pct', 'TC4_pct', 'TC5_pct']
+    thresholds = {}
+    for col in metrics:
+        if col not in df.columns:
+            continue
+        s = df[col].dropna().astype(float)
+        if len(s) < 10:
+            continue
+        thresholds[col] = {
+            'mean': round(float(s.mean()), 2),
+            'std': round(float(s.std()), 2),
+            'p10': round(float(s.quantile(0.10)), 2),
+            'p25': round(float(s.quantile(0.25)), 2),
+            'p50': round(float(s.quantile(0.50)), 2),
+            'p75': round(float(s.quantile(0.75)), 2),
+            'p90': round(float(s.quantile(0.90)), 2),
+        }
+    return thresholds
+
+
+def analyze_tenure_cohorts(df, group_id):
+    """Tenure cohort summary used by Phase 4 deep dives."""
+    if 'tenure' not in df.columns or 'EI' not in df.columns:
+        return {'enabled': False, 'reason': 'missing_tenure_or_ei'}
+
+    agg_map = {'EI': 'mean'}
+    for col in ['burnout_score', 'JSI']:
+        if col in df.columns:
+            agg_map[col] = 'mean'
+    if 'intent' in df.columns:
+        df_work = df.copy()
+        df_work['is_flight_risk'] = df_work['intent'] <= 2
+        agg_map['is_flight_risk'] = 'mean'
+    else:
+        df_work = df
+
+    cohort = df_work.groupby('tenure').agg(agg_map)
+    cohort['n'] = df_work.groupby('tenure')['EI'].count()
+    cohort = cohort[cohort['n'] >= 5].sort_index()
+    if cohort.empty:
+        return {'enabled': False, 'reason': 'not_enough_cohort_n'}
+
+    label_map = {
+        0: 'Dưới 1 tháng', 1: '1-3 tháng', 2: '3-6 tháng', 3: '6-9 tháng',
+        4: '9-12 tháng', 5: '1-2 năm', 6: '2-3 năm', 7: '3-5 năm', 8: 'Trên 5 năm',
+    }
+    records = []
+    for idx, row in cohort.iterrows():
+        records.append({
+            'tenure': int(idx) if pd.notna(idx) else None,
+            'label': label_map.get(int(idx), str(idx)) if pd.notna(idx) else 'Khác',
+            'n': int(row['n']),
+            'EI': round(float(row['EI']), 1),
+            'burnout_score': round(float(row['burnout_score']), 1) if 'burnout_score' in row.index and pd.notna(row['burnout_score']) else None,
+            'flight_risk_pct': round(float(row['is_flight_risk']) * 100, 1) if 'is_flight_risk' in row.index and pd.notna(row['is_flight_risk']) else None,
+        })
+
+    cliff = None
+    diffs = cohort['EI'].diff().dropna()
+    if not diffs.empty and diffs.min() <= -6:
+        cliff_idx = int(diffs.idxmin())
+        cliff = {
+            'label': label_map.get(cliff_idx, str(cliff_idx)),
+            'drop': round(float(diffs.min()), 1),
+        }
+
+    ews_threshold = EWS_TENURE_THRESHOLD.get(group_id, 2)
+    early = cohort[cohort.index <= ews_threshold]
+    mature = cohort[cohort.index > ews_threshold]
+    early_gap = None
+    if not early.empty and not mature.empty:
+        early_gap = round(float(mature['EI'].mean() - early['EI'].mean()), 1)
+
+    return {
+        'enabled': True,
+        'records': records,
+        'cliff': cliff,
+        'early_gap': early_gap,
+        'ews_window': label_map.get(ews_threshold, str(ews_threshold)),
+    }
+
+
+def compute_unit_health(df, reference_df=None):
+    """Health snapshot. Uses reference percentiles when available."""
+    ei = df['EI'].mean() if 'EI' in df.columns else np.nan
+    burnout = df['burnout_score'].mean() if 'burnout_score' in df.columns else np.nan
+    flight = _flight_risk_pct(df)
+
+    if reference_df is not None and not reference_df.empty:
+        ei_pct = _percentile_rank(ei, reference_df.get('EI'), True) if 'EI' in reference_df.columns else None
+        burnout_pct = _percentile_rank(burnout, reference_df.get('burnout_score'), False) if 'burnout_score' in reference_df.columns else None
+        flight_pct = None
+        components = [v for v in [ei_pct, burnout_pct, flight_pct] if v is not None]
+        note = 'Health score dùng percentile rank so với reference distribution.'
+    else:
+        components = []
+        if not np.isnan(ei):
+            components.append(ei)
+        if burnout is not None and not np.isnan(burnout):
+            components.append(100 - burnout)
+        if flight is not None:
+            components.append(100 - flight)
+        note = 'Health score gọn = trung bình EI, retention và inverse burnout.'
+
+    health = float(np.mean(components)) if components else np.nan
+    if np.isnan(health):
+        label = 'Không đủ dữ liệu'
+    elif health >= 75:
+        label = 'Khỏe'
+    elif health >= 60:
+        label = 'Theo dõi'
+    else:
+        label = 'Rủi ro'
+
+    return {
+        'score': round(health, 1) if not np.isnan(health) else None,
+        'label': label,
+        'EI': round(float(ei), 1) if not np.isnan(ei) else None,
+        'burnout_score': round(float(burnout), 1) if burnout is not None and not np.isnan(burnout) else None,
+        'flight_risk_pct': round(float(flight), 1) if flight is not None else None,
+        'note': note,
+    }
+
+
+def build_deep_dive_plan(df, group_id, scan):
+    """Group-specific deep-dive dispatcher from v3, grounded in detected patterns."""
+    anomalies = scan.get('all_anomalies', [])
+    ids = {a.get('id') for a in anomalies}
+    lowest_pillar = None
+    pillar_scores = {
+        p: _pillar_pct(df, p) for p in ['TC1', 'TC2', 'TC3', 'TC4', 'TC5']
+    }
+    pillar_scores = {k: v for k, v in pillar_scores.items() if v is not None}
+    if pillar_scores:
+        lowest_pillar = min(pillar_scores, key=pillar_scores.get)
+
+    playbook = {
+        '1A': {
+            'focus': 'Thu nhập, phân đơn/khu vực và App Driver',
+            'triggers': ['TC4_A1', 'TC4_A5', 'TC5_A5', 'TC3_A1'],
+            'questions': [
+                'TC4 thấp do mức thu nhập thật hay do nhân viên không hiểu cách tính/phạt?',
+                'Có vùng/khu vực nào bị chênh phân đơn hoặc hỗ trợ sự cố không?',
+                'App Driver/công cụ có đang tạo frustration hằng ngày không?',
+            ],
+        },
+        '1B': {
+            'focus': 'Tuyến dài/ngắn, ca đêm, phụ cấp và an toàn',
+            'triggers': ['TC5_A5', 'TC3_A1', 'TC4_A1'],
+            'questions': [
+                'Lịch chạy và tuyến có tạo cảm giác bất công không?',
+                'Phụ cấp/phạt/chi phí đường dài có minh bạch đủ không?',
+                'Áp lực an toàn nghề nghiệp có bị bình thường hóa không?',
+            ],
+        },
+        '2A': {
+            'focus': 'Ca/kíp, OT fairness, onboarding và an toàn lao động',
+            'triggers': ['XP_6', 'TC3_A2', 'TC2_A2'],
+            'questions': [
+                'Nhân sự mới có EI thấp hơn rõ rệt không?',
+                'OT/ca/kíp có phân bổ công bằng không?',
+                'Thiết bị/quy trình kho có đang tạo quá tải ngầm không?',
+            ],
+        },
+        '2B': {
+            'focus': 'Áp lực kép, autonomy và năng lực quản lý tuyến đầu',
+            'triggers': ['XP_1', 'TC2_A1', 'TC2_A3'],
+            'questions': [
+                'Quản lý tuyến đầu đang kẹt giữa KPI và hỗ trợ đội ngũ ở điểm nào?',
+                'MEI cao/thấp có khớp với flight risk không?',
+                'Autonomy có đủ để xử lý vấn đề vận hành tại chỗ không?',
+            ],
+        },
+        '3A': {
+            'focus': 'Process debt, phối hợp liên phòng ban và career block',
+            'triggers': ['XP_2', 'TC3_A3', 'TC3_A4'],
+            'questions': [
+                'Nút thắt quy trình nào gây friction liên phòng ban nhiều nhất?',
+                'Career path có đang là nguyên nhân rời đi âm thầm không?',
+                'Nhóm nào có EI thấp nhưng chưa muốn nghỉ?',
+            ],
+        },
+        '3B': {
+            'focus': 'Strategy clarity, succession, peer collaboration và workload lãnh đạo',
+            'triggers': ['XP_1', 'XP_10', 'TC1_A1'],
+            'questions': [
+                'Lãnh đạo có rõ ưu tiên chiến lược và quyền quyết định không?',
+                'Áp lực lãnh đạo có đang được normalize như một điều hiển nhiên không?',
+                'Peer collaboration có đủ thực chất để giải quyết bài toán cross-function không?',
+            ],
+        },
+    }
+    spec = playbook.get(group_id, {
+        'focus': f'Đi sâu vào {lowest_pillar or "trụ cột thấp nhất"}',
+        'triggers': [],
+        'questions': ['Xác định nhóm có điểm thấp nhất và phỏng vấn nguyên nhân trực tiếp.'],
+    })
+    matched = [t for t in spec['triggers'] if t in ids]
+    urgency = 'HIGH' if any(a.get('severity') == 'critical' for a in anomalies if a.get('id') in matched) else ('MEDIUM' if matched else 'LOW')
+    return {
+        'focus': spec['focus'],
+        'matched_triggers': matched,
+        'urgency': urgency,
+        'lowest_pillar': lowest_pillar,
+        'lowest_pillar_score': round(float(pillar_scores[lowest_pillar]), 1) if lowest_pillar else None,
+        'questions': spec['questions'],
+        'next_step': 'Chạy deep dive theo playbook nhóm và ưu tiên các trigger đã match.' if matched else 'Chưa có trigger đặc thù; bắt đầu từ trụ cột thấp nhất và cohort tenure rủi ro.',
+    }
+
+
+def build_priority_actions(anomalies, limit=5):
+    """Pick the highest-signal actions from anomaly results."""
+    severity_rank = {'critical': 0, 'warning': 1, 'watch': 2}
+    pillar_rank = {'CROSS': 0, 'TC2': 1, 'TC4': 2, 'TC3': 3, 'TC1': 4, 'TC5': 5}
+    seen = set()
+    actions = []
+    for item in sorted(
+        anomalies,
+        key=lambda a: (severity_rank.get(a.get('severity', 'watch'), 3), pillar_rank.get(a.get('pillar'), 9), a.get('id', ''))
+    ):
+        action = item.get('action')
+        if not action or action in seen:
+            continue
+        seen.add(action)
+        actions.append({
+            'id': item.get('id'),
+            'pillar': item.get('pillar'),
+            'severity': item.get('severity'),
+            'title': item.get('title'),
+            'action': action,
+        })
+        if len(actions) >= limit:
+            break
+    return actions
+
+
+def run_full_anomaly_scan(df, group_id, reference_df=None):
+    """Full cached-friendly anomaly scan for a group/unit."""
+    pillar_anomalies = {
+        pid: detect_pillar_anomalies(df, group_id, pid)
+        for pid in ['TC1', 'TC2', 'TC3', 'TC4', 'TC5']
+    }
+    cross = detect_cross_pillar(df, group_id)
+    flat = [a for rows in pillar_anomalies.values() for a in rows] + cross
+    order = {'critical': 0, 'warning': 1, 'watch': 2}
+    flat = sorted(flat, key=lambda x: order.get(x.get('severity', 'watch'), 3))
+
+    scan = {
+        'group_id': group_id,
+        'unit_n': int(len(df)),
+        'health_score': compute_unit_health(df, reference_df=reference_df),
+        'relative_thresholds': compute_relative_thresholds(reference_df if reference_df is not None else df),
+        'tenure_cohorts': analyze_tenure_cohorts(df, group_id),
+        'pillar_anomalies': pillar_anomalies,
+        'cross_pillar_patterns': cross,
+        'all_anomalies': flat,
+        'priority_actions': build_priority_actions(flat),
+        'counts': {
+            'critical': sum(1 for a in flat if a.get('severity') == 'critical'),
+            'warning': sum(1 for a in flat if a.get('severity') == 'warning'),
+            'watch': sum(1 for a in flat if a.get('severity') == 'watch'),
+        },
+    }
+    scan['deep_dive_plan'] = build_deep_dive_plan(df, group_id, scan)
+    return scan
