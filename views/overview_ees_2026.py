@@ -1876,5 +1876,97 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
             </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    
+    <style>
+    /* Footer */
+    .ed-footer-wrapper {
+        margin-top: 32px;
+        background: #FAFAFA;
+        border-top: 4px solid #FF5200;
+        padding: 48px 0;
+        margin-left: -1rem;
+        margin-right: -1rem;
+    }
+    .ed-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 40px;
+        padding: 0 1rem;
+    }
+    .ed-footer-left { max-width: 480px; }
+    .ed-footer-logo {
+        font-size: 1.4rem;
+        font-weight: 900;
+        margin-bottom: 12px;
+    }
+    .ed-footer-logo .ghn { color: #FF5200; }
+    .ed-footer-logo .ees { color: #0052CC; }
+    .ed-footer-desc {
+        font-size: 0.95rem;
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 24px;
+        font-weight: 500;
+    }
+    .ed-footer-right {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .ed-footer-title {
+        color: #FF5200;
+        font-size: 0.85rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 10px;
+    }
+    .ed-footer-item {
+        font-size: 0.85rem;
+        color: #64748B;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .ed-footer-highlight-dark {
+        color: #0A1F44;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-transform: none;
+        font-size: 0.95rem;
+    }
+    .ed-footer-highlight-orange {
+        color: #FF5200;
+        font-weight: 700;
+        text-transform: none;
+        font-size: 0.95rem;
+    }
+    @media (max-width: 768px) {
+        .ed-footer { flex-direction: column; }
+    }
+    </style>
 
+    <div class="ed-footer-wrapper">
+        <div class="ed-container ed-footer">
+            <div class="ed-footer-left">
+                <div class="ed-footer-logo">
+                    <span class="ghn">GHN</span> <span style="color:#94A3B8; font-weight:400; margin:0 4px;">×</span> <span class="ees">EES 2026</span>
+                </div>
+                <div class="ed-footer-desc">
+                    Khảo sát gắn kết nhân viên thường niên của GiaoHangNhanh.<br>
+                    Cùng với tiếng nói của 20.000+ xây dựng môi trường và<br>
+                    trải nghiệm nhân viên cho Công ty.
+                </div>
+            </div>
+            <div class="ed-footer-right">
+                <div class="ed-footer-title">LIÊN HỆ HỖ TRỢ</div>
+                <div class="ed-footer-item">HRBP - BỘ PHẬN ĐỐI TÁC NHÂN SỰ</div>
+                <div class="ed-footer-item">BAN TỔ CHỨC EES 2026</div>
+                <div class="ed-footer-highlight-dark">people@ghn.vn</div>
+                <div class="ed-footer-item">ỨNG DỤNG GTALK</div>
+                <div class="ed-footer-highlight-orange">gtalk.ghn.vn</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
