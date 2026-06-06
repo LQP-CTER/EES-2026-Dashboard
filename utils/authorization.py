@@ -7,7 +7,6 @@ import pandas as pd
 import streamlit as st
 
 
-DEFAULT_AUTHORIZATION_SHEET_ID = "14rVdX0b5N9XZFM61juba5XU38x07pFC9wZR_1XQsrho"
 DEFAULT_AUTHORIZATION_TAB = "Authorization"
 
 
@@ -36,7 +35,12 @@ def _authorization_csv_url() -> str:
     if explicit_url:
         return explicit_url
 
-    sheet_id = _get_secret_or_env("AUTHORIZATION_SHEET_ID", DEFAULT_AUTHORIZATION_SHEET_ID)
+    sheet_id = _get_secret_or_env("AUTHORIZATION_SHEET_ID")
+    if not sheet_id:
+        raise ValueError(
+            "Thiếu AUTHORIZATION_SHEET_ID hoặc AUTHORIZATION_SHEET_URL trong secrets.toml / environment."
+        )
+
     tab_name = _get_secret_or_env("AUTHORIZATION_TAB", DEFAULT_AUTHORIZATION_TAB)
     return f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={quote(tab_name)}"
 
