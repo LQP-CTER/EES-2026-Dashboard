@@ -98,10 +98,3 @@ def render():
                 if st.button("Làm mới Bộ nhớ đệm", width='stretch'):
                     st.cache_data.clear()
                     st.toast("Đã xóa bộ nhớ đệm thành công!", icon="")
-
-    st.markdown("---")
-    if st.button("Giả lập Truy cập User", width='stretch', type="primary"):
-        st.session_state.preview_mode = True
-        st.rerun()
-
-

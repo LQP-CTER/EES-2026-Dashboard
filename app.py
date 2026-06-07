@@ -798,11 +798,6 @@ if not is_admin:
 _auth_info = st.session_state.get("user_authorization", {})
 is_real_admin = isinstance(_auth_info, dict) and _auth_info.get("role", "").upper() == "ADMIN"
 
-if is_real_admin and not st.session_state.preview_mode:
-    # Render admin panel
-    from views import admin_panel
-    admin_panel.render()
-    st.stop()
 
 if is_locked and not is_admin:
     st.markdown("""
@@ -1480,11 +1475,6 @@ user_scope = resolve_data_scope(st.session_state.get("user_authorization"))
 scope_restricted = not user_scope.get("unrestricted", True)
 
 with st.sidebar:
-    if is_real_admin:
-        if st.button("Trở về Admin Panel", width='stretch'):
-            st.session_state.preview_mode = False
-            st.rerun()
-        st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
     # Brand block
     st.markdown("""
@@ -1560,6 +1550,11 @@ with st.sidebar:
     menu_items.append(sac.MenuItem("Phụ lục"))
     index_map[curr_idx] = ("Phụ lục", None)
     curr_idx += 1
+    
+    if is_real_admin:
+        menu_items.append(sac.MenuItem("Admin Panel", icon="gear"))
+        index_map[curr_idx] = ("Admin Panel", None)
+        curr_idx += 1
 
     sel_index = sac.menu(
         menu_items,
@@ -1578,13 +1573,14 @@ with st.sidebar:
     is_company = (sel_dashboard == COMPANY_LABEL)
     is_appendix = (sel_dashboard == "Phụ lục")
     is_data_trust = (sel_dashboard == "Độ tin cậy dữ liệu")
+    is_admin_panel = (sel_dashboard == "Admin Panel")
 
     # Initialize scope variables
     sel_group   = None
     df_filtered = None
     n_before    = 0
 
-    if is_appendix or is_data_trust or is_overview:
+    if is_appendix or is_data_trust or is_overview or is_admin_panel:
         pass
 
     elif is_company:
@@ -1742,6 +1738,15 @@ elif is_data_trust:
         view_i_data_trust.render(summary_df=summary_df)
     except Exception as e:
         st.error(f"Lỗi khi tải Độ tin cậy dữ liệu: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+
+elif is_admin_panel:
+    try:
+        from views import admin_panel
+        admin_panel.render()
+    except Exception as e:
+        st.error(f"Lỗi khi tải Admin Panel: {e}")
         import traceback
         st.code(traceback.format_exc())
 
