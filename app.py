@@ -113,11 +113,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Check Admin Token
-if 'token' in st.query_params:
-    if st.query_params['token'] == st.secrets.get("ADMIN_TOKEN", ""):
-        st.session_state.is_admin = True
-    st.query_params.clear()
+# Cơ chế bypass login bằng ADMIN_TOKEN đã được gỡ bỏ.
+# Mọi người dùng đều phải đăng nhập qua Google để lấy Role từ hệ thống phân quyền.
 
 if 'preview_mode' not in st.session_state:
     st.session_state.preview_mode = False
@@ -223,7 +220,8 @@ def get_sessions_lock():
     return _sessions_lock
 
 
-is_admin = st.session_state.get("is_admin", False)
+# Mọi tài khoản đều phải xác thực, biến này chỉ giữ lại để không vỡ layout cũ
+is_admin = False
 
 def _get_authorization(email: str) -> Optional[dict]:
     try:
@@ -796,7 +794,11 @@ if not is_admin:
                 _render_login_page()
                 st.stop()
 
-if is_admin and not st.session_state.preview_mode:
+# Kiểm tra Role Admin thực sự từ Google Sheets sau khi user đã đăng nhập
+_auth_info = st.session_state.get("user_authorization", {})
+is_real_admin = isinstance(_auth_info, dict) and _auth_info.get("role", "").upper() == "ADMIN"
+
+if is_real_admin and not st.session_state.preview_mode:
     # Render admin panel
     from views import admin_panel
     admin_panel.render()
@@ -1477,9 +1479,8 @@ page_loader = None
 user_scope = resolve_data_scope(st.session_state.get("user_authorization"))
 scope_restricted = not user_scope.get("unrestricted", True)
 
-# ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
-    if st.session_state.get("is_admin", False):
+    if is_real_admin:
         if st.button("Trở về Admin Panel", width='stretch'):
             st.session_state.preview_mode = False
             st.rerun()
