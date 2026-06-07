@@ -1664,12 +1664,23 @@ with st.sidebar:
     _u_name    = st.session_state.get("user_name", _u_email)
     _u_picture = st.session_state.get("user_picture", "")
     if _u_email:
+        _u_auth = st.session_state.get("user_authorization", {})
+        _u_role = _u_auth.get("role", "User") if isinstance(_u_auth, dict) else "User"
+        _role_str = str(_u_role).strip().upper()
+        
+        if _role_str == "ADMIN":
+            _role_badge = '<span style="background-color: #DC2626; color: white; font-size: 0.55rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px; letter-spacing: 0.05em; vertical-align: middle;">ADMIN</span>'
+        else:
+            _role_badge = '<span style="background-color: #3B82F6; color: white; font-size: 0.55rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px; letter-spacing: 0.05em; vertical-align: middle;">USER</span>'
+
         _avatar_html = f'<img src="{_u_picture}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid #FF5200;">' if _u_picture else f'<div style="width:32px;height:32px;border-radius:50%;background:#FF5200;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.9rem;">{_u_name[0].upper()}</div>'
         st.markdown(f"""
         <div style="display:flex;align-items:center;gap:10px;padding:15px 0 10px;margin-top:auto;border-top:1px solid #E2E8F0;">
             {_avatar_html}
             <div>
-                <div style="font-size:0.82rem;font-weight:700;color:#0F172A;line-height:1.2;">{_u_name}</div>
+                <div style="font-size:0.82rem;font-weight:700;color:#0F172A;line-height:1.2;display:flex;align-items:center;">
+                    {_u_name} {_role_badge}
+                </div>
                 <div style="font-size:0.72rem;color:#64748B;">{_u_email}</div>
             </div>
         </div>
