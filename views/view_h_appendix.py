@@ -1,6 +1,5 @@
 import streamlit as st
 
-
 _APPENDIX_CSS = """
 <style>
 .apx-page-header {
@@ -298,32 +297,33 @@ def render(**kwargs):
 
     st.markdown("""
     <div class="apx-page-header">
-        <p class="apx-page-eyebrow">Tham chiếu</p>
-        <h1 class="apx-page-title">Phụ lục & Giải thích Chỉ số</h1>
+        <p class="apx-page-eyebrow">Từ điển Chỉ số / Thư viện tham chiếu</p>
+        <h1 class="apx-page-title">Phụ lục & Giải thích Chỉ số (EES 2026)</h1>
         <p class="apx-page-desc">
-            Tài liệu tham khảo chi tiết về ý nghĩa và công thức tính toán của tất cả các chỉ số được sử dụng trong Dashboard EES 2026.
+            Tài liệu tham khảo chi tiết về ý nghĩa, diễn giải thực tế và công thức tính toán của tất cả các chỉ số (Kpis) được sử dụng trong Dashboard.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
     <div class="apx-context-box">
-        <p class="apx-context-title">Tại sao cần các chỉ số này?</p>
+        <p class="apx-context-title">Tại sao cần hiểu các chỉ số này?</p>
         <p class="apx-context-body">
-            Các chỉ số EES không chỉ đơn thuần là điểm trung bình của khảo sát. Chúng được thiết kế dựa trên các mô hình 
-            tâm lý học tổ chức (như <i>Job Demands-Resources Model</i>) để đo lường không chỉ <b>mức độ hài lòng</b> 
-            mà còn cả <b>sự gắn kết sâu sắc</b>, <b>mức độ kiệt sức</b> và <b>rủi ro biến động nhân sự</b>.
+            Các chỉ số EES không chỉ đơn thuần là "điểm hài lòng". Chúng được thiết kế dựa trên các mô hình 
+            thống kê và tâm lý học để phát hiện các <b>rủi ro ngầm</b> (như tỷ lệ đánh lụi, mẫu giả), 
+            cũng như dự báo <b>nguy cơ nghỉ việc</b> thực tế. Hiểu rõ từng chỉ số giúp bạn nắm bắt chính xác 
+            "sức khỏe" của đội ngũ để đưa ra quyết định kịp thời.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "Chỉ số Cốt lõi",
-        "Rủi ro & Gắn kết",
-        "Phân tích Chuyên sâu",
-        "Mô phỏng & Dự báo",
-        "NLP & Văn bản",
-        "HRIS & Thu nhập"
+        "Cốt lõi (Core)",
+        "Gắn kết (Risk)",
+        "Độ tin cậy (Trust)",
+        "Phân tích (Analysis)",
+        "AI & NLP",
+        "HRIS & Năng suất"
     ])
 
     with tab1:
@@ -331,9 +331,9 @@ def render(**kwargs):
     with tab2:
         _render_risk_engagement()
     with tab3:
-        _render_deep_analysis()
+        _render_data_trust()
     with tab4:
-        _render_simulation()
+        _render_deep_analysis()
     with tab5:
         _render_nlp()
     with tab6:
@@ -357,9 +357,9 @@ def _quick_reference_table(items: list) -> str:
 <td>{item['questions']}</td>
 </tr>"""
     return f"""<div class="apx-quick-ref">
-<p class="apx-quick-ref-title">Tham chiếu nhanh</p>
+<p class="apx-quick-ref-title">Bảng tóm tắt nhanh</p>
 <table class="apx-quick-ref-table">
-<thead><tr><th style="width:40px">#</th><th>Chỉ số</th><th>Công thức</th><th>Câu hỏi</th></tr></thead>
+<thead><tr><th style="width:40px">#</th><th>Tên chỉ số</th><th>Công thức</th><th>Câu hỏi/Nguồn</th></tr></thead>
 <tbody>{rows}</tbody>
 </table>
 </div>"""
@@ -368,7 +368,7 @@ def _quick_reference_table(items: list) -> str:
 def _card(number: int, accent_color: str, title: str, subtitle: str,
           description: str, formula: str, formula_note: str, questions: str,
           scale: str = "", thresholds: list = None) -> str:
-    meta_tags = f'<div class="apx-meta-tag"><span class="apx-meta-tag-label">Câu hỏi</span>{questions}</div>'
+    meta_tags = f'<div class="apx-meta-tag"><span class="apx-meta-tag-label">Nguồn/Câu hỏi</span>{questions}</div>'
     if scale:
         meta_tags += f'<div class="apx-meta-tag"><span class="apx-meta-tag-label">Thang đo</span>{scale}</div>'
 
@@ -380,7 +380,7 @@ def _card(number: int, accent_color: str, title: str, subtitle: str,
             segments += f'<div class="apx-threshold-segment" style="flex:{t["weight"]};background:{t["color"]};">{t["label"]}</div>'
             legend_items += f'<div class="apx-threshold-item"><div class="apx-threshold-dot" style="background:{t["color"]};"></div>{t["desc"]}</div>'
         threshold_html = f"""<div class="apx-threshold-bar">
-<p class="apx-threshold-label">Phân loại</p>
+<p class="apx-threshold-label">Phân loại & Ngưỡng báo động</p>
 <div class="apx-threshold-track">{segments}</div>
 <div class="apx-threshold-legend">{legend_items}</div>
 </div>"""
@@ -394,9 +394,9 @@ def _card(number: int, accent_color: str, title: str, subtitle: str,
 <p class="apx-card-subtitle">{subtitle}</p>
 </div>
 </div>
-<p class="apx-section-label">Ý nghĩa</p>
+<p class="apx-section-label">Giải nghĩa thực tế</p>
 <p class="apx-desc">{description}</p>
-<p class="apx-section-label">Công thức</p>
+<p class="apx-section-label">Công thức toán học</p>
 <div class="apx-formula-box">{formula}</div>
 <p class="apx-note">{formula_note}</p>
 <div class="apx-meta-row">{meta_tags}</div>
@@ -407,24 +407,24 @@ def _card(number: int, accent_color: str, title: str, subtitle: str,
 
 def _render_core_metrics():
     st.markdown(_section_header(
-        "Các chỉ số Nền tảng",
-        "Những chỉ số tổng hợp quan trọng nhất, phản ánh sức khỏe tổ chức toàn diện."
+        "Nhóm Chỉ số Cốt lõi",
+        "Những chỉ số tổng hợp quan trọng nhất, đóng vai trò như 'ống nghe nhịp tim' của tổ chức."
     ), unsafe_allow_html=True)
 
     st.markdown(_quick_reference_table([
         {"name": "Engagement Index", "formula": "EI = Σ(Tỷ lệ tích cực × Trọng số)", "questions": "Q9-Q29"},
-        {"name": "Manager Effectiveness", "formula": "MEI = Count(Q≥4) / Count(Q) × 100%", "questions": "Q11, Q12, Q14, Q15"},
+        {"name": "Manager Effectiveness", "formula": "MEI = Count(Q≥4) / Count(Q) × 100%", "questions": "TC2 (Quản lý trực tiếp)"},
         {"name": "eNPS", "formula": "%Promoter - %Detractor", "questions": "Q31"},
-        {"name": "Pillar Scores", "formula": "(mean - 1) / 4 × 100%", "questions": "Q9-Q29"},
+        {"name": "Pillar Scores", "formula": "(mean - 1) / 4 × 100%", "questions": "Q9-Q29 (Theo nhóm)"},
     ]), unsafe_allow_html=True)
 
     st.markdown(_card(
         number=1,
         accent_color="#4F46E5",
-        title="Engagement Index", subtitle="Chỉ số Gắn kết Tổ chức",
-        description="Thước đo tổng thể về mức độ gắn kết của nhân viên với công ty, được tổng hợp từ 5 trụ cột cốt lõi: <i>Niềm tin & Định hướng, Quản lý trực tiếp, Môi trường & Công cụ, Đãi ngộ & Công bằng, Văn hóa & Tự hào.</i>",
+        title="Engagement Index (EI)", subtitle="Chỉ số Gắn kết Tổ chức",
+        description="Điểm số phản ánh mức độ hạnh phúc và cam kết cống hiến của nhân viên. Khi chỉ số này giảm, các vấn đề về thái độ làm việc, kỷ luật và tỷ lệ nghỉ việc thường sẽ tăng cao ngay sau đó.",
         formula="EI = &Sigma;(Tỷ lệ tích cực<sub>i</sub> &times; Trọng số<sub>i</sub>)",
-        formula_note="<b>Trong đó:</b> Tỷ lệ tích cực = (mean(Q trong trụ cột) - 1) / 4 &times; 100%. Trọng số: TC1=15%, TC2=25%, TC3=20%, TC4=20%, TC5=20%.",
+        formula_note="<b>Tính toán:</b> Điểm trung bình của 5 trụ cột được chuẩn hóa sang % (từ thang 1-5). Trọng số: TC1=15%, TC2=25%, TC3=20%, TC4=20%, TC5=20%.",
         questions="Q9-Q29 (21 câu Likert 5 điểm)",
         scale="0-100%",
         thresholds=[
@@ -438,482 +438,206 @@ def _render_core_metrics():
     st.markdown(_card(
         number=2,
         accent_color="#DB2777",
-        title="Manager Effectiveness Index", subtitle="Chỉ số Năng lực Quản lý",
-        description="Đánh giá mức độ hiệu quả, sự hỗ trợ và năng lực lãnh đạo của Quản lý trực tiếp từ góc nhìn của nhân viên cấp dưới. Gồm các khía cạnh: Ghi nhận năng lực, Đối xử công bằng, Hỗ trợ khi gặp khó khăn, và Lắng nghe ý kiến.",
+        title="Manager Effectiveness Index (MEI)", subtitle="Chỉ số Năng lực Quản lý (MEI)",
+        description="Chấm điểm trực tiếp Trưởng bưu cục/Điều phối viên/Quản lý trực tiếp. Nếu chỉ số này cao, nhân viên ít khi nghỉ việc kể cả khi lương thưởng không quá hấp dẫn (MEI hoạt động như một 'Chiếc khiên' bảo vệ nhân viên khỏi áp lực công việc).",
         formula="MEI = Count(Q &ge; 4) / Count(Q hợp lệ) &times; 100%",
-        formula_note="Tính % câu hỏi được trả lời mức 4 (Đồng ý) hoặc 5 (Hoàn toàn đồng ý) trong nhóm câu hỏi về quản lý trực tiếp. <b>Ngưỡng khiên (Shield):</b> MEI > 4.2/5.0 (~84%) giảm đáng kể tỷ lệ nghỉ việc.",
-        questions="Q11, Q12, Q14, Q15",
+        formula_note="Tính phần trăm (%) số câu trả lời 'Đồng ý' (mức 4) hoặc 'Rất đồng ý' (mức 5) trong Trụ cột số 2 (Quản lý trực tiếp).",
+        questions="Các câu hỏi về Quản lý",
         scale="0-100%",
         thresholds=[
             {"label": "Yếu", "weight": 50, "color": "#DC2626", "desc": "< 50%"},
             {"label": "Trung bình", "weight": 34, "color": "#F59E0B", "desc": "50-83%"},
-            {"label": "Shield Zone", "weight": 16, "color": "#10B981", "desc": "≥ 84%"},
+            {"label": "Shield Zone (Tốt)", "weight": 16, "color": "#10B981", "desc": "≥ 84%"},
         ]
     ), unsafe_allow_html=True)
 
     st.markdown(_card(
         number=3,
         accent_color="#16A34A",
-        title="Employee Net Promoter Score", subtitle="Chỉ số Sẵn sàng Giới thiệu",
-        description="Đo lường mức độ trung thành của nhân viên. Dựa trên câu hỏi duy nhất: <i>\"Bạn có sẵn sàng giới thiệu GHN là một nơi làm việc tốt cho bạn bè/người thân không?\"</i> (Thang 0-10).",
-        formula="eNPS = % Promoter (9-10) - % Detractor (0-6)",
-        formula_note="<b>Promoter (Đại sứ):</b> Điểm 9-10. <b>Passive (Thụ động):</b> Điểm 7-8 (không đưa vào công thức). <b>Detractor (Bất mãn):</b> Điểm 0-6.",
-        questions="Q31 (thang 0-10)",
+        title="Employee Net Promoter Score (eNPS)", subtitle="Chỉ số Sẵn sàng Giới thiệu",
+        description="Dựa trên 1 câu hỏi duy nhất: 'Bạn có sẵn sàng giới thiệu công ty cho bạn bè không?'. Nhân viên có xu hướng chỉ giới thiệu chỗ làm tốt cho người thân để giữ uy tín cá nhân.",
+        formula="eNPS = % Đại sứ (Điểm 9-10) - % Kẻ bất mãn (Điểm 0-6)",
+        formula_note="Người cho điểm 7-8 bị coi là 'Thụ động' (Passive) và không được tính vào công thức. Một chỉ số eNPS dương đã là dấu hiệu rất tốt.",
+        questions="Q31 (Thang điểm 0-10)",
         scale="-100 đến +100",
         thresholds=[
-            {"label": "Tiêu cực", "weight": 50, "color": "#DC2626", "desc": "< 0"},
-            {"label": "Tích cực", "weight": 30, "color": "#3B82F6", "desc": "0 đến +29"},
-            {"label": "Xuất sắc", "weight": 20, "color": "#10B981", "desc": "≥ +30"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=4,
-        accent_color="#D97706",
-        title="Pillar Scores (TC1-TC5)", subtitle="Điểm 5 Trụ cột Gắn kết",
-        description="Điểm riêng biệt cho từng trụ cột, cho phép xác định chính xác lĩnh vực nào đang mạnh/yếu trong tổ chức.",
-        formula="TC_pct = (mean(các Q trong trụ cột) - 1) / 4 &times; 100%",
-        formula_note="<b>TC1</b> (Niềm tin & Định hướng): Q9, Q10 &middot; <b>TC2</b> (Quản lý trực tiếp): Q11-Q15 &middot; <b>TC3</b> (Môi trường & Công cụ): Q16-Q20 &middot; <b>TC4</b> (Đãi ngộ & Công bằng): Q21-Q25 &middot; <b>TC5</b> (Văn hóa & Tự hào): Q26-Q29",
-        questions="Q9-Q29 (phân nhóm theo trụ cột)",
-        scale="0-100% cho mỗi trụ cột",
-        thresholds=[
-            {"label": "Nghiêm trọng", "weight": 50, "color": "#DC2626", "desc": "< 50%"},
-            {"label": "Cần theo dõi", "weight": 15, "color": "#F59E0B", "desc": "50-64%"},
-            {"label": "Khỏe mạnh", "weight": 15, "color": "#3B82F6", "desc": "65-79%"},
-            {"label": "Xuất sắc", "weight": 20, "color": "#10B981", "desc": "≥ 80%"},
+            {"label": "Báo động đỏ", "weight": 50, "color": "#DC2626", "desc": "< 0 (Tiêu cực)"},
+            {"label": "Tốt", "weight": 30, "color": "#3B82F6", "desc": "0 đến +29"},
+            {"label": "Đỉnh cao", "weight": 20, "color": "#10B981", "desc": "≥ +30"},
         ]
     ), unsafe_allow_html=True)
 
 
 def _render_risk_engagement():
     st.markdown(_section_header(
-        "Chỉ số Rủi ro & Gắn kết",
-        "Các chỉ số đo lường nguy cơ nghỉ việc, kiệt sức và mức độ gắn bó của nhân viên."
+        "Nhóm Rủi ro & Ý định ở lại",
+        "Các chỉ số cảnh báo sớm khả năng 'bỏ việc' (Turnover) hoặc 'kiệt sức' (Burnout) của nhân sự."
     ), unsafe_allow_html=True)
 
     st.markdown(_quick_reference_table([
-        {"name": "Turnover Intent", "formula": "Count(Q30≤2) / Count(Q30) × 100%", "questions": "Q30"},
-        {"name": "Intent Retention", "formula": "Count(Q30≥4) / Count(Q30) × 100%", "questions": "Q30"},
-        {"name": "Stay Intention", "formula": "mean(Q22)", "questions": "Q22"},
-        {"name": "Burnout Risk", "formula": "mean(Q18,Q29) - mean(Q11,Q16)", "questions": "Q11, Q16, Q18, Q29"},
-        {"name": "Stay Risk Segmentation", "formula": "Q22≤2 | Q22=3 | Q22≥4", "questions": "Q22"},
-        {"name": "eNPS Segments", "formula": "Promoter | Passive | Detractor", "questions": "Q31"},
+        {"name": "Turnover Intent (Flight Risk)", "formula": "Count(Q30≤2) / Count(Q30) × 100%", "questions": "Q30"},
+        {"name": "Intent Retention Rate", "formula": "Count(Q30≥4) / Count(Q30) × 100%", "questions": "Q30"},
+        {"name": "Burnout Risk Score", "formula": "mean(Áp lực) - mean(Nguồn lực)", "questions": "Q11, Q16, Q18, Q29"},
     ]), unsafe_allow_html=True)
 
     st.markdown(_card(
-        number=5,
+        number=4,
         accent_color="#DC2626",
-        title="Turnover Intent / Flight Risk", subtitle="Tỷ lệ Muốn nghỉ việc",
-        description="Đo lường tỷ lệ nhân viên có ý định rời tổ chức trong vòng 6 tháng tới, dựa trên câu hỏi về ý định gắn bó.",
+        title="Turnover Intent / Flight Risk", subtitle="Tỷ lệ Rủi ro Muốn nghỉ việc",
+        description="Đo lường tỷ lệ nhân sự đang có ý định 'nhảy việc' trong vòng 3 đến 6 tháng tới. Nếu chỉ số này cao, công ty sắp đối mặt với làn sóng nghỉ việc (Attrition) lớn.",
         formula="% Muốn nghỉ = Count(Q30 &le; 2) / Count(Q30 hợp lệ) &times; 100%",
-        formula_note="Phân nhóm: <b>Muốn nghỉ</b> (điểm 1-2) &middot; <b>Phân vân</b> (điểm 3) &middot; <b>Gắn bó</b> (điểm 4-5)",
-        questions="Q30 (Ý định ở lại 3 tháng, Likert 1-5)",
+        formula_note="Được tính từ câu Q30: Nhóm chọn điểm 1 (Rất không đồng ý ở lại) và 2 (Không đồng ý ở lại).",
+        questions="Q30 (Ý định ở lại)",
         scale="0-100%",
         thresholds=[
-            {"label": "Thấp", "weight": 10, "color": "#10B981", "desc": "≤ 10%"},
-            {"label": "Trung bình", "weight": 10, "color": "#F59E0B", "desc": "11-20%"},
-            {"label": "Cao", "weight": 80, "color": "#DC2626", "desc": "> 20%"},
+            {"label": "Thấp (An toàn)", "weight": 10, "color": "#10B981", "desc": "≤ 10%"},
+            {"label": "Cảnh giác", "weight": 10, "color": "#F59E0B", "desc": "11-20%"},
+            {"label": "Báo động đỏ", "weight": 80, "color": "#DC2626", "desc": "> 20%"},
         ]
     ), unsafe_allow_html=True)
 
     st.markdown(_card(
-        number=6,
-        accent_color="#15803D",
-        title="Intent Retention Rate", subtitle="Tỷ lệ Nhân viên Gắn bó",
-        description="Tỷ lệ nhân viên có ý định gắn bó lâu dài với tổ chức, là chỉ số đối nghịch với Flight Risk.",
-        formula="% Gắn bó = Count(Q30 &ge; 4) / Count(Q30 hợp lệ) &times; 100%",
-        formula_note="Nhóm này có xu hướng ở lại tổ chức, cần duy trì và phát huy.",
-        questions="Q30 (Ý định ở lại 3 tháng, Likert 1-5)",
+        number=5,
+        accent_color="#EF4444",
+        title="Burnout Risk Score", subtitle="Tỷ lệ Rủi ro Kiệt sức",
+        description="Đo lường sự cạn kiệt năng lượng. Theo tâm lý học, khi mức độ Áp lực công việc (Cường độ cao) vượt quá Nguồn lực hỗ trợ (Công cụ kém, Sếp bỏ bê), nhân viên sẽ bị 'burnout' (kiệt sức tột độ).",
+        formula="Burnout = Điểm trung bình (Áp lực) - Điểm trung bình (Nguồn lực)",
+        formula_note="Áp lực (ví dụ: Q18, Q29). Nguồn lực hỗ trợ (ví dụ: Q11, Q16). Nếu kết quả > 0, nghĩa là Áp lực đang đè bẹp Nguồn lực.",
+        questions="Q11, Q16, Q18, Q29",
         scale="0-100%",
         thresholds=[
-            {"label": "Thấp", "weight": 50, "color": "#DC2626", "desc": "< 50%"},
-            {"label": "Trung bình", "weight": 20, "color": "#F59E0B", "desc": "50-69%"},
-            {"label": "Tốt", "weight": 30, "color": "#10B981", "desc": "≥ 70%"},
+            {"label": "Bình thường", "weight": 15, "color": "#10B981", "desc": "≤ 15%"},
+            {"label": "Dấu hiệu mệt mỏi", "weight": 15, "color": "#F59E0B", "desc": "16-30%"},
+            {"label": "Kiệt sức", "weight": 70, "color": "#DC2626", "desc": "> 30%"},
+        ]
+    ), unsafe_allow_html=True)
+
+
+def _render_data_trust():
+    st.markdown(_section_header(
+        "Nhóm Độ tin cậy & Làm sạch Dữ liệu",
+        "Bộ lọc AI phát hiện các bản ghi khảo sát rác, không trung thực hoặc đánh lụi để làm sạch dữ liệu."
+    ), unsafe_allow_html=True)
+
+    st.markdown(_quick_reference_table([
+        {"name": "Effective N", "formula": "Khảo sát thô - (Mẫu bị loại trừ)", "questions": "Tất cả"},
+        {"name": "Straightlining Rate", "formula": "SD(Q9-Q29) = 0", "questions": "Q9-Q29"},
+        {"name": "Mahalanobis Outliers", "formula": "Khoảng cách đa chiều > Ngưỡng Chi-Square", "questions": "Q9-Q29"},
+        {"name": "Contradiction Flag", "formula": "Likert cao nhưng NLP bình luận tiêu cực", "questions": "Q9-Q29 & Q32-34"},
+    ]), unsafe_allow_html=True)
+
+    st.markdown(_card(
+        number=6,
+        accent_color="#64748B",
+        title="Effective N (Quy mô Mẫu Hiệu dụng)", subtitle="Số lượng bài test thực tế dùng được",
+        description="Đây là lượng dữ liệu 'sạch' dùng để tính toán sau khi AI loại bỏ các bài test rác (đánh quá nhanh, bỏ trống, hoặc mâu thuẫn). Tỷ lệ giữ (Retention Rate) của dữ liệu cho biết chất lượng điền khảo sát.",
+        formula="N Hiệu dụng = N Khảo sát nộp vào - N Bị phạt (Drop)",
+        formula_note="Những bài bị giảm trọng số (Downweight) vẫn được tính nhưng sức ảnh hưởng chỉ bằng một nửa (0.5).",
+        questions="Toàn bộ hệ thống",
+        scale="Số lượng mẫu",
+        thresholds=[
+            {"label": "Tỷ lệ giữ < 70% (Rác nhiều)", "weight": 30, "color": "#DC2626", "desc": "Chất lượng khảo sát thấp"},
+            {"label": "Tỷ lệ giữ > 80% (Dữ liệu tốt)", "weight": 70, "color": "#10B981", "desc": "Đáng tin cậy"},
         ]
     ), unsafe_allow_html=True)
 
     st.markdown(_card(
         number=7,
-        accent_color="#7C3AED",
-        title="Stay Intention Score", subtitle="Điểm Ý định Ở lại",
-        description="Điểm trung bình của câu hỏi về ý định gắn bó, phản ánh mức độ cam kết ở lại trung bình của toàn bộ nhân viên.",
-        formula="Stay Score = mean(Q22)",
-        formula_note="Điểm trung bình trên thang Likert 1-5 của câu hỏi về thu nhập phản ánh công sức (proxy cho stay intention).",
-        questions="Q22",
-        scale="1-5",
-        thresholds=[
-            {"label": "Nguy hiểm", "weight": 40, "color": "#DC2626", "desc": "< 3.0"},
-            {"label": "Trung bình", "weight": 20, "color": "#F59E0B", "desc": "3.0-3.9"},
-            {"label": "Tốt", "weight": 40, "color": "#10B981", "desc": "≥ 4.0"},
-        ]
+        accent_color="#8B5CF6",
+        title="Straightlining Rate", subtitle="Tỷ lệ Đánh thẳng hàng (Đánh lụi)",
+        description="Số phần trăm người làm khảo sát chọn đúng 1 mức điểm (Ví dụ: toàn chọn số 3 hoặc toàn chọn số 5) cho tất cả các câu từ đầu đến cuối.",
+        formula="Độ lệch chuẩn (Standard Deviation) của nhóm câu Likert = 0",
+        formula_note="Đôi khi đánh toàn 5 là do quá hài lòng thực sự (nhất là đối tượng Shipper), nên AI không luôn luôn xóa thẳng tay mà sẽ đối chiếu với bình luận mở.",
+        questions="Câu hỏi trắc nghiệm Likert (Q9-Q29)",
+        scale="0-100%",
+        thresholds=[]
     ), unsafe_allow_html=True)
-
+    
     st.markdown(_card(
         number=8,
-        accent_color="#EF4444",
-        title="Burnout Risk Score", subtitle="Điểm Rủi ro Kiệt sức",
-        description="Dựa trên mô hình JD-R (Job Demands-Resources). Nếu Áp lực liên tục lớn hơn Nguồn lực, nhân viên sẽ rơi vào trạng thái kiệt quệ.",
-        formula="Burnout = mean(Q18, Q29) - mean(Q11, Q16)",
-        formula_note="<b>Áp lực (Demands):</b> Q18 (Cường độ/An toàn LĐ), Q29 (Áp lực/Tôn trọng). <b>Nguồn lực (Resources):</b> Q11 (Hỗ trợ kịp thời), Q16 (App/Xe an toàn). Burnout > 0 = Áp lực > Nguồn lực.",
-        questions="Q11, Q16, Q18, Q29",
-        scale="0-100%",
-        thresholds=[
-            {"label": "An toàn", "weight": 15, "color": "#10B981", "desc": "≤ 15%"},
-            {"label": "Cần chú ý", "weight": 15, "color": "#F59E0B", "desc": "16-30%"},
-            {"label": "Nguy hiểm", "weight": 70, "color": "#DC2626", "desc": "> 30%"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=9,
-        accent_color="#EA580C",
-        title="Stay Risk Segmentation", subtitle="Phân nhóm Rủi ro Ở lại",
-        description="Phân loại nhân viên thành 3 nhóm rủi ro dựa trên điểm ý định gắn bó, giúp xác định đối tượng cần can thiệp giữ chân.",
-        formula="Flight Risk: Q22 &le; 2 &ensp;|&ensp; At Risk: Q22 = 3 &ensp;|&ensp; Stable: Q22 &ge; 4",
-        formula_note="Mỗi nhóm được tính % trên tổng số nhân viên hợp lệ.",
-        questions="Q22",
-        scale="0-100% cho mỗi nhóm",
-        thresholds=[
-            {"label": "Flight Risk", "weight": 33, "color": "#DC2626", "desc": "Q22 ≤ 2: Nguy cơ rời đi cao"},
-            {"label": "At Risk", "weight": 33, "color": "#F59E0B", "desc": "Q22 = 3: Đang cân nhắc"},
-            {"label": "Stable", "weight": 34, "color": "#10B981", "desc": "Q22 ≥ 4: Ổn định"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=10,
-        accent_color="#059669",
-        title="eNPS Segment Distribution", subtitle="Phân bố Đại sứ / Thụ động / Bất mãn",
-        description="Phân bố chi tiết nhân viên theo 3 nhóm trung thành, giúp hiểu cấu trúc của điểm eNPS tổng thể.",
-        formula="Promoter: Q31 &ge; 9 &ensp;|&ensp; Passive: Q31 &isin; {7, 8} &ensp;|&ensp; Detractor: Q31 &le; 6",
-        formula_note="<b>Promoter:</b> Trung thành, nhiệt huyết. <b>Passive:</b> Hài lòng nhưng dễ bị thu hút bởi offer khác. <b>Detractor:</b> Không hài lòng, có khả năng lan truyền tiêu cực.",
-        questions="Q31 (thang 0-10)",
-        scale="% cho mỗi nhóm",
-        thresholds=[
-            {"label": "Detractor", "weight": 33, "color": "#DC2626", "desc": "Q31 ≤ 6: Bất mãn"},
-            {"label": "Passive", "weight": 33, "color": "#F59E0B", "desc": "Q31 = 7-8: Thụ động"},
-            {"label": "Promoter", "weight": 34, "color": "#10B981", "desc": "Q31 ≥ 9: Đại sứ"},
-        ]
+        accent_color="#F43F5E",
+        title="Contradiction Flags & Mahalanobis", subtitle="Cờ Mâu thuẫn Logic & Outliers",
+        description="Cờ mâu thuẫn xuất hiện khi nhân sự đánh full 5 điểm (cực kỳ hài lòng) nhưng lại ghi bình luận 'Sếp tồi, tôi muốn nghỉ việc'. Mahalanobis đo độ bất thường về mặt toán học trong ma trận trả lời.",
+        formula="NLP Sentiment < 0 AND Mean(Likert) > 4.5",
+        formula_note="Những mẫu bị gắn nhiều cờ (Flag) sẽ bị AI hạ mức tín nhiệm (Downweight) hoặc loại bỏ hoàn toàn (Drop).",
+        questions="Câu trắc nghiệm + Câu mở",
+        scale="Số lượng cờ",
+        thresholds=[]
     ), unsafe_allow_html=True)
 
 
 def _render_deep_analysis():
     st.markdown(_section_header(
-        "Chỉ số Phân tích Chuyên sâu",
-        "Các phương pháp thống kê và phân tích nâng cao để tìm ra nguyên nhân và ưu tiên hành động."
+        "Nhóm Phân tích Chuyên sâu & Ước tính",
+        "Dùng để tìm ra nguyên nhân gốc rễ và đo lường sự ưu tiên (Priority)."
     ), unsafe_allow_html=True)
 
     st.markdown(_quick_reference_table([
-        {"name": "Spearman Correlation", "formula": "ρ = spearmanr(Q, EI)", "questions": "Q9-Q29 vs EI"},
-        {"name": "Root Cause Gap", "formula": "mean(Q|intent≥4) - mean(Q|intent≤2)", "questions": "Q9-Q29 vs Q30"},
-        {"name": "Priority Matrix", "formula": "Median(ρ) × Median(Score)", "questions": "Q9-Q29"},
-        {"name": "Response Rate", "formula": "Participants / Headcount × 100%", "questions": "HRIS"},
-        {"name": "YoY Delta", "formula": "Value_2026 - Benchmark_2025", "questions": "Tổng hợp"},
+        {"name": "Root Cause Gap", "formula": "Mean(Người ở lại) - Mean(Người muốn nghỉ)", "questions": "Q9-Q29 vs Q30"},
+        {"name": "KPI Impact Simulator", "formula": "Độ cải thiện × Trọng số → Lợi ích eNPS", "questions": "Toàn hệ thống"},
     ]), unsafe_allow_html=True)
 
     st.markdown(_card(
-        number=11,
-        accent_color="#2563EB",
-        title="Spearman Rank Correlation", subtitle="Hệ số Tương quan Hạng Spearman với EI",
-        description="Đo lường mức độ ảnh hưởng của từng câu hỏi đến chỉ số gắn kết tổng thể (EI). Câu hỏi có tương quan cao hơn = ảnh hưởng nhiều hơn đến sự gắn kết.",
-        formula="&rho; = spearmanr(Q_score, EI)",
-        formula_note="Tính riêng cho từng câu hỏi Likert (Q9-Q29) so với EI. Giá trị &rho; > 0 = câu hỏi đồng biến với EI (điểm cao hơn &rarr; EI cao hơn).",
-        questions="Q9-Q29 (từng câu) so với EI",
-        scale="-1.0 đến +1.0",
-        thresholds=[
-            {"label": "Yếu", "weight": 30, "color": "#94A3B8", "desc": "|ρ| < 0.3"},
-            {"label": "Trung bình", "weight": 20, "color": "#F59E0B", "desc": "0.3-0.5"},
-            {"label": "Mạnh", "weight": 50, "color": "#10B981", "desc": "> 0.5"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=12,
+        number=9,
         accent_color="#CA8A04",
-        title="Root Cause Gap Score", subtitle="Chênh lệch Điểm: Nhóm Muốn nghỉ vs. Gắn bó",
-        description="So sánh điểm trung bình từng câu hỏi giữa nhóm muốn nghỉ và nhóm gắn bó, giúp xác định nguyên nhân gốc rễ khiến nhân viên muốn rời đi.",
-        formula="Gap = mean(Q | intent &ge; 4) - mean(Q | intent &le; 2)",
-        formula_note="Gap lớn = câu hỏi đó là nguyên nhân chính khiến nhân viên muốn nghỉ. Top 10 gap lớn nhất được xếp hạng ưu tiên.",
-        questions="Q9-Q29 (so sánh theo nhóm Q30)",
-        scale="Điểm chênh lệch (Likert 1-5)",
+        title="Root Cause Gap Score", subtitle="Độ Chênh lệch Tìm Nguyên nhân Gốc rễ",
+        description="Tách nhân sự ra làm 2 nhóm (Nhóm muốn nghỉ vs Nhóm trung thành). So sánh điểm từng câu hỏi của 2 nhóm. Chênh lệch càng lớn, câu hỏi đó càng là lý do chính khiến người ta rời đi.",
+        formula="Gap = Mean(Câu hỏi X | Nhóm ở lại) - Mean(Câu hỏi X | Nhóm muốn nghỉ)",
+        formula_note="Gap lớn (> 0.5 điểm) tức là vấn đề rất nhạy cảm. Đây là kim chỉ nam để biết phải ưu tiên sửa cái gì trước.",
+        questions="So sánh Q9-Q29 với Q30",
+        scale="Chênh lệch từ 0.0 - 5.0",
         thresholds=[
-            {"label": "Nhỏ", "weight": 50, "color": "#94A3B8", "desc": "< 0.5"},
-            {"label": "Đáng kể", "weight": 25, "color": "#F59E0B", "desc": "0.5-1.0"},
-            {"label": "Rất nghiêm trọng", "weight": 25, "color": "#DC2626", "desc": "> 1.0"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=13,
-        accent_color="#9333EA",
-        title="Impact-Effort Priority Matrix", subtitle="Ma trận Ưu tiên Hành động",
-        description="Phân loại từng câu hỏi vào 4 nhóm ưu tiên dựa trên tương quan với EI (Impact) và điểm hiện tại (Effort cần thiết), giúp tập trung nguồn lực hiệu quả.",
-        formula="4 góc phần tư dựa trên Median(&rho;) và Median(Score)",
-        formula_note="<b>Ưu tiên cao</b> (Impact cao + Điểm thấp): Cần hành động ngay. <b>Duy trì</b> (Impact cao + Điểm cao): Giữ vững. <b>Theo dõi</b> (Impact thấp + Điểm thấp): Quan sát. <b>Không ưu tiên</b> (Impact thấp + Điểm cao): Ít quan trọng.",
-        questions="Q9-Q29",
-        scale="Phân loại 4 nhóm",
-        thresholds=[
-            {"label": "Ưu tiên cao", "weight": 25, "color": "#DC2626", "desc": "Hành động ngay"},
-            {"label": "Duy trì", "weight": 25, "color": "#10B981", "desc": "Giữ vững"},
-            {"label": "Theo dõi", "weight": 25, "color": "#F59E0B", "desc": "Quan sát"},
-            {"label": "Không ưu tiên", "weight": 25, "color": "#94A3B8", "desc": "Ít quan trọng"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=14,
-        accent_color="#475569",
-        title="Survey Response Rate", subtitle="Tỷ lệ Phản hồi Khảo sát",
-        description="Tỷ lệ nhân viên tham gia khảo sát so với tổng số nhân viên, phản ánh mức độ đại diện của dữ liệu.",
-        formula="Response Rate = Số người tham gia / Tổng headcount &times; 100%",
-        formula_note="Dựa trên dữ liệu headcount từ HRIS so với số lượng phản hồi thực tế.",
-        questions="Không áp dụng (dữ liệu HRIS)",
-        scale="0-100%",
-        thresholds=[
-            {"label": "Thấp", "weight": 50, "color": "#DC2626", "desc": "< 50%"},
-            {"label": "Chấp nhận", "weight": 20, "color": "#F59E0B", "desc": "50-69%"},
-            {"label": "Tốt", "weight": 30, "color": "#10B981", "desc": "≥ 70%"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=15,
-        accent_color="#059669",
-        title="Year-over-Year Delta", subtitle="Thay đổi Chỉ số so với Năm trước",
-        description="So sánh các chỉ số chính (EI, eNPS) giữa năm hiện tại và năm trước, giúp đánh giá xu hướng cải thiện hoặc suy giảm.",
-        formula="&Delta; = Giá trị 2026 - Benchmark 2025",
-        formula_note="Benchmark 2025: EI = 80.2%, eNPS = +33.6, Response Rate = 75.9%. Giá trị dương = cải thiện, âm = suy giảm.",
-        questions="Không áp dụng (chỉ số tổng hợp)",
-        scale="Điểm phần trăm",
-        thresholds=[
-            {"label": "Suy giảm", "weight": 33, "color": "#DC2626", "desc": "Δ < 0"},
-            {"label": "Duy trì", "weight": 33, "color": "#94A3B8", "desc": "Δ = 0"},
-            {"label": "Cải thiện", "weight": 34, "color": "#10B981", "desc": "Δ > 0"},
-        ]
-    ), unsafe_allow_html=True)
-
-
-def _render_simulation():
-    st.markdown(_section_header(
-        "Chỉ số Mô phỏng & Dự báo",
-        "Các công cụ mô phỏng giúp dự đoán tác động của các can thiệp và ước tính ROI."
-    ), unsafe_allow_html=True)
-
-    st.markdown(_quick_reference_table([
-        {"name": "KPI Simulator", "formula": "improvement × weight × 100 → ROI", "questions": "EI, eNPS, MEI"},
-        {"name": "Micro Risk", "formula": "base + penalties - shields", "questions": "Nhiều yếu tố"},
-        {"name": "Macro Risk", "formula": "salary×0.35 + mei×0.5 + cod×0.08", "questions": "Q30, MEI, thu nhập"},
-        {"name": "Quality Flags", "formula": "SD=0 | Missing>80%", "questions": "Q9-Q29"},
-    ]), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=16,
-        accent_color="#2563EB",
-        title="KPI Impact Simulator", subtitle="Mô phỏng Tác động KPI đến eNPS",
-        description="Dự báo mức tăng eNPS và số người giữ lại được khi cải thiện các trụ cột cụ thể, từ đó ước tính chi phí tiết kiệm được.",
-        formula="""enps_increase = improvement &times; weight &times; 100<br>
-new_enps = current_enps + enps_increase<br>
-retention_gain = (enps_increase / 10) &times; 0.05<br>
-people_saved = N &times; retention_gain<br>
-money_saved = people_saved &times; cost_per_hire""",
-        formula_note="<b>Trọng số theo nhóm:</b> Shipper: MEI 34%, Thu nhập 28%, Hỗ trợ sự cố 18%, App 12%, Văn hóa 8%. Tài xế: Điều phối 32%, An toàn 26%, Thu nhập 20%, Thiết bị 14%, Tinh thần 8%.",
-        questions="EI, eNPS, MEI và các trụ cột",
-        scale="eNPS pts, số người, VND",
-        thresholds=[
-            {"label": "ROI dương = Can thiệp có lợi", "weight": 100, "color": "#10B981", "desc": "Tiết kiệm chi phí tuyển dụng"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=17,
-        accent_color="#DC2626",
-        title="Micro Risk Simulator", subtitle="Trình Giả lập Rủi ro Nghỉ việc (Cá nhân)",
-        description="Ước tính xác suất nghỉ việc của một nhân viên cụ thể dựa trên các yếu tố cá nhân (thâm niên, thu nhập, MEI, v.v.).",
-        formula="""risk = base + tenure_penalty + salary_penalty + ... - mei_shield<br>
-(clamped to [min, max])""",
-        formula_note="<b>Shipper/Driver:</b> base(30) + tenure(0-25) + salary(0-20) + COD(0-15) - MEI(0-30), clamp [10, 95]. <b>Ops 2A/2B:</b> base(28) + tenure(0-20) + shift(0-18) + equip(0-15) - MEI(0-25), clamp [8, 95]. <b>Office 3A/3B:</b> base(22) + tenure(0-18) + workload(0-22) - recognition(0-20), clamp [5, 92].",
-        questions="MEI, thâm niên, thu nhập, ca làm, thiết bị",
-        scale="0-100% (xác suất)",
-        thresholds=[
-            {"label": "Thấp", "weight": 20, "color": "#10B981", "desc": "≤ 20%"},
-            {"label": "Trung bình", "weight": 30, "color": "#F59E0B", "desc": "21-50%"},
-            {"label": "Cao", "weight": 50, "color": "#DC2626", "desc": "> 50%"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=18,
-        accent_color="#CA8A04",
-        title="Macro Risk Simulator", subtitle="Giả lập Tác động Tổ chức (Vĩ mô)",
-        description="Dự báo tỷ lệ nghỉ việc toàn tổ chức khi thay đổi các yếu tố vĩ mô như lương thưởng, năng lực quản lý, và mức phạt.",
-        formula="""impact_salary = salary_change% &times; 0.35<br>
-impact_mei = mei_change% &times; 0.5<br>
-impact_cod = cod_reduction% &times; 0.08<br>
-new_risk = current_risk - (impact_salary + impact_mei + impact_cod)""",
-        formula_note="Baseline là tỷ lệ muốn nghỉ hiện tại (intent_pct_low). Kết quả được clamp trong khoảng [2%, 80%].",
-        questions="Turnover Intent (Q30), MEI, thu nhập",
-        scale="0-100% (tỷ lệ dự báo)",
-        thresholds=[
-            {"label": "Clamp: [2%, 80%]", "weight": 100, "color": "#94A3B8", "desc": "Giới hạn dự báo"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=19,
-        accent_color="#64748B",
-        title="Data Quality Flags", subtitle="Cờ Chất lượng Dữ liệu",
-        description="Phát hiện các phản hồi không hợp lệ: trả lời thẳng hàng (straightline) hoặc bỏ trống quá nhiều, đảm bảo độ tin cậy của phân tích.",
-        formula="""Straightline: SD(Q9..Q29) = 0 AND &ge; 10 câu hợp lệ<br>
-Missing: &gt; 80% câu Likert bị bỏ trống""",
-        formula_note="Straightline = tất cả câu trả lời giống nhau (có thể trả lời ngẫu nhiên). Missing = không trả lời phần lớn câu hỏi.",
-        questions="Q9-Q29 (tất cả câu Likert)",
-        scale="Boolean (Có/Không)",
-        thresholds=[
-            {"label": "Straightline", "weight": 50, "color": "#F59E0B", "desc": "Loại (2A, 2B, 3A) / Giữ (1A, 1B, 3B)"},
-            {"label": "Missing", "weight": 50, "color": "#DC2626", "desc": "Luôn loại"},
+            {"label": "Chênh lệch nhỏ", "weight": 50, "color": "#94A3B8", "desc": "< 0.5"},
+            {"label": "Lý do đáng kể", "weight": 25, "color": "#F59E0B", "desc": "0.5-1.0"},
+            {"label": "Nguyên nhân gốc (Báo động)", "weight": 25, "color": "#DC2626", "desc": "> 1.0"},
         ]
     ), unsafe_allow_html=True)
 
 
 def _render_nlp():
     st.markdown(_section_header(
-        "Chỉ số NLP & Phân tích Văn bản",
-        "Các chỉ số được trích xuất từ phản hồi mở (open-text) bằng kỹ thuật xử lý ngôn ngữ tự nhiên."
+        "Nhóm AI Text & Phân tích Ngôn ngữ tự nhiên",
+        "Sử dụng trí tuệ nhân tạo (NLP) để 'đọc' và hiểu các đoạn phản hồi văn bản mở."
     ), unsafe_allow_html=True)
 
     st.markdown(_quick_reference_table([
-        {"name": "Warning Signals", "formula": "Keyword + AI validation", "questions": "Q32-Q34"},
-        {"name": "Topic Distribution", "formula": "Mentions / Total × 100%", "questions": "Q32-Q34"},
-        {"name": "EVP Keywords", "formula": "Word frequency → 4 buckets", "questions": "Q32-Q34"},
+        {"name": "Warning Signals", "formula": "Keyword Detection + AI Validation", "questions": "Q32-Q34"},
+        {"name": "Topic Negative Pct", "formula": "Mentions (Tiêu cực) / Tổng Mentions × 100%", "questions": "Q32-Q34"},
     ]), unsafe_allow_html=True)
 
     st.markdown(_card(
-        number=20,
-        accent_color="#DC2626",
-        title="NLP Warning Signals", subtitle="Tín hiệu Cảnh báo từ Phản hồi Mở",
-        description="Phát hiện tự động các tín hiệu tiêu cực từ phản hồi văn bản mở, giúp nhận diện sớm các vấn đề nghiêm trọng.",
-        formula="Rule-based keyword detection + AI validation",
-        formula_note="<b>5 loại tín hiệu:</b> Ý định nghỉ việc, Kiệt sức, Bất công, Mất niềm tin, Xung đột QL. Sau khi phát hiện bằng keyword, AI được dùng để lọc false positive.",
-        questions="Q32, Q33, Q34 (phản hồi mở)",
-        scale="Số tín hiệu / Tổng phản hồi",
-        thresholds=[
-            {"label": "Mỗi tín hiệu được AI xác thực", "weight": 100, "color": "#3B82F6", "desc": "Giảm false positive"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=21,
-        accent_color="#7C3AED",
-        title="Topic Distribution with Sentiment", subtitle="Phân bố Chủ đề & Giọng điệu",
-        description="Phân loại phản hồi mở thành các chủ đề và đánh giá giọng điệu (tích cực/trung lập/tiêu cực) cho mỗi chủ đề.",
-        formula="Topic% = Số đề cập / Tổng phản hồi &times; 100",
-        formula_note="Mỗi chủ đề có phân bố: positive%, neutral%, negative%. Giúp hiểu vấn đề nào được quan tâm nhiều nhất và cảm xúc đi kèm.",
-        questions="Q32, Q33, Q34 (phản hồi mở)",
-        scale="% cho mỗi chủ đề",
-        thresholds=[
-            {"label": "Nổi bật", "weight": 20, "color": "#3B82F6", "desc": "> 20%"},
-            {"label": "Cần chú ý", "weight": 50, "color": "#DC2626", "desc": "Negative > 50%"},
-            {"label": "Bình thường", "weight": 30, "color": "#94A3B8", "desc": "Còn lại"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=22,
-        accent_color="#2563EB",
-        title="EVP Keyword Frequency", subtitle="Từ khóa EVP Nổi bật",
-        description="Đếm tần suất từ khóa trong phản hồi mở, phân nhóm theo 4 yếu tố EVP (Employer Value Proposition) để hiểu nhân viên quan tâm đến điều gì nhất.",
-        formula="Word frequency &rarr; bucketed into 4 EVP factors",
-        formula_note="<b>4 nhóm EVP:</b> Lương thưởng & Phụ cấp, Công việc & Môi trường, Quản lý & Hỗ trợ, Công nghệ & Quy trình. Tần suất cao = mối quan tâm lớn.",
-        questions="Q32, Q33, Q34 (phản hồi mở)",
-        scale="Số lần xuất hiện / Tổng phản hồi",
-        thresholds=[
-            {"label": "Top keywords trong mỗi nhóm EVP", "weight": 100, "color": "#9333EA", "desc": "4 buckets"},
-        ]
+        number=10,
+        accent_color="#06B6D4",
+        title="Warning Signals", subtitle="Tín hiệu Cảnh báo Nguy hiểm (AI)",
+        description="Thuật toán AI tự động quét hàng chục nghìn đoạn bình luận để tìm ra các dấu hiệu báo động đỏ như: đe dọa bạo lực, kiệt sức tột độ, mâu thuẫn nảy lửa với sếp, hoặc ý định gian lận.",
+        formula="Dò tìm Keyword + Dùng LLM/AI để lọc False Positive",
+        formula_note="Sau khi dò từ khóa (ví dụ: 'đánh sếp', 'tự tử', 'nghỉ việc'), AI sẽ đọc lại ngữ cảnh để xác định đây là nói đùa hay nguy cơ thật.",
+        questions="Phản hồi mở (Q32, Q33, Q34)",
+        scale="Số lượng tín hiệu báo động",
+        thresholds=[]
     ), unsafe_allow_html=True)
 
 
 def _render_hris():
     st.markdown(_section_header(
-        "Chỉ số HRIS & Thu nhập",
-        "Các chỉ số kết hợp dữ liệu khảo sát với dữ liệu HRIS (nhân sự) để tìm mối tương quan sâu hơn."
+        "Nhóm Nhân sự HRIS & Năng suất (Productivity)",
+        "Liên kết dữ liệu khảo sát với hành vi thực tế trên hệ thống nhân sự (Số đơn, KPIs, Nghỉ việc)."
     ), unsafe_allow_html=True)
 
     st.markdown(_quick_reference_table([
-        {"name": "Income × EI", "formula": "mean(EI) by income bracket", "questions": "EI + HRIS"},
-        {"name": "Penalty × EI", "formula": "mean(EI) by penalty bracket", "questions": "EI + HRIS"},
-        {"name": "Risk Heatmap", "formula": "Risk% = Count(Muốn nghỉ) / N × 100%", "questions": "Q30 + HRIS"},
-        {"name": "Warrior × EI", "formula": "mean(EI) by warrior class", "questions": "EI + HRIS"},
-        {"name": "Income Structure", "formula": "Mean of components", "questions": "HRIS"},
+        {"name": "Turnover Rate", "formula": "Số người nghỉ / Tổng Headcount", "questions": "Hệ thống HRIS"},
+        {"name": "Productivity Groupings", "formula": "Phân chia lượng đơn giao: Cao, TB, Thấp", "questions": "Hệ thống ODS"},
     ]), unsafe_allow_html=True)
 
     st.markdown(_card(
-        number=23,
-        accent_color="#16A34A",
-        title="Income x Engagement", subtitle="Tương quan Thu nhập & Gắn kết",
-        description="Phân tích mức độ gắn kết (EI) và eNPS theo từng nhóm thu nhập, giúp xác định thu nhập có phải yếu tố quyết định gắn kết hay không.",
-        formula="mean(EI) và eNPS theo nhóm thu nhập",
-        formula_note="<b>Nhóm thu nhập:</b> &lt;5tr, 5-7tr, 7-10tr, 10-15tr, &gt;15tr. Cho phép so sánh EI và eNPS giữa các nhóm.",
-        questions="EI, eNPS + HRIS (thu nhập)",
-        scale="EI: 0-100% | eNPS: -100 đến +100",
-        thresholds=[
-            {"label": "Chênh lệch EI > 15% = Đáng kể", "weight": 100, "color": "#F59E0B", "desc": "So sánh nhóm cao nhất vs thấp nhất"},
-        ]
+        number=11,
+        accent_color="#10B981",
+        title="Turnover & Productivity", subtitle="Tỷ lệ Nghỉ việc & Phân nhóm Năng suất",
+        description="Đối chiếu sự gắn kết (EI) với năng suất thực tế (số đơn giao/ngày) và hành vi nghỉ việc thực tế. Dashboard sẽ chỉ ra: liệu những người giao nhiều đơn nhất có đang muốn nghỉ việc nhiều nhất hay không.",
+        formula="Nhóm Năng suất Thấp (<30 đơn), TB (30-60), Cao (>60 đơn)",
+        formula_note="Dữ liệu này được kết nối trực tiếp từ Data Warehouse (NeonDB) để chứng minh mối quan hệ giữa Cảm xúc và Năng suất làm việc.",
+        questions="Dữ liệu HRIS + Khảo sát EES",
+        scale="Hiệu suất thực tế",
+        thresholds=[]
     ), unsafe_allow_html=True)
 
-    st.markdown(_card(
-        number=24,
-        accent_color="#DC2626",
-        title="Penalty x Engagement", subtitle="Tương quan Mức phạt & Gắn kết",
-        description="Phân tích tác động của mức phạt (phạt + truy thu COD) đến sự gắn kết, giúp đánh giá chính sách phạt có ảnh hưởng tiêu cực hay không.",
-        formula="mean(EI) theo nhóm mức phạt",
-        formula_note="<b>Nhóm phạt:</b> Không phạt, &lt;500K, 500K-1tr, 1-3tr, &gt;3tr. tong_phat = Phạt + Truy thu COD.",
-        questions="EI + HRIS (phạt, truy thu COD)",
-        scale="EI: 0-100%",
-        thresholds=[
-            {"label": "EI giảm > 10% = Tác động tiêu cực", "weight": 100, "color": "#DC2626", "desc": "Ở nhóm bị phạt nhiều"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=25,
-        accent_color="#CA8A04",
-        title="Turnover Risk Heatmap", subtitle="Bản đồ Rủi ro: Thu nhập x Mức phạt",
-        description="Heatmap 2 chiều thể hiện tỷ lệ muốn nghỉ việc theo từng kết hợp (nhóm thu nhập, nhóm phạt), giúp xác định nhóm nhân viên có rủi ro cao nhất.",
-        formula="Risk% = Count(Muốn nghỉ) / Tổng trong ô &times; 100%",
-        formula_note="Chỉ hiển thị các ô có N &ge; 10 để đảm bảo ý nghĩa thống kê. Kết hợp Q30 (ý định) + HRIS (thu nhập, phạt).",
-        questions="Q30 + HRIS (thu nhập, phạt)",
-        scale="0-100% cho mỗi ô",
-        thresholds=[
-            {"label": "An toàn", "weight": 15, "color": "#10B981", "desc": "< 15%"},
-            {"label": "Cần chú ý", "weight": 15, "color": "#F59E0B", "desc": "15-30%"},
-            {"label": "Nguy hiểm", "weight": 70, "color": "#DC2626", "desc": "> 30%"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=26,
-        accent_color="#9333EA",
-        title="Warrior Classification x Engagement", subtitle="Phân loại Chiến binh & Gắn kết",
-        description="Phân tích mức độ gắn kết theo phân loại chiến binh (từ HRIS), giúp hiểu nhóm chiến binh nào đang gắn kết tốt/yếu.",
-        formula="mean(EI) và mean(thu nhập) theo phân loại Chiến binh",
-        formula_note="Dựa trên trường 'Phân loại Chiến binh' trong HRIS. Cho phép so sánh EI và thu nhập trung bình giữa các nhóm.",
-        questions="EI + HRIS (Phân loại Chiến binh)",
-        scale="EI: 0-100%",
-        thresholds=[
-            {"label": "So sánh EI giữa các nhóm chiến binh", "weight": 100, "color": "#9333EA", "desc": "Phân tích tương quan"},
-        ]
-    ), unsafe_allow_html=True)
-
-    st.markdown(_card(
-        number=27,
-        accent_color="#059669",
-        title="Income Structure Breakdown", subtitle="Cơ cấu Thu nhập Trung bình",
-        description="Phân tích cơ cấu thu nhập trung bình theo từng thành phần, giúp hiểu tỷ trọng lương, thưởng, phụ cấp trong tổng thu nhập.",
-        formula="Mean của từng thành phần thu nhập",
-        formula_note="<b>Các thành phần:</b> Lương đơn hàng, Thưởng/Phạt GTC và LTC, Phụ cấp, Thưởng Doanh Thu. Hiển thị dưới dạng biểu đồ tròn %.",
-        questions="HRIS (cơ cấu thu nhập)",
-        scale="VND và %",
-        thresholds=[
-            {"label": "Phân tích cơ cấu, không phân loại", "weight": 100, "color": "#94A3B8", "desc": "Biểu đồ tròn %"},
-        ]
-    ), unsafe_allow_html=True)
