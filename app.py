@@ -134,7 +134,7 @@ if os.path.exists(APP_STATE_FILE):
 
 # --- AUTHENTICATION FLOW ---
 from utils.auth import get_google_auth_url, get_user_info
-from utils.authorization import get_authorized_user
+from utils.authorization import get_authorized_user, resolve_data_scope, apply_scope_filter
 
 # Load client secrets
 GOOGLE_CLIENT_ID     = st.secrets.get("GOOGLE_CLIENT_ID", "")
@@ -829,7 +829,7 @@ if announcement.get("active") and announcement.get("text"):
 
 # Import loaders and views
 from utils.data_loader import load_group, load_all_available
-from config.groups import get_available_groups
+from config.groups import get_available_groups, GROUP_REGISTRY
 from views import (
     overview_ees_2026,
     company_overview, hris_linkage,
@@ -1471,6 +1471,11 @@ def apply_global_filters(df):
 OVERVIEW_LABEL = "EES 2026 Overview"
 COMPANY_LABEL = "Tổng quan GHN"
 main_loading_slot = st.empty()
+page_loader = None
+
+# Phạm vi data của user hiện tại (theo Google Sheet phân quyền)
+user_scope = resolve_data_scope(st.session_state.get("user_authorization"))
+scope_restricted = not user_scope.get("unrestricted", True)
 
 # ── SIDEBAR ─────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -1501,9 +1506,12 @@ with st.sidebar:
     index_map[curr_idx] = (OVERVIEW_LABEL, None)
     curr_idx += 1
 
-    menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
-    index_map[curr_idx] = ("Độ tin cậy dữ liệu", None)
-    curr_idx += 1
+    # Trang "Độ tin cậy dữ liệu" hiển thị số liệu QC toàn công ty → chỉ cho user
+    # xem toàn quyền. User bị giới hạn phạm vi sẽ không thấy menu này.
+    if not scope_restricted:
+        menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
+        index_map[curr_idx] = ("Độ tin cậy dữ liệu", None)
+        curr_idx += 1
 
     menu_items.append(sac.MenuItem(COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
     index_map[curr_idx] = (COMPANY_LABEL, None)
@@ -1603,18 +1611,25 @@ with st.sidebar:
         st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
 
         # Load raw data (for building filter options)
-        loader = TerminalLoader(main_loading_slot, f"Đang tải dữ liệu nhóm {sel_group}")
+        _grp_label = GROUP_REGISTRY.get(sel_group, {}).get("short", sel_group)
+        page_loader = TerminalLoader(main_loading_slot, f"Đang tải dữ liệu nhóm {sel_group}")
         try:
-            loader.add(f"Đang tải dữ liệu khảo sát nhóm {sel_group}...")
+            page_loader.add(f"Đang tải dữ liệu khảo sát nhóm {sel_group} - {_grp_label}...")
             df_raw, n_before = load_group(sel_group)
-            loader.add(f"Đã tải dữ liệu khảo sát nhóm {sel_group} ({len(df_raw):,} mẫu hợp lệ).", "ok")
-            loader.add("Đang chuẩn bị bộ lọc phòng ban / section...")
-            loader.done()
-            loader.clear()
+            # Áp dụng phân quyền phạm vi (vd chỉ xem Section/Department được cấp)
+            df_raw, _ = apply_scope_filter(df_raw, st.session_state.get("user_authorization"))
+            page_loader.add(f"Đã tải dữ liệu khảo sát nhóm {sel_group} ({len(df_raw):,} mẫu trong phạm vi).", "ok")
+            page_loader.add("Đang chuẩn bị bộ lọc phòng ban / section...")
         except Exception as e:
             st.error(f"Không thể tải dữ liệu cho nhóm {sel_group}: {e}")
             import traceback
             st.code(traceback.format_exc())
+            st.stop()
+
+        # User bị giới hạn nhưng nhóm này không có dữ liệu thuộc phạm vi được cấp
+        if scope_restricted and (df_raw is None or df_raw.empty):
+            page_loader.clear()
+            st.info("Bạn không có dữ liệu thuộc phạm vi được cấp quyền trong nhóm khảo sát này.")
             st.stop()
 
         sel_tenure_sb = st.selectbox(
@@ -1713,8 +1728,17 @@ if is_overview:
         st.code(traceback.format_exc())
 
 elif is_data_trust:
+    if scope_restricted:
+        st.info("Trang Độ tin cậy dữ liệu chỉ dành cho tài khoản xem toàn công ty.")
+        st.stop()
     try:
-        view_i_data_trust.render()
+        loader = TerminalLoader(main_loading_slot, "Đang tải dữ liệu độ tin cậy")
+        loader.add("Đang tải dữ liệu EES 2026...")
+        summary_df = view_i_data_trust.compute_reliability_table(log_callback=loader.add)
+        loader.add("Đang dựng giao diện Thẩm định & Độ tin cậy dữ liệu...")
+        loader.done()
+        loader.clear()
+        view_i_data_trust.render(summary_df=summary_df)
     except Exception as e:
         st.error(f"Lỗi khi tải Độ tin cậy dữ liệu: {e}")
         import traceback
@@ -1733,12 +1757,26 @@ elif is_company:
         loader = TerminalLoader(main_loading_slot, "Đang tải dữ liệu toàn công ty")
         loader.add("Đang tải dữ liệu EES 2026...")
         all_data = load_all_available(log_callback=loader.add)
-        loader.add("Đang áp dụng bộ lọc thâm niên...")
-        filtered_all_data = {k: (apply_global_filters(v[0]), v[1]) for k, v in all_data.items()}
+        loader.add("Đang áp dụng phân quyền & bộ lọc thâm niên...")
+        _auth = st.session_state.get("user_authorization")
+        filtered_all_data = {}
+        for k, v in all_data.items():
+            _df0, _n_before0 = v
+            _df_scoped, _sinfo = apply_scope_filter(_df0, _auth)
+            # Giữ nguyên n_before (raw count) cho user toàn quyền; user bị giới hạn
+            # dùng số mẫu trong phạm vi để tỷ lệ phản hồi không bị sai lệch.
+            _n_b = _n_before0 if _sinfo["unrestricted"] else len(_df_scoped)
+            filtered_all_data[k] = (apply_global_filters(_df_scoped), _n_b)
+        # User bị giới hạn: bỏ các nhóm không có dữ liệu thuộc phạm vi
+        if scope_restricted:
+            filtered_all_data = {k: v for k, v in filtered_all_data.items() if not v[0].empty}
         loader.add("Đang tính toán KPI và dựng giao diện Tổng quan GHN...")
         loader.done()
         loader.clear()
-        company_overview.render(filtered_all_data, available)
+        if scope_restricted and not filtered_all_data:
+            st.info("Bạn không có dữ liệu thuộc phạm vi được cấp quyền.")
+        else:
+            company_overview.render(filtered_all_data, available)
     except Exception as e:
         st.error(f"Lỗi khi tải view Tổng quan: {e}")
         import traceback
@@ -1747,6 +1785,13 @@ elif is_company:
 else:
     cfg    = available[sel_group]
     n_resp = df_filtered.shape[0] if df_filtered is not None else 0
+
+    if page_loader is not None:
+        page_loader.add("Đang áp dụng bộ lọc thâm niên / phòng ban...")
+        _view_label = sel_nav or "phân tích nhóm"
+        page_loader.add(f"Đang tính toán KPI và dựng giao diện {_view_label}...")
+        page_loader.done()
+        page_loader.clear()
 
     st.markdown(f"""
     <div class="pg-header">

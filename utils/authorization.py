@@ -57,7 +57,7 @@ def load_authorization_table() -> pd.DataFrame:
     if missing:
         raise ValueError(f"Authorization sheet thiếu cột bắt buộc: {', '.join(sorted(missing))}")
 
-    for col in ["email", "status", "role", "department", "section", "survey_view", "full_name", "idnv", "job_title"]:
+    for col in ["email", "status", "role", "division", "department", "section", "survey_view", "full_name", "idnv", "job_title"]:
         if col not in df.columns:
             df[col] = ""
         df[col] = df[col].fillna("").map(_normalize_text)
@@ -87,6 +87,7 @@ def get_authorized_user(email: str) -> Optional[dict]:
         "full_name": first.get("full_name", ""),
         "job_title": first.get("job_title", ""),
         "role": first.get("role", "User") or "User",
+        "divisions": sorted({v for v in matched["division"].tolist() if v}),
         "departments": sorted({v for v in matched["department"].tolist() if v}),
         "sections": sorted({v for v in matched["section"].tolist() if v}),
         "survey_view": sorted({v for v in matched["survey_view_norm"].tolist() if v}) or ["ALL"],
@@ -96,3 +97,82 @@ def get_authorized_user(email: str) -> Optional[dict]:
 
 def is_authorized_email(email: str) -> bool:
     return get_authorized_user(email) is not None
+
+
+# ══════════════════════════════════════════════════════════════
+# DATA SCOPE — giới hạn data 1 user được xem theo cấp tổ chức
+# ══════════════════════════════════════════════════════════════
+def _norm_compare(value: str) -> str:
+    """Chuẩn hóa để so khớp tên đơn vị: bỏ hoa/thường + gộp khoảng trắng."""
+    return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+
+# survey_view (CẤP phân quyền) → (tên cột trong scope, tên cột data trong df)
+_SCOPE_LEVELS = {
+    "SECTION": ("sections", "section"),
+    "DEPARTMENT": ("departments", "department"),
+    "PHONG_BAN": ("departments", "department"),
+    "DIVISION": ("divisions", "division"),
+    "KHOI": ("divisions", "division"),
+}
+
+
+def resolve_data_scope(authorization: Optional[dict]) -> dict:
+    """Xác định phạm vi data 1 user được phép xem.
+
+    Trả về dict:
+        {'unrestricted': bool, 'level': str|None, 'column': str|None, 'values': list,
+         'misconfigured': bool}
+
+    - Admin hoặc survey_view rỗng/ALL  → unrestricted (xem hết).
+    - survey_view = SECTION/DEPARTMENT/DIVISION → giới hạn theo cột tương ứng.
+    - survey_view có cấp nhưng KHÔNG có giá trị đơn vị → misconfigured (fail-closed).
+    """
+    if not authorization:
+        return {"unrestricted": True, "level": None, "column": None, "values": [], "misconfigured": False}
+
+    role = str(authorization.get("role", "")).strip().upper()
+    if role == "ADMIN":
+        return {"unrestricted": True, "level": None, "column": None, "values": [], "misconfigured": False}
+
+    views = [str(v).strip().upper() for v in authorization.get("survey_view", []) if str(v).strip()]
+    if not views or "ALL" in views:
+        return {"unrestricted": True, "level": None, "column": None, "values": [], "misconfigured": False}
+
+    # Ưu tiên cấp HẸP nhất nếu khai báo nhiều cấp: Section > Department > Division
+    for level_key in ("SECTION", "DEPARTMENT", "PHONG_BAN", "DIVISION", "KHOI"):
+        if level_key in views:
+            scope_field, df_col = _SCOPE_LEVELS[level_key]
+            values = [v for v in authorization.get(scope_field, []) if str(v).strip()]
+            if values:
+                return {"unrestricted": False, "level": level_key, "column": df_col,
+                        "values": values, "misconfigured": False}
+            # Có cấp nhưng thiếu giá trị → fail-closed
+            return {"unrestricted": False, "level": level_key, "column": df_col,
+                    "values": [], "misconfigured": True}
+
+    # survey_view có giá trị lạ không nhận diện được → fail-closed cho an toàn
+    return {"unrestricted": False, "level": None, "column": None, "values": [], "misconfigured": True}
+
+
+def apply_scope_filter(df, authorization):
+    """Lọc df theo phạm vi của user. Trả về (df_đã_lọc, scope_dict).
+
+    - unrestricted        → trả về df nguyên vẹn.
+    - có scope hợp lệ      → chỉ giữ các dòng khớp column ∈ values (so khớp chuẩn hóa).
+    - misconfigured / cột không tồn tại trong df → trả về df rỗng (fail-closed).
+    """
+    scope = resolve_data_scope(authorization)
+    if scope["unrestricted"]:
+        return df, scope
+    if df is None:
+        return df, scope
+
+    col = scope["column"]
+    values = scope["values"]
+    if scope["misconfigured"] or not col or not values or col not in df.columns:
+        return df.iloc[0:0].copy(), scope
+
+    targets = {_norm_compare(v) for v in values}
+    mask = df[col].map(lambda x: _norm_compare(x) in targets)
+    return df[mask].copy(), scope

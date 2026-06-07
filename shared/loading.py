@@ -5,7 +5,7 @@ from time import strftime
 class TerminalLoader:
     """Lightweight Streamlit loading console."""
 
-    def __init__(self, slot, title="Đang tải dữ liệu EES 2026", max_lines=8):
+    def __init__(self, slot, title="Đang tải dữ liệu EES 2026", max_lines=14):
         self.slot = slot
         self.title = title
         self.max_lines = max_lines

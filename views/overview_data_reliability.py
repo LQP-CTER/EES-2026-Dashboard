@@ -59,7 +59,7 @@ def _compute_reliability_table():
                 'Contradiction': int(report.get('flags', {}).get('contradiction_n', 0)),
                 'NLP tiêu cực': int(nlp.get('negative_n', 0)),
                 'NLP cảnh báo': int(nlp.get('warning_signal_n', 0)),
-                'Ridge AUC': calibration.get('cv_auc') if calibration.get('cv_auc') is not None else float('nan'),
+                'AUC (Logistic)': calibration.get('cv_auc') if calibration.get('cv_auc') is not None else float('nan'),
                 'VIF cao': len(calibration.get('high_vif', {})) if calibration.get('enabled') else 0,
                 '0 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('0_evidence', 0)),
                 '1 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('1_evidence', 0)),
@@ -220,8 +220,15 @@ def render():
     """, unsafe_allow_html=True)
 
     # ── Load data summary ─────────────────────────────────────────────────
-    with st.spinner("Đang tính toán độ tin cậy cho 6 nhóm..."):
-        summary_df = _compute_reliability_table()
+    from shared.loading import TerminalLoader
+    from views.view_i_data_trust import compute_reliability_table
+
+    loader = TerminalLoader(st.empty(), "Đang tải dữ liệu độ tin cậy")
+    loader.add("Đang tải dữ liệu EES 2026...")
+    summary_df = compute_reliability_table(log_callback=loader.add)
+    loader.add("Đang dựng giao diện độ tin cậy dữ liệu...")
+    loader.done()
+    loader.clear()
 
     if summary_df.empty:
         st.error("Không tải được dữ liệu. Vui lòng thử lại sau.")
@@ -405,7 +412,7 @@ def render():
             'Contradiction': '{:,}',
             'NLP tiêu cực': '{:,}',
             'NLP cảnh báo': '{:,}',
-            'Ridge AUC': '{:.3f}',
+            'AUC (Logistic)': '{:.3f}',
             'VIF cao': '{:,}',
             '0 bằng chứng': '{:,}',
             '1 bằng chứng': '{:,}',

@@ -465,10 +465,23 @@ def load_group(group_id: str):
 
     _calibration_report = calibrate_pillar_weights(df_clean, group_id)
 
-    # EI
+    # EI — weighted sum của các trụ cột, CHUẨN HÓA LẠI trọng số theo từng dòng
+    # trên các trụ cột thực sự có điểm. Tránh EI bị NaN khi một người bỏ trống
+    # trọn một trụ cột (vd 1A/1B chỉ có 2 câu TC1), và tránh under-weight khi
+    # thiếu cột trụ cột.
     pillar_pcts = [f'{p}_pct' for p in PILLAR_WEIGHTS.keys()]
     weights = list(PILLAR_WEIGHTS.values())
-    df_clean['EI'] = sum(df_clean[p] * w for p, w in zip(pillar_pcts, weights) if p in df_clean.columns)
+    present = [(p, w) for p, w in zip(pillar_pcts, weights) if p in df_clean.columns]
+    if present:
+        pct_frame = pd.DataFrame({p: df_clean[p] for p, _ in present})
+        w_series = pd.Series({p: w for p, w in present})
+        valid_mask = pct_frame.notna()
+        eff_w = valid_mask.mul(w_series, axis=1)
+        w_sum = eff_w.sum(axis=1)
+        weighted = (pct_frame.fillna(0.0) * eff_w).sum(axis=1)
+        df_clean['EI'] = np.where(w_sum > 0, weighted / w_sum, np.nan)
+    else:
+        df_clean['EI'] = np.nan
     df_clean['EI_class'] = df_clean['EI'].apply(classify_ei)
 
     # MEI — Manager Effectiveness Index (% câu TC2 được đánh ≥4)
@@ -713,16 +726,19 @@ def compute_kpis(df):
     intent_pct_high = weighted_pct(intent_col >= 4, intent_valid)
     
     if 'burnout_proxy' in df.columns:
-        burnout_pct = weighted_pct(df['burnout_proxy'])
+        # Mẫu số = người THỰC SỰ có điểm burnout (nhất quán với eNPS/intent),
+        # không tính người thiếu dữ liệu áp lực/khối lượng vào mẫu số.
+        burnout_valid = df['burnout_score'].notna() if 'burnout_score' in df.columns else df['burnout_proxy'].notna()
+        burnout_pct = weighted_pct(df['burnout_proxy'], burnout_valid)
     else:
         burnout_pct = weighted_pct(df.get('burnout_risk', pd.Series(0, index=df.index)) > 0)
 
-    q22_col = df.get('stay_intention', pd.Series(dtype=float))
-    q22_valid = q22_col.notna()
-    stay_score_avg = round(weighted_avg(q22_col), 2)
-    stay_flight_pct = round(weighted_pct(q22_col <= 2, q22_valid), 1)
-    stay_atrisk_pct = round(weighted_pct(q22_col == 3, q22_valid), 1)
-    stay_stable_pct = round(weighted_pct(q22_col >= 4, q22_valid), 1)
+    stay_col = df.get('stay_intention', pd.Series(dtype=float))
+    stay_valid = stay_col.notna()
+    stay_score_avg = round(weighted_avg(stay_col), 2)
+    stay_flight_pct = round(weighted_pct(stay_col <= 2, stay_valid), 1)
+    stay_atrisk_pct = round(weighted_pct(stay_col == 3, stay_valid), 1)
+    stay_stable_pct = round(weighted_pct(stay_col >= 4, stay_valid), 1)
 
     silence_rate = round(weighted_pct(df['is_silent']), 1) if 'is_silent' in df.columns else 0
     jsi_avg = round(weighted_avg(df['JSI']), 1) if 'JSI' in df.columns else 0

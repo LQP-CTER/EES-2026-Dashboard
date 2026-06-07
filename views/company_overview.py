@@ -37,7 +37,7 @@ def render(all_data, available_groups):
 
     # total_n_before = raw submissions (tham gia khảo sát)
     # total_n        = sau lọc memo (mẫu phân tích hợp lệ)
-    total_participants = total_n_before + 1 if total_n_before == 20004 else total_n_before  # dùng raw count cho tỷ lệ tham gia
+    total_participants = total_n_before  # raw count cho tỷ lệ tham gia
     total_cleaned = total_n              # mẫu sau lọc dùng cho phân tích
     total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 0
     cleaned_rr = round((total_cleaned / total_headcount) * 100, 1) if total_headcount > 0 else 0

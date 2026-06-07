@@ -60,54 +60,70 @@ def _metric_tile(label: str, value: str, note: str, accent: str, bg: str) -> str
     </div>
     """
 
-@st.cache_data(show_spinner=False, ttl=3600)
-def _compute_reliability_table():
+
+_RELIABILITY_GROUPS = [
+    ('1A', 'Shipper',       12955),
+    ('1B', 'Tài xế',         801),
+    ('2A', 'NV Kho',         4892),
+    ('2B', 'QL Tuyến đầu',   425),
+    ('3A', 'NV Văn phòng',   917),
+    ('3B', 'Manager HO',     109),
+]
+
+
+def _reliability_row(gid, label, df, n_raw):
+    report = df.attrs.get('memo_report', {})
+    nlp = report.get('nlp', {})
+    calibration = df.attrs.get('calibration_report', {})
+    return {
+        'Nhóm': f'{gid} · {label}',
+        'Mẫu thô (Supabase)': n_raw,
+        'Sau Dedup': int(report.get('n_after_dedup', n_raw)),
+        'Maha flag': int(report.get('flags', {}).get('maha_flag_n', 0)),
+        'Contradiction': int(report.get('flags', {}).get('contradiction_n', 0)),
+        'NLP tiêu cực': int(nlp.get('negative_n', 0)),
+        'NLP cảnh báo': int(nlp.get('warning_signal_n', 0)),
+        'AUC (Logistic)': calibration.get('cv_auc') if calibration.get('cv_auc') is not None else float('nan'),
+        'VIF cao': len(calibration.get('high_vif', {})) if calibration.get('enabled') else 0,
+        '0 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('0_evidence', 0)),
+        '1 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('1_evidence', 0)),
+        '2 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('2_evidence', 0)),
+        'KEEP': int(report.get('tier_counts', {}).get('KEEP', 0)),
+        'DOWNWEIGHT': int(report.get('tier_counts', {}).get('DOWNWEIGHT', 0)),
+        'DROP': int(report.get('tier_counts', {}).get('DROP', 0)),
+        'n hiệu dụng': float(report.get('n_effective', 0)),
+        '% giữ': float(report.get('effective_pct', 0)),
+    }
+
+
+def compute_reliability_table(log_callback=None):
+    """Load and summarize reliability metrics for all 6 survey groups."""
     from utils.data_loader import load_group
 
-    GROUPS = [
-        ('1A', 'Shipper',       12955),
-        ('1B', 'Tài xế',         801),
-        ('2A', 'NV Kho',         4892),
-        ('2B', 'QL Tuyến đầu',   425),
-        ('3A', 'NV Văn phòng',   917),
-        ('3B', 'Manager HO',     109),
-    ]
-
     rows = []
-    for gid, label, raw_expected in GROUPS:
+    for gid, label, _raw_expected in _RELIABILITY_GROUPS:
         try:
+            if log_callback:
+                log_callback(f"Đang tải dữ liệu khảo sát nhóm {gid} - {label}...")
             df, n_raw = load_group(gid)
             if df is None or df.empty:
+                if log_callback:
+                    log_callback(f"Nhóm {gid} không có dữ liệu.")
                 continue
-            report = df.attrs.get('memo_report', {})
-            nlp = report.get('nlp', {})
-            calibration = df.attrs.get('calibration_report', {})
-            rows.append({
-                'Nhóm': f'{gid} · {label}',
-                'Mẫu thô (Supabase)': n_raw,
-                'Sau Dedup': int(report.get('n_after_dedup', n_raw)),
-                'Maha flag': int(report.get('flags', {}).get('maha_flag_n', 0)),
-                'Contradiction': int(report.get('flags', {}).get('contradiction_n', 0)),
-                'NLP tiêu cực': int(nlp.get('negative_n', 0)),
-                'NLP cảnh báo': int(nlp.get('warning_signal_n', 0)),
-                'Ridge AUC': calibration.get('cv_auc') if calibration.get('cv_auc') is not None else float('nan'),
-                'VIF cao': len(calibration.get('high_vif', {})) if calibration.get('enabled') else 0,
-                '0 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('0_evidence', 0)),
-                '1 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('1_evidence', 0)),
-                '2 bằng chứng': int(report.get('flags', {}).get('corroboration_dist', {}).get('2_evidence', 0)),
-                'KEEP': int(report.get('tier_counts', {}).get('KEEP', 0)),
-                'DOWNWEIGHT': int(report.get('tier_counts', {}).get('DOWNWEIGHT', 0)),
-                'DROP': int(report.get('tier_counts', {}).get('DROP', 0)),
-                'n hiệu dụng': float(report.get('n_effective', 0)),
-                '% giữ': float(report.get('effective_pct', 0)),
-            })
+            rows.append(_reliability_row(gid, label, df, n_raw))
+            if log_callback:
+                log_callback(f"Đã tải dữ liệu khảo sát nhóm {gid} ({len(df):,} mẫu hợp lệ).", "ok")
         except Exception as e:
             st.warning(f"Không tải được nhóm {gid}: {e}")
+            if log_callback:
+                log_callback(f"Không tải được nhóm {gid}: {e}")
             continue
+    if log_callback:
+        log_callback("Đang tổng hợp bảng độ tin cậy...")
     return pd.DataFrame(rows)
 
 
-def render():
+def render(summary_df=None):
     st.markdown("""
     <style>
     .dt-shell {
@@ -288,9 +304,8 @@ def render():
     </style>
     """, unsafe_allow_html=True)
 
-    # Load data first so the hero can summarize the actual reliability pipeline
-    with st.spinner("Đang tính toán độ tin cậy cho 6 nhóm..."):
-        summary_df = _compute_reliability_table()
+    if summary_df is None:
+        summary_df = compute_reliability_table()
 
     if summary_df.empty:
         st.error("Không tải được dữ liệu. Vui lòng thử lại sau.")
@@ -489,17 +504,17 @@ def render():
 
         advanced_cols = [
             'Nhóm', 'Maha flag', 'NLP tiêu cực', 'NLP cảnh báo',
-            'Ridge AUC', 'VIF cao', 'KEEP', 'DOWNWEIGHT', 'DROP', 'n hiệu dụng'
+            'AUC (Logistic)', 'VIF cao', 'KEEP', 'DOWNWEIGHT', 'DROP', 'n hiệu dụng'
         ]
         live_cols = [c for c in advanced_cols if c in summary_df.columns]
         if live_cols:
-            st.markdown(_sec("Advanced validation engine", "Mahalanobis, NLP và Ridge/VIF được tính từ dữ liệu đang load trong phiên hiện tại."), unsafe_allow_html=True)
+            st.markdown(_sec("Advanced validation engine", "Mahalanobis, NLP và Logistic/VIF được tính từ dữ liệu đang load trong phiên hiện tại."), unsafe_allow_html=True)
             st.dataframe(
                 summary_df[live_cols].style.format({
                     'Maha flag': '{:,}',
                     'NLP tiêu cực': '{:,}',
                     'NLP cảnh báo': '{:,}',
-                    'Ridge AUC': '{:.3f}',
+                    'AUC (Logistic)': '{:.3f}',
                     'VIF cao': '{:,}',
                     'KEEP': '{:,}',
                     'DOWNWEIGHT': '{:,}',
