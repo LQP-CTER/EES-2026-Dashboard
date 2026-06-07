@@ -199,6 +199,51 @@ def _cleanup_expired_sessions(sessions: dict) -> dict:
             cleaned[token] = data
     return cleaned
 
+
+ACCESS_LOGS_FILE = os.path.join("config", "access_logs.csv")
+ACCESS_LOGS_MAX_ROWS = 5000   # Tự trim nếu vượt ngưỡng này
+ACCESS_LOGS_KEEP_ROWS = 3000  # Giữ lại bao nhiêu dòng sau khi trim
+
+def log_access(email: str, name: str, role: str, method: str = "google"):
+    """Ghi nhận 1 lượt đăng nhập thành công vào file CSV.
+    Tự động trim nếu file quá lớn."""
+    import csv
+    try:
+        os.makedirs(os.path.dirname(ACCESS_LOGS_FILE), exist_ok=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        row = [timestamp, email, name, role, method]
+        file_exists = os.path.exists(ACCESS_LOGS_FILE)
+        with open(ACCESS_LOGS_FILE, "a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(["timestamp", "email", "name", "role", "login_method"])
+            writer.writerow(row)
+        # Auto-trim nếu quá nhiều dòng
+        _trim_access_logs()
+    except Exception:
+        pass
+
+
+def _trim_access_logs():
+    """Nếu file log quá ACCESS_LOGS_MAX_ROWS dòng, chỉ giữ ACCESS_LOGS_KEEP_ROWS mới nhất."""
+    import csv
+    try:
+        if not os.path.exists(ACCESS_LOGS_FILE):
+            return
+        with open(ACCESS_LOGS_FILE, "r", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+        if len(rows) <= ACCESS_LOGS_MAX_ROWS + 1:  # +1 for header
+            return
+        header = rows[0]
+        data_rows = rows[1:]
+        kept = data_rows[-ACCESS_LOGS_KEEP_ROWS:]  # giữ mới nhất
+        with open(ACCESS_LOGS_FILE, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(kept)
+    except Exception:
+        pass
+
 def is_streamlit_session_active(session_id: str) -> bool:
     if not session_id:
         return False
@@ -574,6 +619,8 @@ animation: pulse-dot 2s ease-in-out infinite;
                 st.session_state.user_picture = picture
                 st.session_state.current_token = secure_token
                 st.session_state.user_authorization = authorization
+                _role = authorization.get("role", "User") if isinstance(authorization, dict) else "User"
+                log_access(email, name, _role, method="access_code")
                 _set_remember_cookie(secure_token)
                 st.query_params.clear()
                 st.query_params["s"] = secure_token
@@ -671,6 +718,8 @@ if not is_admin:
                 st.session_state.user_picture = picture
                 st.session_state.current_token = secure_token
                 st.session_state.user_authorization = authorization
+                _role = authorization.get("role", "User") if isinstance(authorization, dict) else "User"
+                log_access(email, name, _role, method="google")
                 _set_remember_cookie(secure_token)
                 
                 st.query_params.clear()
