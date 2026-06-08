@@ -460,11 +460,12 @@ def compute_kpis(df):
     n_rows = len(df)
     if n_rows == 0:
         return {'n': 0, 'effective_n': 0, 'ei_mean': 0, 'enps_score': 0, 'promoters': 0,
-                'passives': 0, 'detractors': 0, 'mei_avg': 0,
+                'passives': 0, 'detractors': 0, 'mei_avg': 0, 'mei_mean': 0,
                 'intent_pct_low': 0, 'burnout_pct': 0,
-                'stay_score_avg': 0, 'stay_flight_pct': 0,
-                'stay_atrisk_pct': 0, 'stay_stable_pct': 0,
-                'silence_rate': 0, 'jsi_avg': 0, 'ews_red_pct': 0,
+                'stay_score_avg': 0, 'stay_intent_mean': 0,
+                'stay_flight_pct': 0, 'stay_atrisk_pct': 0, 'stay_stable_pct': 0,
+                'silence_rate': 0, 'straight_line_rate': 0,
+                'flight_risk_pct': 0, 'jsi_avg': 0, 'ews_red_pct': 0,
                 'quadrant': {}, 'contradiction_pct': 0}
 
     w = df.get('CompanyRollup_Weight', df.get('effective_weight', pd.Series(1.0, index=df.index)))
@@ -514,7 +515,12 @@ def compute_kpis(df):
     stay_atrisk_pct = round(weighted_pct(stay_col == 3, stay_valid), 1)
     stay_stable_pct = round(weighted_pct(stay_col >= 4, stay_valid), 1)
 
-    silence_rate = round(weighted_pct(df['is_silent']), 1) if 'is_silent' in df.columns else 0
+    # Silence Rate = (flag_straightline OR is_silent) — khớp với dinh nghia bao cao v13
+    _sl = df.get('flag_straightline', pd.Series(False, index=df.index)).fillna(False).astype(bool)
+    _si = df.get('is_silent', pd.Series(False, index=df.index)).fillna(False).astype(bool)
+    silence_combined = _sl | _si
+    silence_rate = round(weighted_pct(silence_combined), 1)
+    straight_line_rate = round(weighted_pct(_sl), 1)
     jsi_avg = round(weighted_avg(df['JSI']), 1) if 'JSI' in df.columns else 0
 
     ews_col = df.get('EWS')
@@ -528,6 +534,13 @@ def compute_kpis(df):
         for label in ['Champions', 'Trapped Loyalists', 'Confused Leavers', 'Flight Risk']:
             quad_counts[label] = round(weighted_pct(quad == label, quad.notna()), 1)
 
+    # Flight Risk % — dinh nghia bao cao v13: EI < 70 AND intent <= 2
+    _ei_col = pd.to_numeric(df.get('EI', pd.Series(dtype=float)), errors='coerce')
+    _intent_col = pd.to_numeric(df.get('intent', pd.Series(dtype=float)), errors='coerce')
+    _fr_valid = _ei_col.notna() & _intent_col.notna()
+    _fr_mask = (_ei_col < 70) & (_intent_col <= 2)
+    flight_risk_pct = round(weighted_pct(_fr_mask, _fr_valid), 1)
+
     contradiction_pct = round(weighted_pct(df.get('contradiction_flag', pd.Series(False, index=df.index))), 1)
 
     return {
@@ -536,14 +549,18 @@ def compute_kpis(df):
         'enps_score': round(enps_score, 0),
         'promoters': int(promoters), 'passives': int(passives), 'detractors': int(detractors),
         'mei_avg': round(mei_avg, 1),
+        'mei_mean': round(mei_avg, 1),
         'intent_pct_low': round(intent_pct, 1),
         'intent_pct_high': round(intent_pct_high, 1),
         'burnout_pct': round(burnout_pct, 1),
         'stay_score_avg': stay_score_avg,
+        'stay_intent_mean': stay_score_avg,
         'stay_flight_pct': stay_flight_pct,
         'stay_atrisk_pct': stay_atrisk_pct,
         'stay_stable_pct': stay_stable_pct,
         'silence_rate': silence_rate,
+        'straight_line_rate': straight_line_rate,
+        'flight_risk_pct': flight_risk_pct,
         'jsi_avg': jsi_avg,
         'ews_red_pct': ews_red_pct,
         'quadrant': quad_counts,
