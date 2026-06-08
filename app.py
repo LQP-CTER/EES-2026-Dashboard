@@ -276,7 +276,6 @@ def _get_authorization(email: str) -> Optional[dict]:
             "Không đọc được Google Sheet phân quyền.\n\n"
             f"Chi tiết lỗi: `{exc}`"
         )
-        _render_login_page()
         st.stop()
 
 
@@ -286,11 +285,17 @@ def _clear_user_session():
 
 
 def _render_authorization_denied(email: str):
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        header[data-testid="stHeader"] { display: none !important; }
+    </style>
+    """, unsafe_allow_html=True)
     st.error(
         f"Email **{email}** chưa được cấp quyền truy cập dashboard.\n\n"
         "Vui lòng kiểm tra tab `Authorization` trong Google Sheet phân quyền và đảm bảo email có `status = ACTIVE`."
     )
-    _render_login_page()
+    st.link_button("Quay lại trang đăng nhập", "/", use_container_width=False)
     st.stop()
 
 def _render_login_page():
