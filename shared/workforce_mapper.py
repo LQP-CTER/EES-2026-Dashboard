@@ -48,7 +48,7 @@ def _find_col(df: pd.DataFrame, *keywords) -> str | None:
 # ══════════════════════════════════════════════════════════════
 # LOAD WORKFORCE + MAPPING
 # ══════════════════════════════════════════════════════════════
-@st.cache_data(ttl=3600, show_spinner="Đang tải Workforce & Mapping…")
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_workforce_and_mapping() -> tuple[pd.DataFrame, dict, dict]:
     import time
     export_url = f"https://docs.google.com/spreadsheets/d/{WF_SHEET_ID}/export?format=xlsx"
