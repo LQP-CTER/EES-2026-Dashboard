@@ -42,7 +42,7 @@ def _info_box(body: str) -> str:
     </div>"""
 
 
-def _metric_tile(label: str, value: str, note: str, accent: str, bg: str) -> str:
+def _metric_tile(label: str, value: str, note: str, accent: str, bg: str, val_size: str = "clamp(1.7rem, 2vw, 2.25rem)") -> str:
     return f"""
     <div style="background:{bg};border:1px solid {accent}33;border-radius:18px;
                 padding:18px 18px 20px;box-shadow:0 16px 30px rgba(10,31,68,.08);
@@ -51,7 +51,7 @@ def _metric_tile(label: str, value: str, note: str, accent: str, bg: str) -> str
         <div style="font-size:.68rem;font-weight:800;color:{accent};text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">
             {label}
         </div>
-        <div style="font-size:clamp(1.7rem, 2vw, 2.25rem);font-weight:900;color:#0A1F44;line-height:.95;letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap;">
+        <div style="font-size:{val_size};font-weight:900;color:#0A1F44;line-height:.95;letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap;">
             {value}
         </div>
         <div style="font-size:.78rem;color:#64748B;line-height:1.45;margin-top:8px;">
@@ -350,7 +350,7 @@ def render(summary_df=None):
         {_metric_tile("Mẫu thô", f"{raw_total:,}", "6 nhóm khảo sát từ Supabase", "#0A1F44", "#F8FAFC")}
         {_metric_tile("Sau Dedup", f"{dedup_total:,}", "đã khử trùng lặp trước khi gán trọng số", "#1D4ED8", "#EFF6FF")}
         {_metric_tile("n hiệu dụng", f"{eff_total:,.1f}", f"xấp xỉ {pct_keep}% so với mẫu thô", "#10B981", "#F0FDF4")}
-        {_metric_tile("Phân tầng", f"{keep_total:,} / {down_total:,} / {drop_total:,}", "KEEP / DOWNWEIGHT / DROP", "#7C3AED", "#F5F3FF")}
+        {_metric_tile("Phân tầng", f"{keep_total:,} / {down_total:,} / {drop_total:,}", "KEEP / DOWNWEIGHT / DROP", "#7C3AED", "#F5F3FF", val_size="clamp(1.3rem, 1.5vw, 1.6rem)")}
     </div>
     """, unsafe_allow_html=True)
 
