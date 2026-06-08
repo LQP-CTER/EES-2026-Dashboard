@@ -70,6 +70,96 @@ _RELIABILITY_GROUPS = [
     ('3B', 'Manager HO',     109),
 ]
 
+DEEPDIVE_QUALITY_TOTALS = {
+    "headcount": 21353,
+    "raw": 20099,
+    "dropped": 878,
+    "cleaned": 19221,
+    "straightline_weighted": 8757,
+    "effective_base": 16435,
+}
+
+DEEPDIVE_GROUP_BASE = [
+    {
+        "Nhóm": "1A · Nhân viên giao nhận",
+        "Raw submissions": 12955,
+        "Dropped": 693,
+        "Cleaned base": 12262,
+        "EI": 73.5,
+        "eNPS": 31.8,
+        "Stay": 4.01,
+        "Leave %": 5.3,
+        "Silence %": 58.8,
+        "MEI": 81.7,
+        "Flight Risk %": 5.5,
+    },
+    {
+        "Nhóm": "1B · Tài xế",
+        "Raw submissions": 801,
+        "Dropped": 17,
+        "Cleaned base": 784,
+        "EI": 75.9,
+        "eNPS": 47.8,
+        "Stay": None,
+        "Leave %": 2.1,
+        "Silence %": 61.7,
+        "MEI": None,
+        "Flight Risk %": None,
+    },
+    {
+        "Nhóm": "2A · Nhân viên kho",
+        "Raw submissions": 4892,
+        "Dropped": 73,
+        "Cleaned base": 4819,
+        "EI": 72.4,
+        "eNPS": 28.5,
+        "Stay": None,
+        "Leave %": 3.4,
+        "Silence %": 10.4,
+        "MEI": 78.8,
+        "Flight Risk %": None,
+    },
+    {
+        "Nhóm": "2B · Quản lý tuyến đầu",
+        "Raw submissions": 425,
+        "Dropped": 0,
+        "Cleaned base": 425,
+        "EI": 78.9,
+        "eNPS": 59.6,
+        "Stay": 4.36,
+        "Leave %": 2.7,
+        "Silence %": 4.9,
+        "MEI": 89.1,
+        "Flight Risk %": None,
+    },
+    {
+        "Nhóm": "3A · Nhân viên văn phòng",
+        "Raw submissions": 917,
+        "Dropped": 95,
+        "Cleaned base": 822,
+        "EI": 71.5,
+        "eNPS": 16.3,
+        "Stay": 4.01,
+        "Leave %": 4.0,
+        "Silence %": 6.2,
+        "MEI": 81.8,
+        "Flight Risk %": None,
+    },
+    {
+        "Nhóm": "3B · Manager HO",
+        "Raw submissions": 109,
+        "Dropped": 0,
+        "Cleaned base": 109,
+        "EI": 73.6,
+        "eNPS": 32.7,
+        "Stay": None,
+        "Leave %": 0.9,
+        "Silence %": 9.2,
+        "MEI": None,
+        "Flight Risk %": None,
+    },
+]
+
 
 def _reliability_row(gid, label, df, n_raw):
     report = df.attrs.get('memo_report', {})
@@ -260,7 +350,7 @@ def render(summary_df=None):
     }
     .dt-metrics {
         display:grid;
-        grid-template-columns:repeat(4,minmax(0,1fr));
+        grid-template-columns:repeat(5,minmax(0,1fr));
         gap:16px;
         margin-top:18px;
     }
@@ -307,18 +397,19 @@ def render(summary_df=None):
     if summary_df is None:
         summary_df = compute_reliability_table()
 
-    if summary_df.empty:
-        st.error("Không tải được dữ liệu. Vui lòng thử lại sau.")
-        return
+    runtime_available = summary_df is not None and not summary_df.empty
 
-    raw_total   = int(summary_df['Mẫu thô (Supabase)'].sum())
-    dedup_total = int(summary_df['Sau Dedup'].sum())
-    
-    eff_total   = float(summary_df['n hiệu dụng'].sum())
-    keep_total  = int(summary_df['KEEP'].sum())
-    down_total  = int(summary_df['DOWNWEIGHT'].sum())
-    drop_total  = int(summary_df['DROP'].sum())
-    pct_keep    = round(eff_total / max(raw_total, 1) * 100, 1)
+    totals = DEEPDIVE_QUALITY_TOTALS
+    headcount_total = totals["headcount"]
+    raw_total = totals["raw"]
+    drop_total = totals["dropped"]
+    cleaned_total = totals["cleaned"]
+    straightline_total = totals["straightline_weighted"]
+    eff_total = totals["effective_base"]
+    participation_pct = raw_total / max(headcount_total, 1) * 100
+    drop_pct = drop_total / max(raw_total, 1) * 100
+    straightline_pct = straightline_total / max(cleaned_total, 1) * 100
+    effective_pct = eff_total / max(cleaned_total, 1) * 100
 
     st.markdown(f"""
     <div class="dt-shell">
@@ -330,15 +421,15 @@ def render(summary_df=None):
             </div>
             <div class="dt-hero-panel">
                 <div class="dt-hero-panel-inner">
-                    <span class="dt-hero-label">Data Quality Engine</span>
+                    <span class="dt-hero-label">DeepDive v13 · Bảng chất lượng dữ liệu</span>
                     <div>
-                        <div class="dt-hero-score">0.3 - 1.0</div>
-                        <div class="dt-hero-mini">Thang trọng số tin cậy áp dụng cho từng phản hồi trước khi tính các chỉ số tổng hợp.</div>
+                        <div class="dt-hero-score">19,221</div>
+                        <div class="dt-hero-mini">Mẫu phân tích sau làm sạch, lấy theo bảng dữ liệu chính trong EES 2026 DeepDive v13 Final.</div>
                     </div>
                     <div class="dt-hero-pills">
-                        <span class="dt-pill">Straight-lining</span>
-                        <span class="dt-pill">Inconsistency</span>
-                        <span class="dt-pill">Open-ended evidence</span>
+                        <span class="dt-pill">Phản hồi thô 20,099</span>
+                        <span class="dt-pill">Bị loại 878</span>
+                        <span class="dt-pill">n hiệu dụng 16,435</span>
                     </div>
                 </div>
             </div>
@@ -348,21 +439,21 @@ def render(summary_df=None):
 
     st.markdown(f"""
     <div class="dt-metrics">
-        {_metric_tile("Mẫu thô", f"{raw_total:,}", "6 nhóm khảo sát từ Supabase", "#0A1F44", "#F8FAFC")}
-        {_metric_tile("Sau Dedup", f"{dedup_total:,}", "đã khử trùng lặp trước khi gán trọng số", "#1D4ED8", "#EFF6FF")}
-        {_metric_tile("n hiệu dụng", f"{eff_total:,.1f}", f"xấp xỉ {pct_keep}% so với mẫu thô", "#10B981", "#F0FDF4")}
-        {_metric_tile("Phân tầng", f"{keep_total:,} / {down_total:,} / {drop_total:,}", "KEEP / DOWNWEIGHT / DROP", "#7C3AED", "#F5F3FF", val_size="clamp(1.3rem, 1.5vw, 1.6rem)")}
+        {_metric_tile("HRIS base", f"{headcount_total:,}", "Tổng nhân sự trong bảng DeepDive v13", "#0A1F44", "#F8FAFC")}
+        {_metric_tile("Phản hồi thô", f"{raw_total:,}", f"{participation_pct:.1f}% / HRIS base", "#1D4ED8", "#EFF6FF")}
+        {_metric_tile("Mẫu phân tích", f"{cleaned_total:,}", f"loại {drop_total:,} phản hồi ({drop_pct:.1f}%)", "#10B981", "#F0FDF4")}
+        {_metric_tile("Straight-line", f"{straightline_total:,}", f"{straightline_pct:.1f}% / cleaned base", "#F97316", "#FFF7ED")}
+        {_metric_tile("n hiệu dụng", f"{eff_total:,}", f"{effective_pct:.1f}% / cleaned base", "#7C3AED", "#F5F3FF")}
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="dt-card" style="margin:18px 0 26px;">
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin:0">
-            Trước khi diễn giải bất kỳ con số nào, dữ liệu được thẩm định độ tin cậy.
-            Cách tiếp cận: <strong>không xóa phản hồi theo một đầu hiệu đơn lẻ</strong>, mà gán nhiều
-            cơ chế chất lượng rồi gán <em>trọng số tin cậy liên tục</em> cho từng phản hồi.
-            Phản hồi bị loại bỏ hoàn toàn chỉ khi đồng thời trả lời thẳng hàng một màu
-            <strong>VÀ</strong> không để lại ý kiến mở nào — đúng kiểu phản hồi không có thông tin.
+            Các chỉ số chính trong trang này được cố định theo bảng dữ liệu của
+            <strong>EES_2026_DeepDive_v13_Final.pdf</strong>: HRIS base 21,353, phản hồi thô
+            20,099, mẫu phân tích sau làm sạch 19,221, straight-line weighted 8,757 và
+            n hiệu dụng 16,435. Bảng runtime bên dưới chỉ dùng để đối chiếu kỹ thuật khi cần.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -383,21 +474,21 @@ def render(summary_df=None):
 
         st.markdown("""
         <p style="font-size:0.88rem;color:#475569;line-height:1.75">
-            Tỷ lệ tham gia toàn công ty đạt <strong>94.2%</strong> — rất cao so với chuẩn ngành
-            (logistics thường 60–75%). Nhóm Shipper (1A) đạt <strong>93.4%</strong> với hơn 12.900
-            phản hồi, tức gần như toàn bộ lực lượng. Điều này bác bỏ giả định rằng 1A chỉ là
-            mẫu nhỏ: thực tế đây là một cuộc tổng điều tra (census), nên biên sai số gần như
-            bằng 0 và kết quả 1A có thể coi là tiếng nói toàn thể, không phải ước lượng.
+            Theo bảng dữ liệu trong DeepDive v13, tỷ lệ tham gia toàn công ty đạt
+            <strong>94.1%</strong> với <strong>20,099</strong> phản hồi trên nền HRIS
+            <strong>21,353</strong> nhân sự. Sau bước làm sạch, base phân tích còn
+            <strong>19,221</strong> mẫu; phần bị loại khỏi base chính là <strong>878</strong>
+            phản hồi, tương đương <strong>4.4%</strong> mẫu thô.
         </p>
         """, unsafe_allow_html=True)
 
         # KPI cards
         cols = st.columns(4)
         kpi_data = [
-            ("Tổng GHN", "94.2%", "Tỷ lệ tham gia", "#FF5200", "#FFF3EE"),
-            ("1A · Shipper", "93.4%", "12,955 phản hồi", "#10B981", "#F0FDF4"),
-            ("1B · Tài xế", "~99%", "801 phản hồi", "#3B82F6", "#EFF6FF"),
-            ("2A · NV Kho", "~95%", "4,892 phản hồi", "#8B5CF6", "#F5F3FF"),
+            ("Tổng GHN", "94.1%", "20,099 / 21,353", "#FF5200", "#FFF3EE"),
+            ("Mẫu phân tích", "19,221", "sau loại 878 phản hồi", "#10B981", "#F0FDF4"),
+            ("Straight-line", "8,757", "45.6% / cleaned base", "#3B82F6", "#EFF6FF"),
+            ("n hiệu dụng", "16,435", "85.5% / cleaned base", "#8B5CF6", "#F5F3FF"),
         ]
         for col, (label, val, sub, color, bg) in zip(cols, kpi_data):
             with col:
@@ -424,9 +515,9 @@ def render(summary_df=None):
 
         st.markdown(_callout(
             "Ý nghĩa thực tiễn",
-            "Với 1A, tỷ lệ trả lời thẳng hàng cao (54%) là <strong>đặc trưng tâm lý lực lượng lao động trực tiếp</strong> "
-            "(trả lời nhanh, đồng thuận), không phải dữ liệu rác — nên được giảm trọng số chứ không loại bỏ. "
-            "Kết quả vẫn đại diện cho toàn thể nhóm.",
+            "Với 1A, bảng DeepDive ghi nhận 12,955 phản hồi thô và 12,262 mẫu phân tích sau làm sạch. "
+            "Tỷ lệ silence/straight-line cao cần được đọc như một tín hiệu chất lượng dữ liệu cần hiệu chỉnh trọng số, "
+            "không tự động đồng nghĩa toàn bộ nhóm là dữ liệu rác.",
             color="#10B981", bg="#F0FDF4"
         ), unsafe_allow_html=True)
 
@@ -438,65 +529,59 @@ def render(summary_df=None):
 
         st.markdown("""
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin-bottom:12px">
-            Thay vì áp dụng cách làm truyền thống là xóa bỏ hàng loạt các phản hồi nghi ngờ, hệ thống áp dụng thuật toán <strong>Trọng số tin cậy (Reliability Weight)</strong> từ 0.0 đến 1.0 cho mỗi phản hồi dựa trên 3 nguyên tắc xử lý:
+            Bảng dưới đây viết lại theo đúng bảng dữ liệu trong <strong>EES 2026 DeepDive v13 Final</strong>.
+            Luồng đọc số là: HRIS base → phản hồi thô → phản hồi bị loại khỏi base chính →
+            cleaned analytical base → straight-line weighted → effective base.
         </p>
         <ul style="font-size:0.85rem;color:#475569;line-height:1.7;margin-bottom:20px;padding-left:20px">
-            <li><strong>Phát hiện Straight-lining (Đánh đồng màu):</strong> Tính toán độ biến thiên (variance) của các câu Likert. Nếu người tham gia đánh cùng 1 mức điểm cho 100% câu hỏi (variance cực thấp), hệ thống sẽ đánh cờ cảnh báo rác.</li>
-            <li><strong>Kiểm tra Mâu thuẫn (Inconsistency):</strong> Đối chiếu điểm eNPS (Q33) với trung bình các câu Likert. Nếu có mâu thuẫn lớn (ví dụ: khuyên người thân làm việc ở mức 10/10 nhưng Likert lại toàn đánh 1 sao), điểm tin cậy sẽ bị trừ.</li>
-            <li><strong>Cứu xét bằng Câu hỏi mở (Open-ended):</strong> Nếu người tham gia có để lại ý kiến đóng góp thực tế ở câu hỏi mở, hệ thống sẽ tự động cộng điểm tin cậy vì đây là bằng chứng cốt lõi của người làm khảo sát có đọc câu hỏi.</li>
-            <li><strong>Quyết định:</strong> Chỉ những phản hồi vi phạm TẤT CẢ các lỗi trên (đánh đồng màu + mâu thuẫn + bỏ trống câu hỏi mở) mới bị loại bỏ hoàn toàn (DROP). Các phản hồi vi phạm nhẹ sẽ bị giảm trọng số đóng góp (ví dụ: x0.5) thay vì xóa bỏ.</li>
+            <li><strong>Phản hồi thô (Raw submissions):</strong> toàn bộ phản hồi thu thập theo từng nhóm khảo sát.</li>
+            <li><strong>Bị loại (Dropped):</strong> phản hồi bị loại khỏi base phân tích đã làm sạch trong bảng DeepDive.</li>
+            <li><strong>Mẫu phân tích (Cleaned base):</strong> mẫu chính thức dùng để đọc EI, eNPS, Leave, Silence và các trụ cột.</li>
+            <li><strong>n hiệu dụng (Effective base):</strong> tổng n sau hiệu chỉnh trọng số chất lượng, dùng cho số tổng thể.</li>
         </ul>
         """, unsafe_allow_html=True)
 
-        # Bảng phân hạng dùng cùng summary_df đang load, tránh hard-code lệch tài liệu.
-        df_table = summary_df.copy()
-        df_table["Mẫu thô"] = df_table["Mẫu thô (Supabase)"].astype(int)
-        df_table["Loại bỏ (DROP)"] = df_table["DROP"].astype(int)
-        df_table["Base phân tích"] = (df_table["Mẫu thô"] - df_table["Loại bỏ (DROP)"]).clip(lower=0).astype(int)
-        df_table['"n hiệu dụng"'] = df_table["n hiệu dụng"].round(0).astype(int)
-        df_table["Tỷ lệ giữ"] = df_table["% giữ"].map(lambda v: f"{float(v):.1f}%")
-        df_table = df_table[["Nhóm", "Mẫu thô", "Loại bỏ (DROP)", "Base phân tích", '"n hiệu dụng"', "Tỷ lệ giữ"]]
+        df_table = pd.DataFrame(DEEPDIVE_GROUP_BASE)
+        df_table["Drop %"] = df_table["Dropped"] / df_table["Raw submissions"].clip(lower=1) * 100
+        df_table["Cleaned %"] = df_table["Cleaned base"] / df_table["Raw submissions"].clip(lower=1) * 100
+        df_table = df_table[[
+            "Nhóm", "Raw submissions", "Dropped", "Drop %", "Cleaned base",
+            "Cleaned %", "EI", "eNPS", "Leave %", "Silence %", "MEI", "Flight Risk %"
+        ]].rename(columns={
+            "Raw submissions": "Phản hồi thô (Raw)",
+            "Dropped": "Bị loại (Dropped)",
+            "Drop %": "Tỷ lệ loại (Drop %)",
+            "Cleaned base": "Mẫu phân tích (Cleaned)",
+            "Cleaned %": "Tỷ lệ giữ (Cleaned %)",
+            "Leave %": "Ý định nghỉ (Leave %)",
+            "Silence %": "Im lặng (Silence %)",
+            "Flight Risk %": "Rủi ro rời bỏ (Flight Risk)",
+        })
 
-        # Render table with custom styling
-        header_cols = st.columns([2, 1.2, 1.5, 1.5, 1.5, 1.2])
-        headers = list(df_table.columns)
-        header_styles = [
-            "background:#0A1F44;color:white;padding:10px 12px;border-radius:8px 0 0 0;font-size:0.78rem;font-weight:700",
-            "background:#0A1F44;color:white;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
-            "background:#FEF2F2;color:#DC2626;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
-            "background:#EFF6FF;color:#1D4ED8;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
-            "background:#F5F3FF;color:#7C3AED;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",
-            "background:#F0FDF4;color:#15803D;padding:10px 12px;border-radius:0 8px 0 0;font-size:0.78rem;font-weight:700;text-align:right",
-        ]
-        for col, h, style in zip(header_cols, headers, header_styles):
-            with col:
-                st.markdown(f'<div style="{style}">{h}</div>', unsafe_allow_html=True)
-
-        row_colors = ["#FFFFFF", "#F8FAFC"]
-        for i, row in df_table.iterrows():
-            row_cols = st.columns([2, 1.2, 1.5, 1.5, 1.5, 1.2])
-            bg = row_colors[i % 2]
-            cell_style = f"background:{bg};padding:9px 12px;font-size:0.84rem;border-bottom:1px solid #F1F5F9"
-            num_style  = f"background:{bg};padding:9px 12px;font-size:0.84rem;border-bottom:1px solid #F1F5F9;text-align:right"
-            with row_cols[0]:
-                st.markdown(f'<div style="{cell_style};font-weight:600;color:#0A1F44">{row["Nhóm"]}</div>', unsafe_allow_html=True)
-            with row_cols[1]:
-                st.markdown(f'<div style="{num_style};color:#0A1F44">{row["Mẫu thô"]:,}</div>', unsafe_allow_html=True)
-            with row_cols[2]:
-                st.markdown(f'<div style="{num_style};color:#DC2626;font-weight:600">{row["Loại bỏ (DROP)"]:,}</div>', unsafe_allow_html=True)
-            with row_cols[3]:
-                st.markdown(f'<div style="{num_style};color:#1D4ED8;font-weight:600">{row["Base phân tích"]:,}</div>', unsafe_allow_html=True)
-            with row_cols[4]:
-                st.markdown(f'<div style="{num_style};color:#7C3AED;font-weight:700">{row[chr(34)+"n hiệu dụng"+chr(34)]:,}</div>', unsafe_allow_html=True)
-            with row_cols[5]:
-                st.markdown(f'<div style="{num_style};color:#15803D;font-weight:600">{row["Tỷ lệ giữ"]}</div>', unsafe_allow_html=True)
+        st.dataframe(
+            df_table.style.format({
+                "Phản hồi thô (Raw)": "{:,.0f}",
+                "Bị loại (Dropped)": "{:,.0f}",
+                "Tỷ lệ loại (Drop %)": "{:.1f}%",
+                "Mẫu phân tích (Cleaned)": "{:,.0f}",
+                "Tỷ lệ giữ (Cleaned %)": "{:.1f}%",
+                "EI": "{:.1f}",
+                "eNPS": "{:+.1f}",
+                "Ý định nghỉ (Leave %)": "{:.1f}%",
+                "Im lặng (Silence %)": "{:.1f}%",
+                "MEI": "{:.1f}",
+                "Rủi ro rời bỏ (Flight Risk)": "{:.1f}%",
+            }, na_rep="-"),
+            width="stretch",
+            height=300,
+            hide_index=True,
+        )
 
         st.markdown("""
         <p style="font-size:0.78rem;color:#94A3B8;margin-top:12px;line-height:1.6;font-style:italic">
-            * Cột <em>"n hiệu dụng"</em> = tổng trọng số tin cậy — phản ánh lượng thông tin thực
-            sự được dùng để phân tích, không phải số đầu đếm thô. Phản hồi <em>giảm trọng số</em>
-            (54%) là đặc trưng tâm lý lực lượng lao động trực tiếp (trả lời nhanh, đồng thuận),
-            không phải dữ liệu rác — nên được giảm trọng số chứ không loại bỏ.
+            * DeepDive v13 trình bày n hiệu dụng ở cấp tổng thể là 16,435; bảng nhóm phía trên
+            dùng cleaned base theo từng nhóm, không ép phân bổ lại n hiệu dụng theo nhóm khi tài liệu
+            không công bố chi tiết phân bổ này.
         </p>
         """, unsafe_allow_html=True)
 
@@ -504,24 +589,26 @@ def render(summary_df=None):
             'Nhóm', 'Maha flag', 'NLP tiêu cực', 'NLP cảnh báo',
             'AUC (Logistic)', 'VIF cao', 'KEEP', 'DOWNWEIGHT', 'DROP', 'n hiệu dụng'
         ]
-        live_cols = [c for c in advanced_cols if c in summary_df.columns]
-        if live_cols:
-            st.markdown(_sec("Advanced validation engine", "Mahalanobis, NLP và Logistic/VIF được tính từ dữ liệu đang load trong phiên hiện tại."), unsafe_allow_html=True)
-            st.dataframe(
-                summary_df[live_cols].style.format({
-                    'Maha flag': '{:,}',
-                    'NLP tiêu cực': '{:,}',
-                    'NLP cảnh báo': '{:,}',
-                    'AUC (Logistic)': '{:.3f}',
-                    'VIF cao': '{:,}',
-                    'KEEP': '{:,}',
-                    'DOWNWEIGHT': '{:,}',
-                    'DROP': '{:,}',
-                    'n hiệu dụng': '{:,.1f}',
-                }),
-                width='stretch',
-                height=260,
-            )
+        if runtime_available:
+            live_cols = [c for c in advanced_cols if c in summary_df.columns]
+            if live_cols:
+                with st.expander("Đối chiếu runtime từ dữ liệu đang load (tham khảo kỹ thuật)", expanded=False):
+                    st.caption("Bảng này phục vụ kiểm tra Mahalanobis, NLP và Logistic/VIF trong phiên hiện tại; không thay thế số chuẩn trong DeepDive v13.")
+                    st.dataframe(
+                        summary_df[live_cols].style.format({
+                            'Maha flag': '{:,}',
+                            'NLP tiêu cực': '{:,}',
+                            'NLP cảnh báo': '{:,}',
+                            'AUC (Logistic)': '{:.3f}',
+                            'VIF cao': '{:,}',
+                            'KEEP': '{:,}',
+                            'DOWNWEIGHT': '{:,}',
+                            'DROP': '{:,}',
+                            'n hiệu dụng': '{:,.1f}',
+                        }),
+                        width='stretch',
+                        height=260,
+                    )
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -669,7 +756,7 @@ def render(summary_df=None):
             (
                 "Không so sánh trực tiếp với 2025",
                 "#EF4444", "#FEF2F2",
-                "Thang đo 2026 (1–5) khác với 2026 (1–10). Điểm Engagement 2026 = 3.8/5 "
+                "Thang đo 2026 (1–5) khác với 2025 (1–10). Điểm Engagement 2026 = 3.8/5 "
                 "<strong>không phải</strong> sụt giảm từ 8.02/10 — đây là hai thước đo độc lập. "
                 "Cần quy đổi cùng thang hoặc dùng %Favorable thay vì điểm tuyệt đối để so sánh.",
             ),
