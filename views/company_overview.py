@@ -8,6 +8,7 @@ from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025
 from utils.ai_generator import render_ai_insight_card
 
+MIN_DEPARTMENT_N = 1
 MIN_ORG_SEGMENT_N = 5
 UNKNOWN_ORG_VALUE = "Chưa xác định"
 
@@ -501,35 +502,19 @@ def render(all_data, available_groups):
     st.markdown(section_header("Phân Tích Chi Tiết — Phòng Ban & Section",
                                "So sánh EI, eNPS và 5 trụ cột theo từng phòng ban / section"), unsafe_allow_html=True)
 
-    def _count_segments(df_src, group_cols):
-        if isinstance(group_cols, str):
-            group_cols = [group_cols]
-        if not all(c in df_src.columns for c in group_cols):
-            return 0, 0
-        counts = df_src.groupby(group_cols, dropna=False).size()
-        return int(len(counts)), int((counts >= MIN_ORG_SEGMENT_N).sum())
-
-    def _build_drilldown_table(df_src, group_cols, label, display_cols=None):
-        if isinstance(group_cols, str):
-            group_cols = [group_cols]
-        if display_cols is None:
-            display_cols = {}
+    def _build_drilldown_table(df_src, group_col, label, min_n=MIN_ORG_SEGMENT_N):
         rows = []
-        for grp_val, grp_df in df_src.groupby(group_cols, dropna=False):
-            if len(grp_df) < MIN_ORG_SEGMENT_N:
+        for grp_val, grp_df in df_src.groupby(group_col, dropna=False):
+            if len(grp_df) < min_n:
                 continue
-            if not isinstance(grp_val, tuple):
-                grp_val = (grp_val,)
             kpis = compute_kpis(grp_df)
             row = {
+                label: grp_val,
                 'N': kpis['n'],
                 'EI (%)': round(kpis['ei_mean'], 1),
                 'eNPS': round(kpis['enps_score'], 0),
                 'Rủi ro nghỉ việc (%)': round(kpis['intent_pct_low'], 1),
             }
-            for col_name, value in zip(group_cols, grp_val):
-                row[display_cols.get(col_name, col_name)] = value
-            row[label] = " · ".join(str(v) for v in grp_val if str(v) != UNKNOWN_ORG_VALUE)
             for p, plabel in PILLAR_LABELS.items():
                 col = f'{p}_pct'
                 if col in grp_df.columns:
@@ -537,11 +522,7 @@ def render(all_data, available_groups):
             rows.append(row)
         if not rows:
             return pd.DataFrame()
-        leading_cols = [display_cols.get(c, c) for c in group_cols if display_cols.get(c, c) in rows[0]]
-        metric_cols = ['N', 'EI (%)', 'eNPS', 'Rủi ro nghỉ việc (%)']
-        pillar_cols_present = [c for c in PILLAR_LABELS.values() if c in rows[0]]
         tbl = pd.DataFrame(rows).sort_values('EI (%)', ascending=False).reset_index(drop=True)
-        tbl = tbl[[*leading_cols, label, *metric_cols, *pillar_cols_present]]
         return tbl
 
     def _color_ei(v):
@@ -574,25 +555,18 @@ def render(all_data, available_groups):
     tab_dept, tab_section = st.tabs(["Theo Phòng Ban (Department)", "Theo Section"])
 
     with tab_dept:
-        if {'division', 'department'}.issubset(df_total.columns):
-            dept_total_count, dept_visible_count = _count_segments(df_total, ['division', 'department'])
-            tbl_dept = _build_drilldown_table(
-                df_total,
-                ['division', 'department'],
-                'Đơn vị',
-                {'division': 'Khối', 'department': 'Phòng Ban'},
-            )
+        if 'department' in df_total.columns:
+            tbl_dept = _build_drilldown_table(df_total, 'department', 'Phòng Ban', min_n=MIN_DEPARTMENT_N)
             if not tbl_dept.empty:
                 # Summary KPI row
-                kd1, kd2, kd3, kd4 = st.columns(4)
-                kd1.metric("Phòng ban trong data", dept_total_count)
-                kd2.metric(f"Đang hiển thị (N >= {MIN_ORG_SEGMENT_N})", dept_visible_count)
-                kd3.metric("EI cao nhất", f"{tbl_dept['EI (%)'].max():.1f}%", delta=tbl_dept.iloc[0]['Đơn vị'])
-                kd4.metric("EI thấp nhất", f"{tbl_dept['EI (%)'].iloc[-1]:.1f}%", delta=tbl_dept.iloc[-1]['Đơn vị'], delta_color="inverse")
+                kd1, kd2, kd3 = st.columns(3)
+                kd1.metric("Số phòng ban phân tích", len(tbl_dept))
+                kd2.metric("EI cao nhất", f"{tbl_dept['EI (%)'].max():.1f}%", delta=tbl_dept.iloc[0]['Phòng Ban'])
+                kd3.metric("EI thấp nhất", f"{tbl_dept['EI (%)'].iloc[-1]:.1f}%", delta=tbl_dept.iloc[-1]['Phòng Ban'], delta_color="inverse")
 
                 # Bar chart EI by department
                 fig_dept = go.Figure(go.Bar(
-                    y=tbl_dept['Đơn vị'], x=tbl_dept['EI (%)'],
+                    y=tbl_dept['Phòng Ban'], x=tbl_dept['EI (%)'],
                     orientation='h',
                     marker=dict(
                         color=[
@@ -606,7 +580,7 @@ def render(all_data, available_groups):
                 ))
                 fig_dept.add_vline(x=75, line_dash='dot', line_color='#10B981', line_width=1.5,
                                    annotation_text='75% target', annotation_position='top right')
-                fig_dept = fig_card(fig_dept, 'EI theo Khối + Phòng Ban', 'Mức độ gắn kết trung bình theo đúng cặp Khối/Phòng ban')
+                fig_dept = fig_card(fig_dept, 'EI theo Phòng Ban', 'Mức độ gắn kết trung bình')
                 fig_dept.update_layout(
                     height=max(300, len(tbl_dept) * 28 + 80),
                     xaxis=dict(range=[0, 100]),
@@ -615,7 +589,7 @@ def render(all_data, available_groups):
                 st.plotly_chart(fig_dept, width='stretch', key="dept_ei_bar")
 
                 # Detailed table with pillar heatmap
-                st.markdown("##### Bảng chi tiết — EI, eNPS & 5 Trụ Cột theo Khối / Phòng Ban")
+                st.markdown("##### Bảng chi tiết — EI, eNPS & 5 Trụ Cột theo Phòng Ban")
                 avail_pillar_cols = [c for c in pillar_cols if c in tbl_dept.columns]
 
                 # Format numbers into strings before styling
@@ -657,25 +631,18 @@ def render(all_data, available_groups):
                                            'EI (%)', 'eNPS', avail_pillar_cols)
                 st.dataframe(styled_dept, width='stretch', hide_index=True)
             else:
-                st.info(f"Không đủ mẫu theo phòng ban (tối thiểu {MIN_ORG_SEGMENT_N} người / phòng ban).")
+                st.info("Không có dữ liệu theo phòng ban.")
         else:
-            st.info("Dữ liệu chưa có đủ cột 'division' và 'department'.")
+            st.info("Dữ liệu chưa có cột 'department'.")
 
     with tab_section:
-        if {'division', 'department', 'section'}.issubset(df_total.columns):
-            section_total_count, section_visible_count = _count_segments(df_total, ['division', 'department', 'section'])
-            tbl_section = _build_drilldown_table(
-                df_total,
-                ['division', 'department', 'section'],
-                'Đơn vị',
-                {'division': 'Khối', 'department': 'Phòng Ban', 'section': 'Section'},
-            )
+        if 'section' in df_total.columns:
+            tbl_section = _build_drilldown_table(df_total, 'section', 'Section')
             if not tbl_section.empty:
-                ks1, ks2, ks3, ks4 = st.columns(4)
-                ks1.metric("Section trong data", section_total_count)
-                ks2.metric(f"Đang hiển thị (N >= {MIN_ORG_SEGMENT_N})", section_visible_count)
-                ks3.metric("EI cao nhất", f"{tbl_section['EI (%)'].max():.1f}%", delta=tbl_section.iloc[0]['Đơn vị'])
-                ks4.metric("EI thấp nhất", f"{tbl_section['EI (%)'].iloc[-1]:.1f}%", delta=tbl_section.iloc[-1]['Đơn vị'], delta_color="inverse")
+                ks1, ks2, ks3 = st.columns(3)
+                ks1.metric("Số section phân tích", len(tbl_section))
+                ks2.metric("EI cao nhất", f"{tbl_section['EI (%)'].max():.1f}%", delta=tbl_section.iloc[0]['Section'])
+                ks3.metric("EI thấp nhất", f"{tbl_section['EI (%)'].iloc[-1]:.1f}%", delta=tbl_section.iloc[-1]['Section'], delta_color="inverse")
 
                 # Bar chart – paginated nếu nhiều section
                 max_section_show = min(len(tbl_section), 60)
@@ -696,7 +663,7 @@ def render(all_data, available_groups):
                 ]).drop_duplicates()
 
                 fig_sec = go.Figure(go.Bar(
-                    y=tbl_section_show['Đơn vị'], x=tbl_section_show['EI (%)'],
+                    y=tbl_section_show['Section'], x=tbl_section_show['EI (%)'],
                     orientation='h',
                     marker=dict(
                         color=[
@@ -733,7 +700,7 @@ def render(all_data, available_groups):
             else:
                 st.info(f"Không đủ mẫu theo section (tối thiểu {MIN_ORG_SEGMENT_N} người / section).")
         else:
-            st.info("Dữ liệu chưa có đủ cột 'division', 'department' và 'section'.")
+            st.info("Dữ liệu chưa có cột 'section'.")
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 3: DEMOGRAPHICS (THÂM NIÊN & CẤP BẬC)
