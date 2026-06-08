@@ -598,9 +598,18 @@ animation: pulse-dot 2s ease-in-out infinite;
                 st.error("Vui lòng nhập mã đăng nhập.")
             elif code == st.secrets.get("ACCESS_CODE", "EX-TEAM-EES-2026"):
                 email = "ex-team@ghn.vn"
-                authorization = _get_authorization(email)
-                if authorization is None:
-                    _render_authorization_denied(email)
+                # Không kiểm tra Google Sheet cho tài khoản dùng mã chung, tự động cấp quyền User xem toàn bộ dữ liệu
+                authorization = {
+                    "email": email,
+                    "idnv": "EX-TEAM",
+                    "full_name": "Thành viên EX-TEAM",
+                    "job_title": "Executive Team",
+                    "role": "User",
+                    "divisions": [],
+                    "departments": [],
+                    "sections": [],
+                    "all_data_flag": True
+                }
                 name = "Thành viên EX-TEAM"
                 picture = ""
                 secure_token = secrets.token_urlsafe(32)
