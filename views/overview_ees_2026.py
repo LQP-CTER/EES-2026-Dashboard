@@ -24,12 +24,14 @@ def render():
     img3 = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1780393855/LOGO%20GHN/EES_2026_-_GDV_a_Vu%CC%83_ew1dix.png"
     img4 = "https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392210/LOGO%20GHN/Mr_Nguye%CC%82%CC%83n_Va%CC%82n_Ta%CC%82n_Regional_Director_Gia%CC%81m_%C4%90o%CC%82%CC%81c_Vu%CC%80ng_rbzjr3.png"
 
-    main_video_url  = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780389451/LOGO%20GHN/Action_video_dgq3f7.mp4"
-    short_urls = [
-        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780395113/LOGO%20GHN/IMG_0734_nhqt02.mp4",   "Khoảnh khắc 1"),
-        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393976/LOGO%20GHN/IMG_1233_wgzajm.mp4",   "Khoảnh khắc 2"),
-        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393954/LOGO%20GHN/IMG_1232_ykz6pz.mp4",   "Khoảnh khắc 3"),
-        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393907/LOGO%20GHN/IMG_1723_gdh1gs.mp4",   "Khoảnh khắc 4"),
+    main_video_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780395113/LOGO%20GHN/IMG_0734_nhqt02.mp4"
+    highlight_url = "https://res.cloudinary.com/dd7gti2kn/video/upload/v1780389451/LOGO%20GHN/Action_video_dgq3f7.mp4"
+    playlist = [
+        (main_video_url, "Nhìn lại EES 2025"),
+        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393976/LOGO%20GHN/IMG_1233_wgzajm.mp4", "Giới thiệu EES 2026"),
+        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393954/LOGO%20GHN/IMG_1232_ykz6pz.mp4", "EES Race 2026"),
+        (highlight_url, "Highlight"),
+        ("https://res.cloudinary.com/dd7gti2kn/video/upload/v1780393907/LOGO%20GHN/IMG_1723_gdh1gs.mp4", "EES 2026 Vinh danh")
     ]
 
     # ── Global page CSS (no video rules here) ────────────────────────────────
@@ -498,11 +500,11 @@ def render():
                         <div class="ed-orbit-ring"></div>
                         <div class="ed-orbit-ring"></div>
                         <div class="ed-orbit-core"></div>
-                        <span class="ed-orbit-pill p1">Lãnh đạo</span>
-                        <span class="ed-orbit-pill p2">MEI</span>
-                        <span class="ed-orbit-pill p3">Công việc</span>
-                        <span class="ed-orbit-pill p4">Thu nhập</span>
-                        <span class="ed-orbit-pill p5">Môi trường</span>
+                        <span class="ed-orbit-pill p1">Niềm tin lãnh đạo</span>
+                        <span class="ed-orbit-pill p2">Quản lý trực tiếp</span>
+                        <span class="ed-orbit-pill p3">Công việc &amp; phát triển</span>
+                        <span class="ed-orbit-pill p4">Thu nhập &amp; minh bạch</span>
+                        <span class="ed-orbit-pill p5">Môi trường &amp; phát triển</span>
                     </div>
                     <div class="ed-command-bars">
                         <span></span><span></span><span></span><span></span>
@@ -536,8 +538,7 @@ def render():
     """, unsafe_allow_html=True)
 
     # ── 2. VIDEO SECTION ─────────────────────────────────────────────────────
-    # Playlist = main highlight reel + 4 shorts. The main reel is the first item.
-    playlist = [(main_video_url, "Highlight Reel")] + short_urls
+    # Playlist is defined above
 
     dock_cards = ""
     for i, (url, label) in enumerate(playlist):
@@ -1434,7 +1435,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
       <div class="jt-stat">
         <div class="jt-stat-num">5</div>
         <div class="jt-stat-label">Trụ Cột Phân Tích</div>
-        <div class="jt-stat-desc">Lãnh đạo · MEI · Công việc · Thu nhập · Môi trường</div>
+        <div class="jt-stat-desc">Niềm tin lãnh đạo · Quản lý trực tiếp · Công việc &amp; phát triển · Thu nhập &amp; minh bạch · Môi trường &amp; phát triển</div>
       </div>
       <div class="jt-stat">
         <div class="jt-stat-num">01</div>
@@ -1503,7 +1504,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     components.html(journey_html, height=820, scrolling=False)
 
     # ── Vietnam Map (standalone, full-width) ─────────────────────────────────
-    st.plotly_chart(create_vietnam_map(), use_container_width=True)
+    # st.plotly_chart(create_vietnam_map(), use_container_width=True)
 
 
 
@@ -1850,28 +1851,28 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
                     <div class="ed-team-role">Project Lead</div>
                     <div class="ed-team-name">Team EX &amp; L&amp;D</div>
                     <div class="ed-team-desc">Thiết kế bộ câu hỏi, phối hợp triển khai khảo sát và điều phối thu thập phản hồi toàn GHN.</div>
-                    <span class="ed-team-badge">Survey Design &amp; Ops</span>
+                    
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">HR</div>
                     <div class="ed-team-role">Truyền thông &amp; Lan tỏa</div>
                     <div class="ed-team-name">HRBP các vùng &amp; KTC</div>
                     <div class="ed-team-desc">Hỗ trợ truyền thông nội bộ, thúc đẩy nhân viên tham gia khảo sát và đảm bảo tỉ lệ phản hồi đạt mức cao nhất tại từng khu vực.</div>
-                    <span class="ed-team-badge">Internal Comms · Engagement Push</span>
+                    
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">IT</div>
                     <div class="ed-team-role">Hạ tầng &amp; Hệ thống</div>
                     <div class="ed-team-name">Team IT</div>
                     <div class="ed-team-desc">Đảm bảo hạ tầng server, băng thông mạng và hỗ trợ kỹ thuật liên tục trong suốt quá trình triển khai khảo sát.</div>
-                    <span class="ed-team-badge">System & Infrastructure</span>
+                    
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">BI</div>
                     <div class="ed-team-role">Kỹ thuật Dữ liệu</div>
                     <div class="ed-team-name">Team BI</div>
                     <div class="ed-team-desc">Xây dựng kiến trúc cơ sở dữ liệu, tối ưu hóa đường ống xử lý dữ liệu (data pipeline) và kết nối API.</div>
-                    <span class="ed-team-badge">Data Engineering</span>
+                    
                 </div>
             </div>
         </div>
