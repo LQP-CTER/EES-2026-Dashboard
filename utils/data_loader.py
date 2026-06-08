@@ -352,15 +352,42 @@ def load_group(group_id: str):
     df_clean.attrs['pct_removed']   = pct_removed
     df_clean.attrs['filter_method'] = 'weighted_reliability'
     df_clean.attrs['filter_desc']   = filter_desc
-    # memo_report rút gọn
+    
+    import json
+    # Tái tạo các chỉ số tổng hợp cho trang Độ tin cậy
+    tier_counts = df_clean['tier_v2'].value_counts().to_dict() if 'tier_v2' in df_clean.columns else {}
+    tier_counts['DROP'] = n_removed
+    n_effective = float(df_clean['effective_weight'].sum()) if 'effective_weight' in df_clean.columns else float(n_clean)
+    effective_pct = round((n_effective / n_before) * 100, 1) if n_before else 0.0
+    
+    maha_n = int(df_clean['flag_mahalanobis'].sum()) if 'flag_mahalanobis' in df_clean.columns else 0
+    contra_n = int(df_clean['contradiction_flag'].sum()) if 'contradiction_flag' in df_clean.columns else 0
+    neg_n = int((df_clean['nlp_sentiment_label'] == 'tiêu_cực').sum()) if 'nlp_sentiment_label' in df_clean.columns else 0
+    
+    warn_n = 0
+    if 'nlp_warning_signals' in df_clean.columns:
+        warn_n = int(df_clean['nlp_warning_signals'].apply(lambda x: len(json.loads(x)) > 0 if isinstance(x, str) and str(x) != '[]' else False).sum())
+
+    # memo_report tái tạo
     df_clean.attrs['memo_report'] = {
         'n_raw':      n_before,
         'n_clean':    n_clean,
+        'n_after_dedup': n_before, # Đơn giản hóa
         'n_removed':  n_removed,
         'pct_removed': pct_removed,
         'filter_desc': filter_desc,
+        'n_effective': n_effective,
+        'effective_pct': effective_pct,
+        'tier_counts': tier_counts,
+        'flags': {
+            'maha_flag_n': maha_n,
+            'contradiction_n': contra_n,
+        },
         'mahalanobis': {},
-        'nlp': {}
+        'nlp': {
+            'negative_n': neg_n,
+            'warning_signal_n': warn_n
+        }
     }
     df_clean.attrs['calibration_report'] = {'enabled': False, 'reason': 'pre_processed'}
     
