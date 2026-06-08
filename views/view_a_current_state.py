@@ -31,7 +31,7 @@ def _make_table_col_cfg(row_label_key, pillars_seen):
         cfg[pl] = st.column_config.NumberColumn(short, format='%.1f%%', width='medium')
     return cfg
 
-def render(df, cfg, pillar_filter=None):
+def render(df, cfg, pillar_filter=None, group_id=None):
     apply_theme()
     kpis = compute_kpis(df)
     from shared.plotly_theme import make_html_kpi, section_header
@@ -237,6 +237,13 @@ def render(df, cfg, pillar_filter=None):
     )
     # ► Đặt chỗ trống cho AI — sẽ được render SAU khi toàn bộ UI đã hiển thị
     ai_placeholder = st.empty()
+
+    # ── Analyst Intelligence — nội dung đã đối chiếu từ docs/analyst ──
+    try:
+        from views.analyst_intelligence import render_group_analyst_intelligence
+        render_group_analyst_intelligence(group_id or cfg.get("id"))
+    except Exception as _analyst_err:
+        st.caption(f"Phân tích chuyên sâu từ tài liệu analyst không khả dụng: {_analyst_err}")
 
     # ── HR Strategic Insights — Điểm Nóng Thực Địa theo từng Nhóm ──
     is_shipper      = cfg.get('short') == 'Shipper'

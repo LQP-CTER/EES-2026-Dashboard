@@ -1831,10 +1831,7 @@ elif is_company:
     try:
         loader = TerminalLoader(main_loading_slot, "Đang tải dữ liệu toàn công ty")
         
-        loader.add("Đang tải Workforce & Mapping (Google Sheets)...")
-        from shared.workforce_mapper import load_workforce_and_mapping
-        load_workforce_and_mapping()
-        loader.add("Đã tải xong Workforce & Mapping.", "ok")
+
         
         loader.add("Đang tải dữ liệu EES 2026...")
         all_data = load_all_available(log_callback=loader.add)

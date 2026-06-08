@@ -28,12 +28,8 @@ def render(all_data, available_groups):
     total_enps = total_kpis['enps_score']
     total_intent = total_kpis['intent_pct_low']
 
-    try:
-        from shared.workforce_mapper import load_workforce_and_mapping
-        df_wf, _, _ = load_workforce_and_mapping()
-        total_headcount = len(df_wf) if not df_wf.empty else 21353
-    except Exception:
-        total_headcount = 21353
+    # Tính tổng số nhân sự hiện tại của toàn công ty (hardcode cho EES 2026)
+    total_headcount = 21353
 
     # total_n_before = raw submissions (tham gia khảo sát)
     # total_n        = sau lọc memo (mẫu phân tích hợp lệ)
@@ -335,6 +331,12 @@ def render(all_data, available_groups):
         st.markdown(make_html_kpi("Attrition Risk - Rủi ro nghỉ việc", f"{total_intent:.1f}%", delta="N/A", color="red", icon="", progress_val=total_intent), unsafe_allow_html=True)
     with kpi_c4:
         st.markdown(make_html_kpi("Response Rate - Tỷ lệ phản hồi", f"{total_rr:.1f}%", delta=f"{rr_delta:+.1f}%", color="green", icon="", progress_val=total_rr), unsafe_allow_html=True)
+
+    try:
+        from views.analyst_intelligence import render_company_analyst_intelligence
+        render_company_analyst_intelligence()
+    except Exception as _analyst_err:
+        st.caption(f"Phân tích chuyên sâu từ tài liệu analyst không khả dụng: {_analyst_err}")
 
     # Calculate dynamic insights across divisions
     div_stats = []
