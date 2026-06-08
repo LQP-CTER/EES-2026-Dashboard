@@ -240,47 +240,63 @@ def process_group(group_id: str) -> pd.DataFrame:
         if "Vùng" in str(c) or "vùng" in str(c):
             vung_col = c; break
 
-    _1B_EN_VN = {
-        "xuyen a sorting centers":   "Cụm Kho Trung Chuyển Xuyên Á",
-        "hung yen sorting centers":  "Cụm Kho Trung Chuyển Hưng Yên",
-        "m12 sorting centers":       "Cụm Kho Trung Chuyển M12",
-        "dai tu sorting centers":    "Cụm Kho Trung Chuyển Đài Tư",
-        "freight operations - hcm":  "Bộ Phận Vận Hành HCM",
-        "freight operations - hn":   "Bộ Phận Vận Hành HN",
-        "xbg region":                "Vùng XBG",
-        "ttb region":                "Vùng TTB",
-        "nno region":                "Vùng HNO",
-    }
-    if group_id == "1B" and vung_col in df_clean.columns:
-        df_clean[vung_col] = df_clean[vung_col].apply(
-            lambda x: _1B_EN_VN.get(str(x).strip().lower(), x) if pd.notna(x) else x
-        )
+    # ── Org Mapping (Native From Survey) ──────────────────────────────────────
+    print(f"  [3/6] Org mapping (Native from Survey)...")
+    df_clean["section"] = "Khác"
 
-    try:
-        raw_clean_df = df_raw.loc[df_clean.index].copy()
-        df_clean = map_survey_to_org(
-            df_clean, group=group_id, vung_col=vung_col,
-            id_col=df_clean.columns[1], raw_df=raw_clean_df,
+    if group_id in ["1A", "1B"]:
+        div_name = "Khối Thị Trường" if group_id == "1A" else "Khối Vận Hành"
+        df_clean["division"] = div_name
+        df_clean["department"] = df_clean[vung_col].fillna("Khác").astype(str)
+    else:
+        # Find the division column
+        div_col = None
+        for c in df_clean.columns:
+            c_str = str(c).lower().strip()
+            if c_str.startswith("khối/ phòng ban bạn đang làm việc") or c_str.startswith("phòng ban bạn đang làm việc") or c_str.startswith("khối/phòng ban bạn đang làm việc"):
+                # Prefer the one that actually has data (for 3B)
+                if df_clean[c].notna().any():
+                    div_col = c
+                    break
+
+        # Find the department columns
+        dept_cols = []
+        for c in df_clean.columns:
+            c_str = str(c).lower().strip()
+            if c_str.startswith("bạn thuộc"):
+                dept_cols.append(c)
+
+        if div_col:
+            df_clean["division"] = df_clean[div_col].fillna("Khác").astype(str)
+            if dept_cols:
+                # bfill across department columns to get the first non-null
+                dept_series = df_clean[dept_cols].bfill(axis=1).iloc[:, 0]
+                df_clean["department"] = dept_series.fillna(df_clean[div_col]).astype(str)
+            else:
+                df_clean["department"] = df_clean[div_col].fillna("Khác").astype(str)
+        else:
+            df_clean["division"] = "Khác"
+            df_clean["department"] = "Khác"
+
+    # Clean up newline and spaces
+    df_clean["division"] = df_clean["division"].str.replace("\n", " ").str.strip()
+    df_clean["department"] = df_clean["department"].str.replace("\n", " ").str.strip()
+
+    # Apply 3A exclusions
+    if group_id == "3A":
+        EXCLUDE_DIVS = [
+            "phòng dịch vụ kho vận",
+            "phòng kinh doanh khách hàng lớn",
+            "phòng nền tảng vận hành",
+            "technology operations department",
+        ]
+        m_exc = (
+            df_clean["division"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
+            df_clean["department"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
+            df_clean["section"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS)
         )
-        if group_id == "3A":
-            EXCLUDE_DIVS = [
-                "phòng dịch vụ kho vận",
-                "phòng kinh doanh khách hàng lớn",
-                "phòng nền tảng vận hành",
-                "technology operations department",
-            ]
-            m_exc = (
-                df_clean["division"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
-                df_clean["department"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS) |
-                df_clean["section"].astype(str).str.strip().str.lower().isin(EXCLUDE_DIVS)
-            )
-            n_before -= m_exc.sum()
-            df_clean = df_clean[~m_exc].copy()
-    except Exception as e:
-        print(f"  WARN Org mapping: {e} — dùng 'Khác'")
-        df_clean["division"]   = "Khác"
-        df_clean["department"] = "Khác"
-        df_clean["section"]    = "Khác"
+        n_before -= m_exc.sum()
+        df_clean = df_clean[~m_exc].copy()
 
     # ── Pillar Scores & EI ────────────────────────────────────────────────────
     print(f"  [4/6] KPI columns (EI, MEI, Burnout, JSI, EWS)...")

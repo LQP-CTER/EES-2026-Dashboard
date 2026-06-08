@@ -361,7 +361,12 @@ def load_group(group_id: str):
     effective_pct = round((n_effective / n_before) * 100, 1) if n_before else 0.0
     
     maha_n = int(df_clean['flag_mahalanobis'].sum()) if 'flag_mahalanobis' in df_clean.columns else 0
-    contra_n = int(df_clean['contradiction_flag'].sum()) if 'contradiction_flag' in df_clean.columns else 0
+    if 'flag_contradiction' in df_clean.columns:
+        contra_n = int(df_clean['flag_contradiction'].sum())
+    elif 'contradiction_flag' in df_clean.columns:
+        contra_n = int(df_clean['contradiction_flag'].sum())
+    else:
+        contra_n = 0
     neg_n = int((df_clean['nlp_sentiment_label'] == 'tiêu_cực').sum()) if 'nlp_sentiment_label' in df_clean.columns else 0
     
     warn_n = 0
@@ -447,10 +452,14 @@ def load_all_available(log_callback=None):
 
 
 def compute_kpis(df):
-    """Compute KPI dict from any group's dataframe using CompanyRollup_Weight."""
+    """Compute KPI dict from any group's dataframe.
+
+    ``n`` is the analytical base count, matching the analyst reports.
+    Weighted/effective sample size is exposed separately as ``effective_n``.
+    """
     n_rows = len(df)
     if n_rows == 0:
-        return {'n': 0, 'ei_mean': 0, 'enps_score': 0, 'promoters': 0,
+        return {'n': 0, 'effective_n': 0, 'ei_mean': 0, 'enps_score': 0, 'promoters': 0,
                 'passives': 0, 'detractors': 0, 'mei_avg': 0,
                 'intent_pct_low': 0, 'burnout_pct': 0,
                 'stay_score_avg': 0, 'stay_flight_pct': 0,
@@ -458,8 +467,10 @@ def compute_kpis(df):
                 'silence_rate': 0, 'jsi_avg': 0, 'ews_red_pct': 0,
                 'quadrant': {}, 'contradiction_pct': 0}
 
-    w = df.get('CompanyRollup_Weight', pd.Series(1.0, index=df.index))
-    n = int(w.sum()) # effective n
+    w = df.get('CompanyRollup_Weight', df.get('effective_weight', pd.Series(1.0, index=df.index)))
+    w = pd.to_numeric(w, errors='coerce').fillna(1.0).clip(lower=0)
+    effective_n = float(w.sum())
+    n = int(n_rows)
     
     def weighted_avg(col):
         mask = col.notna()
@@ -520,7 +531,8 @@ def compute_kpis(df):
     contradiction_pct = round(weighted_pct(df.get('contradiction_flag', pd.Series(False, index=df.index))), 1)
 
     return {
-        'n': n, 'ei_mean': round(ei_mean, 1),
+        'n': n, 'effective_n': round(effective_n, 1),
+        'ei_mean': round(ei_mean, 1),
         'enps_score': round(enps_score, 0),
         'promoters': int(promoters), 'passives': int(passives), 'detractors': int(detractors),
         'mei_avg': round(mei_avg, 1),

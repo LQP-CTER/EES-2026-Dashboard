@@ -314,10 +314,6 @@ def render(summary_df=None):
     raw_total   = int(summary_df['Mẫu thô (Supabase)'].sum())
     dedup_total = int(summary_df['Sau Dedup'].sum())
     
-    # [Business Request] Fix số hiển thị thành 20,005 để khớp số liệu đã báo cáo truyền thông
-    if raw_total == 20009:
-        raw_total = 20005
-        dedup_total = 20005
     eff_total   = float(summary_df['n hiệu dụng'].sum())
     keep_total  = int(summary_df['KEEP'].sum())
     down_total  = int(summary_df['DOWNWEIGHT'].sum())
@@ -452,21 +448,18 @@ def render(summary_df=None):
         </ul>
         """, unsafe_allow_html=True)
 
-        # Bảng phân hạng
-        table_data = {
-            "Nhóm": ["1A - Giao hàng", "1B - Tài xế", "2A - NV Kho",
-                     "2B - QL Tuyến", "3A - Văn phòng", "3B - QL Cấp cao"],
-            "Mẫu thô": [12955, 801, 4892, 425, 917, 109],
-            "Loại bỏ (DROP)": [175, 2, 31, 0, 0, 0],
-            "Base phân tích": [12780, 799, 4861, 425, 917, 109],
-            '"n hiệu dụng"': [9377, 630, 3827, 358, 798, 102],
-            "Tỷ lệ giữ": ["72,4%", "78,7%", "78,2%", "84,2%", "87,0%", "93,3%"]
-        }
-        df_table = pd.DataFrame(table_data)
+        # Bảng phân hạng dùng cùng summary_df đang load, tránh hard-code lệch tài liệu.
+        df_table = summary_df.copy()
+        df_table["Mẫu thô"] = df_table["Mẫu thô (Supabase)"].astype(int)
+        df_table["Loại bỏ (DROP)"] = df_table["DROP"].astype(int)
+        df_table["Base phân tích"] = (df_table["Mẫu thô"] - df_table["Loại bỏ (DROP)"]).clip(lower=0).astype(int)
+        df_table['"n hiệu dụng"'] = df_table["n hiệu dụng"].round(0).astype(int)
+        df_table["Tỷ lệ giữ"] = df_table["% giữ"].map(lambda v: f"{float(v):.1f}%")
+        df_table = df_table[["Nhóm", "Mẫu thô", "Loại bỏ (DROP)", "Base phân tích", '"n hiệu dụng"', "Tỷ lệ giữ"]]
 
         # Render table with custom styling
         header_cols = st.columns([2, 1.2, 1.5, 1.5, 1.5, 1.2])
-        headers = list(table_data.keys())
+        headers = list(df_table.columns)
         header_styles = [
             "background:#0A1F44;color:white;padding:10px 12px;border-radius:8px 0 0 0;font-size:0.78rem;font-weight:700",
             "background:#0A1F44;color:white;padding:10px 12px;font-size:0.78rem;font-weight:700;text-align:right",

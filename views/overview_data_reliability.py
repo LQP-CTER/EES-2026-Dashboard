@@ -386,7 +386,7 @@ def render():
 
     st.markdown(f"""
     <p style="font-size:0.82rem;color:{SLATE_500};line-height:1.7;margin-top:8px;font-style:italic">
-        <strong>Mẫu thô</strong> = số record lấy từ Supabase (19.886 dòng — gồm 6 nhóm).
+        <strong>Mẫu thô</strong> = số record lấy từ Supabase/Neon theo dữ liệu đang load.
         <strong>Sau Dedup</strong> = đã khử trùng lặp (một số nhân viên nộp 2 lần).
         <strong>n hiệu dụng</strong> = tổng trọng số tin cậy — phản ánh lượng thông tin thực sự
         dùng được, không phải số đầu đếm thô. Tỷ lệ ~75% nghĩa là khoảng 1/4 phản hồi bị giảm
@@ -442,8 +442,8 @@ def render():
     st.markdown(f"""
     <p style="font-size:0.82rem;color:{SLATE_500};line-height:1.7;margin-top:8px;font-style:italic">
         <strong>Nhận xét nổi bật:</strong>
-        Nhóm <strong>1A · Shipper</strong> có số lượng DROP lớn nhất (2.531 bản — tương ứng 19.5% mẫu thô).
-        Đây là nhóm straight-line cao do đặc thù trả lời nhanh của lực lượng lao động trực tiếp,
+        Nhóm <strong>1A · Shipper</strong> thường là nhóm có số lượng phản hồi bị giảm trọng số lớn nhất
+        do đặc thù trả lời nhanh của lực lượng lao động trực tiếp,
         <em>không phải dữ liệu rác</em> — vẫn được giữ làm tham chiếu nhưng giảm đóng góp vào trung bình.
     </p>
     """, unsafe_allow_html=True)
@@ -484,8 +484,8 @@ def render():
          "Khi tính EI, MEI, burnout, JSI... dashboard dùng <code>Σ(value × effective_weight) / Σ(effective_weight)</code>. "
          "Con số này phản ánh lượng thông tin thực sự, không phải trung bình cộng đơn thuần."),
         ("n hiệu dụng ≠ số lượng phản hồi", BLUE, "#EFF6FF",
-         "Hai con số có thể khác nhau đáng kể. Ví dụ nhóm 1A: 12.955 phản hồi nhưng n hiệu dụng = 9.142 — "
-         "nghĩa là dashboard <em>đang lắng nghe tương đương</em> tiếng nói của ~9.100 người."),
+         "Hai con số có thể khác nhau đáng kể. Ví dụ một nhóm có hơn 12 nghìn phản hồi nhưng n hiệu dụng thấp hơn "
+         "do một phần phản hồi bị giảm trọng số tin cậy."),
         ("Cronbach α = 0.94–0.99 (rất cao)", "#F59E0B", "#FFFBEB",
          "Hệ số quá cao có thể phản ánh hiệu ứng halo (đồng ý/toàn bộ) chứ không hẳn nhất quán tâm lý. "
          "Báo cáo <strong>luôn đính kèm phân phối điểm</strong> và <strong>phân tích open-text</strong> để tam giác hóa."),

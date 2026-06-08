@@ -32,7 +32,7 @@ SEGMENT_LABELS = {
 
 
 def _weights(df: pd.DataFrame) -> pd.Series:
-    w = df.get("CompanyRollup_Weight", pd.Series(1.0, index=df.index))
+    w = df.get("CompanyRollup_Weight", df.get("effective_weight", pd.Series(1.0, index=df.index)))
     w = pd.to_numeric(w, errors="coerce").fillna(1.0).clip(lower=0)
     return w
 

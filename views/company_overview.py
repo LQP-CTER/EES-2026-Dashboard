@@ -28,8 +28,12 @@ def render(all_data, available_groups):
     total_enps = total_kpis['enps_score']
     total_intent = total_kpis['intent_pct_low']
 
-    # Tính tổng số nhân sự hiện tại của toàn công ty (hardcode cho EES 2026)
-    total_headcount = 21353
+    try:
+        from shared.workforce_mapper import load_workforce_and_mapping
+        df_wf, _, _ = load_workforce_and_mapping()
+        total_headcount = len(df_wf) if df_wf is not None and not df_wf.empty else 21353
+    except Exception:
+        total_headcount = 21353
 
     # total_n_before = raw submissions (tham gia khảo sát)
     # total_n        = sau lọc memo (mẫu phân tích hợp lệ)
@@ -334,7 +338,7 @@ def render(all_data, available_groups):
 
     try:
         from views.analyst_intelligence import render_company_analyst_intelligence
-        render_company_analyst_intelligence()
+        render_company_analyst_intelligence(all_data)
     except Exception as _analyst_err:
         st.caption(f"Phân tích chuyên sâu từ tài liệu analyst không khả dụng: {_analyst_err}")
 
