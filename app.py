@@ -691,6 +691,14 @@ if not is_admin:
     # 1. Xử lý callback OAuth (có ?code= trên URL)
     if "code" in st.query_params:
         code = st.query_params.get("code")
+        
+        # Ngăn chặn việc xử lý cùng một code 2 lần (Streamlit thỉnh thoảng rerun kép)
+        if st.session_state.get("last_processed_oauth_code") == code:
+            st.query_params.clear()
+            st.rerun()
+            
+        st.session_state["last_processed_oauth_code"] = code
+        
         with st.spinner("Đang xác thực Google..."):
             user_info = get_user_info(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI)
 
