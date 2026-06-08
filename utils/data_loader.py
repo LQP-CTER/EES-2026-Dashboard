@@ -6,7 +6,31 @@ import os, sys
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-import streamlit as st
+
+# Safe Streamlit import: data_loader có thể được import từ script offline
+# (không có Streamlit runtime). Khi đó, tạo stub để tránh crash.
+try:
+    import streamlit as st
+    _has_streamlit = True
+except Exception:
+    _has_streamlit = False
+
+if not _has_streamlit:
+    # Stub tối giản: cache_data / cache_resource trở thành passthrough decorator
+    class _StStub:
+        def cache_data(self, *a, **kw):
+            def _deco(fn): return fn
+            return _deco
+        def cache_resource(self, *a, **kw):
+            def _deco(fn): return fn
+            return _deco
+        def warning(self, *a, **kw): pass
+        def error(self, *a, **kw): pass
+        def connection(self, *a, **kw): raise RuntimeError("No Streamlit runtime")
+        class secrets:
+            @staticmethod
+            def get(k, d=None): return d
+    st = _StStub()
 
 # Paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
