@@ -842,6 +842,13 @@ if not is_admin:
             # Chưa đăng nhập và không có token trên URL:
             # Nếu người dùng vừa nhấn Đăng xuất hoặc bị lỗi -> Hiện trang Login sạch
             if st.query_params.get("logout") == "1" or st.query_params.get("error") == "1":
+                is_err = st.query_params.get("error") == "1"
+                st.query_params.clear()
+                if is_err:
+                    st.toast("Phiên đăng nhập hết hạn hoặc xảy ra lỗi. Vui lòng đăng nhập lại.", icon="⚠️")
+                else:
+                    st.toast("Đăng xuất thành công.", icon="✅")
+                
                 _render_login_page()
                 st.stop()
             else:
