@@ -427,8 +427,8 @@ def render():
     }
     .ed-orbit-pill.p1 { left:2px; top:42px; }
     .ed-orbit-pill.p2 { right:4px; top:36px; }
-    .ed-orbit-pill.p3 { left:32px; bottom:14px; }
-    .ed-orbit-pill.p4 { right:28px; bottom:12px; }
+    .ed-orbit-pill.p3 { left:-10px; bottom:8px; }
+    .ed-orbit-pill.p4 { right:-20px; bottom:24px; }
     .ed-orbit-pill.p5 { left:50%; top:-16px; transform:translateX(-50%); }
     .ed-command-bars {
         position:absolute;
