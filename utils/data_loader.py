@@ -202,9 +202,12 @@ def _normalize_loaded_column_names(df: pd.DataFrame) -> pd.DataFrame:
         target = stripped
 
         q_match = re.fullmatch(r"q_?(\d{1,2})", lower)
+        bracket_question_match = re.search(r"^\[[^\d\]]*(\d{1,2})\s*\]", stripped)
         tc_match = re.fullmatch(r"tc_?([1-5])_(mean|pct)", lower)
         if q_match:
             target = f"Q{int(q_match.group(1))}"
+        elif bracket_question_match:
+            target = f"Q{int(bracket_question_match.group(1))}"
         elif tc_match:
             target = f"TC{tc_match.group(1)}_{tc_match.group(2)}"
         elif lower in canonical_simple:

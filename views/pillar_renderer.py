@@ -53,6 +53,84 @@ def _qmean(df, col):
     return vals.mean() if len(vals) >= 5 else None
 
 
+def _render_aggregate_only_fallback(df, cfg, group_id, pillar_id, qs, context="quick"):
+    """Render a useful aggregate view when raw question columns are absent."""
+    meta = PILLAR_META[pillar_id]
+    p_col = f"{pillar_id}_pct"
+    missing_preview = ", ".join(qs[:8]) if qs else "không resolve được codebook"
+    available_q = sorted([c for c in df.columns if str(c).upper().startswith("Q")])[:12]
+    available_txt = ", ".join(available_q) if available_q else "không thấy cột Q nào"
+
+    if p_col not in df.columns:
+        st.info(
+            "Không tìm thấy cột câu hỏi hoặc cột điểm tổng hợp cho trụ cột này trong dữ liệu đang load. "
+            f"Codebook cần: {missing_preview}. Dữ liệu hiện có: {available_txt}."
+        )
+        return
+
+    vals = pd.to_numeric(df[p_col], errors="coerce").dropna()
+    if vals.empty:
+        st.info(
+            f"Cột tổng hợp {p_col} có trong dữ liệu nhưng không có giá trị hợp lệ. "
+            f"Codebook cần raw questions: {missing_preview}."
+        )
+        return
+
+    pillar_pct = float(vals.mean())
+    pillar_mean = pillar_pct / 100 * 4 + 1
+    ei_val = pd.to_numeric(df.get("EI", pd.Series(dtype=float)), errors="coerce").mean()
+    enps_val = pd.to_numeric(df.get("eNPS", pd.Series(dtype=float)), errors="coerce").mean()
+
+    st.markdown(f"""
+    <div style="background:#FFF7ED;border:1px solid #FDBA7433;border-left:4px solid {meta['color']};
+                border-radius:12px;padding:16px 18px;margin-bottom:16px;">
+        <div style="font-size:.72rem;font-weight:900;color:#FF5200;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px;">Aggregate mode</div>
+        <div style="font-size:.95rem;color:#0A1F44;font-weight:850;margin-bottom:6px;">DB hiện có điểm tổng hợp <code>{p_col}</code>, nhưng thiếu raw question columns.</div>
+        <div style="font-size:.82rem;color:#475569;line-height:1.65;">
+            Dashboard vẫn đọc được điểm trụ cột tổng hợp, nhưng chưa thể xếp hạng từng câu hỏi.
+            Cần bổ sung các cột raw trong table Neon: <strong>{missing_preview}</strong>.
+            Cột Q hiện thấy: <strong>{available_txt}</strong>.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Điểm trụ cột", f"{pillar_pct:.1f}%")
+    c2.metric("Quy đổi thang 5", f"{pillar_mean:.2f}/5")
+    c3.metric("EI nhóm", f"{ei_val:.1f}%" if not pd.isna(ei_val) else "N/A")
+    c4.metric("eNPS TB", f"{enps_val:.1f}" if not pd.isna(enps_val) else "N/A")
+
+    breakdown_col = next((c for c in ["department", "section", "division"] if c in df.columns), None)
+    if breakdown_col:
+        rows = []
+        for unit, g in df.groupby(breakdown_col, dropna=False):
+            scores = pd.to_numeric(g[p_col], errors="coerce").dropna()
+            if len(scores) < 5:
+                continue
+            rows.append({
+                "Đơn vị": unit,
+                "N": len(scores),
+                f"{pillar_id} (%)": round(float(scores.mean()), 1),
+                "EI (%)": round(float(pd.to_numeric(g.get("EI", pd.Series(dtype=float)), errors="coerce").mean()), 1),
+            })
+        if rows:
+            agg_df = pd.DataFrame(rows).sort_values(f"{pillar_id} (%)", ascending=True)
+            fig = px.bar(
+                agg_df.tail(20),
+                x=f"{pillar_id} (%)",
+                y="Đơn vị",
+                orientation="h",
+                color=f"{pillar_id} (%)",
+                color_continuous_scale="RdYlGn",
+                text=f"{pillar_id} (%)",
+            )
+            fig = fig_card(fig, f"{pillar_id} theo {breakdown_col}", "Fallback theo điểm tổng hợp từ database")
+            fig.update_layout(height=max(320, min(len(agg_df), 20) * 26 + 90), coloraxis_showscale=False)
+            st.plotly_chart(fig, width="stretch", key=f"aggregate_fallback_{context}_{pillar_id}")
+            with st.expander("Bảng aggregate fallback", expanded=False):
+                st.dataframe(agg_df.sort_values(f"{pillar_id} (%)", ascending=False), width="stretch", hide_index=True)
+
+
 # ─────────────────────────────────────────────────────────────
 # PILLAR HEADER
 # ─────────────────────────────────────────────────────────────
@@ -81,6 +159,8 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
     score_str = f"{pillar_mean:.2f}" if pillar_mean else "N/A"
     fav_str = f"{fav_pct:.1f}%"
     weight_str = f"{PILLAR_WEIGHTS.get(pillar_id, 0)*100:.0f}%"
+    q_count_str = str(len(q_cols)) if q_cols else f"{len(qs)}*"
+    q_count_note = "câu hỏi trong trụ cột" if q_cols else "theo codebook; DB thiếu raw Q"
 
     # Pillar score color
     if pillar_mean:
@@ -112,8 +192,8 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
             </div>
             <div style="background:#F8FAFC;padding:14px;border-radius:8px;border:1px solid #F1F5F9;">
                 <span style="font-size:0.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Số câu hỏi</span>
-                <div style="font-size:1.8rem;font-weight:900;color:#0A1F44;line-height:1;">{len(q_cols)}</div>
-                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">câu hỏi trong trụ cột</div>
+                <div style="font-size:1.8rem;font-weight:900;color:#0A1F44;line-height:1;">{q_count_str}</div>
+                <div style="font-size:0.7rem;color:#94A3B8;margin-top:3px;">{q_count_note}</div>
             </div>
         </div>
     </div>
@@ -138,13 +218,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     color = meta['color']
 
     if not q_cols:
-        missing_preview = ", ".join(qs[:8]) if qs else "không resolve được codebook"
-        available_q = sorted([c for c in df.columns if str(c).upper().startswith("Q")])[:12]
-        available_txt = ", ".join(available_q) if available_q else "không thấy cột Q nào"
-        st.info(
-            "Không tìm thấy cột câu hỏi cho trụ cột này trong dữ liệu đang load. "
-            f"Codebook cần: {missing_preview}. Dữ liệu hiện có: {available_txt}."
-        )
+        _render_aggregate_only_fallback(df, cfg, group_id, pillar_id, qs, context="quick")
         return
 
     cb = get_codebook(group_id)
@@ -334,13 +408,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
     q_cols = [q for q in qs if q in df.columns]
 
     if not q_cols:
-        missing_preview = ", ".join(qs[:8]) if qs else "không resolve được codebook"
-        available_q = sorted([c for c in df.columns if str(c).upper().startswith("Q")])[:12]
-        available_txt = ", ".join(available_q) if available_q else "không thấy cột Q nào"
-        st.info(
-            "Không tìm thấy cột câu hỏi cho trụ cột này trong dữ liệu đang load. "
-            f"Codebook cần: {missing_preview}. Dữ liệu hiện có: {available_txt}."
-        )
+        _render_aggregate_only_fallback(df, cfg, group_id, pillar_id, qs, context="detail")
         return
 
     meta = PILLAR_META[pillar_id]
