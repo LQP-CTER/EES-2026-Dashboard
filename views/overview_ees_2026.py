@@ -425,11 +425,11 @@ def render():
         backdrop-filter:blur(10px);
         box-shadow:0 12px 22px rgba(0,0,0,.16);
     }
-    .ed-orbit-pill.p1 { left:8px; top:28px; }
-    .ed-orbit-pill.p2 { right:10px; top:22px; }
-    .ed-orbit-pill.p3 { left:38px; bottom:20px; }
-    .ed-orbit-pill.p4 { right:34px; bottom:18px; }
-    .ed-orbit-pill.p5 { left:50%; top:0; transform:translateX(-50%); }
+    .ed-orbit-pill.p1 { left:2px; top:42px; }
+    .ed-orbit-pill.p2 { right:4px; top:36px; }
+    .ed-orbit-pill.p3 { left:32px; bottom:14px; }
+    .ed-orbit-pill.p4 { right:28px; bottom:12px; }
+    .ed-orbit-pill.p5 { left:50%; top:-16px; transform:translateX(-50%); }
     .ed-command-bars {
         position:absolute;
         right:28px;
@@ -1836,7 +1836,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 </body>
 </html>
 """
-    components.html(timeline_html, height=1300, scrolling=False)
+    components.html(timeline_html, height=1450, scrolling=False)
     # ── 5. TEAM ───────────────────────────────────────────────────────────────
     st.html("""
     <div class="ed-container">
