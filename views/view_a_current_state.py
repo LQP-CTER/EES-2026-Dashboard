@@ -5,6 +5,7 @@ import pandas as pd
 from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from utils.ai_generator import render_ai_insight_card
+from views.view_i_data_trust import DEEPDIVE_GROUP_BASE
 
 # Tên viết tắt cho header cột bảng (tránh bị cắt chữ)
 _PILLAR_SHORT = {
@@ -30,6 +31,12 @@ def _make_table_col_cfg(row_label_key, pillars_seen):
         short = _PILLAR_SHORT.get(pl, pl)
         cfg[pl] = st.column_config.NumberColumn(short, format='%.1f%%', width='medium')
     return cfg
+
+
+_DEEPDIVE_GROUP_QUALITY = {
+    item["Nhóm"].split(" · ")[0].strip().upper(): item
+    for item in DEEPDIVE_GROUP_BASE
+}
 
 def render(df, cfg, pillar_filter=None, group_id=None):
     apply_theme()
@@ -73,44 +80,54 @@ def render(df, cfg, pillar_filter=None, group_id=None):
 
     # ══ SECTION 1: COMPACT HERO KPI — 1 hàng 6 cột ══
     # ── Data Quality Summary Panel ──
-    _n_before    = df.attrs.get('n_before', len(df))
-    _n_removed   = df.attrs.get('n_removed', 0)
-    _pct_removed = df.attrs.get('pct_removed', 0.0)
-    _filter_desc = df.attrs.get('filter_desc', 'Áp dụng bộ lọc chất lượng tiêu chuẩn')
-    _filter_meth = df.attrs.get('filter_method', 'standard')
-    _n_final     = len(df)
+    _gid = str(group_id or cfg.get('id') or '').strip().upper()
+    _quality = _DEEPDIVE_GROUP_QUALITY.get(_gid)
+    if _quality:
+        _n_before = int(_quality["Raw submissions"])
+        _n_removed = int(_quality["Dropped"])
+        _n_final = int(_quality["Cleaned base"])
+        _pct_removed = round(_n_removed / _n_before * 100, 1) if _n_before > 0 else 0.0
+        _filter_desc = "Số mẫu trước/sau loại theo EES_2026_DeepDive_v13_Final; dữ liệu Neon đang load là bảng đã làm sạch."
+        _filter_meth = "deepdive"
+    else:
+        _n_before = df.attrs.get('n_before', len(df))
+        _n_removed = df.attrs.get('n_removed', 0)
+        _pct_removed = df.attrs.get('pct_removed', 0.0)
+        _filter_desc = df.attrs.get('filter_desc', 'Áp dụng bộ lọc chất lượng tiêu chuẩn')
+        _filter_meth = df.attrs.get('filter_method', 'standard')
+        _n_final = len(df)
     _keep_pct    = round(_n_final / _n_before * 100, 1) if _n_before > 0 else 100
 
-    _meth_color = {"none": "#0EA5E9", "straight_and_empty": "#8B5CF6", "standard": "#10B981"}.get(_filter_meth, "#64748B")
-    _meth_label = {"none": "Không lọc", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn"}.get(_filter_meth, "Lọc chuẩn")
+    _meth_color = {"none": "#0EA5E9", "straight_and_empty": "#8B5CF6", "standard": "#10B981", "deepdive": "#1D4ED8"}.get(_filter_meth, "#64748B")
+    _meth_label = {"none": "Không lọc", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn", "deepdive": "Theo DeepDive v13"}.get(_filter_meth, "Lọc chuẩn")
 
     st.markdown(f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 18px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-            <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94A3B8;"> Xử lý dữ liệu</span>
+            <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94A3B8;">Dòng xử lý mẫu</span>
             <span style="background:{_meth_color}18;color:{_meth_color};font-size:0.68rem;font-weight:700;padding:2px 10px;border-radius:20px;">{_meth_label}</span>
             <span style="font-size:0.72rem;color:#64748B;margin-left:auto;">{_filter_desc}</span>
         </div>
         <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
             <div style="text-align:center;">
                 <div style="font-size:1.3rem;font-weight:900;color:#1E293B;letter-spacing:-0.03em;">{_n_before:,}</div>
-                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu thu thập</div>
+                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu thực nhận</div>
             </div>
             <div style="font-size:1.2rem;color:#CBD5E1;">→</div>
             <div style="text-align:center;">
                 <div style="font-size:1.3rem;font-weight:900;color:#DC2626;letter-spacing:-0.03em;">−{_n_removed:,}</div>
-                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Loại bỏ ({_pct_removed:.1f}%)</div>
+                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Loại khỏi phân tích ({_pct_removed:.1f}%)</div>
             </div>
             <div style="font-size:1.2rem;color:#CBD5E1;">→</div>
             <div style="text-align:center;">
                 <div style="font-size:1.3rem;font-weight:900;color:#15803D;letter-spacing:-0.03em;">{_n_final:,}</div>
-                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu phân tích ({_keep_pct:.1f}%)</div>
+                <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu dùng phân tích ({_keep_pct:.1f}%)</div>
             </div>
             <div style="flex:1;min-width:120px;">
                 <div style="background:#E2E8F0;border-radius:99px;height:6px;overflow:hidden;">
                     <div style="background:linear-gradient(90deg,#15803D,#22C55E);height:100%;width:{_keep_pct}%;border-radius:99px;transition:width 0.5s;"></div>
                 </div>
-                <div style="font-size:0.65rem;color:#94A3B8;margin-top:3px;text-align:right;">{_keep_pct:.1f}% được sử dụng</div>
+                <div style="font-size:0.65rem;color:#94A3B8;margin-top:3px;text-align:right;">{_keep_pct:.1f}% giữ lại sau xử lý</div>
             </div>
         </div>
     </div>
