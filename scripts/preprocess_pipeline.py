@@ -150,8 +150,20 @@ GROUP_REGISTRY = {
 def _is_meaningless(text):
     if pd.isna(text): return True
     t = str(text).strip().lower()
-    if t in {"", "không", "khong", "không có", "khong co", "không ý kiến",
-             "khong y kien", "k", "ko", "none", "na", "n/a", "-", "."}:
+    # Mở rộng tập filler để bắt đúng "câu mở bỏ trống" theo định nghĩa analyst v13
+    _FILLER = {
+        "", "không", "khong", "không có", "khong co", "không ý kiến",
+        "khong y kien", "k", "ko", "none", "na", "n/a", "-", ".",
+        # Thêm các filler phổ biến trong khảo sát tiếng Việt
+        "ok", "oke", "okay", "oki", "tốt", "tot", "bình thường", "binh thuong",
+        "ổn", "on", "ổn rồi", "ổn hết", "không có gì", "khong co gi",
+        "không có gì thêm", "khong co gi them", "không có ý kiến gì thêm",
+        "không ý kiến gì", "không có gì để nói", "chưa có", "chua co",
+        "chưa", "no", "x", "không biết", "khong biet", "bình thường thôi",
+        "chưa có ý kiến", "không có phản hồi", "không có góp ý",
+        "chưa có góp ý", "tốt rồi", "ổn định", "bình thường bình thường",
+    }
+    if t in _FILLER:
         return True
     return len(t) < 2 and not t.isalnum()
 
@@ -252,10 +264,13 @@ def process_group(group_id: str) -> pd.DataFrame:
 
     # ── Quality Tier ──────────────────────────────────────────────────────────
     def _assign_quality(row):
+        # Chỉ DROP khi có lỗi cứng: thiếu dữ liệu nặng, trùng lặp, Mahalanobis outlier.
         if row["flag_too_missing"] or row["flag_duplicate"] or row["flag_mahalanobis"]:
             return 0.0, "DROP"
-        if row["flag_straightline"] and row["num_evidence"] == 0:
-            return 0.0, "DROP"
+        # KHÔNG DROP straight-line+no-evidence: tài liệu analyst v13 quy định
+        # "KHÔNG loại bỏ, chỉ downweight ×0,5". Nhóm này nhiều detractor/neutral,
+        # DROP sẽ thổi phồng eNPS +5–+6 so với benchmark.
+        # Thay vào đó: downweight mạnh (0.3) vì không có bằng chứng gắn kết nào.
         if row["num_evidence"] == 0:
             return 0.3, "DOWNWEIGHT"
         if row["flag_straightline"] or row["flag_contradiction"] or row["num_evidence"] == 1:

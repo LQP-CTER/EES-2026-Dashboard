@@ -742,11 +742,15 @@ def compute_kpis(df):
     stay_atrisk_pct = round(weighted_pct(stay_col == 3, stay_valid), 1)
     stay_stable_pct = round(weighted_pct(stay_col >= 4, stay_valid), 1)
 
-    # Silence Rate = (flag_straightline OR is_silent) — khớp với dinh nghia bao cao v13
+    # Silence Rate = % câu mở bỏ trống (is_silent only) — định nghĩa Bảng 2, v13
+    # KHÔNG phải (flag_straightline | is_silent): đó là lỗi trước đây làm tăng sai số.
+    # Straight-line Rate = % trả lời đồng đều Likert (flag_straightline only), là chỉ số riêng.
+    # NOTE: eNPS chênh ~+5–+6 so với tài liệu analyst do pipeline DROP các mẫu
+    #   flag_straightline=True AND num_evidence==0 (detractor-heavy). Fix dứt điểm cần
+    #   chạy lại preprocess_pipeline.py sau khi đã sửa logic _assign_quality ở đó.
     _sl = df.get('flag_straightline', pd.Series(False, index=df.index)).fillna(False).astype(bool)
     _si = df.get('is_silent', pd.Series(False, index=df.index)).fillna(False).astype(bool)
-    silence_combined = _sl | _si
-    silence_rate = round(weighted_pct(silence_combined), 1)
+    silence_rate = round(weighted_pct(_si), 1)
     straight_line_rate = round(weighted_pct(_sl), 1)
     jsi_avg = round(weighted_avg(df['JSI']), 1) if 'JSI' in df.columns else 0
 
