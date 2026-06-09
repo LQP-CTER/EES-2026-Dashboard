@@ -74,12 +74,33 @@ def render(df, cfg, pillar_filter=None, group_id=None):
 
     # ══ SECTION 1: COMPACT HERO KPI — 1 hàng 6 cột ══
     # ── Data Quality Summary Panel — ưu tiên số liệu từ dữ liệu thực tế ──
-    _n_before = df.attrs.get('n_before', len(df))
-    _n_removed = df.attrs.get('n_removed', 0)
-    _n_final = len(df)
-    _pct_removed = df.attrs.get('pct_removed', 0.0)
-    _filter_desc = df.attrs.get('filter_desc', 'Áp dụng bộ lọc chất lượng tiêu chuẩn')
-    _filter_meth = df.attrs.get('filter_method', 'standard')
+    from views.view_i_data_trust import DEEPDIVE_GROUP_BASE, DEEPDIVE_QUALITY_TOTALS
+    _gid = str(group_id or cfg.get('id') or '').strip().upper()
+    
+    if not _gid: # Công ty
+        _n_before = DEEPDIVE_QUALITY_TOTALS['raw']
+        _n_removed = DEEPDIVE_QUALITY_TOTALS['dropped']
+        _n_final = DEEPDIVE_QUALITY_TOTALS['cleaned']
+        _pct_removed = round(_n_removed / _n_before * 100, 1) if _n_before > 0 else 0.0
+        _filter_desc = 'Số mẫu trước/sau loại theo EES_2026_DeepDive_v13_Final'
+        _filter_meth = 'deepdive'
+    else:
+        _q_group = next((g for g in DEEPDIVE_GROUP_BASE if g['Nhóm'].split(' · ')[0].strip().upper() == _gid), None)
+        if _q_group:
+            _n_before = int(_q_group['Raw submissions'])
+            _n_removed = int(_q_group['Dropped'])
+            _n_final = int(_q_group['Cleaned base'])
+            _pct_removed = round(_n_removed / _n_before * 100, 1) if _n_before > 0 else 0.0
+            _filter_desc = 'Số mẫu trước/sau loại theo EES_2026_DeepDive_v13_Final'
+            _filter_meth = 'deepdive'
+        else:
+            _n_before = df.attrs.get('n_before', len(df))
+            _n_removed = df.attrs.get('n_removed', 0)
+            _n_final = len(df)
+            _pct_removed = df.attrs.get('pct_removed', 0.0)
+            _filter_desc = df.attrs.get('filter_desc', 'Áp dụng bộ lọc chất lượng tiêu chuẩn')
+            _filter_meth = df.attrs.get('filter_method', 'standard')
+
     _keep_pct    = round(_n_final / _n_before * 100, 1) if _n_before > 0 else 100
 
     _meth_color = {"none": "#0EA5E9", "straight_and_empty": "#8B5CF6", "standard": "#10B981", "deepdive": "#1D4ED8"}.get(_filter_meth, "#64748B")
