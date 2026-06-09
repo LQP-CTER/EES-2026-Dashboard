@@ -1472,7 +1472,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
       <div class="jt-dot">{_jt_icon("gear")}</div>
       <div class="jt-body">
         <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 03</div>
-        <div class="jt-milestone">∞ vòng</div>
+        <div class="jt-milestone">Data Processing</div>
         <div class="jt-title">Xử Lý & Làm Sạch Dữ Liệu</div>
         <div class="jt-desc">Chuẩn hóa dữ liệu thô qua nhiều vòng kiểm tra, map với HRIS và thiết lập cấu trúc phân nhóm Division/Section chính xác tuyệt đối.</div>
       </div>
