@@ -7,7 +7,7 @@ from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025
 from utils.ai_generator import render_ai_insight_card
-from views.view_i_data_trust import DEEPDIVE_GROUP_BASE, DEEPDIVE_QUALITY_TOTALS
+from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
 
 MIN_DEPARTMENT_N = 1
 MIN_ORG_SEGMENT_N = 5
@@ -41,14 +41,12 @@ def _pct(numerator, denominator) -> float:
     return round((numerator / denominator) * 100, 1) if denominator else 0.0
 
 
-def _render_data_processing_section():
-    totals = DEEPDIVE_QUALITY_TOTALS
-    raw = totals["raw"]
-    dropped = totals["dropped"]
-    cleaned = totals["cleaned"]
-    headcount = totals["headcount"]
-    effective = totals["effective_base"]
-    straightline = totals["straightline_weighted"]
+def _render_data_processing_section(headcount, raw, cleaned, effective=None, straightline=None):
+    dropped = raw - cleaned
+    if effective is None:
+        effective = cleaned
+    if straightline is None:
+        straightline = effective
 
     cards = [
         ("HRIS / Headcount", headcount, "Nền nhân sự dùng để đối chiếu độ phủ", "#0A1F44"),
@@ -192,16 +190,21 @@ def _render_data_processing_section():
         )
     )
 
+    # Bảng chất lượng dữ liệu theo nhóm — dùng số liệu thực tế từ all_data
+    from config.groups import GROUP_REGISTRY
     group_rows = []
-    for row in DEEPDIVE_GROUP_BASE:
+    for group_id, (df, n_before) in all_data.items():
+        n_clean = len(df)
+        n_dropped = n_before - n_clean
+        grp_label = GROUP_REGISTRY.get(group_id, {}).get("short", group_id)
         group_rows.append(
             {
-                "Nhóm khảo sát": row["Nhóm"],
-                "Mẫu thu thập": row["Raw submissions"],
-                "Mẫu bị loại": row["Dropped"],
-                "Tỷ lệ loại": _pct(row["Dropped"], row["Raw submissions"]),
-                "Mẫu sau loại": row["Cleaned base"],
-                "Tỷ lệ giữ": _pct(row["Cleaned base"], row["Raw submissions"]),
+                "Nhóm khảo sát": f"{group_id} · {grp_label}",
+                "Mẫu thu thập": n_before,
+                "Mẫu bị loại": n_dropped,
+                "Tỷ lệ loại": _pct(n_dropped, n_before),
+                "Mẫu sau loại": n_clean,
+                "Tỷ lệ giữ": _pct(n_clean, n_before),
             }
         )
 
@@ -229,10 +232,12 @@ def render(all_data, available_groups):
     apply_theme()
 
     all_dfs = []
-    for group_id, (df, _n_before) in all_data.items():
+    total_n_before = 0
+    for group_id, (df, n_before) in all_data.items():
         df_group = df.copy()
         df_group["_survey_group"] = group_id
         all_dfs.append(df_group)
+        total_n_before += n_before
 
     df_total = _normalize_org_columns(pd.concat(all_dfs, ignore_index=True))
     total_kpis = compute_kpis(df_total)
@@ -241,11 +246,18 @@ def render(all_data, available_groups):
     total_intent = total_kpis['intent_pct_low']
     total_mei = total_kpis.get('mei_avg', 0.0)
 
-    # Neon dashboard tables are clean tables. Use DeepDive v13 as the source of truth
-    # for collection/cleaning counts so raw submissions are not collapsed into clean N.
-    total_headcount = DEEPDIVE_QUALITY_TOTALS["headcount"]
-    total_participants = DEEPDIVE_QUALITY_TOTALS["raw"]
-    total_cleaned = DEEPDIVE_QUALITY_TOTALS["cleaned"]
+    # Số liệu đồng bộ từ dữ liệu thực tế
+    total_participants = total_n_before  # raw submissions từ tất cả nhóm
+    total_cleaned = total_kpis['n']       # mẫu sau lọc dùng cho phân tích
+
+    # Headcount từ HRIS (không thay đổi theo dữ liệu khảo sát)
+    try:
+        from shared.workforce_mapper import load_workforce_and_mapping
+        df_wf, _, _ = load_workforce_and_mapping()
+        total_headcount = len(df_wf) if df_wf is not None and not df_wf.empty else DEEPDIVE_QUALITY_TOTALS["headcount"]
+    except Exception:
+        total_headcount = DEEPDIVE_QUALITY_TOTALS["headcount"]
+
     total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 0
     cleaned_rr = round((total_cleaned / total_headcount) * 100, 1) if total_headcount > 0 else 0
     bm = get_company_benchmark_2025()
@@ -514,7 +526,11 @@ def render(all_data, available_groups):
     </div>
     ''')
     st.html(hero_html)
-    _render_data_processing_section()
+    _render_data_processing_section(
+        headcount=total_headcount,
+        raw=total_participants,
+        cleaned=total_cleaned,
+    )
 
     # Executive company overview section
     from shared.plotly_theme import make_html_kpi

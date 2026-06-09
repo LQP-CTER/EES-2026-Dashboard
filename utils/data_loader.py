@@ -55,10 +55,10 @@ SURVEY_TABLE_CANDIDATE_TEMPLATES = [
 
 PILLAR_LABELS = {
     'TC1': 'Niềm tin lãnh đạo',
-    'TC2': 'Quản lý trực tiếp',
+    'TC2': 'Quản lý trực tiếp (MEI)',
     'TC3': 'Công việc & phát triển',
     'TC4': 'Thu nhập & minh bạch',
-    'TC5': 'Môi trường & phát triển',
+    'TC5': 'Môi trường & gắn kết',
 }
 
 TENURE_LABELS = [

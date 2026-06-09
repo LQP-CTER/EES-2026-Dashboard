@@ -1636,8 +1636,8 @@ with st.sidebar:
         label = available[g]['label']
         group_children = []
 
-        # 1. Tổng quan Tổ chức
-        group_children.append(sac.MenuItem(f"{g}__Tổng quan Tổ chức"))
+        # 1. Tổng quan Khảo sát
+        group_children.append(sac.MenuItem(f"{g}__Tổng quan Khảo sát"))
 
         # 2. Các trụ cột
         for p in PILLAR_ORDER:
@@ -1684,9 +1684,9 @@ with st.sidebar:
     # Child items + parent items của các group (value duy nhất nên không bị ghi đè)
     for g in group_opts:
         grp_label = available[g]['label']
-        # Parent click → navigate to "Tổng quan Tổ chức" của group đó
-        _NAV_MAP[grp_label] = (grp_label, "Tổng quan Tổ chức")
-        _NAV_MAP[f"{g}__Tổng quan Tổ chức"] = (grp_label, "Tổng quan Tổ chức")
+        # Parent click → navigate to "Tổng quan Khảo sát" của group đó
+        _NAV_MAP[grp_label] = (grp_label, "Tổng quan Khảo sát")
+        _NAV_MAP[f"{g}__Tổng quan Khảo sát"] = (grp_label, "Tổng quan Khảo sát")
         _NAV_MAP[f"{g}__Đo lường Impact"] = (grp_label, "Đo lường Impact")
         _NAV_MAP[f"{g}__Xem Báo Cáo"] = (grp_label, "Xem Báo Cáo")
         for p in PILLAR_ORDER:
@@ -1951,7 +1951,7 @@ else:
                 sel_pillar = p_id
                 break
 
-        if sel_nav == "Tổng quan Tổ chức":
+        if sel_nav == "Tổng quan Khảo sát":
             view_a_current_state.render(df_filtered, cfg)
         elif sel_nav == "Xem Báo Cáo":
             from views import narrative_flow
