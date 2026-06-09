@@ -136,12 +136,12 @@ DATA_CLEAN_DIR = os.path.join(PROJECT_ROOT, "Data_Clean")
 os.makedirs(DATA_CLEAN_DIR, exist_ok=True)
 
 GROUP_REGISTRY = {
-    "1A": {"label": "[1A] Nhân viên Giao nhận", "file": "EES-2026-Final-1A.xlsx", "codebook": CODEBOOK_1A},
-    "1B": {"label": "[1B] Tài xế xe tải",        "file": "EES-2026-Final-1B.xlsx", "codebook": CODEBOOK_1B},
-    "2A": {"label": "[2A] Nhân viên Vận hành Kho","file": "EES-2026-Final-2A.xlsx", "codebook": CODEBOOK_2A},
-    "2B": {"label": "[2B] Nhân viên Kho (khác)",  "file": "EES-2026-Final-2B.xlsx", "codebook": CODEBOOK_2B},
-    "3A": {"label": "[3A] Nhân viên Văn phòng",   "file": "EES-2026-Final-3A.xlsx", "codebook": CODEBOOK_3A},
-    "3B": {"label": "[3B] Kỹ thuật/IT",           "file": "EES-2026-Final-3B.xlsx", "codebook": CODEBOOK_3B},
+    "1A": {"label": "[1A] Nhân viên Giao nhận", "file": "EES_2026_1A_Cleaned.xlsx", "codebook": CODEBOOK_1A},
+    "1B": {"label": "[1B] Tài xế xe tải",        "file": "EES_2026_1B_Cleaned.xlsx", "codebook": CODEBOOK_1B},
+    "2A": {"label": "[2A] Nhân viên Vận hành Kho","file": "EES_2026_2A_Cleaned.xlsx", "codebook": CODEBOOK_2A},
+    "2B": {"label": "[2B] Nhân viên Kho (khác)",  "file": "EES_2026_2B_Cleaned.xlsx", "codebook": CODEBOOK_2B},
+    "3A": {"label": "[3A] Nhân viên Văn phòng",   "file": "EES_2026_3A_Cleaned.xlsx", "codebook": CODEBOOK_3A},
+    "3B": {"label": "[3B] Kỹ thuật/IT",           "file": "EES_2026_3B_Cleaned.xlsx", "codebook": CODEBOOK_3B},
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -184,12 +184,25 @@ def process_group(group_id: str) -> pd.DataFrame:
     print(f"  Raw rows: {n_before:,}")
 
     # ── Rename columns ────────────────────────────────────────────────────────
-    col_rename = {}
-    for q_id, q_info in codebook.items():
-        idx = q_info["col_idx"]
-        if idx < len(df_raw.columns):
-            col_rename[df_raw.columns[idx]] = q_id
-    df = df_raw.rename(columns=col_rename).copy()
+    # Một số xlsx (2A/2B/3A/3B) đã được pre-labeled với tên Q_ID sẵn.
+    # Nếu rename theo col_idx, cột mới trùng tên cột cũ → DataFrame thay vì Series.
+    # Kiểm tra: nếu ≥50% Q_ID của codebook đã có trong tên cột, bỏ qua bước rename.
+    import re as _re
+    _q_pat = _re.compile(r'^Q\d+$')
+    _pre_labeled = set(c for c in df_raw.columns if _q_pat.match(str(c)))
+    _expected_ids = set(codebook.keys())
+    _already_labeled = len(_pre_labeled & _expected_ids) / max(len(_expected_ids), 1) >= 0.5
+
+    if _already_labeled:
+        print(f"  xlsx đã có Q_ID sẵn ({len(_pre_labeled & _expected_ids)}/{len(_expected_ids)}) — bỏ qua rename.")
+        df = df_raw.copy()
+    else:
+        col_rename = {}
+        for q_id, q_info in codebook.items():
+            idx = q_info["col_idx"]
+            if idx < len(df_raw.columns):
+                col_rename[df_raw.columns[idx]] = q_id
+        df = df_raw.rename(columns=col_rename).copy()
 
     likert_cols = [q for q, info in codebook.items() if info["loại"] == "likert"]
     open_cols   = [q for q, info in codebook.items() if info["loại"] == "open"]
@@ -429,7 +442,7 @@ def process_group(group_id: str) -> pd.DataFrame:
             if pd.notna(tc2 := row.get("TC2_pct")):   score += (100 - tc2) / 100 * 30; n += 1
             if pd.notna(tc3 := row.get("TC3_pct")):   score += (100 - tc3) / 100 * 30; n += 1
             return round(score, 1) if n > 0 else None
-        df_clean["EWS"] = None
+        df_clean["EWS"] = np.nan   # float64, không bị stringify trong export_parquet
         if early_mask.any():
             df_clean.loc[early_mask, "EWS"] = df_clean.loc[early_mask].apply(_ews, axis=1)
         df_clean["EWS_flag"] = df_clean["EWS"].apply(
@@ -549,14 +562,22 @@ def process_group(group_id: str) -> pd.DataFrame:
 def export_parquet(df_clean: pd.DataFrame, group_id: str):
     out_path = os.path.join(DATA_CLEAN_DIR, f"{group_id}_clean.parquet")
 
-    # Sanitize: ép tất cả cột object về string để PyArrow không bị mixed-type error
+    # Sanitize: ép tất cả cột object về string để PyArrow không bị mixed-type error.
+    # Ngoại lệ: cột số (EWS, score, pct…) giữ nguyên float — không stringify.
+    _NUMERIC_COLS = {"EWS", "burnout_score", "JSI", "EI", "MEI"}
     df_out = df_clean.copy()
     for col in df_out.columns:
         if df_out[col].dtype == object:
-            # Chuyển sang pandas StringDtype (nullable) — tương thích Parquet hoàn toàn
-            df_out[col] = df_out[col].apply(
-                lambda x: None if (x is None or (isinstance(x, float) and pd.isna(x))) else str(x)
-            ).astype("string")
+            # Thử convert sang numeric trước; nếu >= 80% giá trị non-null chuyển được → giữ float
+            _num = pd.to_numeric(df_out[col], errors='coerce')
+            _nonnull = df_out[col].notna().sum()
+            if col in _NUMERIC_COLS or (_nonnull > 0 and _num.notna().sum() / _nonnull >= 0.8):
+                df_out[col] = _num  # float64
+            else:
+                # Text / categorical → pandas StringDtype (tương thích Parquet hoàn toàn)
+                df_out[col] = df_out[col].apply(
+                    lambda x: None if (x is None or (isinstance(x, float) and pd.isna(x))) else str(x)
+                ).astype("string")
 
     df_out.to_parquet(out_path, index=False)
     size_mb = os.path.getsize(out_path) / (1024 * 1024)
@@ -662,6 +683,7 @@ def main():
             "neondb":  "SKIP" if (args.skip_upload or args.skip_neondb)  else ("OK" if ok_neo  else "FAIL"),
             "supabase":"SKIP" if (args.skip_upload or args.skip_supabase) else ("OK" if ok_supa else "FAIL"),
         })
+
 
     # Summary
     print(f"\n{'='*60}")

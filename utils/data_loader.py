@@ -250,7 +250,12 @@ def _loader_cache_token(group_id: str) -> str:
 
 
 def normalize_tenure_value(value):
-    if pd.isna(value) or str(value).strip() == '':
+    # Guard: pandas may pass a Series when a column contains mixed/nested objects
+    if not isinstance(value, (str, int, float, np.integer, np.floating)) or (
+        isinstance(value, float) and np.isnan(value)
+    ):
+        return np.nan, 'Khác'
+    if str(value).strip() == '':
         return np.nan, 'Khác'
     raw = str(value).strip()
     label = TENURE_CODE_MAP.get(raw.upper(), raw)
@@ -701,12 +706,18 @@ def compute_kpis(df):
     n = int(n_rows)
     
     def weighted_avg(col):
+        col = pd.to_numeric(col, errors='coerce')   # guard: StringDtype parquet columns
         mask = col.notna()
         if not mask.any(): return 0
         return np.average(col[mask], weights=w[mask])
         
     def weighted_pct(condition_mask, valid_mask=None):
         if valid_mask is None: valid_mask = pd.Series(True, index=df.index)
+        # Guard: condition_mask may be StringDtype if column came from parquet string cast
+        if hasattr(condition_mask, 'dtype') and str(condition_mask.dtype) in ('string', 'object'):
+            condition_mask = condition_mask.map(
+                lambda x: str(x).strip().lower() == 'true' if pd.notna(x) else False
+            ).astype(bool)
         if not valid_mask.any() or w[valid_mask].sum() == 0: return 0
         cond = condition_mask.reindex(df.index).fillna(False).astype(bool)
         return (w[cond & valid_mask].sum() / w[valid_mask].sum()) * 100
@@ -757,7 +768,8 @@ def compute_kpis(df):
     ews_col = df.get('EWS')
     ews_red_pct = 0
     if ews_col is not None and ews_col.notna().any():
-        ews_red_pct = round(weighted_pct(ews_col >= 60, ews_col.notna()), 1)
+        _ews_num = pd.to_numeric(ews_col, errors='coerce')  # guard: StringDtype in parquet
+        ews_red_pct = round(weighted_pct(_ews_num >= 60, _ews_num.notna()), 1)
 
     quad = df.get('engagement_quadrant')
     quad_counts = {}
