@@ -247,8 +247,9 @@ def render(all_data, available_groups):
     total_mei = total_kpis.get('mei_avg', 0.0)
 
     # Số liệu đồng bộ từ dữ liệu thực tế
-    total_participants = total_n_before  # raw submissions từ tất cả nhóm
-    total_cleaned = total_kpis['n']       # mẫu sau lọc dùng cho phân tích
+    from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
+    total_participants = DEEPDIVE_QUALITY_TOTALS["raw"]  # raw submissions từ tất cả nhóm
+    total_cleaned = DEEPDIVE_QUALITY_TOTALS["cleaned"]   # mẫu sau lọc dùng cho phân tích
 
     # Headcount từ HRIS (không thay đổi theo dữ liệu khảo sát)
     try:
