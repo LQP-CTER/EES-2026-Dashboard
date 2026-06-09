@@ -1952,7 +1952,7 @@ else:
                 break
 
         if sel_nav == "Tổng quan Khảo sát":
-            view_a_current_state.render(df_filtered, cfg)
+            view_a_current_state.render(df_filtered, cfg, group_id=sel_group)
         elif sel_nav == "Xem Báo Cáo":
             from views import narrative_flow
             narrative_flow.render_narrative(df_filtered, cfg, sel_group)
