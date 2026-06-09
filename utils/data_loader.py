@@ -45,6 +45,14 @@ from shared.workforce_mapper import map_survey_to_org, get_org_summary
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(BASE, 'Data')
 
+SURVEY_TABLE_CANDIDATE_TEMPLATES = [
+    "survey_{gid}_clean",
+    "ees_2026_{gid}_clean",
+    "ees2026_{gid}_clean",
+    "survey_{gid}",
+    "ees_{gid}_clean",
+]
+
 PILLAR_LABELS = {
     'TC1': 'Niềm tin lãnh đạo',
     'TC2': 'Quản lý trực tiếp',
@@ -69,6 +77,131 @@ TENURE_CODE_MAP = {chr(65 + i): label for i, label in enumerate(TENURE_LABELS)}
 TENURE_MAP = {label: i for i, label in enumerate(TENURE_LABELS)}
 TENURE_MAP.update({i + 1: i for i in range(len(TENURE_LABELS))})
 EWS_TENURE_THRESHOLD = {'1A': 1, '1B': 1, '2A': 2, '2B': 2, '3A': 2, '3B': 2}
+
+
+def _secrets_section(name: str):
+    try:
+        return st.secrets.get(name, {})
+    except Exception:
+        return {}
+
+
+def _table_secret_keys(group_id: str, db_name: str) -> list[str]:
+    gid = group_id.upper()
+    gid_l = group_id.lower()
+    db = db_name.upper()
+    return [
+        f"{db}_TABLE_{gid}",
+        f"{db}_SURVEY_{gid}_TABLE",
+        f"SURVEY_TABLE_{gid}",
+        f"EES_TABLE_{gid}",
+        f"TABLE_{gid}",
+        f"{db}_TABLE_{gid_l}",
+        f"SURVEY_TABLE_{gid_l}",
+        f"EES_TABLE_{gid_l}",
+    ]
+
+
+def _get_configured_table_names(group_id: str, db_name: str) -> list[str]:
+    """Read optional table overrides from secrets/env.
+
+    Supported examples:
+    - EES_TABLE_1A = "survey_1a_clean_v2"
+    - NEONDB_TABLE_1A = "ees2026.survey_1a_clean"
+    - [survey_tables] group_1a = "survey_1a_clean_v2"
+    - [neondb_tables] group_1a = "survey_1a_clean_v2"
+    """
+    values = []
+    for key in _table_secret_keys(group_id, db_name):
+        try:
+            val = st.secrets.get(key, "")
+        except Exception:
+            val = ""
+        if not val:
+            val = os.environ.get(key, "")
+        if val:
+            values.append(str(val).strip())
+
+    section_names = [
+        f"{db_name.lower()}_tables",
+        "survey_tables",
+        "database_tables",
+        "ees_tables",
+    ]
+    lookup_keys = [
+        group_id.upper(),
+        group_id.lower(),
+        f"group_{group_id.lower()}",
+        f"survey_{group_id.lower()}",
+    ]
+    for section_name in section_names:
+        section = _secrets_section(section_name)
+        if not section:
+            continue
+        for key in lookup_keys:
+            try:
+                val = section.get(key, "")
+            except Exception:
+                val = ""
+            if val:
+                values.append(str(val).strip())
+
+    deduped = []
+    for val in values:
+        if val and val not in deduped:
+            deduped.append(val)
+    return deduped
+
+
+def get_survey_table_candidates(group_id: str, db_name: str) -> list[str]:
+    gid = group_id.lower()
+    configured = _get_configured_table_names(group_id, db_name)
+    defaults = [template.format(gid=gid) for template in SURVEY_TABLE_CANDIDATE_TEMPLATES]
+    candidates = []
+    for name in [*configured, *defaults]:
+        if name and name not in candidates:
+            candidates.append(name)
+    return candidates
+
+
+def _quote_sql_identifier(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'
+
+
+def _quote_table_name(table_name: str) -> str:
+    parts = [p.strip() for p in str(table_name).split(".") if p.strip()]
+    return ".".join(_quote_sql_identifier(p) for p in parts)
+
+
+def _query_survey_table(conn, table_name: str, ttl=3600) -> pd.DataFrame:
+    return conn.query(f"SELECT * FROM {_quote_table_name(table_name)}", ttl=ttl)
+
+
+def _validate_survey_table(df: pd.DataFrame, group_id: str, table_name: str) -> None:
+    if df is None or df.empty:
+        raise ValueError(f"{table_name} rỗng")
+    if "EI" not in df.columns:
+        raise ValueError(f"{table_name} thiếu cột EI")
+    if not any(c in df.columns for c in ["division", "department", "section"]):
+        raise ValueError(f"{table_name} thiếu cột tổ chức division/department/section")
+
+
+def _get_data_source_mode() -> str:
+    try:
+        mode = st.secrets.get("DATA_SOURCE", "")
+    except Exception:
+        mode = ""
+    if not mode:
+        mode = os.environ.get("DATA_SOURCE", "")
+    mode = str(mode or "auto").strip().lower()
+    return mode if mode in {"auto", "neondb", "supabase", "parquet"} else "auto"
+
+
+def _loader_cache_token(group_id: str) -> str:
+    mode = _get_data_source_mode()
+    neon_candidates = ",".join(get_survey_table_candidates(group_id, "neondb"))
+    supa_candidates = ",".join(get_survey_table_candidates(group_id, "supabase"))
+    return f"{mode}|neon:{neon_candidates}|supa:{supa_candidates}"
 
 
 def normalize_tenure_value(value):
@@ -282,40 +415,78 @@ def build_memo_report(df_all: pd.DataFrame, df_clean: pd.DataFrame, n_before: in
     }
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
 def load_group(group_id: str):
+    return _load_group_cached(group_id, _loader_cache_token(group_id))
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _load_group_cached(group_id: str, cache_token: str):
     """
     Load dữ liệu đã xử lý sẵn cho một group khảo sát.
     Ưu tiên: NeonDB → Supabase → Parquet local.
     Returns (df_clean, n_before).
     """
+    _ = cache_token
     from config.groups import GROUP_REGISTRY
     from shared.codebook import PILLAR_WEIGHTS
     cfg      = GROUP_REGISTRY[group_id]
     codebook = cfg['codebook']
 
-    table_name = f"survey_{group_id.lower()}_clean"
     df_clean   = None
+    source_table = None
+    source_db = None
+    data_source_mode = _get_data_source_mode()
 
     # ── Ưu tiên 1: NeonDB (pre-processed table) ──────────────────────────────
-    try:
-        conn     = st.connection("neondb", type="sql")
-        df_clean = conn.query(f'SELECT * FROM "{table_name}"', ttl=3600)
-        print(f"[{group_id}] Loaded {len(df_clean):,} rows from NeonDB ({table_name})")
-    except Exception as e_neo:
-        print(f"[{group_id}] NeonDB unavailable ({e_neo}). Trying Supabase...")
+    if data_source_mode in {"auto", "neondb"}:
+        try:
+            conn     = st.connection("neondb", type="sql")
+            errors = []
+            for table_name in get_survey_table_candidates(group_id, "neondb"):
+                try:
+                    candidate_df = _query_survey_table(conn, table_name, ttl=3600)
+                    if candidate_df is not None:
+                        _validate_survey_table(candidate_df, group_id, table_name)
+                        df_clean = candidate_df
+                        source_table = table_name
+                        source_db = "NeonDB"
+                        print(f"[{group_id}] Loaded {len(df_clean):,} rows from NeonDB ({table_name})")
+                        break
+                except Exception as exc:
+                    errors.append(f"{table_name}: {exc}")
+            if df_clean is None:
+                raise RuntimeError("; ".join(errors[-3:]) if errors else "no table candidates")
+        except Exception as e_neo:
+            if data_source_mode == "neondb":
+                raise RuntimeError(f"[{group_id}] DATA_SOURCE=neondb nhưng không đọc được NeonDB/table đúng: {e_neo}") from e_neo
+            print(f"[{group_id}] NeonDB unavailable or no matching table ({e_neo}). Trying Supabase...")
 
     # ── Ưu tiên 2: Supabase ───────────────────────────────────────────────────
-    if df_clean is None:
+    if df_clean is None and data_source_mode in {"auto", "supabase"}:
         try:
             conn     = st.connection("supabase", type="sql")
-            df_clean = conn.query(f'SELECT * FROM "{table_name}"', ttl=3600)
-            print(f"[{group_id}] Loaded {len(df_clean):,} rows from Supabase ({table_name})")
+            errors = []
+            for table_name in get_survey_table_candidates(group_id, "supabase"):
+                try:
+                    candidate_df = _query_survey_table(conn, table_name, ttl=3600)
+                    if candidate_df is not None:
+                        _validate_survey_table(candidate_df, group_id, table_name)
+                        df_clean = candidate_df
+                        source_table = table_name
+                        source_db = "Supabase"
+                        print(f"[{group_id}] Loaded {len(df_clean):,} rows from Supabase ({table_name})")
+                        break
+                except Exception as exc:
+                    errors.append(f"{table_name}: {exc}")
+            if df_clean is None:
+                raise RuntimeError("; ".join(errors[-3:]) if errors else "no table candidates")
         except Exception as e_supa:
-            print(f"[{group_id}] Supabase unavailable ({e_supa}). Trying local parquet...")
+            if data_source_mode == "supabase":
+                raise RuntimeError(f"[{group_id}] DATA_SOURCE=supabase nhưng không đọc được Supabase/table đúng: {e_supa}") from e_supa
+            print(f"[{group_id}] Supabase unavailable or no matching table ({e_supa}). Trying local parquet...")
 
     # ── Ưu tiên 3: Local Parquet backup ──────────────────────────────────────
-    if df_clean is None:
+    if df_clean is None and data_source_mode in {"auto", "parquet"}:
         import os
         import pandas as pd
         parquet_path = os.path.join(
@@ -325,9 +496,13 @@ def load_group(group_id: str):
         if os.path.exists(parquet_path):
             try:
                 df_clean = pd.read_parquet(parquet_path)
+                source_table = os.path.basename(parquet_path)
+                source_db = "Local Parquet"
                 print(f"[{group_id}] Loaded {len(df_clean):,} rows from local parquet ({parquet_path})")
             except Exception as e_parq:
                 print(f"[{group_id}] Parquet read failed ({e_parq}).")
+    elif df_clean is None:
+        raise RuntimeError(f"[{group_id}] DATA_SOURCE={data_source_mode} nhưng không có dữ liệu phù hợp.")
 
     if df_clean is None:
         raise RuntimeError(f"Could not load data for {group_id} from any source.")
@@ -344,6 +519,8 @@ def load_group(group_id: str):
     likert_cols = [q for q, info in codebook.items() if info['loại'] == 'likert']
     open_cols   = [q for q, info in codebook.items() if info['loại'] == 'open']
     df_clean.attrs['group_id']      = group_id
+    df_clean.attrs['source_db']      = source_db or "unknown"
+    df_clean.attrs['source_table']   = source_table or "unknown"
     df_clean.attrs['codebook']      = codebook
     df_clean.attrs['likert_cols']   = [c for c in likert_cols if c in df_clean.columns]
     df_clean.attrs['open_cols']     = [c for c in open_cols   if c in df_clean.columns]
@@ -441,7 +618,9 @@ def load_all_available(log_callback=None):
             results[gid] = load_group(gid)
             if log_callback:
                 rows = len(results[gid][0])
-                log_callback(f"Đã tải dữ liệu khảo sát nhóm {gid} ({rows:,} mẫu hợp lệ).", "ok")
+                source_db = results[gid][0].attrs.get("source_db", "unknown")
+                source_table = results[gid][0].attrs.get("source_table", "unknown")
+                log_callback(f"Đã tải dữ liệu khảo sát nhóm {gid} ({rows:,} mẫu hợp lệ) từ {source_db}.{source_table}.", "ok")
         except Exception as e:
             st.warning(f"Không load được nhóm {gid}: {e}")
             if log_callback:

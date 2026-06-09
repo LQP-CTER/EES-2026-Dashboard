@@ -65,6 +65,45 @@ def _get_db_url(name: str) -> str:
     return ""
 
 
+def _get_table_name(group_id: str, db_name: str) -> str:
+    """Resolve survey table name from secrets/env, fallback to legacy name."""
+    gid = group_id.upper()
+    gid_l = group_id.lower()
+    db = db_name.upper()
+    env_keys = [
+        f"{db}_TABLE_{gid}",
+        f"{db}_SURVEY_{gid}_TABLE",
+        f"SURVEY_TABLE_{gid}",
+        f"EES_TABLE_{gid}",
+        f"TABLE_{gid}",
+        f"{db}_TABLE_{gid_l}",
+        f"SURVEY_TABLE_{gid_l}",
+        f"EES_TABLE_{gid_l}",
+    ]
+    for key in env_keys:
+        val = os.environ.get(key, "").strip()
+        if val:
+            return val
+
+    section_names = [
+        f"{db_name.lower()}_tables",
+        "survey_tables",
+        "database_tables",
+        "ees_tables",
+    ]
+    lookup_keys = [gid, gid_l, f"group_{gid_l}", f"survey_{gid_l}"]
+    for section_name in section_names:
+        section = SECRETS.get(section_name, {})
+        if not section:
+            continue
+        for key in lookup_keys:
+            val = str(section.get(key, "")).strip()
+            if val:
+                return val
+
+    return f"survey_{gid_l}_clean"
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. IMPORT CÁC MODULE XỬ LÝ (tái sử dụng từ project)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -538,7 +577,7 @@ def _sanitize_df_for_sql(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def upload_to_db(df_clean: pd.DataFrame, group_id: str, db_name: str):
-    table_name = f"survey_{group_id.lower()}_clean"
+    table_name = _get_table_name(group_id, db_name)
     engine = _get_engine(db_name)
     if engine is None:
         return False
