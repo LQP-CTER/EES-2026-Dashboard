@@ -1838,7 +1838,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 """
     components.html(timeline_html, height=1300, scrolling=False)
     # ── 5. TEAM ───────────────────────────────────────────────────────────────
-    st.markdown("""
+    st.html("""
     <div class="ed-container">
         <div class="ed-team-section">
             <div class="ed-section-header">
@@ -1970,4 +1970,4 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
             </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
