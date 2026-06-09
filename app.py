@@ -1624,12 +1624,12 @@ with st.sidebar:
     menu_items = []
 
     # Top-level items (value = label, không cần prefix)
-    menu_items.append(sac.MenuItem(OVERVIEW_LABEL, value=OVERVIEW_LABEL))
+    menu_items.append(sac.MenuItem(OVERVIEW_LABEL))
 
     if not scope_restricted:
-        menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu", value="Độ tin cậy dữ liệu"))
+        menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
 
-    menu_items.append(sac.MenuItem(COMPANY_LABEL, value=COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
+    menu_items.append(sac.MenuItem(COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
 
     # Group items với child có value duy nhất: "{group_id}__{child_label}"
     for g in group_opts:
@@ -1637,23 +1637,23 @@ with st.sidebar:
         group_children = []
 
         # 1. Tổng quan Tổ chức
-        group_children.append(sac.MenuItem("Tổng quan Tổ chức", value=f"{g}__Tổng quan Tổ chức"))
+        group_children.append(sac.MenuItem(f"{g}__Tổng quan Tổ chức"))
 
         # 2. Các trụ cột
         for p in PILLAR_ORDER:
             p_name = PILLAR_META[p]['name']
-            group_children.append(sac.MenuItem(p_name, value=f"{g}__{p_name}"))
+            group_children.append(sac.MenuItem(f"{g}__{p_name}"))
 
         # 3. Đo lường Impact & Xem Báo Cáo
-        group_children.append(sac.MenuItem("Đo lường Impact", value=f"{g}__Đo lường Impact"))
-        group_children.append(sac.MenuItem("Xem Báo Cáo", value=f"{g}__Xem Báo Cáo"))
+        group_children.append(sac.MenuItem(f"{g}__Đo lường Impact"))
+        group_children.append(sac.MenuItem(f"{g}__Xem Báo Cáo"))
 
-        menu_items.append(sac.MenuItem(label, children=group_children, value=label))
+        menu_items.append(sac.MenuItem(label, children=group_children))
 
-    menu_items.append(sac.MenuItem("Phụ lục", value="Phụ lục"))
+    menu_items.append(sac.MenuItem("Phụ lục"))
 
     if is_real_admin:
-        menu_items.append(sac.MenuItem("Admin Panel", value="Admin Panel", icon="gear"))
+        menu_items.append(sac.MenuItem("Admin Panel", icon="gear"))
 
     # Format function: hiển thị title, bỏ qua value prefix
     def _menu_format(v):
