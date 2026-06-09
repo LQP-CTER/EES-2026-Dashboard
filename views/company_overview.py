@@ -41,7 +41,7 @@ def _pct(numerator, denominator) -> float:
     return round((numerator / denominator) * 100, 1) if denominator else 0.0
 
 
-def _render_data_processing_section(headcount, raw, cleaned, effective=None, straightline=None):
+def _render_data_processing_section(headcount, raw, cleaned, all_data, effective=None, straightline=None):
     dropped = raw - cleaned
     if effective is None:
         effective = cleaned
@@ -530,6 +530,7 @@ def render(all_data, available_groups):
         headcount=total_headcount,
         raw=total_participants,
         cleaned=total_cleaned,
+        all_data=all_data,
     )
 
     # Executive company overview section
