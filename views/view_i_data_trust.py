@@ -72,7 +72,7 @@ _RELIABILITY_GROUPS = [
 
 DEEPDIVE_QUALITY_TOTALS = {
     "headcount": 21353,
-    "raw": 20099,
+    "raw": 20005,
     "dropped": 878,
     "cleaned": 19221,
     "straightline_weighted": 8757,
@@ -427,7 +427,7 @@ def render(summary_df=None):
                         <div class="dt-hero-mini">Mẫu phân tích sau làm sạch, lấy theo bảng dữ liệu chính trong EES 2026 DeepDive v13 Final.</div>
                     </div>
                     <div class="dt-hero-pills">
-                        <span class="dt-pill">Phản hồi thô 20,099</span>
+                        <span class="dt-pill">Phản hồi thô 20,005</span>
                         <span class="dt-pill">Bị loại 878</span>
                         <span class="dt-pill">n hiệu dụng 16,435</span>
                     </div>
@@ -452,7 +452,7 @@ def render(summary_df=None):
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin:0">
             Các chỉ số chính trong trang này được cố định theo bảng dữ liệu của
             <strong>EES_2026_DeepDive_v13_Final.pdf</strong>: HRIS base 21,353, phản hồi thô
-            20,099, mẫu phân tích sau làm sạch 19,221, straight-line weighted 8,757 và
+            20,005, mẫu phân tích sau làm sạch 19,221, straight-line weighted 8,757 và
             n hiệu dụng 16,435. Bảng runtime bên dưới chỉ dùng để đối chiếu kỹ thuật khi cần.
         </p>
     </div>
@@ -475,7 +475,7 @@ def render(summary_df=None):
         st.markdown("""
         <p style="font-size:0.88rem;color:#475569;line-height:1.75">
             Theo bảng dữ liệu trong DeepDive v13, tỷ lệ tham gia toàn công ty đạt
-            <strong>94.1%</strong> với <strong>20,099</strong> phản hồi trên nền HRIS
+            <strong>93.7%</strong> với <strong>20,005</strong> phản hồi trên nền HRIS
             <strong>21,353</strong> nhân sự. Sau bước làm sạch, base phân tích còn
             <strong>19,221</strong> mẫu; phần bị loại khỏi base chính là <strong>878</strong>
             phản hồi, tương đương <strong>4.4%</strong> mẫu thô.
@@ -485,7 +485,7 @@ def render(summary_df=None):
         # KPI cards
         cols = st.columns(4)
         kpi_data = [
-            ("Tổng GHN", "94.1%", "20,099 / 21,353", "#FF5200", "#FFF3EE"),
+            ("Tổng GHN", "93.7%", "20,005 / 21,353", "#FF5200", "#FFF3EE"),
             ("Mẫu phân tích", "19,221", "sau loại 878 phản hồi", "#10B981", "#F0FDF4"),
             ("Straight-line", "8,757", "45.6% / cleaned base", "#3B82F6", "#EFF6FF"),
             ("n hiệu dụng", "16,435", "85.5% / cleaned base", "#8B5CF6", "#F5F3FF"),

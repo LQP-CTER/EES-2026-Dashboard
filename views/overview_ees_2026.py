@@ -518,12 +518,12 @@ def render():
                     </div>
                     <div class="ed-metric-item">
                         <span class="ed-metric-label">Phản hồi</span>
-                        <span class="ed-metric-val">20,099</span>
+                        <span class="ed-metric-val">20,005</span>
                         <span class="ed-metric-sub">Phản hồi thu thập</span>
                     </div>
                     <div class="ed-metric-item">
                         <span class="ed-metric-label">Tỷ lệ tham gia</span>
-                        <span class="ed-metric-val">94.1%</span>
+                        <span class="ed-metric-val">93.7%</span>
                         <span class="ed-metric-sub positive">▲ +17.8% so với 2025</span>
                     </div>
                     <div class="ed-metric-item">
@@ -1464,7 +1464,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
         <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 02</div>
         <div class="jt-milestone">19 ngày</div>
         <div class="jt-title">Thu Thập Thần Tốc</div>
-        <div class="jt-desc">Phối hợp với các khối Vận hành trên toàn quốc, đạt 20,099 phản hồi thu thập và 19,221 mẫu phân tích sau làm sạch — vượt mọi kỳ vọng ban đầu về quy mô lẫn tốc độ.</div>
+        <div class="jt-desc">Phối hợp với các khối Vận hành trên toàn quốc, đạt 20,005 phản hồi thu thập và 19,221 mẫu phân tích sau làm sạch — vượt mọi kỳ vọng ban đầu về quy mô lẫn tốc độ.</div>
       </div>
     </div>
 
