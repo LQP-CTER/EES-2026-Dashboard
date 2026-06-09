@@ -1836,7 +1836,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 </body>
 </html>
 """
-    components.html(timeline_html, height=1650, scrolling=False)
+    components.html(timeline_html, height=1750, scrolling=False)
     # ── 5. TEAM ───────────────────────────────────────────────────────────────
     st.html("""
     <div class="ed-container">
