@@ -53,6 +53,7 @@ def render(all_data, available_groups):
     total_ei = total_kpis['ei_mean']
     total_enps = total_kpis['enps_score']
     total_intent = total_kpis['intent_pct_low']
+    total_mei = total_kpis.get('mei_mean', 0.0)
 
     try:
         from shared.workforce_mapper import load_workforce_and_mapping
@@ -329,12 +330,7 @@ def render(all_data, available_groups):
             <div class="ghn-metric" style="--accent:#64748B"><div class="ghn-metric-label">Chưa tham gia</div><div class="ghn-metric-value">{max(total_headcount - total_participants, 0):,}</div><div class="ghn-metric-sub">{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</div></div>
         </div>
 
-        <div class="ghn-context">
-            <div class="ghn-context-card"><div class="ghn-context-chip">Đối chiếu</div><h4>Nhiều lớp dữ liệu</h4><p>Đọc đồng thời theo phòng ban, section, thâm niên và 5 trụ cột để tránh kết luận từ một lát cắt đơn lẻ.</p></div>
-            <div class="ghn-context-card"><div class="ghn-context-chip">Chiến lược</div><h4>Câu chuyện điều hành</h4><p>Gom tín hiệu chính, rủi ro và ưu tiên hành động thành câu chuyện điều hành có thể triển khai.</p></div>
-            <div class="ghn-context-card"><div class="ghn-context-chip">Ưu tiên</div><h4>Góc nhìn sẵn sàng hành động</h4><p>Các tầng phân tích mới hỗ trợ nhìn ra segment, lifecycle và cross-pillar risk trước khi quyết định.</p></div>
-            <div class="ghn-context-card"><div class="ghn-context-chip">Hiệu năng</div><h4>Cache theo nhóm</h4><p>Dữ liệu được cache theo nhóm khảo sát để dashboard tải gọn hơn khi đi sâu vào từng cấp tổ chức.</p></div>
-        </div>
+
     </div>
     ''')
     st.html(hero_html)
@@ -345,8 +341,8 @@ def render(all_data, available_groups):
     <div class="ghn-band">
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
             <div>
-                <div style="font-size:.72rem;font-weight:850;color:#FF5200;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">Tín hiệu điều hành</div>
-                <div style="font-size:1.35rem;font-weight:900;color:#0A1F44;letter-spacing:-.02em;">Bốn chỉ số điều hành chính</div>
+                <div style="font-size:.72rem;font-weight:850;color:#FF5200;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">TỔNG QUAN GIAO HÀNG NHANH</div>
+                <div style="font-size:1.35rem;font-weight:900;color:#0A1F44;letter-spacing:-.02em;">Bốn chỉ số chiến lược</div>
             </div>
             <div style="font-size:.82rem;color:#64748B;font-weight:550;">So sánh với baseline 2025 và trạng thái hiện tại của toàn tổ chức.</div>
         </div>
@@ -360,7 +356,7 @@ def render(all_data, available_groups):
     with kpi_c3:
         st.markdown(make_html_kpi("Attrition Risk - Rủi ro nghỉ việc", f"{total_intent:.1f}%", delta="N/A", color="red", icon="", progress_val=total_intent), unsafe_allow_html=True)
     with kpi_c4:
-        st.markdown(make_html_kpi("Response Rate - Tỷ lệ phản hồi", f"{total_rr:.1f}%", delta=f"{rr_delta:+.1f}%", color="green", icon="", progress_val=total_rr), unsafe_allow_html=True)
+        st.markdown(make_html_kpi("MEI - Quản lý trực tiếp", f"{total_mei:.1f}", delta="N/A", color="green", icon="", progress_val=total_mei), unsafe_allow_html=True)
 
     try:
         from views.analyst_intelligence import render_company_analyst_intelligence
