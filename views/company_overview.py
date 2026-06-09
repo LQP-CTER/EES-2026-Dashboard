@@ -7,6 +7,7 @@ from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025
 from utils.ai_generator import render_ai_insight_card
+from views.view_i_data_trust import DEEPDIVE_GROUP_BASE, DEEPDIVE_QUALITY_TOTALS
 
 MIN_DEPARTMENT_N = 1
 MIN_ORG_SEGMENT_N = 5
@@ -32,6 +33,194 @@ def _normalize_org_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _fmt_num(value) -> str:
+    return f"{int(value):,}"
+
+
+def _pct(numerator, denominator) -> float:
+    return round((numerator / denominator) * 100, 1) if denominator else 0.0
+
+
+def _render_data_processing_section():
+    totals = DEEPDIVE_QUALITY_TOTALS
+    raw = totals["raw"]
+    dropped = totals["dropped"]
+    cleaned = totals["cleaned"]
+    headcount = totals["headcount"]
+    effective = totals["effective_base"]
+    straightline = totals["straightline_weighted"]
+
+    cards = [
+        ("HRIS / Headcount", headcount, "Nền nhân sự dùng để đối chiếu độ phủ", "#0A1F44"),
+        ("Mẫu thu thập", raw, f"{_pct(raw, headcount):.1f}% / HRIS trước khi loại", "#1D4ED8"),
+        ("Mẫu bị loại", dropped, f"{_pct(dropped, raw):.1f}% mẫu không đưa vào phân tích", "#FF5200"),
+        ("Mẫu sau loại", cleaned, f"{_pct(cleaned, headcount):.1f}% / HRIS dùng cho dashboard", "#10B981"),
+        ("N hiệu dụng", effective, f"Sau hiệu chỉnh straight-line: {_fmt_num(straightline)}", "#64748B"),
+    ]
+    card_html = "\n".join(
+        f"""
+        <div class="ghn-process-card" style="--accent:{accent}">
+            <div class="ghn-process-label">{label}</div>
+            <div class="ghn-process-value">{_fmt_num(value)}</div>
+            <div class="ghn-process-note">{note}</div>
+        </div>
+        """
+        for label, value, note, accent in cards
+    )
+
+    st.markdown(
+        """
+        <style>
+        .ghn-process-wrap {
+            border-radius:24px;
+            padding:24px;
+            margin:0 0 26px;
+            background:
+                radial-gradient(circle at 12% 0%, rgba(255,82,0,.10), transparent 30%),
+                linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 62%, #EEF6FF 100%);
+            border:1px solid #E2E8F0;
+            box-shadow:0 18px 44px rgba(10,31,68,.08);
+        }
+        .ghn-process-head {
+            display:flex;
+            justify-content:space-between;
+            gap:18px;
+            align-items:flex-end;
+            flex-wrap:wrap;
+            margin-bottom:18px;
+        }
+        .ghn-process-kicker {
+            color:#FF5200;
+            font-size:.72rem;
+            font-weight:850;
+            text-transform:uppercase;
+            letter-spacing:.14em;
+            margin-bottom:6px;
+        }
+        .ghn-process-title {
+            color:#0A1F44;
+            font-size:1.35rem;
+            font-weight:900;
+            letter-spacing:-.02em;
+        }
+        .ghn-process-desc {
+            max-width:620px;
+            color:#64748B;
+            font-size:.84rem;
+            line-height:1.62;
+            font-weight:550;
+        }
+        .ghn-process-flow {
+            display:grid;
+            grid-template-columns:repeat(5,minmax(0,1fr));
+            gap:14px;
+        }
+        .ghn-process-card {
+            position:relative;
+            min-width:0;
+            overflow:hidden;
+            border-radius:18px;
+            background:rgba(255,255,255,.88);
+            border:1px solid rgba(226,232,240,.95);
+            box-shadow:0 14px 30px rgba(10,31,68,.07);
+            padding:17px 17px 18px;
+        }
+        .ghn-process-card::before {
+            content:'';
+            position:absolute;
+            top:0;
+            left:0;
+            right:0;
+            height:4px;
+            background:linear-gradient(90deg,var(--accent),#FFB38B);
+        }
+        .ghn-process-label {
+            color:var(--accent);
+            font-size:.68rem;
+            font-weight:850;
+            letter-spacing:.1em;
+            text-transform:uppercase;
+            margin-bottom:10px;
+        }
+        .ghn-process-value {
+            color:#0A1F44;
+            font-size:clamp(1.6rem,2.25vw,2.35rem);
+            font-weight:950;
+            line-height:.95;
+            letter-spacing:-.04em;
+            font-variant-numeric:tabular-nums;
+            white-space:nowrap;
+        }
+        .ghn-process-note {
+            color:#64748B;
+            font-size:.78rem;
+            line-height:1.45;
+            margin-top:8px;
+            font-weight:550;
+        }
+        @media (max-width:1180px) {
+            .ghn-process-flow { grid-template-columns:repeat(3,minmax(0,1fr)); }
+        }
+        @media (max-width:720px) {
+            .ghn-process-wrap { padding:20px; border-radius:22px; }
+            .ghn-process-flow { grid-template-columns:1fr; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.html(
+        dedent(
+            f"""
+            <div class="ghn-process-wrap">
+                <div class="ghn-process-head">
+                    <div>
+                        <div class="ghn-process-kicker">Xử lý dữ liệu</div>
+                        <div class="ghn-process-title">Từ mẫu thu thập đến mẫu phân tích</div>
+                    </div>
+                    <div class="ghn-process-desc">
+                        Database hiện tại đang là bảng đã làm sạch, nên phần này dùng số chuẩn từ
+                        EES_2026_DeepDive_v13_Final để thể hiện đúng mẫu thực nhận trước loại và mẫu sau loại.
+                    </div>
+                </div>
+                <div class="ghn-process-flow">
+                    {card_html}
+                </div>
+            </div>
+            """
+        )
+    )
+
+    group_rows = []
+    for row in DEEPDIVE_GROUP_BASE:
+        group_rows.append(
+            {
+                "Nhóm khảo sát": row["Nhóm"],
+                "Mẫu thu thập": row["Raw submissions"],
+                "Mẫu bị loại": row["Dropped"],
+                "Tỷ lệ loại": _pct(row["Dropped"], row["Raw submissions"]),
+                "Mẫu sau loại": row["Cleaned base"],
+                "Tỷ lệ giữ": _pct(row["Cleaned base"], row["Raw submissions"]),
+            }
+        )
+
+    df_groups = pd.DataFrame(group_rows)
+    st.dataframe(
+        df_groups.style.format(
+            {
+                "Mẫu thu thập": "{:,.0f}",
+                "Mẫu bị loại": "{:,.0f}",
+                "Tỷ lệ loại": "{:.1f}%",
+                "Mẫu sau loại": "{:,.0f}",
+                "Tỷ lệ giữ": "{:.1f}%",
+            }
+        ),
+        width="stretch",
+        hide_index=True,
+    )
+
+
 def render(all_data, available_groups):
     if not all_data:
         st.error("Không tìm thấy dữ liệu nào.")
@@ -40,32 +229,23 @@ def render(all_data, available_groups):
     apply_theme()
 
     all_dfs = []
-    total_n_before = 0
-    for group_id, (df, n_before) in all_data.items():
+    for group_id, (df, _n_before) in all_data.items():
         df_group = df.copy()
         df_group["_survey_group"] = group_id
         all_dfs.append(df_group)
-        total_n_before += n_before
 
     df_total = _normalize_org_columns(pd.concat(all_dfs, ignore_index=True))
     total_kpis = compute_kpis(df_total)
-    total_n = total_kpis['n']
     total_ei = total_kpis['ei_mean']
     total_enps = total_kpis['enps_score']
     total_intent = total_kpis['intent_pct_low']
-    total_mei = total_kpis.get('mei_mean', 0.0)
+    total_mei = total_kpis.get('mei_avg', 0.0)
 
-    try:
-        from shared.workforce_mapper import load_workforce_and_mapping
-        df_wf, _, _ = load_workforce_and_mapping()
-        total_headcount = len(df_wf) if df_wf is not None and not df_wf.empty else 21353
-    except Exception:
-        total_headcount = 21353
-
-    # total_n_before = raw submissions (tham gia khảo sát)
-    # total_n        = sau lọc memo (mẫu phân tích hợp lệ)
-    total_participants = total_n_before  # raw count cho tỷ lệ tham gia
-    total_cleaned = total_n              # mẫu sau lọc dùng cho phân tích
+    # Neon dashboard tables are clean tables. Use DeepDive v13 as the source of truth
+    # for collection/cleaning counts so raw submissions are not collapsed into clean N.
+    total_headcount = DEEPDIVE_QUALITY_TOTALS["headcount"]
+    total_participants = DEEPDIVE_QUALITY_TOTALS["raw"]
+    total_cleaned = DEEPDIVE_QUALITY_TOTALS["cleaned"]
     total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 0
     cleaned_rr = round((total_cleaned / total_headcount) * 100, 1) if total_headcount > 0 else 0
     bm = get_company_benchmark_2025()
@@ -334,6 +514,7 @@ def render(all_data, available_groups):
     </div>
     ''')
     st.html(hero_html)
+    _render_data_processing_section()
 
     # Executive company overview section
     from shared.plotly_theme import make_html_kpi
