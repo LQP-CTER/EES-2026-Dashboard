@@ -70,6 +70,10 @@ def _render_pillar_header(pillar_id, df, cfg, group_id):
             pillar_fav += (vals >= 4).sum()
             total_valid += len(vals)
         fav_pct = (pillar_fav / total_valid * 100) if total_valid > 0 else 0
+    elif f"{pillar_id}_pct" in df.columns:
+        pillar_pct = pd.to_numeric(df[f"{pillar_id}_pct"], errors="coerce").dropna()
+        pillar_mean = (pillar_pct.mean() / 100 * 4 + 1) if not pillar_pct.empty else None
+        fav_pct = float(pillar_pct.mean()) if not pillar_pct.empty else 0
     else:
         pillar_mean, fav_pct = None, 0
 
@@ -134,7 +138,13 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     color = meta['color']
 
     if not q_cols:
-        st.info("Không có câu hỏi nào trong trụ cột này.")
+        missing_preview = ", ".join(qs[:8]) if qs else "không resolve được codebook"
+        available_q = sorted([c for c in df.columns if str(c).upper().startswith("Q")])[:12]
+        available_txt = ", ".join(available_q) if available_q else "không thấy cột Q nào"
+        st.info(
+            "Không tìm thấy cột câu hỏi cho trụ cột này trong dữ liệu đang load. "
+            f"Codebook cần: {missing_preview}. Dữ liệu hiện có: {available_txt}."
+        )
         return
 
     cb = get_codebook(group_id)
@@ -324,7 +334,13 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
     q_cols = [q for q in qs if q in df.columns]
 
     if not q_cols:
-        st.info("Không có câu hỏi nào trong trụ cột này.")
+        missing_preview = ", ".join(qs[:8]) if qs else "không resolve được codebook"
+        available_q = sorted([c for c in df.columns if str(c).upper().startswith("Q")])[:12]
+        available_txt = ", ".join(available_q) if available_q else "không thấy cột Q nào"
+        st.info(
+            "Không tìm thấy cột câu hỏi cho trụ cột này trong dữ liệu đang load. "
+            f"Codebook cần: {missing_preview}. Dữ liệu hiện có: {available_txt}."
+        )
         return
 
     meta = PILLAR_META[pillar_id]

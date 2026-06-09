@@ -177,6 +177,48 @@ def _query_survey_table(conn, table_name: str, ttl=3600) -> pd.DataFrame:
     return conn.query(f"SELECT * FROM {_quote_table_name(table_name)}", ttl=ttl)
 
 
+def _normalize_loaded_column_names(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize DB column casing so analytical views can find Q/TC/KPI columns.
+
+    Some Postgres tables are created with lowercase identifiers (q11, tc2_pct,
+    enps), while the dashboard codebook expects Q11, TC2_pct, eNPS, etc.
+    """
+    df = df.copy()
+    rename_map = {}
+    existing = set(df.columns)
+
+    canonical_simple = {
+        "ei": "EI",
+        "mei": "MEI",
+        "jsi": "JSI",
+        "ews": "EWS",
+        "enps": "eNPS",
+    }
+
+    import re
+    for col in df.columns:
+        stripped = str(col).strip()
+        lower = stripped.lower()
+        target = stripped
+
+        q_match = re.fullmatch(r"q_?(\d{1,2})", lower)
+        tc_match = re.fullmatch(r"tc_?([1-5])_(mean|pct)", lower)
+        if q_match:
+            target = f"Q{int(q_match.group(1))}"
+        elif tc_match:
+            target = f"TC{tc_match.group(1)}_{tc_match.group(2)}"
+        elif lower in canonical_simple:
+            target = canonical_simple[lower]
+
+        if target != col and target not in existing:
+            rename_map[col] = target
+            existing.add(target)
+
+    if rename_map:
+        df = df.rename(columns=rename_map)
+    return df
+
+
 def _validate_survey_table(df: pd.DataFrame, group_id: str, table_name: str) -> None:
     if df is None or df.empty:
         raise ValueError(f"{table_name} rỗng")
@@ -446,6 +488,7 @@ def _load_group_cached(group_id: str, cache_token: str):
                 try:
                     candidate_df = _query_survey_table(conn, table_name, ttl=3600)
                     if candidate_df is not None:
+                        candidate_df = _normalize_loaded_column_names(candidate_df)
                         _validate_survey_table(candidate_df, group_id, table_name)
                         df_clean = candidate_df
                         source_table = table_name
@@ -470,6 +513,7 @@ def _load_group_cached(group_id: str, cache_token: str):
                 try:
                     candidate_df = _query_survey_table(conn, table_name, ttl=3600)
                     if candidate_df is not None:
+                        candidate_df = _normalize_loaded_column_names(candidate_df)
                         _validate_survey_table(candidate_df, group_id, table_name)
                         df_clean = candidate_df
                         source_table = table_name
@@ -496,6 +540,7 @@ def _load_group_cached(group_id: str, cache_token: str):
         if os.path.exists(parquet_path):
             try:
                 df_clean = pd.read_parquet(parquet_path)
+                df_clean = _normalize_loaded_column_names(df_clean)
                 source_table = os.path.basename(parquet_path)
                 source_db = "Local Parquet"
                 print(f"[{group_id}] Loaded {len(df_clean):,} rows from local parquet ({parquet_path})")
