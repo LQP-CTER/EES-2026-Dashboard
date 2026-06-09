@@ -375,10 +375,20 @@ def render(all_data, available_groups):
     df_div_stats = pd.DataFrame(div_stats)
 
     if not df_div_stats.empty:
-        top_div = df_div_stats.loc[df_div_stats['ei_mean'].idxmax()]
-        bot_div = df_div_stats.loc[df_div_stats['ei_mean'].idxmin()]
+        ei_col = df_div_stats['ei_mean'].dropna()
+        if ei_col.empty:
+            top_div = bot_div = df_div_stats.iloc[0]
+        else:
+            top_div = df_div_stats.loc[ei_col.idxmax()]
+            bot_div = df_div_stats.loc[ei_col.idxmin()]
         
-        pillar_scores = {p: df_total[f'{p}_pct'].mean() for p in PILLAR_LABELS.keys() if f'{p}_pct' in df_total.columns}
+        pillar_scores = {}
+        for p in PILLAR_LABELS.keys():
+            col = f'{p}_pct'
+            if col in df_total.columns:
+                mean_val = df_total[col].mean()
+                if pd.notna(mean_val):
+                    pillar_scores[p] = mean_val
         if pillar_scores:
             top_pillar_key = max(pillar_scores, key=pillar_scores.get)
             bot_pillar_key = min(pillar_scores, key=pillar_scores.get)

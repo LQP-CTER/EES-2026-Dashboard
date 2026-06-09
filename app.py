@@ -857,7 +857,53 @@ if not is_admin:
                     st.stop()
         else:
             # Chưa đăng nhập và không có token trên URL:
-            # Nếu người dùng vừa nhấn Đăng xuất hoặc bị lỗi -> Hiện trang Login sạch
+            # Thử khôi phục từ remember cookie trước khi hiện trang login
+            cookie_token = _get_remember_cookie()
+            if cookie_token:
+                with _sessions_lock:
+                    sessions = _load_active_sessions()
+                    sessions = _cleanup_expired_sessions(sessions)
+
+                    if cookie_token in sessions:
+                        data = sessions[cookie_token]
+                        authorization = _get_authorization(data.get("email", ""))
+                        if authorization is None:
+                            sessions.pop(cookie_token, None)
+                            _save_active_sessions(sessions)
+                            _clear_remember_cookie()
+                            st.query_params.clear()
+                            st.query_params["error"] = "1"
+                            _render_authorization_denied(data.get("email", ""))
+
+                        new_token = secrets.token_urlsafe(32)
+                        now = time.time()
+
+                        sessions[new_token] = {
+                            "email": data["email"],
+                            "name": data["name"],
+                            "picture": data["picture"],
+                            "authorization": authorization,
+                            "streamlit_session_id": current_sid,
+                            "last_seen": now,
+                            "created_at": now
+                        }
+                        sessions.pop(cookie_token, None)
+                        _save_active_sessions(sessions)
+
+                        st.session_state.user_email = data["email"]
+                        st.session_state.user_name = data["name"]
+                        st.session_state.user_picture = data["picture"]
+                        st.session_state.current_token = new_token
+                        st.session_state.user_authorization = authorization
+
+                        _set_remember_cookie(new_token)
+                        st.query_params.clear()
+                        st.query_params["s"] = new_token
+                        st.rerun()
+                    else:
+                        _clear_remember_cookie()
+
+            # Cookie không hợp lệ hoặc không có -> Hiện trang Login
             if st.query_params.get("logout") == "1" or st.query_params.get("error") == "1":
                 is_err = st.query_params.get("error") == "1"
                 st.query_params.clear()
@@ -865,7 +911,7 @@ if not is_admin:
                     st.toast("Phiên đăng nhập hết hạn hoặc xảy ra lỗi. Vui lòng đăng nhập lại.", icon="⚠️")
                 else:
                     st.toast("Đăng xuất thành công.", icon="✅")
-                
+
                 _render_login_page()
                 st.stop()
             else:
@@ -877,7 +923,7 @@ _auth_info = st.session_state.get("user_authorization", {})
 is_real_admin = isinstance(_auth_info, dict) and _auth_info.get("role", "").upper() == "ADMIN"
 
 
-if is_locked and not is_admin:
+if is_locked and not is_real_admin:
     st.markdown("""
     <div style='text-align: center; margin-top: 100px;'>
         <img src='https://res.cloudinary.com/dd7gti2kn/image/upload/v1772773708/LOGO%20GHN/Logo/LOGO_INAN_sep2os.png' width='200'>
@@ -1528,6 +1574,12 @@ div[data-baseweb="select"] > div:hover {
 available = get_available_groups()
 group_opts = list(available.keys())
 
+def _safe_tenure_index(value):
+    try:
+        return tenure_opts.index(value)
+    except ValueError:
+        return 0  # Fallback to 'Tất cả'
+
 if 'global_tenure' not in st.session_state:
     st.session_state.global_tenure = 'Tất cả'
 
@@ -1538,6 +1590,8 @@ tenure_opts = [
 ]
 
 def apply_global_filters(df):
+    if df is None or df.empty:
+        return df
     if st.session_state.global_tenure != 'Tất cả':
         if 'Q5' in df.columns:
             return df[df['Q5'] == st.session_state.global_tenure]
@@ -1568,82 +1622,78 @@ with st.sidebar:
     import streamlit_antd_components as sac
 
     menu_items = []
-    index_map = {}
-    curr_idx = 0
 
-    menu_items.append(sac.MenuItem(OVERVIEW_LABEL))
-    index_map[curr_idx] = (OVERVIEW_LABEL, None)
-    curr_idx += 1
+    # Top-level items (value = label, không cần prefix)
+    menu_items.append(sac.MenuItem(OVERVIEW_LABEL, value=OVERVIEW_LABEL))
 
-    # Trang "Độ tin cậy dữ liệu" hiển thị số liệu QC toàn công ty → chỉ cho user
-    # xem toàn quyền. User bị giới hạn phạm vi sẽ không thấy menu này.
     if not scope_restricted:
-        menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
-        index_map[curr_idx] = ("Độ tin cậy dữ liệu", None)
-        curr_idx += 1
+        menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu", value="Độ tin cậy dữ liệu"))
 
-    menu_items.append(sac.MenuItem(COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
-    index_map[curr_idx] = (COMPANY_LABEL, None)
-    curr_idx += 1
+    menu_items.append(sac.MenuItem(COMPANY_LABEL, value=COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
 
+    # Group items với child có value duy nhất: "{group_id}__{child_label}"
     for g in group_opts:
         label = available[g]['label']
-        
-        # Build children for the group
         group_children = []
-        
+
         # 1. Tổng quan Tổ chức
-        group_children.append(sac.MenuItem("Tổng quan Tổ chức"))
-        
-        # 2. Các trụ cột (phẳng, không gom nhóm thêm 1 cấp nữa để dễ thấy)
+        group_children.append(sac.MenuItem("Tổng quan Tổ chức", value=f"{g}__Tổng quan Tổ chức"))
+
+        # 2. Các trụ cột
         for p in PILLAR_ORDER:
             p_name = PILLAR_META[p]['name']
-            group_children.append(sac.MenuItem(p_name))
-            
+            group_children.append(sac.MenuItem(p_name, value=f"{g}__{p_name}"))
+
         # 3. Đo lường Impact & Xem Báo Cáo
-        group_children.append(sac.MenuItem("Đo lường Impact"))
-        group_children.append(sac.MenuItem("Xem Báo Cáo"))
-        
-        # Add parent node
-        menu_items.append(sac.MenuItem(label, children=group_children))
-        
-        # Mapping index
-        index_map[curr_idx] = (label, "Tổng quan Tổ chức") # Parent node
-        curr_idx += 1
-        
-        index_map[curr_idx] = (label, "Tổng quan Tổ chức") # Child 1
-        curr_idx += 1
-        
-        for p in PILLAR_ORDER:
-            p_name = PILLAR_META[p]['name']
-            index_map[curr_idx] = (label, p_name)
-            curr_idx += 1
-            
-        index_map[curr_idx] = (label, "Đo lường Impact")
-        curr_idx += 1
-        
-        index_map[curr_idx] = (label, "Xem Báo Cáo")
-        curr_idx += 1
+        group_children.append(sac.MenuItem("Đo lường Impact", value=f"{g}__Đo lường Impact"))
+        group_children.append(sac.MenuItem("Xem Báo Cáo", value=f"{g}__Xem Báo Cáo"))
 
-    menu_items.append(sac.MenuItem("Phụ lục"))
-    index_map[curr_idx] = ("Phụ lục", None)
-    curr_idx += 1
-    
+        menu_items.append(sac.MenuItem(label, children=group_children, value=label))
+
+    menu_items.append(sac.MenuItem("Phụ lục", value="Phụ lục"))
+
     if is_real_admin:
-        menu_items.append(sac.MenuItem("Admin Panel", icon="gear"))
-        index_map[curr_idx] = ("Admin Panel", None)
-        curr_idx += 1
+        menu_items.append(sac.MenuItem("Admin Panel", value="Admin Panel", icon="gear"))
 
-    sel_index = sac.menu(
+    # Format function: hiển thị title, bỏ qua value prefix
+    def _menu_format(v):
+        if isinstance(v, str) and "__" in v:
+            return v.split("__", 1)[1]
+        return v
+
+    # return_index=False → trả về value của MenuItem được chọn
+    sel_value = sac.menu(
         menu_items,
         key='sac_main_menu',
-        return_index=True,
+        return_index=False,
+        format_func=_menu_format,
         size='sm',
-        open_all=False,      # Đóng mặc định cho gọn gàng
+        open_all=False,
         variant='subtle',
         color='indigo',
     )
-    sel_dashboard, sel_nav = index_map.get(sel_index, (OVERVIEW_LABEL, None))
+
+    # Mapping value → (dashboard, nav)
+    _NAV_MAP = {
+        OVERVIEW_LABEL: (OVERVIEW_LABEL, None),
+        COMPANY_LABEL: (COMPANY_LABEL, None),
+        "Phụ lục": ("Phụ lục", None),
+        "Độ tin cậy dữ liệu": ("Độ tin cậy dữ liệu", None),
+        "Admin Panel": ("Admin Panel", None),
+    }
+    # Child items + parent items của các group (value duy nhất nên không bị ghi đè)
+    for g in group_opts:
+        grp_label = available[g]['label']
+        # Parent click → navigate to "Tổng quan Tổ chức" của group đó
+        _NAV_MAP[grp_label] = (grp_label, "Tổng quan Tổ chức")
+        _NAV_MAP[f"{g}__Tổng quan Tổ chức"] = (grp_label, "Tổng quan Tổ chức")
+        _NAV_MAP[f"{g}__Đo lường Impact"] = (grp_label, "Đo lường Impact")
+        _NAV_MAP[f"{g}__Xem Báo Cáo"] = (grp_label, "Xem Báo Cáo")
+        for p in PILLAR_ORDER:
+            p_name = PILLAR_META[p]['name']
+            _NAV_MAP[f"{g}__{p_name}"] = (grp_label, p_name)
+
+    sel_dashboard, sel_nav = _NAV_MAP.get(sel_value, (OVERVIEW_LABEL, None))
 
     st.markdown('<div class="sb-divider"></div>', unsafe_allow_html=True)
 
@@ -1666,7 +1716,7 @@ with st.sidebar:
         st.markdown('<span class="sb-section">Bộ lọc</span>', unsafe_allow_html=True)
         sel_tenure_sb = st.selectbox(
             "Thâm niên", tenure_opts,
-            index=tenure_opts.index(st.session_state.global_tenure),
+            index=_safe_tenure_index(st.session_state.global_tenure),
             key="tenure_co"
         )
         st.session_state.global_tenure = sel_tenure_sb
@@ -1709,7 +1759,7 @@ with st.sidebar:
 
         sel_tenure_sb = st.selectbox(
             "Thâm niên", tenure_opts,
-            index=tenure_opts.index(st.session_state.global_tenure),
+            index=_safe_tenure_index(st.session_state.global_tenure),
             key="tenure_grp"
         )
         st.session_state.global_tenure = sel_tenure_sb

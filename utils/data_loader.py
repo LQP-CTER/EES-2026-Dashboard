@@ -557,11 +557,11 @@ def _load_group_cached(group_id: str, cache_token: str):
 
     import pandas as pd
     # Đọc metadata từ các cột _meta_ (được pipeline lưu vào DB/parquet)
-    n_before     = int(df_clean['_meta_n_raw'].iloc[0])   if '_meta_n_raw'   in df_clean.columns else len(df_clean)
-    n_clean      = int(df_clean['_meta_n_clean'].iloc[0]) if '_meta_n_clean' in df_clean.columns else len(df_clean)
+    n_before     = int(df_clean['_meta_n_raw'].iloc[0])   if '_meta_n_raw' in df_clean.columns and not df_clean.empty else len(df_clean)
+    n_clean      = int(df_clean['_meta_n_clean'].iloc[0]) if '_meta_n_clean' in df_clean.columns and not df_clean.empty else len(df_clean)
     n_removed    = n_before - n_clean
     pct_removed  = round(n_removed / n_before * 100, 1)   if n_before else 0.0
-    filter_desc  = str(df_clean['_meta_filter_desc'].iloc[0])  if '_meta_filter_desc' in df_clean.columns else ''
+    filter_desc  = str(df_clean['_meta_filter_desc'].iloc[0])  if '_meta_filter_desc' in df_clean.columns and not df_clean.empty else ''
 
     # Restore df.attrs để downstream views tương thích hoàn toàn
     likert_cols = [q for q, info in codebook.items() if info['loại'] == 'likert']
@@ -801,38 +801,48 @@ def load_hris():
     import os
     import time
     local_cache = "data/hris_cache.parquet"
-    
-    try:
-        # Tối ưu hóa: Ưu tiên đọc từ file Parquet cục bộ nếu có (tốc độ ánh sáng)
-        if os.path.exists(local_cache) and (time.time() - os.path.getmtime(local_cache) < 86400 * 7):
+
+    df_hris = None
+    cache_ok = False
+
+    if os.path.exists(local_cache) and (time.time() - os.path.getmtime(local_cache) < 86400 * 7):
+        try:
             df_hris = pd.read_parquet(local_cache)
-        else:
-            try:
-                hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
-            except Exception:
-                hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
-            
-            hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
+            cache_ok = True
+        except Exception:
+            pass  # Cache corrupted, will reload from source
+
+    if df_hris is None:
+        try:
+            hris_sheet_id = st.secrets.get("HRIS_SHEET_ID", "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo")
+        except Exception:
+            hris_sheet_id = "19ey-QCV4cxzokmBAaMgbY7kHcZNa1fSiW4boTosaBwo"
+
+        hris_url = f"https://docs.google.com/spreadsheets/d/{hris_sheet_id}/export?format=csv"
+        try:
             df_hris = pd.read_csv(hris_url)
             df_hris.columns = df_hris.columns.str.strip()
-            
-            # Lưu cache ra file parquet để dùng cho các lần sau
             os.makedirs("data", exist_ok=True)
             try:
                 df_hris.to_parquet(local_cache, index=False)
             except Exception:
-                pass  # Bỏ qua nếu môi trường không hỗ trợ pyarrow/fastparquet
-                
-    except Exception as e:
-        import streamlit as st
-        st.error(f"Lỗi tải HRIS: {e}")
+                pass
+        except Exception as e:
+            import streamlit as st
+            st.error(f"Lỗi tải HRIS: {e}")
+            return None, None
+
+    if df_hris is None or df_hris.empty:
         return None, None
+
     month_col = df_hris.columns[1]
 
     def _parse_month(m):
         try:
             parts = str(m).split('/')
-            return int(parts[1].lstrip('0')) * 100 + int(parts[0])
+            if len(parts) != 2 or not parts[0] or not parts[1]:
+                return 0
+            return int(parts[1].lstrip('0') or '0') * 100 + int(parts[0].lstrip('0') or '0')
         except Exception:
             return 0
 
