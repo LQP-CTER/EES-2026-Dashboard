@@ -27,6 +27,14 @@ from utils.action_queue import build_priority_action_queue
 from utils.executive_brief import build_executive_brief
 from utils.lifecycle_analysis import build_lifecycle_risk
 from utils.pillar_interaction import build_cross_pillar_priority
+from utils.pillar_analysis import (
+    build_action_evidence,
+    build_contrast_evidence,
+    build_outcome_links,
+    build_role_scorecard,
+    build_specialized_risk_segments,
+    get_analysis_profile,
+)
 from views.anomaly_cards import render_anomaly_tab
 from utils.ai_generator import render_ai_insight_card
 
@@ -52,6 +60,61 @@ def _qmean(df, col):
         return None
     vals = df[col].dropna()
     return vals.mean() if len(vals) >= 5 else None
+
+
+def _render_analysis_lens(df, group_id, pillar_id):
+    """Render the pillar-specific question and evidence snapshot."""
+    profile = get_analysis_profile(pillar_id)
+    scorecard = build_role_scorecard(df, group_id, pillar_id)
+    contrasts = build_contrast_evidence(df, group_id, pillar_id)
+    outcomes = build_outcome_links(df, group_id, pillar_id)
+
+    st.markdown(f"""
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-left:4px solid {PILLAR_META[pillar_id]['color']};
+                border-radius:10px;padding:15px 18px;margin-bottom:16px;">
+        <div style="font-size:.68rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">
+            Câu hỏi điều hành riêng của {pillar_id}
+        </div>
+        <div style="font-size:1rem;font-weight:850;color:#0A1F44;margin-bottom:5px;">{profile['lens']}</div>
+        <div style="font-size:.8rem;color:#64748B;line-height:1.55;">{profile['focus']}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if scorecard.empty:
+        return {"scorecard": scorecard, "contrasts": contrasts, "outcomes": outcomes}
+
+    weakest = scorecard.iloc[0]
+    top_contrast = contrasts.sort_values("Khoảng cách", ascending=False).iloc[0] if not contrasts.empty else None
+    top_outcome = outcomes.iloc[0] if not outcomes.empty else None
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric(
+            "Tín hiệu yếu nhất",
+            f"{weakest['Điểm TB']:.2f}/5",
+            weakest["Tín hiệu"],
+            delta_color="off",
+        )
+    with c2:
+        if top_contrast is not None:
+            st.metric(
+                "Khoảng cách nội tại",
+                f"{top_contrast['Khoảng cách']:.2f} điểm",
+                top_contrast["Tín hiệu yếu hơn"],
+                delta_color="off",
+            )
+        else:
+            st.metric("Khoảng cách nội tại", "N/A")
+    with c3:
+        if top_outcome is not None:
+            st.metric(
+                "Liên hệ nổi bật",
+                f"ρ {top_outcome['Tương quan Spearman']:+.3f}",
+                f"{top_outcome['Kết quả liên quan']} · {top_outcome['Mức bằng chứng']}",
+                delta_color="off",
+            )
+        else:
+            st.metric("Liên hệ nổi bật", "Chưa đủ mẫu")
+    return {"scorecard": scorecard, "contrasts": contrasts, "outcomes": outcomes}
 
 
 def _render_aggregate_only_fallback(df, cfg, group_id, pillar_id, qs, context="quick"):
@@ -223,6 +286,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         return
 
     cb = get_codebook(group_id)
+    lens_data = _render_analysis_lens(df, group_id, pillar_id)
 
     # ── Khối 1: Xếp hạng câu hỏi theo điểm ──────────────────
     st.markdown("#### Câu hỏi nào đang kéo trụ cột xuống?")
@@ -376,6 +440,9 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
     p_name = meta['name']
     group_name = cfg.get('label', 'nhóm này')
     pillar_doc_desc = get_pillar_description(pillar_id, group_id)
+    analysis_profile = get_analysis_profile(pillar_id)
+    contrast_records = lens_data["contrasts"].to_dict("records")
+    outcome_records = lens_data["outcomes"].to_dict("records")
 
     prompt = (
         f"Bạn là Chuyên gia People Analytics, phân tích trụ cột '{p_name}' cho {group_name}. "
@@ -383,12 +450,16 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         f"- Điểm TB trụ cột: {p_mean:.2f}/5\n"
         f"- Câu yếu nhất: {weakest_label} ({weakest['Mean']:.2f}/5, {weakest['Negative']:.1f}% tiêu cực)\n"
         f"- Câu mạnh nhất: {strongest['Label']} ({strongest['Mean']:.2f}/5)\n"
-        f"- Định hướng: {pillar_doc_desc}\n\n"
+        f"- Định hướng: {pillar_doc_desc}\n"
+        f"- Câu hỏi điều hành: {analysis_profile['lens']}\n"
+        f"- Các đối chiếu nội tại: {contrast_records}\n"
+        f"- Liên hệ với outcome: {outcome_records}\n\n"
         f"YÊU CẦU (CHỈ dùng dữ liệu đã cung cấp): "
-        f"(1) Tại sao '{weakest['Label']}' yếu nhất? Liên kết với đặc thù {group_name}. "
-        f"(2) Điều gì xảy ra trong 3-6 tháng nếu không can thiệp? "
-        f"(3) Đề xuất 1 hành động CỤ THỂ trong 30 ngày. "
-        f"Sắc bén, bám sát đặc thù, KHÔNG chung chung."
+        f"(1) Trả lời trực tiếp câu hỏi điều hành của trụ cột. "
+        f"(2) Tách rõ dữ liệu quan sát được, liên hệ thống kê và giả thuyết cần kiểm chứng. "
+        f"(3) Giải thích vì sao '{weakest['Label']}' là điểm đau trong bối cảnh {group_name}. "
+        f"(4) Đề xuất 1 hành động cụ thể trong 30 ngày, bám đúng phạm vi {analysis_profile['focus']}. "
+        f"Không dùng câu khuyến nghị chung có thể áp dụng cho mọi trụ cột."
     )
     ai_data = {
         'Pillar': p_name, 'Group': group_name,
@@ -415,28 +486,20 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
     meta = PILLAR_META[pillar_id]
     color = meta['color']
 
-    # ── So sánh tương quan (Nghịch lý) ──
-    # Dùng "vai trò câu hỏi" (role) thay vì hard-code số câu → đúng cho cả 6 nhóm.
-    # Mỗi cặp: (role_A, role_B, tiêu đề). Role được resolve về mã câu theo group_id.
-    from shared.codebook import get_role_question
-    role_pairs = {
-        'TC1': [('info_trust', 'info_timely', 'Tin tưởng định hướng vs Nhận thông tin kịp thời')],
-        'TC2': [('mgr_support', 'mgr_fairness', 'Quản lý hỗ trợ vs Phân công công bằng')],
-        'TC3': [('change_guide', 'info_timely', 'Hướng dẫn thay đổi vs Thông báo thay đổi')],
-        'TC4': [('income_fair', 'transparency', 'Thu nhập công bằng vs Minh bạch khấu trừ/phạt')],
-        'TC5': [('pride', 'pressure', 'Tự hào về tổ chức vs Mức độ áp lực/Burnout')],
-    }
+    _render_analysis_lens(df, group_id, pillar_id)
 
+    # ── Đối chiếu chuyên biệt theo trụ cột ──
+    from shared.codebook import get_role_question
+    profile = get_analysis_profile(pillar_id)
     pairs = {}
-    if pillar_id in role_pairs:
-        resolved = []
-        for roleA, roleB, title in role_pairs[pillar_id]:
-            qA = get_role_question(group_id, roleA)
-            qB = get_role_question(group_id, roleB)
-            if qA and qB:
-                resolved.append((qA, qB, title))
-        if resolved:
-            pairs[pillar_id] = resolved
+    resolved = []
+    for roleA, roleB, title in profile["contrasts"]:
+        qA = get_role_question(group_id, roleA)
+        qB = get_role_question(group_id, roleB)
+        if qA and qB:
+            resolved.append((qA, qB, title))
+    if resolved:
+        pairs[pillar_id] = resolved
 
     if pillar_id in pairs:
         for qA, qB, title in pairs[pillar_id]:
@@ -651,6 +714,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
 
 def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
     meta = PILLAR_META[pillar_id]
+    profile = get_analysis_profile(pillar_id)
     qs = get_pillar_questions(group_id, pillar_id)
     q_cols = [q for q in qs if q in df.columns]
 
@@ -661,6 +725,59 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
     df_work = df.copy()
     df_work['_pillar_score'] = df_work[q_cols].mean(axis=1)
 
+    st.markdown(f"#### Nhóm rủi ro theo lăng kính {meta['short']}")
+    st.caption(profile["focus"])
+    specialized_risk = build_specialized_risk_segments(df, group_id, pillar_id)
+    if not specialized_risk.empty:
+        top_risk = specialized_risk.iloc[0]
+        r1, r2, r3 = st.columns(3)
+        r1.metric(
+            "Segment cần ưu tiên",
+            str(top_risk["Segment"]),
+            f"{top_risk['Segment Type']} · N={int(top_risk['N']):,}",
+            delta_color="off",
+        )
+        r2.metric(
+            "Risk score chuyên biệt",
+            f"{top_risk['Risk Score chuyên biệt']:.1f}",
+            profile["driver"],
+            delta_color="off",
+        )
+        r3.metric("Owner khởi động", str(top_risk["Owner đề xuất"]))
+
+        risk_cols = [
+            "Segment Type", "Segment", "N", f"Điểm {pillar_id} (%)",
+            "EI (%)", "eNPS", "% Muốn nghỉ", "% Burnout",
+            "Risk Score chuyên biệt", "Chẩn đoán trọng tâm", "Owner đề xuất",
+        ]
+        risk_cols = [col for col in risk_cols if col in specialized_risk.columns]
+        risk_formats = {
+            col: fmt for col, fmt in {
+                "N": "{:,.0f}",
+                f"Điểm {pillar_id} (%)": "{:.1f}",
+                "EI (%)": "{:.1f}",
+                "eNPS": "{:.0f}",
+                "% Muốn nghỉ": "{:.1f}",
+                "% Burnout": "{:.1f}",
+                "Risk Score chuyên biệt": "{:.1f}",
+            }.items() if col in risk_cols
+        }
+        st.dataframe(
+            specialized_risk[risk_cols].style.format(risk_formats),
+            width="stretch",
+            hide_index=True,
+            height=330,
+        )
+        with st.expander("Hành động đầu tiên theo từng segment", expanded=False):
+            st.dataframe(
+                specialized_risk[
+                    ["Segment Type", "Segment", "N", "Owner đề xuất", "Hành động đầu tiên"]
+                ],
+                width="stretch",
+                hide_index=True,
+            )
+        st.markdown("---")
+
     lifecycle = build_lifecycle_risk(df, group_id, pillar_id=pillar_id)
     cross_priority = build_cross_pillar_priority(df, pillar_id)
     action_queue = build_priority_action_queue(
@@ -669,6 +786,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
         pillar_id=pillar_id,
         lifecycle=lifecycle,
         cross_priority=cross_priority,
+        include_segments=False,
     )
     if not action_queue.empty:
         st.markdown("##### Priority Action Queue")
@@ -971,14 +1089,56 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
 def _render_tab_root_cause(df, cfg, group_id, pillar_id):
     from views import view_d_root_cause, view_f_action_priority
 
-    st.markdown("####  Phân tích nguyên nhân gốc rễ")
+    evidence = build_action_evidence(df, group_id, pillar_id)
+    profile = evidence["profile"]
+    st.markdown("#### Chuỗi bằng chứng và hành động chuyên biệt")
+    st.caption(profile["focus"])
+    if evidence.get("enabled"):
+        weakest = evidence["weakest"]
+        top_contrast = evidence.get("top_contrast")
+        top_outcome = evidence.get("top_outcome")
+        evidence_items = [
+            f"<li><strong>Điểm đau:</strong> {weakest['Tín hiệu']} đạt {weakest['Điểm TB']:.2f}/5 "
+            f"({weakest['% Tiêu cực']:.1f}% tiêu cực, N={int(weakest['N']):,}).</li>"
+        ]
+        if top_contrast:
+            evidence_items.append(
+                f"<li><strong>Mâu thuẫn nội tại:</strong> {top_contrast['Đối chiếu']} lệch "
+                f"{top_contrast['Khoảng cách']:.2f} điểm; vế yếu hơn là {top_contrast['Tín hiệu yếu hơn']}.</li>"
+            )
+        if top_outcome:
+            evidence_items.append(
+                f"<li><strong>Liên hệ kết quả:</strong> tương quan với {top_outcome['Kết quả liên quan']} "
+                f"ρ={top_outcome['Tương quan Spearman']:+.3f} ({top_outcome['Mức bằng chứng'].lower()}).</li>"
+            )
+        st.markdown(f"""
+        <div style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.85fr);gap:14px;margin-bottom:18px;">
+            <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px 18px;">
+                <div style="font-size:.7rem;font-weight:850;color:#64748B;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;">
+                    Bằng chứng · {evidence['confidence']}
+                </div>
+                <ul style="margin:0;padding-left:18px;color:#334155;font-size:.82rem;line-height:1.7;">
+                    {''.join(evidence_items)}
+                </ul>
+            </div>
+            <div style="background:#FFF7ED;border:1px solid #FDBA7466;border-left:4px solid #FF5200;border-radius:10px;padding:16px 18px;">
+                <div style="font-size:.7rem;font-weight:850;color:#FF5200;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;">
+                    Hành động 30 ngày
+                </div>
+                <div style="font-size:.82rem;color:#334155;line-height:1.65;margin-bottom:8px;">{evidence['action']}</div>
+                <div style="font-size:.74rem;color:#64748B;"><strong>Owner:</strong> {evidence['owner']}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("#### Phân tích nguyên nhân gốc rễ")
     try:
         view_d_root_cause.render(df, cfg, group_id, pillar_filter=pillar_id)
     except TypeError:
         view_d_root_cause.render(df, cfg, group_id)
 
     st.markdown("---")
-    st.markdown("####  Ưu tiên hành động")
+    st.markdown("#### Ưu tiên hành động")
     try:
         view_f_action_priority.render(df, cfg, pillar_filter=pillar_id)
     except TypeError:
@@ -991,6 +1151,7 @@ def _render_tab_root_cause(df, cfg, group_id, pillar_id):
 
 def _render_tab_anomaly(df, cfg, group_id, pillar_id):
     """Tab Bất thường — per-pillar anomalies + cross-pillar patterns."""
+    profile = get_analysis_profile(pillar_id)
     scan = run_full_anomaly_scan(df, group_id)
     health = scan.get('health_score', {})
     priority_actions = scan.get('priority_actions', [])
@@ -998,7 +1159,15 @@ def _render_tab_anomaly(df, cfg, group_id, pillar_id):
     tenure = scan.get('tenure_cohorts', {})
     pillar_anomalies = scan.get('pillar_anomalies', {}).get(pillar_id, [])
     cross_anomalies = scan.get('cross_pillar_patterns', [])
-    all_anomalies = pillar_anomalies + cross_anomalies
+    st.markdown(f"""
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-left:4px solid {PILLAR_META[pillar_id]['color']};
+                border-radius:10px;padding:14px 17px;margin-bottom:16px;">
+        <div style="font-size:.68rem;font-weight:850;color:#64748B;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">
+            Phạm vi quét riêng của {pillar_id}
+        </div>
+        <div style="font-size:.84rem;color:#334155;line-height:1.6;">{profile['anomaly_focus']}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;margin-bottom:16px;">
@@ -1049,7 +1218,10 @@ def _render_tab_anomaly(df, cfg, group_id, pillar_id):
             )
         st.markdown("---")
 
-    render_anomaly_tab(all_anomalies, pillar_id=pillar_id, show_cross=True)
+    render_anomaly_tab(pillar_anomalies, pillar_id=pillar_id, show_cross=False)
+    if cross_anomalies:
+        with st.expander("Bất thường liên trụ cột có liên quan", expanded=False):
+            render_anomaly_tab(cross_anomalies, pillar_id=pillar_id, show_cross=True)
 
 
 # ─────────────────────────────────────────────────────────────

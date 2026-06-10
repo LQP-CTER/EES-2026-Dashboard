@@ -4,6 +4,7 @@ import pandas as pd
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from shared.codebook import PILLAR_ORDER
 from utils.ai_generator import render_ai_insight_card
+from utils.pillar_analysis import get_analysis_profile
 
 def render(df, cfg, pillar_filter=None, **kwargs):
     apply_theme()
@@ -13,11 +14,17 @@ def render(df, cfg, pillar_filter=None, **kwargs):
     # Filter by pillar if requested
     if pillar_filter and pillar_filter in PILLAR_ORDER:
         likert_cols = [q for q in likert_cols if codebook.get(q, {}).get('trụ_cột') == pillar_filter]
+    analysis_profile = get_analysis_profile(pillar_filter) if pillar_filter in PILLAR_ORDER else None
 
     from shared.plotly_theme import section_header
 
     # Non-DA user context banner
-    st.markdown("""
+    profile_context = (
+        f"<strong>Lăng kính đang dùng:</strong> {analysis_profile['focus']}"
+        if analysis_profile else
+        "Ma trận đang đọc đồng thời toàn bộ các trụ cột."
+    )
+    st.markdown(f"""
     <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
         <div style="font-size:1.4rem;flex-shrink:0;"></div>
         <div>
@@ -25,6 +32,7 @@ def render(df, cfg, pillar_filter=None, **kwargs):
             <div style="font-size:0.8rem;color:#475569;line-height:1.55;">
                 Biểu đồ này giúp bạn <strong>xác định đúng trọng tâm</strong>: không phải mọi điểm thấp đều cần giải quyết ngay. Chỉ những yếu tố <strong style="color:#DC2626;">ảnh hưởng lớn đến gắn kết MÀ điểm hiện tại lại thấp</strong> mới là ưu tiên thực sự.
                 Nhìn vào góc <span style="background:#FEF2F2;color:#DC2626;padding:1px 6px;border-radius:4px;font-weight:700;">đỏ trên-trái</span> trước tiên — đó là những nơi cần đầu tư nguồn lực ngay.
+                <div style="margin-top:7px;">{profile_context}</div>
             </div>
         </div>
     </div>
@@ -71,11 +79,13 @@ def render(df, cfg, pillar_filter=None, **kwargs):
         f"Các yếu tố 'Ưu tiên cao' (điểm thấp + ảnh hưởng lớn đến EI):\n"
         f"{ai_data['High_Priority_Items']}\n"
         f"Tổng số yếu tố ưu tiên cao: {ai_data['Total_High_Priority_Count']}\n\n"
+        f"Lăng kính chuyên biệt: {analysis_profile['lens'] if analysis_profile else 'Toàn bộ trải nghiệm'}.\n"
+        f"Phạm vi hành động: {analysis_profile['focus'] if analysis_profile else 'Ưu tiên theo tác động đến EI'}.\n\n"
         f"Giải thích bằng ngôn ngữ thông thường: "
         f"(1) Nhân viên đang gặp vấn đề gì thực tế? "
         f"(2) Nếu cải thiện, điều gì thay đổi? Dẫn chứng bằng số tương quan. "
         f"(3) Bước đầu tiên cần làm ngay trong tháng tới? "
-        f"CHỈ phân tích từ danh sách đã cho."
+        f"CHỈ phân tích từ danh sách đã cho và không đưa khuyến nghị chung ngoài phạm vi lăng kính chuyên biệt."
     )
     render_ai_insight_card("AI Action Priorities", ai_data, prompt, custom_style="margin-bottom: 24px;")
 
