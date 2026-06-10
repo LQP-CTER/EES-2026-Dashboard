@@ -2274,11 +2274,12 @@ elif is_company:
             filtered_all_data = {k: v for k, v in filtered_all_data.items() if not v[0].empty}
         loader.add("Đang tính toán KPI và dựng giao diện Tổng quan GHN...")
         loader.done()
-        loader.clear()
         if scope_restricted and not filtered_all_data:
+            loader.clear()
             st.info("Bạn không có dữ liệu thuộc phạm vi được cấp quyền.")
         else:
             company_overview.render(filtered_all_data, available)
+            loader.clear()  # Clear AFTER render hoàn thành — tránh trang trắng
     except Exception as e:
         st.error(f"Lỗi khi tải view Tổng quan: {e}")
         import traceback
@@ -2324,11 +2325,11 @@ else:
         elif sel_pillar:
             from views import pillar_renderer
             pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
-        elif sel_nav and "Đo lường Impact" in sel_nav:
+        elif sel_nav and "\u0110o l\u01b0\u1eddng Impact" in sel_nav:
             view_g_kpi_impact.render(df_filtered, cfg)
         else:
-            st.info("Chọn một trụ cột từ sidebar bên trái.")
+            st.info("Ch\u1ecdn m\u1ed9t tr\u1ee5 c\u1ed9t t\u1eeb sidebar b\u00ean tr\u00e1i.")
     except Exception as e:
-        st.error(f"Lỗi khi tải phân tích: {e}")
+        st.error(f"L\u1ed7i khi t\u1ea3i ph\u00e2n t\u00edch: {e}")
         import traceback
         st.code(traceback.format_exc())

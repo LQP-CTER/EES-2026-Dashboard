@@ -1012,6 +1012,20 @@ def render(all_data, available_groups):
     st.markdown(section_header("Phân Tích Chi Tiết — Phòng Ban & Section",
                                "So sánh EI, eNPS và 5 trụ cột theo từng phòng ban / section"), unsafe_allow_html=True)
 
+    st.markdown(
+        f"""<div style="display:inline-flex;align-items:center;gap:8px;
+                        background:#FFF8F0;border:1px solid #FFD5BF;border-radius:8px;
+                        padding:7px 14px;margin-bottom:12px;font-size:0.78rem;color:#B45309;font-weight:600;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Chỉ hiển thị phòng ban / section có <strong style="margin:0 3px">N &gt; {MIN_ORG_SEGMENT_N}</strong> mẫu để đảm bảo tính đại diện thống kê.
+        </div>""",
+        unsafe_allow_html=True
+    )
+
     def _build_drilldown_table(df_src, group_col, label, min_n=MIN_ORG_SEGMENT_N):
         rows = []
         for grp_val, grp_df in df_src.groupby(group_col, dropna=True):  # dropna=True: bỏ qua hàng không xác định

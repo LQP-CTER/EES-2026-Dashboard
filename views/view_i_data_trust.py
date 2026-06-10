@@ -421,10 +421,10 @@ def render(summary_df=None):
             </div>
             <div class="dt-hero-panel">
                 <div class="dt-hero-panel-inner">
-                    <span class="dt-hero-label">DeepDive v13 · Bảng chất lượng dữ liệu</span>
+                    <span class="dt-hero-label">EES 2026 · Bảng chất lượng dữ liệu</span>
                     <div>
                         <div class="dt-hero-score">19,221</div>
-                        <div class="dt-hero-mini">Mẫu phân tích sau làm sạch, lấy theo bảng dữ liệu chính trong EES 2026 DeepDive v13 Final.</div>
+                        <div class="dt-hero-mini">Mẫu phân tích hợp lệ sau khi qua đầy đủ các bước kiểm định và làm sạch dữ liệu.</div>
                     </div>
                     <div class="dt-hero-pills">
                         <span class="dt-pill">Phản hồi thô 20,005</span>
@@ -439,21 +439,21 @@ def render(summary_df=None):
 
     st.markdown(f"""
     <div class="dt-metrics">
-        {_metric_tile("HRIS base", f"{headcount_total:,}", "Tổng nhân sự trong bảng DeepDive v13", "#0A1F44", "#F8FAFC")}
-        {_metric_tile("Phản hồi thô", f"{raw_total:,}", f"{participation_pct:.1f}% / HRIS base", "#1D4ED8", "#EFF6FF")}
-        {_metric_tile("Mẫu phân tích", f"{cleaned_total:,}", f"loại {drop_total:,} phản hồi ({drop_pct:.1f}%)", "#10B981", "#F0FDF4")}
-        {_metric_tile("Straight-line", f"{straightline_total:,}", f"{straightline_pct:.1f}% / cleaned base", "#F97316", "#FFF7ED")}
-        {_metric_tile("n hiệu dụng", f"{eff_total:,}", f"{effective_pct:.1f}% / cleaned base", "#7C3AED", "#F5F3FF")}
+        {_metric_tile("Tổng nhân sự", f"{headcount_total:,}", "Quy mô nhân sự toàn GHN (HRIS)", "#0A1F44", "#F8FAFC")}
+        {_metric_tile("Phản hồi thu thập", f"{raw_total:,}", f"{participation_pct:.1f}% tỷ lệ tham gia", "#1D4ED8", "#EFF6FF")}
+        {_metric_tile("Mẫu phân tích", f"{cleaned_total:,}", f"sau loại {drop_total:,} phản hồi ({drop_pct:.1f}%)", "#10B981", "#F0FDF4")}
+        {_metric_tile("Phản hồi trùng lặp", f"{straightline_total:,}", f"{straightline_pct:.1f}% / mẫu đã làm sạch", "#F97316", "#FFF7ED")}
+        {_metric_tile("Mẫu hiệu dụng", f"{eff_total:,}", f"{effective_pct:.1f}% / mẫu đã làm sạch", "#7C3AED", "#F5F3FF")}
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="dt-card" style="margin:18px 0 26px;">
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin:0">
-            Các chỉ số chính trong trang này được cố định theo bảng dữ liệu của
-            <strong>EES_2026_DeepDive_v13_Final.pdf</strong>: HRIS base 21,353, phản hồi thô
-            20,005, mẫu phân tích sau làm sạch 19,221, straight-line weighted 8,757 và
-            n hiệu dụng 16,435. Bảng runtime bên dưới chỉ dùng để đối chiếu kỹ thuật khi cần.
+            Các chỉ số được cố định theo kết quả phân tích chính thức của EES 2026:
+            21,353 nhân sự, 20,005 phản hồi thu thập, 19,221 mẫu phân tích sau làm sạch,
+            8,757 phản hồi trùng lặp và 16,435 mẫu hiệu dụng.
+            Bảng runtime bên dưới chỉ dùng để đối chiếu kỹ thuật khi cần.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -474,21 +474,20 @@ def render(summary_df=None):
 
         st.markdown("""
         <p style="font-size:0.88rem;color:#475569;line-height:1.75">
-            Theo bảng dữ liệu trong DeepDive v13, tỷ lệ tham gia toàn công ty đạt
-            <strong>93.7%</strong> với <strong>20,005</strong> phản hồi trên nền HRIS
-            <strong>21,353</strong> nhân sự. Sau bước làm sạch, base phân tích còn
-            <strong>19,221</strong> mẫu; phần bị loại khỏi base chính là <strong>878</strong>
-            phản hồi, tương đương <strong>4.4%</strong> mẫu thô.
+            Tỷ lệ tham gia toàn công ty đạt <strong>93.7%</strong> với <strong>20,005</strong>
+            phản hồi trên tổng <strong>21,353</strong> nhân sự. Sau bước làm sạch và kiểm định
+            chất lượng, base phân tích còn <strong>19,221</strong> mẫu hợp lệ — phần bị loại
+            là <strong>878</strong> phản hồi, chiếm khoảng <strong>4.4%</strong> tổng thu thập.
         </p>
         """, unsafe_allow_html=True)
 
         # KPI cards
         cols = st.columns(4)
         kpi_data = [
-            ("Tổng GHN", "93.7%", "20,005 / 21,353", "#FF5200", "#FFF3EE"),
+            ("Tỷ lệ tham gia", "93.7%", "20,005 / 21,353 nhân sự", "#FF5200", "#FFF3EE"),
             ("Mẫu phân tích", "19,221", "sau loại 878 phản hồi", "#10B981", "#F0FDF4"),
-            ("Straight-line", "8,757", "45.6% / cleaned base", "#3B82F6", "#EFF6FF"),
-            ("n hiệu dụng", "16,435", "85.5% / cleaned base", "#8B5CF6", "#F5F3FF"),
+            ("Phản hồi trùng lặp", "8,757", "45.6% / mẫu đã làm sạch", "#3B82F6", "#EFF6FF"),
+            ("Mẫu hiệu dụng", "16,435", "85.5% / mẫu đã làm sạch", "#8B5CF6", "#F5F3FF"),
         ]
         for col, (label, val, sub, color, bg) in zip(cols, kpi_data):
             with col:
@@ -514,10 +513,10 @@ def render(summary_df=None):
         """, unsafe_allow_html=True)
 
         st.markdown(_callout(
-            "Ý nghĩa thực tiễn",
-            "Với 1A, bảng DeepDive ghi nhận 12,955 phản hồi thô và 12,262 mẫu phân tích sau làm sạch. "
-            "Tỷ lệ silence/straight-line cao cần được đọc như một tín hiệu chất lượng dữ liệu cần hiệu chỉnh trọng số, "
-            "không tự động đồng nghĩa toàn bộ nhóm là dữ liệu rác.",
+            "Lưu ý khi đọc dữ liệu nhóm Shipper (1A)",
+            "Nhóm 1A ghi nhận 12,955 phản hồi thô và 12,262 mẫu sau làm sạch. "
+            "Tỷ lệ phản hồi trùng lặp cao trong nhóm này nên được hiểu là tín hiệu cần hiệu chỉnh trọng số "
+            "khi phân tích — không đồng nghĩa với việc toàn bộ dữ liệu nhóm thiếu tin cậy.",
             color="#10B981", bg="#F0FDF4"
         ), unsafe_allow_html=True)
 
@@ -529,15 +528,15 @@ def render(summary_df=None):
 
         st.markdown("""
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin-bottom:12px">
-            Bảng dưới đây viết lại theo đúng bảng dữ liệu trong <strong>EES 2026 DeepDive v13 Final</strong>.
-            Luồng đọc số là: HRIS base → phản hồi thô → phản hồi bị loại khỏi base chính →
-            cleaned analytical base → straight-line weighted → effective base.
+            Bảng dưới tổng hợp số liệu theo từng nhóm khảo sát, từ phản hồi thu thập ban đầu đến
+            mẫu phân tích cuối cùng sau khi qua các bước kiểm định chất lượng dữ liệu.
+            Luồng đọc: Tổng nhân sự HRIS → Phản hồi thu thập → Phản hồi bị loại → Mẫu phân tích → Mẫu hiệu dụng.
         </p>
         <ul style="font-size:0.85rem;color:#475569;line-height:1.7;margin-bottom:20px;padding-left:20px">
-            <li><strong>Phản hồi thô (Raw submissions):</strong> toàn bộ phản hồi thu thập theo từng nhóm khảo sát.</li>
-            <li><strong>Bị loại (Dropped):</strong> phản hồi bị loại khỏi base phân tích đã làm sạch trong bảng DeepDive.</li>
-            <li><strong>Mẫu phân tích (Cleaned base):</strong> mẫu chính thức dùng để đọc EI, eNPS, Leave, Silence và các trụ cột.</li>
-            <li><strong>n hiệu dụng (Effective base):</strong> tổng n sau hiệu chỉnh trọng số chất lượng, dùng cho số tổng thể.</li>
+            <li><strong>Phản hồi thô:</strong> toàn bộ phản hồi thu thập được từ mỗi nhóm khảo sát.</li>
+            <li><strong>Bị loại:</strong> phản hồi không đạt tiêu chí chất lượng, loại ra khỏi base phân tích chính thức.</li>
+            <li><strong>Mẫu phân tích:</strong> base chính thức dùng để tính EI, eNPS, ý định nghỉ việc và các trụ cột.</li>
+            <li><strong>Mẫu hiệu dụng:</strong> tổng n sau hiệu chỉnh trọng số chất lượng, dùng cho các chỉ số tổng thể.</li>
         </ul>
         """, unsafe_allow_html=True)
 
@@ -548,29 +547,29 @@ def render(summary_df=None):
             "Nhóm", "Raw submissions", "Dropped", "Drop %", "Cleaned base",
             "Cleaned %", "EI", "eNPS", "Leave %", "Silence %", "MEI", "Flight Risk %"
         ]].rename(columns={
-            "Raw submissions": "Phản hồi thô (Raw)",
-            "Dropped": "Bị loại (Dropped)",
-            "Drop %": "Tỷ lệ loại (Drop %)",
-            "Cleaned base": "Mẫu phân tích (Cleaned)",
-            "Cleaned %": "Tỷ lệ giữ (Cleaned %)",
-            "Leave %": "Ý định nghỉ (Leave %)",
-            "Silence %": "Im lặng (Silence %)",
-            "Flight Risk %": "Rủi ro rời bỏ (Flight Risk)",
+            "Raw submissions": "Phản hồi thô",
+            "Dropped": "Bị loại",
+            "Drop %": "Tỷ lệ loại",
+            "Cleaned base": "Mẫu phân tích",
+            "Cleaned %": "Tỷ lệ giữ",
+            "Leave %": "Ý định nghỉ",
+            "Silence %": "Im lặng",
+            "Flight Risk %": "Rủi ro rời bỏ",
         })
 
         st.dataframe(
             df_table.style.format({
-                "Phản hồi thô (Raw)": "{:,.0f}",
-                "Bị loại (Dropped)": "{:,.0f}",
-                "Tỷ lệ loại (Drop %)": "{:.1f}%",
-                "Mẫu phân tích (Cleaned)": "{:,.0f}",
-                "Tỷ lệ giữ (Cleaned %)": "{:.1f}%",
+                "Phản hồi thô": "{:,.0f}",
+                "Bị loại": "{:,.0f}",
+                "Tỷ lệ loại": "{:.1f}%",
+                "Mẫu phân tích": "{:,.0f}",
+                "Tỷ lệ giữ": "{:.1f}%",
                 "EI": "{:.1f}",
                 "eNPS": "{:+.1f}",
-                "Ý định nghỉ (Leave %)": "{:.1f}%",
-                "Im lặng (Silence %)": "{:.1f}%",
+                "Ý định nghỉ": "{:.1f}%",
+                "Im lặng": "{:.1f}%",
                 "MEI": "{:.1f}",
-                "Rủi ro rời bỏ (Flight Risk)": "{:.1f}%",
+                "Rủi ro rời bỏ": "{:.1f}%",
             }, na_rep="-"),
             width="stretch",
             height=300,
@@ -579,9 +578,9 @@ def render(summary_df=None):
 
         st.markdown("""
         <p style="font-size:0.78rem;color:#94A3B8;margin-top:12px;line-height:1.6;font-style:italic">
-            * DeepDive v13 trình bày n hiệu dụng ở cấp tổng thể là 16,435; bảng nhóm phía trên
-            dùng cleaned base theo từng nhóm, không ép phân bổ lại n hiệu dụng theo nhóm khi tài liệu
-            không công bố chi tiết phân bổ này.
+            * Mẫu hiệu dụng ở cấp tổng thể là 16,435; bảng nhóm phía trên dùng mẫu phân tích
+            (cleaned base) theo từng nhóm riêng — phân bổ mẫu hiệu dụng chi tiết theo nhóm
+            không được công bố trong tài liệu phân tích chính thức.
         </p>
         """, unsafe_allow_html=True)
 
