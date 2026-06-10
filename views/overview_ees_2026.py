@@ -382,75 +382,70 @@ def render():
         font-weight:800;
         backdrop-filter:blur(12px);
     }
-    .ed-orbit {
+    /* ── Pillar tags — replaces orbit/pills ── */
+    .ed-pillars {
         position:absolute;
-        left:50%;
+        left:26px;
+        right:26px;
         bottom:28px;
-        width:280px;
-        height:190px;
-        transform:translateX(-50%);
-        transform-style:preserve-3d;
+        display:flex;
+        flex-direction:column;
+        gap:6px;
     }
-    .ed-orbit-ring {
-        position:absolute;
-        inset:22px 12px 28px;
-        border:1px solid rgba(255,255,255,.24);
-        border-radius:50%;
-        transform:rotateX(64deg);
+    .ed-pillar-row {
+        display:flex;
+        gap:6px;
     }
-    .ed-orbit-ring:nth-child(2) {
-        inset:44px 42px 48px;
-        border-color:rgba(255,213,191,.42);
-    }
-    .ed-orbit-core {
-        position:absolute;
-        left:50%;
-        top:48%;
-        width:86px;
-        height:86px;
-        border-radius:50%;
-        transform:translate(-50%,-50%) translateZ(42px);
-        background:radial-gradient(circle at 35% 28%, #FFFFFF 0%, #FFD5BF 22%, #FF5200 66%, #B93800 100%);
-        box-shadow:0 0 34px rgba(255,82,0,.62);
-    }
-    .ed-orbit-pill {
-        position:absolute;
-        padding:7px 10px;
+    .ed-pillar-tag {
+        display:inline-flex;
+        align-items:center;
+        gap:5px;
+        padding:5px 10px;
         border-radius:999px;
-        color:#fff;
-        background:rgba(255,255,255,.12);
-        border:1px solid rgba(255,255,255,.20);
-        font-size:.68rem;
-        font-weight:800;
+        color:rgba(255,255,255,.90);
+        background:rgba(255,255,255,.10);
+        border:1px solid rgba(255,255,255,.18);
+        font-size:.62rem;
+        font-weight:700;
+        letter-spacing:.01em;
         backdrop-filter:blur(10px);
-        box-shadow:0 12px 22px rgba(0,0,0,.16);
+        white-space:nowrap;
     }
-    .ed-orbit-pill.p1 { left:2px; top:42px; }
-    .ed-orbit-pill.p2 { right:4px; top:36px; }
-    .ed-orbit-pill.p3 { left:-10px; bottom:8px; }
-    .ed-orbit-pill.p4 { right:-20px; bottom:24px; }
-    .ed-orbit-pill.p5 { left:50%; top:-16px; transform:translateX(-50%); }
+    .ed-pillar-tag::before {
+        content:'';
+        width:6px;
+        height:6px;
+        border-radius:50%;
+        background:#FF5200;
+        flex-shrink:0;
+    }
+    .ed-pillar-divider {
+        height:1px;
+        background:rgba(255,255,255,.12);
+        margin:4px 0 2px;
+    }
+    /* ── Bar chart — right side ── */
     .ed-command-bars {
         position:absolute;
-        right:28px;
-        bottom:28px;
+        right:26px;
+        bottom:116px;
         z-index:2;
         display:flex;
-        align-items:end;
+        align-items:flex-end;
         gap:8px;
-        height:94px;
+        height:80px;
     }
     .ed-command-bars span {
-        width:16px;
+        width:14px;
         border-radius:999px 999px 4px 4px;
         background:linear-gradient(180deg,#FFFFFF,#FFD5BF 42%,#FF5200);
-        opacity:.92;
-        box-shadow:0 12px 18px rgba(0,0,0,.18);
+        opacity:.88;
+        box-shadow:0 8px 14px rgba(0,0,0,.18);
     }
-    .ed-command-bars span:nth-child(1) { height:38px; }
-    .ed-command-bars span:nth-child(2) { height:64px; }
-    .ed-command-bars span:nth-child(3) { height:48px; }
-    .ed-command-bars span:nth-child(4) { height:82px; }
+    .ed-command-bars span:nth-child(1) { height:32px; }
+    .ed-command-bars span:nth-child(2) { height:56px; }
+    .ed-command-bars span:nth-child(3) { height:42px; }
+    .ed-command-bars span:nth-child(4) { height:72px; }
 
     @media (max-width: 1080px) {
         .ed-hero-shell { grid-template-columns:1fr; padding:32px; }
@@ -496,18 +491,22 @@ def render():
                         </div>
                         <span class="ed-command-chip">Live Overview</span>
                     </div>
-                    <div class="ed-orbit">
-                        <div class="ed-orbit-ring"></div>
-                        <div class="ed-orbit-ring"></div>
-                        <div class="ed-orbit-core"></div>
-                        <span class="ed-orbit-pill p1">Niềm tin lãnh đạo</span>
-                        <span class="ed-orbit-pill p2">Quản lý trực tiếp</span>
-                        <span class="ed-orbit-pill p3">Công việc &amp; phát triển</span>
-                        <span class="ed-orbit-pill p4">Thu nhập &amp; minh bạch</span>
-                        <span class="ed-orbit-pill p5">Môi trường &amp; phát triển</span>
-                    </div>
                     <div class="ed-command-bars">
                         <span></span><span></span><span></span><span></span>
+                    </div>
+                    <div class="ed-pillars">
+                        <div class="ed-pillar-divider"></div>
+                        <div class="ed-pillar-row">
+                            <span class="ed-pillar-tag">Niềm tin lãnh đạo</span>
+                            <span class="ed-pillar-tag">Quản lý trực tiếp</span>
+                        </div>
+                        <div class="ed-pillar-row">
+                            <span class="ed-pillar-tag">Công việc &amp; phát triển</span>
+                            <span class="ed-pillar-tag">Thu nhập &amp; minh bạch</span>
+                        </div>
+                        <div class="ed-pillar-row">
+                            <span class="ed-pillar-tag">Môi trường &amp; phát triển</span>
+                        </div>
                     </div>
                 </div>
                 <div class="ed-metrics-grid">
