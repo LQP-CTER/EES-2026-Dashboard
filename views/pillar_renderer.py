@@ -21,6 +21,7 @@ from shared.codebook import (
     get_codebook, get_pillar_questions, get_question_label, PILLAR_WEIGHTS,
 )
 from shared.plotly_theme import fig_card, COLORS
+from shared.loading import TerminalLoader
 from utils.anomaly_detector import detect_pillar_anomalies, detect_cross_pillar, run_full_anomaly_scan
 from utils.action_queue import build_priority_action_queue
 from utils.executive_brief import build_executive_brief
@@ -1085,15 +1086,14 @@ def _render_tab_hris(df, cfg, group_id, pillar_id):
 # ─────────────────────────────────────────────────────────────
 
 def render(df, cfg, group_id, pillar_id):
-    """Main entry: render pillar with 5–6 tabs."""
+    """Main entry: lazily render only the selected pillar analysis section."""
     if df is None or df.empty:
         st.warning("Không có dữ liệu để hiển thị.")
         return
 
     _render_pillar_header(pillar_id, df, cfg, group_id)
 
-    # Build tabs
-    tab_names = [
+    section_names = [
         "Chẩn đoán Nhanh",
         "Chi tiết Từng câu",
         "Nhóm Rủi ro",
@@ -1101,29 +1101,53 @@ def render(df, cfg, group_id, pillar_id):
         "Bất thường",
     ]
     if pillar_id == 'TC4':
-        tab_names.append("HRIS & Rủi ro")
+        section_names.append("HRIS & Rủi ro")
     elif pillar_id == 'TC3':
-        tab_names.append("HRIS & Năng suất")
+        section_names.append("HRIS & Năng suất")
     elif pillar_id == 'TC5':
-        tab_names.append("Rủi ro Gắn kết")
+        section_names.append("Rủi ro Gắn kết")
 
-    tabs = st.tabs(tab_names)
+    selected_section = st.segmented_control(
+        "Nội dung phân tích",
+        options=section_names,
+        default=section_names[0],
+        selection_mode="single",
+        key=f"pillar_section_{group_id}_{pillar_id}",
+        label_visibility="collapsed",
+        width="stretch",
+    )
+    selected_section = selected_section or section_names[0]
 
-    with tabs[0]:
-        _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id)
+    renderers = {
+        section_names[0]: _render_tab_quick_diagnosis,
+        section_names[1]: _render_tab_detail,
+        section_names[2]: _render_tab_risk_groups,
+        section_names[3]: _render_tab_root_cause,
+        section_names[4]: _render_tab_anomaly,
+    }
+    if len(section_names) > 5:
+        renderers[section_names[5]] = _render_tab_hris
 
-    with tabs[1]:
-        _render_tab_detail(df, cfg, group_id, pillar_id)
+    loading_messages = {
+        section_names[1]: "Đang tổng hợp chi tiết từng câu và phản hồi mở...",
+        section_names[2]: "Đang xác định các nhóm, segment và lifecycle có rủi ro...",
+        section_names[3]: "Đang phân tích driver, nguyên nhân và mức ưu tiên hành động...",
+        section_names[4]: "Đang quét bất thường trong trụ cột và liên kết chéo...",
+    }
+    if len(section_names) > 5:
+        loading_messages[section_names[5]] = "Đang đối chiếu dữ liệu HRIS và chỉ báo liên quan..."
 
-    with tabs[2]:
-        _render_tab_risk_groups(df, cfg, group_id, pillar_id)
+    renderer = renderers[selected_section]
+    loading_message = loading_messages.get(selected_section)
+    if not loading_message:
+        renderer(df, cfg, group_id, pillar_id)
+        return
 
-    with tabs[3]:
-        _render_tab_root_cause(df, cfg, group_id, pillar_id)
-
-    with tabs[4]:
-        _render_tab_anomaly(df, cfg, group_id, pillar_id)
-
-    if len(tabs) > 5:
-        with tabs[5]:
-            _render_tab_hris(df, cfg, group_id, pillar_id)
+    loading_slot = st.empty()
+    loader = TerminalLoader(loading_slot, f"Đang mở {selected_section}")
+    loader.add(loading_message)
+    try:
+        renderer(df, cfg, group_id, pillar_id)
+        loader.done(f"Đã hoàn tất {selected_section}.")
+    finally:
+        loader.clear()
