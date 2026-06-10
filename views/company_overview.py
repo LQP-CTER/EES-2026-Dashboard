@@ -9,7 +9,7 @@ from utils.benchmark_2025 import get_company_benchmark_2025
 from utils.ai_generator import render_ai_insight_card
 from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
 
-MIN_DEPARTMENT_N = 1
+MIN_DEPARTMENT_N = 6  # Chỉ hiển thị phòng ban có N > 5
 MIN_ORG_SEGMENT_N = 5
 UNKNOWN_ORG_VALUE = "Chưa xác định"
 
@@ -836,7 +836,7 @@ def render(all_data, available_groups):
                                            'EI (%)', 'eNPS', avail_pillar_cols)
                 st.dataframe(styled_dept, width='stretch', hide_index=True)
             else:
-                st.info("Không có dữ liệu theo phòng ban.")
+                st.info("Không có phòng ban nào có số mẫu trên 5.")
         else:
             st.info("Dữ liệu chưa có cột 'department'.")
 

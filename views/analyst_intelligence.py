@@ -345,7 +345,7 @@ def render_group_analyst_intelligence(group_id: Optional[str]):
     actions = "".join(f"<li>{html.escape(a)}</li>" for a in item["actions"])
 
     st.markdown(section_header("Phân tích chuyên sâu từ tài liệu analyst", "Các insight đã đối chiếu từ bộ tài liệu trong docs/analyst"), unsafe_allow_html=True)
-    st.markdown(
+    st.html(
         dedent(
             f"""
             <div class="aiq-shell">
@@ -365,8 +365,7 @@ def render_group_analyst_intelligence(group_id: Optional[str]):
                 </div>
             </div>
             """
-        ),
-        unsafe_allow_html=True,
+        )
     )
 
 
@@ -414,7 +413,7 @@ def render_company_analyst_intelligence(all_data):
     decisions_df = pd.DataFrame(EXECUTIVE_DECISIONS, columns=["Quyết định", "Mốc đề xuất", "Ý nghĩa triển khai"])
 
     st.markdown(section_header("Phân tích chuyên sâu từ tài liệu analyst", "Những điểm cần bổ sung để dashboard khớp với bộ tài liệu analyst"), unsafe_allow_html=True)
-    st.markdown(
+    st.html(
         dedent(
             f"""
             <div class="aiq-shell">
@@ -432,7 +431,6 @@ def render_company_analyst_intelligence(all_data):
                 <div class="aiq-card-grid">{finding_html}</div>
             </div>
             """
-        ),
-        unsafe_allow_html=True,
+        )
     )
     st.dataframe(decisions_df, width="stretch", hide_index=True)

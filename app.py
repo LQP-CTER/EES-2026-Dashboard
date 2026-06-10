@@ -55,46 +55,53 @@ except Exception:
 
 st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", layout="wide", initial_sidebar_state="expanded")
 
-# Tắt hoàn toàn hiệu ứng "làm mờ" trang cũ của Streamlit ngay từ đầu
-# Đồng thời biến Spinner mặc định thành Loading Overlay toàn màn hình cực đẹp
+# Giữ giao diện cũ ổn định trong lúc Streamlit rerun để tránh chớp trắng.
+# Spinner chỉ là một status nhỏ, không che hoặc blur toàn bộ dashboard.
 st.markdown("""
 <style>
-    /* Xóa hiệu ứng mờ nhòe kẹt trang cũ */
+    /* Streamlit đánh dấu UI cũ là stale trong lúc rerun. Giữ nó hiển thị
+       nguyên trạng cho tới khi UI mới sẵn sàng thay thế. */
     [data-stale="true"], 
     [data-testid="stale-element-container"], 
     .stale-element, 
     .stale {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        filter: none !important;
+        transition: none !important;
+        animation: none !important;
+        pointer-events: none !important;
     }
 
-    /* Biến Spinner thành Loading Overlay siêu mượt */
+    /* Loading status gọn: không phủ trắng toàn màn hình. */
     [data-testid="stSpinner"] {
         position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: rgba(255, 255, 255, 0.9) !important;
+        top: max(12px, env(safe-area-inset-top)) !important;
+        left: 50% !important;
+        width: auto !important;
+        height: auto !important;
+        transform: translateX(-50%) !important;
+        background: transparent !important;
         z-index: 99999 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        backdrop-filter: blur(8px) !important;
+        pointer-events: none !important;
     }
     
     [data-testid="stSpinner"] > div {
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
         align-items: center !important;
-        gap: 15px !important;
-        transform: scale(1.3) !important;
-        background: #FFFFFF !important;
-        padding: 30px 40px !important;
-        border-radius: 20px !important;
-        box-shadow: 0 20px 40px rgba(10,31,68,0.1) !important;
-        border: 1px solid rgba(255,82,0,0.1) !important;
+        gap: 10px !important;
+        transform: none !important;
+        background: rgba(255,255,255,.96) !important;
+        padding: 9px 14px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 28px rgba(10,31,68,.14) !important;
+        border: 1px solid #E2E8F0 !important;
+        backdrop-filter: blur(6px) !important;
+        white-space: nowrap !important;
     }
     
     /* Đổi màu vòng xoay loading sang màu cam GHN */
@@ -105,10 +112,26 @@ st.markdown("""
     /* Chỉnh chữ loading */
     [data-testid="stSpinner"] p {
         font-family: 'Inter', sans-serif !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
+        font-size: 0.78rem !important;
+        font-weight: 650 !important;
         color: #0A1F44 !important;
         margin: 0 !important;
+    }
+
+    @media (max-width: 768px) {
+        [data-testid="stSpinner"] {
+            top: max(8px, env(safe-area-inset-top)) !important;
+            max-width: calc(100vw - 24px) !important;
+        }
+        [data-testid="stSpinner"] > div {
+            max-width: calc(100vw - 24px) !important;
+            padding: 8px 11px !important;
+        }
+        [data-testid="stSpinner"] p {
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 72vw !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -976,15 +999,18 @@ footer {visibility: hidden !important;}
 .viewerBadge_link {display: none !important;}
 [class*="viewerBadge"] {display: none !important;}
 
-/* Fix the blurry loading issue by completely hiding stale elements */
+/* Keep the previous frame visible while Streamlit replaces it.
+   Hiding stale elements here caused the whole dashboard to flash white. */
 [data-testid="stale-element-container"], 
 [data-stale="true"], 
 .stale, 
-[data-testid*="stale"],
-div.st-emotion-cache-1kyxreq {
-    opacity: 0 !important;
+[data-testid*="stale"] {
+    opacity: 1 !important;
     transition: none !important;
-    visibility: hidden !important;
+    visibility: visible !important;
+    filter: none !important;
+    animation: none !important;
+    pointer-events: none !important;
 }
 
 html, body, .stApp {
@@ -1590,11 +1616,65 @@ st.markdown("""
     [data-testid="stSidebarCollapseButton"],
     button[title="Collapse sidebar"],
     button[aria-label="Collapse sidebar"],
+    button[aria-label="Close sidebar"],
+    button[title="Close sidebar"],
     button[aria-label="Thu nhỏ thanh bên"],
     button[title="Thu nhỏ thanh bên"] {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
+    }
+
+    /* Safari can render Streamlit's Material Symbol name as literal text
+       (for example "keyboard_double_arrow_left"). Replace it with CSS. */
+    [data-testid="stSidebarCollapseButton"] button,
+    button[title="Collapse sidebar"],
+    button[aria-label="Collapse sidebar"],
+    button[aria-label="Close sidebar"],
+    button[title="Close sidebar"],
+    button[aria-label="Thu nhỏ thanh bên"],
+    button[title="Thu nhỏ thanh bên"] {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+        color: transparent !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+    }
+
+    [data-testid="stSidebarCollapseButton"] button span,
+    button[title="Collapse sidebar"] span,
+    button[aria-label="Collapse sidebar"] span,
+    button[aria-label="Close sidebar"] span,
+    button[title="Close sidebar"] span,
+    button[aria-label="Thu nhỏ thanh bên"] span,
+    button[title="Thu nhỏ thanh bên"] span {
+        display: none !important;
+        font-size: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    [data-testid="stSidebarCollapseButton"] button::before,
+    button[title="Collapse sidebar"]::before,
+    button[aria-label="Collapse sidebar"]::before,
+    button[aria-label="Close sidebar"]::before,
+    button[title="Close sidebar"]::before,
+    button[aria-label="Thu nhỏ thanh bên"]::before,
+    button[title="Thu nhỏ thanh bên"]::before {
+        content: "" !important;
+        display: block !important;
+        width: 9px !important;
+        height: 9px !important;
+        border-left: 2px solid #475569 !important;
+        border-bottom: 2px solid #475569 !important;
+        transform: rotate(45deg) !important;
+        margin-left: 4px !important;
     }
 
     [data-testid="stSidebar"] {
@@ -1809,7 +1889,7 @@ st.markdown("""
     }
 
     .tl-box {
-        margin: 10px 0 14px !important;
+        margin: 0 !important;
         border-radius: 9px !important;
     }
 
