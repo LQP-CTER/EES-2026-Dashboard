@@ -1569,6 +1569,316 @@ div[data-baseweb="select"] > div:hover {
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+/* ═══════ MOBILE RESPONSIVE LAYER ═══════
+   Desktop stays controlled by the main CSS above. These rules only apply to
+   tablet/phone widths so the current web layout is not affected. */
+@media (max-width: 768px) {
+    html, body, .stApp {
+        overflow-x: hidden !important;
+    }
+
+    .block-container {
+        padding-top: 1.1rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    /* Let phone users collapse/open the sidebar when Streamlit renders it as a drawer. */
+    [data-testid="stSidebarCollapseButton"],
+    button[title="Collapse sidebar"],
+    button[aria-label="Collapse sidebar"],
+    button[aria-label="Thu nhỏ thanh bên"],
+    button[title="Thu nhỏ thanh bên"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    [data-testid="stSidebar"] {
+        width: min(88vw, 330px) !important;
+        min-width: min(88vw, 330px) !important;
+        max-width: min(88vw, 330px) !important;
+    }
+
+    [data-testid="stSidebar"] section[data-testid="stSidebarContent"] {
+        padding-bottom: 1rem !important;
+        overflow-x: hidden !important;
+    }
+
+    .sb-brand {
+        padding: 16px 16px 12px !important;
+    }
+
+    .sb-logo {
+        height: 30px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .sb-section {
+        padding: 12px 16px 6px !important;
+    }
+
+    /* Streamlit columns and explicit horizontal blocks should stack on phones. */
+    [data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+    }
+
+    div[data-testid="stHorizontalBlock"] {
+        gap: 0.75rem !important;
+    }
+
+    .pg-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        margin-bottom: 22px !important;
+        padding-bottom: 18px !important;
+    }
+
+    .pg-title {
+        font-size: clamp(1.75rem, 8vw, 2.35rem) !important;
+        line-height: 1.08 !important;
+    }
+
+    .pg-subtitle {
+        font-size: 0.82rem !important;
+    }
+
+    .pg-badge {
+        align-self: flex-start !important;
+        padding: 5px 11px !important;
+    }
+
+    .hero-card {
+        padding: 22px 18px !important;
+        border-radius: 14px !important;
+    }
+
+    .hero-title {
+        font-size: 1.28rem !important;
+    }
+
+    .hero-metrics,
+    .ghn-metrics,
+    .ghn-context,
+    .ghn-process-flow,
+    .dt-grid,
+    .dt-metrics,
+    .dt-proof-grid,
+    .ed-metrics-grid,
+    .ed-masonry,
+    .ed-team-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .ghn-shell,
+    .dt-shell,
+    .ed-hero-shell,
+    .ed-team-section {
+        padding: 20px !important;
+        border-radius: 20px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .ghn-hero,
+    .dt-hero,
+    .ed-hero-shell,
+    .ed-timeline-section {
+        grid-template-columns: 1fr !important;
+        gap: 18px !important;
+        transform: none !important;
+    }
+
+    .ghn-command {
+        min-height: 235px !important;
+        padding: 20px !important;
+        transform: none !important;
+        border-radius: 18px !important;
+    }
+
+    .ghn-title,
+    .dt-title,
+    .ed-headline {
+        font-size: clamp(2rem, 10vw, 2.75rem) !important;
+        line-height: 1.08 !important;
+        letter-spacing: -0.035em !important;
+    }
+
+    .ghn-command-score {
+        font-size: clamp(3rem, 17vw, 4.3rem) !important;
+    }
+
+    .ghn-metric,
+    .ghn-process-card,
+    .custom-metric-card,
+    .premium-kpi-card,
+    [data-testid="stMetric"] {
+        padding: 16px !important;
+        border-radius: 14px !important;
+    }
+
+    .ghn-metric-value,
+    .ghn-process-value,
+    .metric-value,
+    [data-testid="stMetricValue"] {
+        font-size: clamp(1.7rem, 8vw, 2.2rem) !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .sample-flow-panel {
+        padding: 12px 14px !important;
+        border-radius: 12px !important;
+    }
+
+    .sample-flow-head {
+        align-items: flex-start !important;
+    }
+
+    .sample-flow-desc {
+        width: 100% !important;
+        margin-left: 0 !important;
+        line-height: 1.45 !important;
+    }
+
+    .sample-flow-body {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .sample-flow-step {
+        text-align: left !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 10px !important;
+        padding: 11px 12px !important;
+        background: #FFFFFF !important;
+    }
+
+    .sample-flow-arrow {
+        display: none !important;
+    }
+
+    .sample-flow-progress {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        scrollbar-width: thin !important;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        flex: 0 0 auto !important;
+        padding: 9px 14px !important;
+        min-width: max-content !important;
+        font-size: 0.78rem !important;
+    }
+
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"] {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+
+    .js-plotly-plot,
+    .plot-container,
+    [data-testid="stPlotlyChart"] {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+
+    img,
+    video,
+    iframe {
+        max-width: 100% !important;
+    }
+
+    video {
+        height: auto !important;
+        border-radius: 14px !important;
+    }
+
+    .tl-box {
+        margin: 10px 0 14px !important;
+        border-radius: 9px !important;
+    }
+
+    .tl-body {
+        font-size: 11px !important;
+        overflow-x: auto !important;
+    }
+
+    .tl-row {
+        white-space: normal !important;
+        align-items: flex-start !important;
+    }
+
+    .ed-masonry {
+        grid-auto-rows: auto !important;
+    }
+
+    .ed-masonry-item,
+    .ed-masonry-item-large,
+    .ed-masonry-item-tall,
+    .ed-masonry-item-wide {
+        grid-column: auto !important;
+        grid-row: auto !important;
+        min-height: 220px !important;
+    }
+
+    .ed-timeline-node {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .ed-timeline-big-num {
+        min-width: 0 !important;
+        text-align: left !important;
+        font-size: 2.8rem !important;
+    }
+
+    .ai-content {
+        max-height: none !important;
+        font-size: 0.82rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .block-container {
+        padding-left: 0.65rem !important;
+        padding-right: 0.65rem !important;
+    }
+
+    .ghn-shell,
+    .dt-shell,
+    .ed-hero-shell,
+    .ed-team-section,
+    .hero-card {
+        padding: 16px !important;
+        border-radius: 18px !important;
+    }
+
+    .ghn-mini-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .stButton > button {
+        width: 100% !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # ── State & Setup ───────────────────────────────────────────────────────────
 available = get_available_groups()
