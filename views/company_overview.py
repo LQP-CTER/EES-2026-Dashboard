@@ -8,6 +8,7 @@ from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025
 from utils.ai_generator import render_ai_insight_card
 from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
+from shared.codebook import get_codebook, get_question_label
 
 MIN_DEPARTMENT_N = 3  # Chỉ hiển thị phòng ban có N > 2
 MIN_ORG_SEGMENT_N = 5
@@ -50,6 +51,305 @@ def _fmt_num(value) -> str:
 
 def _pct(numerator, denominator) -> float:
     return round((numerator / denominator) * 100, 1) if denominator else 0.0
+
+
+def _build_department_question_diagnostics(df_department: pd.DataFrame) -> pd.DataFrame:
+    """Rank weak Likert questions while preserving each survey group's wording."""
+    rows = []
+    if "_survey_group" not in df_department.columns:
+        return pd.DataFrame()
+
+    for group_id, df_group in df_department.groupby("_survey_group", dropna=True):
+        codebook = get_codebook(str(group_id))
+        if not codebook:
+            continue
+        for question_id, meta in codebook.items():
+            if meta.get("loại") != "likert" or question_id not in df_group.columns:
+                continue
+            values = pd.to_numeric(df_group[question_id], errors="coerce").dropna()
+            if len(values) < MIN_DEPARTMENT_N:
+                continue
+            rows.append(
+                {
+                    "Nhóm": str(group_id),
+                    "Câu hỏi": question_id,
+                    "N": len(values),
+                    "Nội dung": get_question_label(str(group_id), question_id),
+                    "Trụ cột": PILLAR_LABELS.get(meta.get("trụ_cột"), meta.get("trụ_cột", "N/A")),
+                    "Điểm TB": round(float(values.mean()), 2),
+                    "Tích cực (%)": round(float((values >= 4).mean() * 100), 1),
+                    "Tiêu cực (%)": round(float((values <= 2).mean() * 100), 1),
+                }
+            )
+
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows).sort_values(
+        ["Điểm TB", "Tiêu cực (%)", "N"],
+        ascending=[True, False, False],
+    ).reset_index(drop=True)
+
+
+def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame):
+    """Render an evidence-led department diagnosis without changing source data."""
+    department_options = tbl_dept["Phòng Ban"].dropna().astype(str).tolist()
+    if not department_options:
+        return
+
+    st.markdown(
+        """
+        <div style="margin:34px 0 14px;padding-top:24px;border-top:1px solid #E2E8F0;">
+            <div style="font-size:.72rem;font-weight:850;color:#FF5200;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">
+                Deep Dive Phòng Ban
+            </div>
+            <div style="font-size:1.35rem;font-weight:900;color:#0A1F44;letter-spacing:-.02em;">
+                Chẩn đoán một phòng ban cụ thể
+            </div>
+            <div style="font-size:.84rem;color:#64748B;line-height:1.6;margin-top:6px;">
+                Đọc đồng thời KPI, trụ cột, câu hỏi yếu, section và thâm niên để nhận diện nguyên nhân có khả năng.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    selected_department = st.selectbox(
+        "Chọn phòng ban để phân tích sâu",
+        department_options,
+        key="company_department_deep_dive",
+    )
+    df_department = df_total[df_total["department"].astype(str) == selected_department].copy()
+    if len(df_department) < MIN_DEPARTMENT_N:
+        st.info("Phòng ban này không đủ tối thiểu 3 mẫu để phân tích.")
+        return
+
+    kpis = compute_kpis(df_department)
+    company_kpis = compute_kpis(df_total)
+    ei_gap = round(kpis["ei_mean"] - company_kpis["ei_mean"], 1)
+    enps_gap = round(kpis["enps_score"] - company_kpis["enps_score"], 0)
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Số mẫu", f"{kpis['n']:,}")
+    c2.metric("EI", f"{kpis['ei_mean']:.1f}%", delta=f"{ei_gap:+.1f} so với GHN")
+    c3.metric("eNPS", f"{kpis['enps_score']:+.0f}", delta=f"{enps_gap:+.0f} so với GHN")
+    c4.metric("Rủi ro nghỉ việc", f"{kpis['intent_pct_low']:.1f}%")
+    c5.metric("MEI", f"{kpis.get('mei_avg', 0):.1f}%")
+
+    pillar_rows = []
+    for pillar_id, pillar_label in PILLAR_LABELS.items():
+        col = f"{pillar_id}_pct"
+        if col not in df_department.columns:
+            continue
+        dept_values = pd.to_numeric(df_department[col], errors="coerce").dropna()
+        company_values = pd.to_numeric(df_total[col], errors="coerce").dropna()
+        if dept_values.empty:
+            continue
+        dept_score = float(dept_values.mean())
+        company_score = float(company_values.mean()) if not company_values.empty else dept_score
+        pillar_rows.append(
+            {
+                "Trụ cột": pillar_label,
+                "Điểm phòng ban": round(dept_score, 1),
+                "GHN": round(company_score, 1),
+                "Chênh lệch": round(dept_score - company_score, 1),
+            }
+        )
+    df_pillars = pd.DataFrame(pillar_rows)
+
+    col_pillar, col_segment = st.columns([1.15, 0.85])
+    with col_pillar:
+        if not df_pillars.empty:
+            df_pillars_plot = df_pillars.sort_values("Điểm phòng ban", ascending=True)
+            fig_pillar = go.Figure()
+            fig_pillar.add_trace(
+                go.Bar(
+                    y=df_pillars_plot["Trụ cột"],
+                    x=df_pillars_plot["Điểm phòng ban"],
+                    orientation="h",
+                    name=selected_department,
+                    marker_color=[
+                        "#10B981" if score >= 75 else "#F59E0B" if score >= 65 else "#EF4444"
+                        for score in df_pillars_plot["Điểm phòng ban"]
+                    ],
+                    text=[f"{score:.1f}%" for score in df_pillars_plot["Điểm phòng ban"]],
+                    textposition="outside",
+                )
+            )
+            fig_pillar.add_trace(
+                go.Scatter(
+                    y=df_pillars_plot["Trụ cột"],
+                    x=df_pillars_plot["GHN"],
+                    mode="markers",
+                    name="GHN",
+                    marker=dict(color="#0A1F44", size=9, symbol="diamond"),
+                )
+            )
+            fig_pillar = fig_card(
+                fig_pillar,
+                "Hồ sơ 5 Trụ Cột",
+                "Thanh màu là phòng ban, điểm kim cương là toàn GHN",
+            )
+            fig_pillar.update_layout(
+                xaxis=dict(range=[0, 105]),
+                yaxis=dict(autorange="reversed"),
+                legend=dict(orientation="h", y=1.08),
+                height=390,
+            )
+            st.plotly_chart(fig_pillar, width="stretch", key="department_deep_dive_pillars")
+        else:
+            st.info("Phòng ban chưa có dữ liệu tổng hợp 5 trụ cột.")
+
+    with col_segment:
+        section_rows = []
+        if "section" in df_department.columns:
+            for section, df_section in df_department.groupby("section", dropna=True):
+                if len(df_section) < MIN_DEPARTMENT_N:
+                    continue
+                section_kpis = compute_kpis(df_section)
+                section_rows.append(
+                    {
+                        "Section": section,
+                        "N": section_kpis["n"],
+                        "EI (%)": round(section_kpis["ei_mean"], 1),
+                        "eNPS": round(section_kpis["enps_score"], 0),
+                    }
+                )
+        df_sections = pd.DataFrame(section_rows)
+        if not df_sections.empty:
+            df_sections = df_sections.sort_values("EI (%)", ascending=True)
+            fig_section = go.Figure(
+                go.Bar(
+                    y=df_sections["Section"],
+                    x=df_sections["EI (%)"],
+                    orientation="h",
+                    marker_color=[
+                        "#10B981" if score >= 75 else "#F59E0B" if score >= 65 else "#EF4444"
+                        for score in df_sections["EI (%)"]
+                    ],
+                    text=[f"{score:.1f}% · n={n}" for score, n in zip(df_sections["EI (%)"], df_sections["N"])],
+                    textposition="inside",
+                )
+            )
+            fig_section = fig_card(fig_section, "Điểm nóng theo Section", "Chỉ hiển thị section có N > 2")
+            fig_section.update_layout(
+                xaxis=dict(range=[0, 100]),
+                yaxis=dict(autorange="reversed"),
+                height=max(330, len(df_sections) * 30 + 90),
+            )
+            st.plotly_chart(fig_section, width="stretch", key="department_deep_dive_sections")
+        else:
+            st.info("Không có section nào trong phòng ban đạt N > 2.")
+
+    question_diagnostics = _build_department_question_diagnostics(df_department)
+    st.markdown("##### Câu hỏi đang kéo trải nghiệm xuống")
+    if not question_diagnostics.empty:
+        weakest_questions = question_diagnostics.head(8).copy()
+        st.dataframe(
+            weakest_questions,
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "Điểm TB": st.column_config.NumberColumn(format="%.2f"),
+                "Tích cực (%)": st.column_config.NumberColumn(format="%.1f%%"),
+                "Tiêu cực (%)": st.column_config.NumberColumn(format="%.1f%%"),
+            },
+        )
+    else:
+        weakest_questions = pd.DataFrame()
+        st.info("Chưa có đủ raw question data để xếp hạng câu hỏi của phòng ban này.")
+
+    tenure_rows = []
+    if "Q5" in df_department.columns:
+        for tenure, df_tenure in df_department.groupby("Q5", dropna=True):
+            if len(df_tenure) < MIN_DEPARTMENT_N:
+                continue
+            tenure_kpis = compute_kpis(df_tenure)
+            tenure_rows.append(
+                {
+                    "Thâm niên": tenure,
+                    "N": tenure_kpis["n"],
+                    "EI (%)": round(tenure_kpis["ei_mean"], 1),
+                    "eNPS": round(tenure_kpis["enps_score"], 0),
+                    "Rủi ro nghỉ việc (%)": round(tenure_kpis["intent_pct_low"], 1),
+                }
+            )
+    df_tenure = pd.DataFrame(tenure_rows)
+    if not df_tenure.empty:
+        df_tenure = df_tenure.sort_values("EI (%)", ascending=True)
+        fig_tenure = go.Figure(
+            go.Bar(
+                y=df_tenure["Thâm niên"],
+                x=df_tenure["EI (%)"],
+                orientation="h",
+                marker_color=[
+                    "#10B981" if score >= 75 else "#F59E0B" if score >= 65 else "#EF4444"
+                    for score in df_tenure["EI (%)"]
+                ],
+                text=[
+                    f"{ei:.1f}% · eNPS {enps:+.0f} · n={n}"
+                    for ei, enps, n in zip(df_tenure["EI (%)"], df_tenure["eNPS"], df_tenure["N"])
+                ],
+                textposition="inside",
+            )
+        )
+        fig_tenure = fig_card(
+            fig_tenure,
+            "Lát cắt Thâm niên",
+            "Tìm cohort đang kéo trải nghiệm của phòng ban xuống",
+        )
+        fig_tenure.update_layout(
+            xaxis=dict(range=[0, 100]),
+            yaxis=dict(autorange="reversed"),
+            height=max(340, len(df_tenure) * 34 + 90),
+        )
+        st.plotly_chart(fig_tenure, width="stretch", key="department_deep_dive_tenure")
+
+    weakest_pillar = None
+    strongest_pillar = None
+    if not df_pillars.empty:
+        weakest_pillar = df_pillars.loc[df_pillars["Điểm phòng ban"].idxmin()].to_dict()
+        strongest_pillar = df_pillars.loc[df_pillars["Điểm phòng ban"].idxmax()].to_dict()
+
+    weakest_question_records = []
+    if not weakest_questions.empty:
+        weakest_question_records = weakest_questions.head(3)[
+            ["Nhóm", "Câu hỏi", "Nội dung", "Trụ cột", "N", "Điểm TB", "Tích cực (%)", "Tiêu cực (%)"]
+        ].to_dict("records")
+
+    ai_data = {
+        "Phòng ban": selected_department,
+        "N": int(kpis["n"]),
+        "EI": round(kpis["ei_mean"], 1),
+        "Chênh lệch EI so với GHN": ei_gap,
+        "eNPS": round(kpis["enps_score"], 0),
+        "Chênh lệch eNPS so với GHN": enps_gap,
+        "Rủi ro nghỉ việc": round(kpis["intent_pct_low"], 1),
+        "MEI": round(kpis.get("mei_avg", 0), 1),
+        "Trụ cột yếu nhất": weakest_pillar,
+        "Trụ cột mạnh nhất": strongest_pillar,
+        "Ba câu hỏi yếu nhất": weakest_question_records,
+        "Section thấp nhất": (
+            df_sections.head(3).to_dict("records") if not df_sections.empty else []
+        ),
+        "Nhóm thâm niên thấp nhất": (
+            df_tenure.head(3).to_dict("records") if not df_tenure.empty else []
+        ),
+    }
+    prompt = (
+        "Viết chẩn đoán Deep Dive cho phòng ban này theo phong cách Master Report. "
+        "Mở bằng một tên chẩn đoán ngắn phản ánh vấn đề nổi bật nhất. "
+        "Phân tích lần lượt hiện tượng, các bằng chứng đang kéo EI/eNPS xuống, nguyên nhân có khả năng "
+        "từ trụ cột, câu hỏi hoặc section, và hai hành động ưu tiên có thể triển khai. "
+        "Chỉ sử dụng dữ liệu JSON được cung cấp. Nếu dữ liệu chỉ thể hiện tương quan hoặc điểm thấp, "
+        "phải dùng cách diễn đạt 'tín hiệu', 'có khả năng' hoặc 'cần kiểm chứng', không khẳng định quan hệ nhân quả."
+    )
+    render_ai_insight_card(
+        f"AI Deep Dive Phòng Ban · {selected_department}",
+        ai_data,
+        prompt,
+        badge="Department Diagnosis",
+        custom_style="margin-top:20px;",
+    )
 
 
 def _render_data_processing_section(headcount, raw, cleaned, all_data, effective=None, straightline=None):
@@ -568,12 +868,6 @@ def render(all_data, available_groups):
     with kpi_c4:
         st.markdown(make_html_kpi("MEI - Quản lý trực tiếp", f"{total_mei:.1f}", delta="N/A", color="green", icon="", progress_val=total_mei), unsafe_allow_html=True)
 
-    try:
-        from views.analyst_intelligence import render_company_analyst_intelligence
-        render_company_analyst_intelligence(all_data)
-    except Exception as _analyst_err:
-        st.caption(f"Phân tích chuyên sâu từ tài liệu analyst không khả dụng: {_analyst_err}")
-
     # Calculate dynamic insights across divisions
     div_stats = []
     for div, df_div in df_total.groupby('division', dropna=True):
@@ -846,6 +1140,7 @@ def render(all_data, available_groups):
                 styled_dept = _make_styler(tbl_dept_fmt, tbl_dept.reset_index(drop=True),
                                            'EI (%)', 'eNPS', avail_pillar_cols)
                 st.dataframe(styled_dept, width='stretch', hide_index=True)
+                _render_department_deep_dive(df_total, tbl_dept)
             else:
                 st.info("Không có phòng ban nào có số mẫu trên 2.")
         else:
