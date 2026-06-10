@@ -73,10 +73,10 @@ _RELIABILITY_GROUPS = [
 DEEPDIVE_QUALITY_TOTALS = {
     "headcount": 21353,
     "raw": 20005,
-    "dropped": 878,
-    "cleaned": 19221,
+    "dropped": 889,
+    "cleaned": 19210,
     "straightline_weighted": 8757,
-    "effective_base": 16435,
+    "effective_base": 16424,
 }
 
 DEEPDIVE_GROUP_BASE = [
@@ -148,12 +148,12 @@ DEEPDIVE_GROUP_BASE = [
     {
         "Nhóm": "3B · Manager HO",
         "Raw submissions": 109,
-        "Dropped": 0,
-        "Cleaned base": 109,
-        "EI": 73.6,
-        "eNPS": 32.7,
+        "Dropped": 11,
+        "Cleaned base": 98,
+        "EI": 72.4,
+        "eNPS": 29.0,
         "Stay": None,
-        "Leave %": 0.9,
+        "Leave %": 1.0,
         "Silence %": 9.2,
         "MEI": None,
         "Flight Risk %": None,
