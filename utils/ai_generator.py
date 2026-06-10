@@ -7,6 +7,24 @@ import hashlib
 from groq import Groq
 
 _AI_LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg=="
+MASTER_REPORT_VOICE_VERSION = "master-report-v1"
+
+
+def get_master_report_voice_prompt():
+    """Editorial voice derived from GHN_EES_2026_Master_Report_Outstanding.docx."""
+    return """
+GIỌNG VĂN CHUẨN GHN EES 2026 MASTER REPORT:
+1. Viết như chuyên gia tư vấn EX và People Analytics đang trình bày cho Ban Lãnh đạo GHN. Giọng văn sắc sảo, có lập trường, giàu tính chẩn đoán và hướng đến vận hành.
+2. Mở thẳng bằng phát hiện quan trọng nhất. Không mở đầu bằng lời chào, câu dẫn chung chung, hoặc cụm "Dựa trên dữ liệu".
+3. Mỗi insight đi theo mạch: Hiện tượng quan sát được, cơ chế hoặc nguyên nhân có bằng chứng, hàm ý đối với vận hành hoặc trải nghiệm nhân viên, hành động ưu tiên.
+4. Có thể đặt một tên chẩn đoán ngắn cho hiện tượng, ví dụ "Điểm nghẽn Truyền thông", "Khoảng trống Thực thi", "Rủi ro Công bằng Điều phối", "Vòng lặp Suy giảm Gắn kết". Tên phải phản ánh đúng dữ liệu, không được tạo kịch tính vô căn cứ.
+5. Ưu tiên động từ chủ động và rõ lực: "chỉ ra", "vạch rõ", "bộc lộ", "kích hoạt", "làm suy giảm", "củng cố", "chuyển hóa". Không viết kiểu chatbot trung tính, vòng vo.
+6. Có thể dùng thuật ngữ tiếng Anh trong ngoặc khi thật sự giúp định danh khái niệm, ví dụ Employee Experience, Systemic Risk, Cohort Analysis, Psychological Safety. Luôn giải thích bằng tiếng Việt và không lạm dụng.
+7. Kết nối chỉ số với câu chuyện tổ chức. Không chỉ lặp lại con số; phải nói rõ con số đó đang phản ánh trải nghiệm nào và quyết định quản trị nào cần được ưu tiên.
+8. Khuyến nghị phải cụ thể, gắn với chủ thể thực thi hoặc điểm chạm vận hành nếu dữ liệu cho phép. Tránh các câu rỗng như "cần tiếp tục theo dõi", "nâng cao hơn nữa", "tăng cường truyền thông".
+9. Giữ chất văn mạnh nhưng có kiểm soát. Không dùng các từ cường điệu như "kinh hoàng", "thảm họa", "chí mạng" nếu dữ liệu không chứng minh mức độ đó. Không khẳng định quan hệ nhân quả khi dữ liệu chỉ thể hiện tương quan.
+10. Tôn trọng cấu trúc đầu ra mà nhiệm vụ yêu cầu. Nếu nhiệm vụ không quy định cấu trúc, viết 2 đoạn ngắn, mỗi đoạn 2 đến 3 câu: đoạn đầu là chẩn đoán, đoạn sau là hàm ý và hành động.
+"""
 # ============================================================
 # DUAL GROQ KEY — ROUND-ROBIN LOAD BALANCER
 # Key 1 và Key 2 luân phiên xử lý request.
@@ -75,7 +93,7 @@ def get_groq_clients_all():
 
 
 def get_cache_key(data_json, context_prompt):
-    return hashlib.md5((data_json + context_prompt).encode()).hexdigest()
+    return hashlib.md5((MASTER_REPORT_VOICE_VERSION + data_json + context_prompt).encode()).hexdigest()
 
 
 # ============================================================
@@ -109,33 +127,15 @@ B. Mọi con số bạn viết trong bài phân tích PHẢI khớp chính xác 
 C. Nếu bạn không chắc chắn một chỉ số có trong JSON hay không, HÃY BỎ QUA chỉ số đó.
 D. KHÔNG tự tính toán, suy diễn, hoặc ngoại suy thêm bất kỳ con số nào ngoài những gì JSON cung cấp.
 
-YÊU CẦU ĐỊNH DẠNG VÀ TÔNG VĂN NGHIÊM NGẶT:
-1. Tông văn: Chuyên nghiệp, khách quan, dựa trên dữ liệu, đi thẳng vào vấn đề. Viết như báo cáo phân tích dành cho lãnh đạo cấp cao.
+{get_master_report_voice_prompt()}
 
-2. NGÔN NGỮ SẠCH VÀ DỄ HIỂU:
-   - Dùng từ ngữ thông dụng, rõ ràng, dễ hiểu. KHÔNG dùng từ ngữ văn hoa, ẩn dụ, hoặc quá học thuật (ví dụ: KHÔNG dùng "tử huyệt", "đòn bẩy", "vòng lặp hụt hẫng", "chất keo dính", "cú sốc", "khoảng mù").
-   - Dùng thuật ngữ HR Analytics chuẩn: Engagement Index (EI), eNPS, Attrition Risk, Cohort Analysis, Turnover rate.
-   - Khi cần nhấn mạnh, dùng cụm từ trực tiếp và cụ thể thay vì ẩn dụ. Ví dụ: thay vì "điểm nghẽn truyền thông", viết "vấn đề truyền thông nội bộ chưa hiệu quả".
-
-3. TUYỆT ĐỐI KHÔNG DÙNG DẤU GẠCH NGANG dưới bất kỳ hình thức nào: KHÔNG dùng '-', '—', '–' trong toàn bộ bài viết. Nếu cần liệt kê hoặc phân tách ý, dùng dấu phẩy hoặc viết thành câu riêng.
-
-4. Tuyệt đối KHÔNG DÙNG các từ ngữ quá kịch tính (ví dụ: "đột biến", "kinh hoàng", "báo động đỏ"). Thay vào đó dùng ngôn ngữ chuyên gia: "rủi ro đáng kể", "xu hướng cần quan tâm", "mức độ ảnh hưởng cao".
-
-5. KHÔNG SỬ DỤNG ký tự Markdown như **, *, #. KHÔNG viết Tiêu đề. KHÔNG dùng Bullet points.
-
-6. TUYỆT ĐỐI KHÔNG mở đầu bằng các từ chào hỏi (ví dụ: "Kính gửi...", "Chào bạn...", "Thưa...", "Dựa trên dữ liệu..."). Bắt đầu phân tích ngay lập tức.
-
-7. TUYỆT ĐỐI KHÔNG viết các câu kết luận sáo rỗng, chung chung (ví dụ: "cần tiếp tục theo dõi...", "cần lưu ý rằng...", "điều này cho thấy...", "tóm lại..."). Chỉ viết Insight thực sự có giá trị.
-
-8. BẮT BUỘC viết dưới dạng HAI ĐOẠN VĂN liền mạch:
-   - Đoạn 1: Mô tả hiện tượng quan sát được và nguyên nhân chính, dẫn chứng bằng số liệu cụ thể từ JSON.
-   - Đoạn 2: Đề xuất hướng can thiệp hoặc khuyến nghị chiến lược, gắn với bối cảnh thực tế của dữ liệu.
-
-9. Độ dài tối đa: 4-6 câu. Mỗi câu phải mang thông tin mới và cụ thể.
-
-10. Để nhấn mạnh, DÙNG thẻ HTML: `<span class="ai-highlight">` cho chỉ số tốt và `<span class="ai-warning">` cho rủi ro.
-
-11. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
+YÊU CẦU TRÌNH BÀY:
+1. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
+2. Dùng câu rõ nghĩa, nhịp chắc, không biến insight thành một đoạn văn hàn lâm khó đọc.
+3. Không dùng lời chào, không tự giới thiệu vai trò, không kết luận sáo rỗng.
+4. Không dùng ký tự Markdown # hoặc bảng Markdown. Chỉ dùng bullet khi nhiệm vụ cụ thể yêu cầu danh sách.
+5. Khi cần nhấn mạnh trong đoạn văn, dùng `<span class="ai-highlight">` cho tín hiệu tích cực và `<span class="ai-warning">` cho rủi ro.
+6. Độ dài mặc định 5 đến 7 câu, trừ khi nhiệm vụ yêu cầu cấu trúc hoặc độ dài khác.
 """
 
 

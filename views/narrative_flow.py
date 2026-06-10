@@ -16,7 +16,11 @@ import plotly.graph_objects as go
 from shared.codebook import PILLAR_META, PILLAR_ORDER, get_pillar_questions, get_question_label
 from shared.plotly_theme import fig_card, COLORS, make_html_kpi, section_header
 from utils.contradiction_engine import detect_contradictions, get_top_contradictions
-from utils.ai_generator import render_ai_insight_card
+from utils.ai_generator import (
+    MASTER_REPORT_VOICE_VERSION,
+    get_master_report_voice_prompt,
+    render_ai_insight_card,
+)
 
 
 _AI_LOGO_B64 = ""
@@ -1100,7 +1104,9 @@ def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
     responses_text = "\n".join([f"- {r}" for r in sample])
 
     group_name = cfg.get('label', group_id)
-    prompt_key = hashlib.md5((unit_label + responses_text[:200]).encode()).hexdigest()
+    prompt_key = hashlib.md5(
+        (MASTER_REPORT_VOICE_VERSION + unit_label + responses_text[:200]).encode()
+    ).hexdigest()
     cache_key  = f"ev_voice_{group_id}_{prompt_key}"
 
     # Các button phân tích theo loại
@@ -1250,7 +1256,16 @@ TUYỆT ĐỐI:
                     try:
                         stream = client.chat.completions.create(
                             messages=[
-                                {"role": "system", "content": "Bạn là chuyên gia phân tích định tính và cảm xúc trong lĩnh vực Quản trị Nhân lực. Phân tích súc tích, chính xác, luôn bằng tiếng Việt."},
+                                {
+                                    "role": "system",
+                                    "content": (
+                                        "Bạn là chuyên gia phân tích định tính và cảm xúc trong lĩnh vực "
+                                        "Quản trị Nhân lực. Luôn viết bằng tiếng Việt. Chỉ sử dụng dữ liệu "
+                                        "và trích dẫn được cung cấp. Tỷ lệ ước lượng chỉ được đưa ra khi có "
+                                        "thể đếm trực tiếp từ tập phản hồi và phải ghi rõ là ước lượng.\n\n"
+                                        + get_master_report_voice_prompt()
+                                    ),
+                                },
                                 {"role": "user", "content": ai_prompt}
                             ],
                             model=model,

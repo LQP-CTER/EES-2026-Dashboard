@@ -107,28 +107,28 @@ def render(df, cfg, pillar_filter=None, group_id=None):
     _meth_label = {"none": "Không lọc", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn", "deepdive": "Theo DeepDive v13"}.get(_filter_meth, "Lọc chuẩn")
 
     st.markdown(f"""
-    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 18px;margin-bottom:14px;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+    <div class="sample-flow-panel" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 18px;margin-bottom:14px;">
+        <div class="sample-flow-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
             <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94A3B8;">Dòng xử lý mẫu</span>
             <span style="background:{_meth_color}18;color:{_meth_color};font-size:0.68rem;font-weight:700;padding:2px 10px;border-radius:20px;">{_meth_label}</span>
-            <span style="font-size:0.72rem;color:#64748B;margin-left:auto;">{_filter_desc}</span>
+            <span class="sample-flow-desc" style="font-size:0.72rem;color:#64748B;margin-left:auto;">{_filter_desc}</span>
         </div>
-        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
-            <div style="text-align:center;">
+        <div class="sample-flow-body" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+            <div class="sample-flow-step" style="text-align:center;">
                 <div style="font-size:1.3rem;font-weight:900;color:#1E293B;letter-spacing:-0.03em;">{_n_before:,}</div>
                 <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu thực nhận</div>
             </div>
-            <div style="font-size:1.2rem;color:#CBD5E1;">→</div>
-            <div style="text-align:center;">
+            <div class="sample-flow-arrow" style="font-size:1.2rem;color:#CBD5E1;">→</div>
+            <div class="sample-flow-step" style="text-align:center;">
                 <div style="font-size:1.3rem;font-weight:900;color:#DC2626;letter-spacing:-0.03em;">−{_n_removed:,}</div>
                 <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Loại khỏi phân tích ({_pct_removed:.1f}%)</div>
             </div>
-            <div style="font-size:1.2rem;color:#CBD5E1;">→</div>
-            <div style="text-align:center;">
+            <div class="sample-flow-arrow" style="font-size:1.2rem;color:#CBD5E1;">→</div>
+            <div class="sample-flow-step" style="text-align:center;">
                 <div style="font-size:1.3rem;font-weight:900;color:#15803D;letter-spacing:-0.03em;">{_n_final:,}</div>
                 <div style="font-size:0.65rem;color:#94A3B8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Mẫu dùng phân tích ({_keep_pct:.1f}%)</div>
             </div>
-            <div style="flex:1;min-width:120px;">
+            <div class="sample-flow-progress" style="flex:1;min-width:120px;">
                 <div style="background:#E2E8F0;border-radius:99px;height:6px;overflow:hidden;">
                     <div style="background:linear-gradient(90deg,#15803D,#22C55E);height:100%;width:{_keep_pct}%;border-radius:99px;transition:width 0.5s;"></div>
                 </div>
