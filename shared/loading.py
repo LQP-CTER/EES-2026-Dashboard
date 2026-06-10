@@ -39,17 +39,12 @@ class TerminalLoader:
             f"""
 <style>
 .tl-box {{
-    position: fixed;
-    right: 18px;
-    bottom: max(18px, env(safe-area-inset-bottom));
-    z-index: 99990;
-    width: min(520px, calc(100vw - 36px));
-    margin: 0;
+    margin: 18px 0 20px;
     border-radius: 10px;
     border: 1px solid #E2E8F0;
     background: #0B1220;
     color: #D6E4FF;
-    box-shadow: 0 16px 40px rgba(15,23,42,.18);
+    box-shadow: 0 10px 24px rgba(15,23,42,.08);
     overflow: hidden;
 }}
 .tl-head {{
@@ -67,23 +62,6 @@ class TerminalLoader:
 .tl-time {{ color: #64748B; flex: 0 0 auto; }}
 .tl-tag {{ flex: 0 0 auto; min-width: 34px; text-align: center; border: 1px solid; border-radius: 4px; font-size: 10px; font-weight: 700; line-height: 1.35; }}
 .tl-msg {{ color: #D6E4FF; overflow: hidden; text-overflow: ellipsis; }}
-@media (max-width: 768px) {{
-    .tl-box {{
-        left: 12px;
-        right: 12px;
-        bottom: max(12px, env(safe-area-inset-bottom));
-        width: auto;
-        max-height: 42vh;
-    }}
-    .tl-body {{
-        max-height: 32vh;
-        overflow-y: auto;
-    }}
-    .tl-row {{
-        white-space: normal;
-        align-items: flex-start;
-    }}
-}}
 </style>
 <div class="tl-box">
     <div class="tl-head"><span class="tl-dot"></span><span>{escape(self.title)}</span></div>

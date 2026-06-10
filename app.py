@@ -55,53 +55,47 @@ except Exception:
 
 st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", layout="wide", initial_sidebar_state="expanded")
 
-# Giữ giao diện cũ ổn định trong lúc Streamlit rerun để tránh chớp trắng.
-# Spinner chỉ là một status nhỏ, không che hoặc blur toàn bộ dashboard.
+# Tắt nội dung cũ trong lúc Streamlit rerun để trang mới hiển thị vùng loading riêng.
+# Spinner mặc định được dùng như loading overlay toàn màn hình.
 st.markdown("""
 <style>
-    /* Streamlit đánh dấu UI cũ là stale trong lúc rerun. Giữ nó hiển thị
-       nguyên trạng cho tới khi UI mới sẵn sàng thay thế. */
+    /* Ẩn frame cũ để tránh trộn nội dung giữa hai trang. */
     [data-stale="true"], 
     [data-testid="stale-element-container"], 
     .stale-element, 
     .stale {
-        opacity: 1 !important;
-        visibility: visible !important;
-        filter: none !important;
-        transition: none !important;
-        animation: none !important;
-        pointer-events: none !important;
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
     }
 
-    /* Loading status gọn: không phủ trắng toàn màn hình. */
+    /* Loading overlay toàn màn hình trong lúc Streamlit xử lý. */
     [data-testid="stSpinner"] {
         position: fixed !important;
-        top: max(12px, env(safe-area-inset-top)) !important;
-        left: 50% !important;
-        width: auto !important;
-        height: auto !important;
-        transform: translateX(-50%) !important;
-        background: transparent !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        transform: none !important;
+        background: rgba(255, 255, 255, 0.9) !important;
         z-index: 99999 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        pointer-events: none !important;
+        backdrop-filter: blur(8px) !important;
     }
     
     [data-testid="stSpinner"] > div {
         display: flex !important;
-        flex-direction: row !important;
+        flex-direction: column !important;
         align-items: center !important;
-        gap: 10px !important;
-        transform: none !important;
-        background: rgba(255,255,255,.96) !important;
-        padding: 9px 14px !important;
-        border-radius: 10px !important;
-        box-shadow: 0 10px 28px rgba(10,31,68,.14) !important;
-        border: 1px solid #E2E8F0 !important;
-        backdrop-filter: blur(6px) !important;
-        white-space: nowrap !important;
+        gap: 15px !important;
+        transform: scale(1.3) !important;
+        background: #FFFFFF !important;
+        padding: 30px 40px !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 40px rgba(10,31,68,0.1) !important;
+        border: 1px solid rgba(255,82,0,0.1) !important;
     }
     
     /* Đổi màu vòng xoay loading sang màu cam GHN */
@@ -112,26 +106,10 @@ st.markdown("""
     /* Chỉnh chữ loading */
     [data-testid="stSpinner"] p {
         font-family: 'Inter', sans-serif !important;
-        font-size: 0.78rem !important;
-        font-weight: 650 !important;
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
         color: #0A1F44 !important;
         margin: 0 !important;
-    }
-
-    @media (max-width: 768px) {
-        [data-testid="stSpinner"] {
-            top: max(8px, env(safe-area-inset-top)) !important;
-            max-width: calc(100vw - 24px) !important;
-        }
-        [data-testid="stSpinner"] > div {
-            max-width: calc(100vw - 24px) !important;
-            padding: 8px 11px !important;
-        }
-        [data-testid="stSpinner"] p {
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 72vw !important;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -999,18 +977,15 @@ footer {visibility: hidden !important;}
 .viewerBadge_link {display: none !important;}
 [class*="viewerBadge"] {display: none !important;}
 
-/* Keep the previous frame visible while Streamlit replaces it.
-   Hiding stale elements here caused the whole dashboard to flash white. */
+/* Hide stale elements while the newly selected page is loading. */
 [data-testid="stale-element-container"], 
 [data-stale="true"], 
 .stale, 
-[data-testid*="stale"] {
-    opacity: 1 !important;
+[data-testid*="stale"],
+div.st-emotion-cache-1kyxreq {
+    opacity: 0 !important;
     transition: none !important;
-    visibility: visible !important;
-    filter: none !important;
-    animation: none !important;
-    pointer-events: none !important;
+    visibility: hidden !important;
 }
 
 html, body, .stApp {
@@ -1889,7 +1864,7 @@ st.markdown("""
     }
 
     .tl-box {
-        margin: 0 !important;
+        margin: 10px 0 14px !important;
         border-radius: 9px !important;
     }
 
