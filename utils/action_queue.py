@@ -90,10 +90,12 @@ def build_priority_action_queue(
     lifecycle: dict | None = None,
     cross_priority: dict | None = None,
     limit_per_source: int = 5,
+    include_segments: bool = True,
 ) -> pd.DataFrame:
     """Combine segment, lifecycle and cross-pillar findings into one action queue."""
     rows = []
-    _append_segment_actions(rows, df, pillar_id, limit_per_source)
+    if include_segments:
+        _append_segment_actions(rows, df, pillar_id, limit_per_source)
     _append_lifecycle_action(rows, lifecycle or {})
     _append_cross_pillar_actions(rows, cross_priority or {}, limit_per_source)
     if not rows:

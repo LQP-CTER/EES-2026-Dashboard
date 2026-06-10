@@ -957,7 +957,7 @@ from views import (
     company_overview, hris_linkage,
     view_a_current_state, view_b_problem_groups,
     view_c_key_issues, view_d_root_cause,
-    view_e_impact_risk, view_f_action_priority, view_g_kpi_impact,
+    view_e_impact_risk, view_g_kpi_impact,
     view_h_appendix, view_i_data_trust
 )
 from shared.codebook import PILLAR_META, PILLAR_ORDER
