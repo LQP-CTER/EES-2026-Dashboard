@@ -9,13 +9,22 @@ from utils.benchmark_2025 import get_company_benchmark_2025
 from utils.ai_generator import render_ai_insight_card
 from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
 
-MIN_DEPARTMENT_N = 6  # Chỉ hiển thị phòng ban có N > 5
+MIN_DEPARTMENT_N = 3  # Chỉ hiển thị phòng ban có N > 2
 MIN_ORG_SEGMENT_N = 5
 UNKNOWN_ORG_VALUE = "Chưa xác định"
 
+# Tập hợp các giá trị "rác" xuất phát từ pipeline cũ hoặc HRIS không xác định được.
+# _normalize_org_columns sẽ thay tất cả thành None để groupby tự bỏ qua.
+_ORG_BAD_VALUES = {
+    "không xác định", "chưa xác định", "khong xac dinh", "chua xac dinh",
+    "khác", "khac", "nan", "none", "null", "", "n/a", "na",
+}
+
 
 def _normalize_org_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Normalize org columns so GHN overview does not silently drop blank units."""
+    """Normalize org columns: fill missing/legacy-bad values with None so
+    groupby(dropna=True) silently skips them instead of surfacing a spurious
+    'Không xác định' / 'Khác' category in every chart."""
     df = df.copy()
     fallback_map = {
         "division": ["division", "Khối", "Khoi", "Division", "Khối/Phòng ban", "Khối / Phòng ban"],
@@ -29,7 +38,9 @@ def _normalize_org_columns(df: pd.DataFrame) -> pd.DataFrame:
                 df[target] = df[source]
         if target in df.columns:
             clean = df[target].astype("string").str.replace(r"\s+", " ", regex=True).str.strip()
-            df[target] = clean.mask(clean.isna() | clean.eq("") | clean.str.lower().isin({"nan", "none", "null"}), UNKNOWN_ORG_VALUE)
+            # Replace null, empty, legacy bad strings → None (pandas NA)
+            bad_mask = clean.isna() | clean.eq("") | clean.str.lower().isin(_ORG_BAD_VALUES)
+            df[target] = clean.mask(bad_mask, other=pd.NA)
     return df
 
 
@@ -565,7 +576,7 @@ def render(all_data, available_groups):
 
     # Calculate dynamic insights across divisions
     div_stats = []
-    for div, df_div in df_total.groupby('division', dropna=False):
+    for div, df_div in df_total.groupby('division', dropna=True):
         if len(df_div) < MIN_ORG_SEGMENT_N:
             continue
         kpis = compute_kpis(df_div)
@@ -651,7 +662,7 @@ def render(all_data, available_groups):
         with c2:
             # Heatmap of pillars by division
             hm_data = []
-            for div, df_div in df_total.groupby('division', dropna=False):
+            for div, df_div in df_total.groupby('division', dropna=True):
                 if len(df_div) < MIN_ORG_SEGMENT_N:
                     continue
                 row = {'division': div}
@@ -709,7 +720,7 @@ def render(all_data, available_groups):
 
     def _build_drilldown_table(df_src, group_col, label, min_n=MIN_ORG_SEGMENT_N):
         rows = []
-        for grp_val, grp_df in df_src.groupby(group_col, dropna=False):
+        for grp_val, grp_df in df_src.groupby(group_col, dropna=True):  # dropna=True: bỏ qua hàng không xác định
             if len(grp_df) < min_n:
                 continue
             kpis = compute_kpis(grp_df)
@@ -836,7 +847,7 @@ def render(all_data, available_groups):
                                            'EI (%)', 'eNPS', avail_pillar_cols)
                 st.dataframe(styled_dept, width='stretch', hide_index=True)
             else:
-                st.info("Không có phòng ban nào có số mẫu trên 5.")
+                st.info("Không có phòng ban nào có số mẫu trên 2.")
         else:
             st.info("Dữ liệu chưa có cột 'department'.")
 
