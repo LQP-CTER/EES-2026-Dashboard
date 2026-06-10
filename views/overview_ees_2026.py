@@ -1208,7 +1208,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
     gap: 44px;
-    padding: 4px 4px 10px 4px;
+    padding: 4px 4px 16px 4px;
     align-items: start;
 }
 
@@ -1233,6 +1233,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 .jt-stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
     gap: 16px;
 }
 .jt-stat {
@@ -1244,6 +1245,9 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     position: relative;
     overflow: hidden;
     transition: box-shadow 0.3s ease, transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 .jt-stat:hover {
     box-shadow: 0 12px 32px rgba(10,31,68,0.10);
@@ -1290,8 +1294,8 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 .jt-node {
     display: flex;
     gap: 18px;
-    align-items: center;
-    padding: 0 0 28px 0;
+    align-items: flex-start;
+    padding: 0 0 32px 0;
     position: relative;
 }
 .jt-node:last-child { padding-bottom: 0; }
@@ -1501,7 +1505,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
         .replace('{_jt_icon("gear")}', _jt_icon("gear"))
         .replace('{_jt_icon("report")}', _jt_icon("report"))
     )
-    components.html(journey_html, height=820, scrolling=False)
+    components.html(journey_html, height=1020, scrolling=False)
 
     # ── Vietnam Map (standalone, full-width) ─────────────────────────────────
     # st.plotly_chart(create_vietnam_map(), use_container_width=True)
