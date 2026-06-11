@@ -1048,6 +1048,7 @@ def render():
         (img2,  "CPO Kick-off — Khởi động chiến dịch"),
         (img3,  "Giám đốc vùng — GDV anh Vũ"),
         ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1781173209/LOGO%20GHN/photo_2026-06-11_17-19-05_olthvk.jpg",        "Quà tặng gửi đến các bạn NVPTTT"),
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1781173209/LOGO%20GHN/photo_2026-06-11_17-19-11_fqee8q.jpg",        "Tổng kết quà tặng"),
 
         ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392653/LOGO%20GHN/IMG_1490_mky43b.jpg",        "Team tại sự kiện"),
         (img4,  "Giám đốc vùng — Mr. Nguyễn Văn Tân"),
