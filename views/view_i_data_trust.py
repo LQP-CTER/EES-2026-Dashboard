@@ -584,30 +584,7 @@ def render(summary_df=None):
         </p>
         """, unsafe_allow_html=True)
 
-        advanced_cols = [
-            'Nhóm', 'Maha flag', 'NLP tiêu cực', 'NLP cảnh báo',
-            'AUC (Logistic)', 'VIF cao', 'KEEP', 'DOWNWEIGHT', 'DROP', 'n hiệu dụng'
-        ]
-        if runtime_available:
-            live_cols = [c for c in advanced_cols if c in summary_df.columns]
-            if live_cols:
-                with st.expander("Đối chiếu runtime từ dữ liệu đang load (tham khảo kỹ thuật)", expanded=False):
-                    st.caption("Bảng này phục vụ kiểm tra Mahalanobis, NLP và Logistic/VIF trong phiên hiện tại; không thay thế số chuẩn trong DeepDive v13.")
-                    st.dataframe(
-                        summary_df[live_cols].style.format({
-                            'Maha flag': '{:,}',
-                            'NLP tiêu cực': '{:,}',
-                            'NLP cảnh báo': '{:,}',
-                            'AUC (Logistic)': '{:.3f}',
-                            'VIF cao': '{:,}',
-                            'KEEP': '{:,}',
-                            'DOWNWEIGHT': '{:,}',
-                            'DROP': '{:,}',
-                            'n hiệu dụng': '{:,.1f}',
-                        }),
-                        width='stretch',
-                        height=260,
-                    )
+
 
         st.markdown("<br>", unsafe_allow_html=True)
 
