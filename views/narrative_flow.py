@@ -51,6 +51,17 @@ def render_narrative(df, cfg, group_id):
     """Render toàn bộ narrative flow cho một nhóm."""
     group_name = cfg.get('label', group_id)
 
+    # ── Mode selector ────────────────────────────────────────────────
+    mode = st.segmented_control(
+        "Chế độ báo cáo",
+        options=["Tổng quan nhóm", "Báo cáo đơn vị"],
+        default="Tổng quan nhóm",
+        key=f"narrative_mode_{group_id}",
+    )
+    if mode == "Báo cáo đơn vị":
+        _render_unit_report(df, cfg, group_id)
+        return
+
     from utils.data_loader import compute_kpis
     kpis = compute_kpis(df)
 
@@ -1297,3 +1308,697 @@ TUYỆT ĐỐI:
             ai_container.error(f"Không thể kết nối AI. Chi tiết lỗi: {err_msg}")
     else:
         st.info("Chọn đơn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")
+
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# UNIT REPORT MODE  —  7 phần báo cáo đơn vị (department / section)
+# ═══════════════════════════════════════════════════════════════════════
+
+def _render_unit_report(df, cfg, group_id):
+    """
+    Entry point cho chế độ 'Báo cáo đơn vị'.
+    Người dùng chọn Division → Department → Section → toàn bộ báo cáo
+    lọc theo đơn vị đó, so sánh vs benchmark (toàn nhóm).
+    """
+    from utils.unit_report import (
+        get_org_options, build_unit_df, get_unit_label, get_unit_level,
+        pillar_scores_comparison, kpis_with_delta, get_open_col,
+        get_participation_rate,
+    )
+    from utils.credibility import confidence_badge, triangulate_pillar
+
+    org = get_org_options(df)
+    has_div  = bool(org["division"])
+    has_dept = bool(org["department"])
+    has_sec  = bool(org["section"])
+
+    if not has_div and not has_dept:
+        st.info("Nhóm này không có phân cấp đơn vị. Vui lòng dùng chế độ 'Tổng quan nhóm'.")
+        return
+
+    # ── Unit selector ──────────────────────────────────────────────────
+    col1, col2, col3 = st.columns(3)
+    sel_div = sel_dept = sel_sec = None
+
+    with col1:
+        if has_div:
+            opt_div = ["— Chọn khối —"] + org["division"]
+            sel_div_raw = st.selectbox("Khối / Division", opt_div,
+                                       key=f"ur_div_{group_id}")
+            if sel_div_raw != "— Chọn khối —":
+                sel_div = sel_div_raw
+
+    df_after_div = df[df["division"] == sel_div] if sel_div and has_div else df
+
+    with col2:
+        if has_dept and sel_div is not None:
+            depts_avail = sorted([
+                v for v in df_after_div["department"].dropna().unique()
+                if str(v).strip().lower() not in {"nan","none","","n/a"}
+            ])
+            opt_dept = ["— Tất cả phòng ban —"] + depts_avail
+            sel_dept_raw = st.selectbox("Phòng ban", opt_dept,
+                                        key=f"ur_dept_{group_id}")
+            if sel_dept_raw != "— Tất cả phòng ban —":
+                sel_dept = sel_dept_raw
+        elif has_dept and not has_div:
+            opt_dept = ["— Chọn phòng ban —"] + org["department"]
+            sel_dept_raw = st.selectbox("Phòng ban", opt_dept,
+                                        key=f"ur_dept_nodiv_{group_id}")
+            if sel_dept_raw != "— Chọn phòng ban —":
+                sel_dept = sel_dept_raw
+
+    df_after_dept = df_after_div.copy()
+    if sel_dept and has_dept:
+        df_after_dept = df_after_dept[df_after_dept["department"] == sel_dept]
+
+    with col3:
+        if has_sec and sel_dept is not None:
+            secs_avail = sorted([
+                v for v in df_after_dept["section"].dropna().unique()
+                if str(v).strip().lower() not in {"nan","none","","n/a"}
+            ])
+            if secs_avail:
+                opt_sec = ["— Tất cả section —"] + secs_avail
+                sel_sec_raw = st.selectbox("Section / Vùng", opt_sec,
+                                           key=f"ur_sec_{group_id}")
+                if sel_sec_raw != "— Tất cả section —":
+                    sel_sec = sel_sec_raw
+
+    if sel_div is None and sel_dept is None:
+        st.markdown(
+            '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;'
+            'padding:12px 18px;margin-top:10px;font-size:0.83rem;color:#1D4ED8;">'
+            '👆 Chọn ít nhất <strong>Khối</strong> hoặc <strong>Phòng ban</strong> để xem báo cáo đơn vị.'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    # ── Build unit dataframe ───────────────────────────────────────────
+    df_unit = build_unit_df(df, sel_div, sel_dept, sel_sec)
+    unit_label = get_unit_label(sel_div, sel_dept, sel_sec)
+    unit_level = get_unit_level(sel_div, sel_dept, sel_sec)
+    n_unit = len(df_unit)
+
+    if n_unit < 5:
+        st.warning(
+            f"Đơn vị **{unit_label}** chỉ có {n_unit} người tham gia khảo sát — "
+            "không đủ mẫu để phân tích (cần ≥ 5). Vui lòng chọn đơn vị lớn hơn."
+        )
+        return
+
+    part_rate = get_participation_rate(df_unit, df)
+    kpis_d    = kpis_with_delta(df_unit, df)
+    pillar_comp = pillar_scores_comparison(df_unit, df, group_id)
+
+    # ── Header banner ──────────────────────────────────────────────────
+    badge_html = confidence_badge(n_unit, part_rate)
+    st.markdown(
+        f'<div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #FF5200;'
+        f'border-radius:12px;padding:18px 24px;margin-bottom:20px;">'
+        f'<div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;'
+        f'color:#FF5200;margin-bottom:4px;">BÁO CÁO ĐƠN VỊ</div>'
+        f'<div style="font-size:1.25rem;font-weight:800;color:#0A1F44;letter-spacing:-.02em;">'
+        f'{unit_label}</div>'
+        f'<div style="margin-top:8px;">{badge_html}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    # ── Render 7 phần ─────────────────────────────────────────────────
+    _render_unit_p1_context(df_unit, df, unit_label, kpis_d, n_unit)
+    _render_unit_p2_radar(pillar_comp, unit_label, group_id)
+    _render_unit_p3_pillars(df_unit, df, group_id, cfg, pillar_comp)
+    _render_unit_p4_risk(df_unit, df, group_id, unit_level, sel_dept)
+    _render_unit_p5_contradictions(df_unit, group_id, cfg)
+    _render_unit_p6_voice(df_unit, group_id, cfg, unit_label)
+    _render_unit_p7_actions(df_unit, df, group_id, pillar_comp, unit_label)
+
+
+# ── P1: Bối cảnh & Vị trí ────────────────────────────────────────────
+
+def _render_unit_p1_context(df_unit, df_bench, unit_label, kpis_d, n_unit):
+    """P1 — KPI strip với delta so sánh benchmark."""
+    st.markdown(_part_header("P1", "Bối cảnh & Vị trí",
+                             f"Đơn vị {unit_label} đang đứng ở đâu so với toàn nhóm?",
+                             color="#2563EB"), unsafe_allow_html=True)
+
+    def _delta_badge(val, reverse=False):
+        """reverse=True: delta dương là xấu (flight risk, burnout)."""
+        if val is None:
+            return ""
+        good = val > 0 if not reverse else val < 0
+        color = "#15803D" if good else "#DC2626"
+        bg    = "#F0FDF4" if good else "#FEF2F2"
+        sign  = "▲" if val > 0 else "▼"
+        return (
+            f'<span style="background:{bg};color:{color};padding:2px 7px;'
+            f'border-radius:5px;font-size:.72rem;font-weight:700;">'
+            f'{sign}{abs(val):.1f}</span>'
+        )
+
+    metrics = [
+        ("Engagement Index", f"{kpis_d['ei_mean']:.1f}%",
+         kpis_d["delta_ei"], kpis_d["bench_ei"], False, "#2563EB"),
+        ("eNPS", f"{kpis_d['enps_score']:+.0f}",
+         kpis_d["delta_enps"], kpis_d["bench_enps"], False, "#7C3AED"),
+        ("% Muốn nghỉ", f"{kpis_d['intent_pct_low']:.1f}%",
+         kpis_d["delta_flight"], kpis_d["bench_flight"], True, "#DC2626"),
+        ("% Burnout", f"{kpis_d['burnout_pct']:.1f}%",
+         kpis_d["delta_burnout"], kpis_d["bench_burnout"], True, "#EA580C"),
+        ("MEI (QL)", f"{kpis_d.get('mei_avg',0):.1f}%",
+         kpis_d["delta_mei"], kpis_d["bench_mei"], False, "#059669"),
+    ]
+
+    cols = st.columns(5)
+    for col, (name, val_str, delta, bench, rev, accent) in zip(cols, metrics):
+        delta_html = _delta_badge(delta, reverse=rev)
+        with col:
+            st.markdown(
+                f'<div style="background:#fff;border:1px solid #E2E8F0;border-top:3px solid {accent};'
+                f'border-radius:10px;padding:14px 12px;text-align:center;">'
+                f'<div style="font-size:.67rem;font-weight:700;color:#94A3B8;text-transform:uppercase;'
+                f'letter-spacing:.07em;margin-bottom:6px;">{name}</div>'
+                f'<div style="font-size:1.7rem;font-weight:900;color:{accent};line-height:1.1;">{val_str}</div>'
+                f'<div style="margin-top:5px;">{delta_html}</div>'
+                f'<div style="font-size:.68rem;color:#CBD5E1;margin-top:3px;">nhóm: {bench}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+
+# ── P2: Radar 5 Trụ cột ───────────────────────────────────────────────
+
+def _render_unit_p2_radar(pillar_comp, unit_label, group_id):
+    """P2 — Radar chart unit vs benchmark + top strengths/weaknesses."""
+    import plotly.graph_objects as go
+
+    st.markdown(_part_header("P2", "Sức khỏe 5 Trụ cột",
+                             "So sánh trực quan unit vs toàn nhóm", color="#7C3AED"),
+                unsafe_allow_html=True)
+
+    if not pillar_comp:
+        st.info("Không đủ dữ liệu để vẽ radar.")
+        return
+
+    names   = [r["name"] for r in pillar_comp]
+    scores_u = [r["pct_unit"] for r in pillar_comp]
+    scores_b = [r["pct_bench"] if r["pct_bench"] is not None else r["pct_unit"]
+                for r in pillar_comp]
+
+    # Close the polygon
+    names_c    = names + [names[0]]
+    scores_uc  = scores_u + [scores_u[0]]
+    scores_bc  = scores_b + [scores_b[0]]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=scores_bc, theta=names_c,
+        fill="toself", name="Benchmark nhóm",
+        line=dict(color="#94A3B8", width=2, dash="dot"),
+        fillcolor="rgba(148,163,184,0.12)",
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r=scores_uc, theta=names_c,
+        fill="toself", name=unit_label[:30],
+        line=dict(color="#FF5200", width=2.5),
+        fillcolor="rgba(255,82,0,0.15)",
+        marker=dict(size=7, color="#FF5200"),
+    ))
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 100], tickfont=dict(size=10)),
+            angularaxis=dict(tickfont=dict(size=11, family="Inter")),
+        ),
+        legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
+        height=380,
+        margin=dict(l=40, r=40, t=30, b=60),
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter"),
+    )
+
+    col_r, col_cards = st.columns([1.1, 0.9], gap="large")
+    with col_r:
+        st.plotly_chart(fig, use_container_width=True,
+                        key=f"unit_radar_{group_id}_{unit_label[:15]}")
+
+    with col_cards:
+        sorted_p = sorted(
+            [r for r in pillar_comp if r["delta"] is not None],
+            key=lambda x: x["delta"],
+        )
+        weakest  = sorted_p[:2]
+        strongest = sorted_p[-2:][::-1]
+
+        st.markdown("**Thế mạnh cốt lõi**")
+        for r in strongest:
+            _delta = f"+{r['delta']:.2f}" if r["delta"] >= 0 else f"{r['delta']:.2f}"
+            st.markdown(
+                f'<div style="background:#F0FDF4;border-left:3px solid #15803D;'
+                f'border-radius:7px;padding:8px 12px;margin-bottom:6px;">'
+                f'<span style="font-size:.8rem;font-weight:700;color:#14532D;">{r["name"]}</span>'
+                f'<span style="float:right;font-size:.78rem;color:#15803D;font-weight:700;">'
+                f'{r["score_unit"]:.2f}/5 · {_delta}</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("**Điểm cần cải thiện**", unsafe_allow_html=False)
+        for r in weakest:
+            _delta = f"+{r['delta']:.2f}" if r["delta"] >= 0 else f"{r['delta']:.2f}"
+            st.markdown(
+                f'<div style="background:#FEF2F2;border-left:3px solid #DC2626;'
+                f'border-radius:7px;padding:8px 12px;margin-bottom:6px;">'
+                f'<span style="font-size:.8rem;font-weight:700;color:#7F1D1D;">{r["name"]}</span>'
+                f'<span style="float:right;font-size:.78rem;color:#DC2626;font-weight:700;">'
+                f'{r["score_unit"]:.2f}/5 · {_delta}</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        # AI summary
+        if pillar_comp:
+            from utils.ai_generator import render_ai_insight_card
+            pillar_lines = "\n".join([
+                f"  {r['name']}: {r['score_unit']:.2f}/5 (benchmark {r['score_bench'] or '?':.2f}, delta {r['delta'] or 0:+.2f})"
+                for r in pillar_comp
+            ])
+            prompt = (
+                f"Bạn là HR Business Partner phân tích đơn vị '{unit_label}'.\n"
+                f"DỮ LIỆU THỰC TẾ (KHÔNG bịa thêm):\n{pillar_lines}\n\n"
+                "Viết 2 đoạn ngắn bằng tiếng Việt:\n"
+                "(1) Thế mạnh cốt lõi — dẫn chứng bằng số.\n"
+                "(2) Điểm nghẽn chính và lý do quan trọng — dẫn chứng bằng số.\n"
+                "Tối đa 80 từ mỗi đoạn. Chỉ dùng số đã cung cấp."
+            )
+            render_ai_insight_card(
+                f"AI · Nhận định 5 Trụ cột — {unit_label[:25]}",
+                {"pillars": pillar_comp}, prompt,
+                custom_style="margin-top:12px;",
+            )
+
+
+# ── P3: Chi tiết từng Trụ cột ─────────────────────────────────────────
+
+def _render_unit_p3_pillars(df_unit, df_bench, group_id, cfg, pillar_comp):
+    """P3 — Expandable per-pillar detail: bar chart câu hỏi + bảng + triangulation."""
+    import plotly.graph_objects as go
+    from utils.credibility import confidence_badge, triangulate_pillar, render_triangulation_box
+    from utils.unit_report import pillar_question_detail
+
+    st.markdown(_part_header("P3", "Chi tiết từng Trụ cột tại đơn vị",
+                             "Đi sâu đến từng câu hỏi, so sánh vs benchmark nhóm",
+                             color="#EA580C"), unsafe_allow_html=True)
+
+    for r in pillar_comp:
+        pid   = r["pillar_id"]
+        delta = r["delta"] if r["delta"] is not None else 0
+        flag  = " ⚠️" if delta <= -0.2 else (" ✅" if delta >= 0.1 else "")
+        delta_str = f"{delta:+.2f}" if r["delta"] is not None else "—"
+        header_label = f"{r['name']}{flag}  ·  {r['score_unit']:.2f}/5  ({delta_str} vs nhóm)"
+
+        with st.expander(header_label, expanded=(delta <= -0.2)):
+            df_qs = pillar_question_detail(df_unit, df_bench, group_id, pid)
+            if df_qs.empty:
+                st.info("Không đủ dữ liệu câu hỏi.")
+                continue
+
+            # Bar chart: unit vs benchmark per question
+            labels = [f"{row['Câu']}: {row['Nội dung'][:35]}…"
+                      if len(row['Nội dung']) > 35 else f"{row['Câu']}: {row['Nội dung']}"
+                      for _, row in df_qs.iterrows()]
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                name="Đơn vị", y=labels, x=df_qs["Điểm đơn vị"],
+                orientation="h", marker_color="#FF5200",
+                text=[f"{v:.2f}" for v in df_qs["Điểm đơn vị"]],
+                textposition="outside", textfont=dict(size=10),
+            ))
+            if "Điểm nhóm" in df_qs.columns and df_qs["Điểm nhóm"].notna().any():
+                fig.add_trace(go.Bar(
+                    name="Benchmark nhóm", y=labels, x=df_qs["Điểm nhóm"],
+                    orientation="h", marker_color="#94A3B8",
+                    opacity=0.65,
+                ))
+            fig.update_layout(
+                barmode="group", height=max(220, len(df_qs) * 50 + 60),
+                margin=dict(l=10, r=50, t=20, b=10),
+                xaxis=dict(range=[1, 5.5], title="Điểm TB (1–5)", gridcolor="rgba(226,232,240,0.5)"),
+                yaxis=dict(autorange="reversed"),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(family="Inter", size=11),
+            )
+            st.plotly_chart(fig, use_container_width=True,
+                            key=f"unit_p3_bar_{group_id}_{pid}")
+
+            # Câu yếu nhất
+            weakest_q = df_qs.iloc[0]
+            st.markdown(
+                f'<div style="background:#FEF2F2;border-left:3px solid #DC2626;'
+                f'border-radius:8px;padding:10px 14px;margin:8px 0;">'
+                f'<span style="font-size:.68rem;font-weight:800;color:#DC2626;'
+                f'text-transform:uppercase;letter-spacing:.07em;">Câu yếu nhất</span><br>'
+                f'<span style="font-size:.88rem;font-weight:700;color:#0A1F44;">'
+                f'{weakest_q["Câu"]}: {weakest_q["Nội dung"]}</span><br>'
+                f'<span style="font-size:.8rem;color:#64748B;">'
+                f'Điểm {weakest_q["Điểm đơn vị"]:.2f}/5 · {weakest_q["% Tiêu cực"]:.1f}% tiêu cực · N={weakest_q["N"]:,}'
+                f'</span></div>',
+                unsafe_allow_html=True,
+            )
+
+            # Bảng chi tiết
+            st.markdown("**Bảng chi tiết**")
+            cols_show = ["Câu", "Nội dung", "Điểm đơn vị", "Điểm nhóm", "Delta", "% Tiêu cực", "N"]
+            cols_show = [c for c in cols_show if c in df_qs.columns]
+            st.dataframe(
+                df_qs[cols_show].style.format({
+                    "Điểm đơn vị": "{:.2f}",
+                    "Điểm nhóm": "{:.2f}",
+                    "Delta": "{:+.2f}",
+                    "% Tiêu cực": "{:.1f}%",
+                    "N": "{:,}",
+                }, na_rep="—").background_gradient(
+                    cmap="RdYlGn", subset=["Điểm đơn vị"], vmin=2, vmax=5
+                ),
+                use_container_width=True, hide_index=True,
+            )
+
+            # Triangulation
+            tri = triangulate_pillar(df_unit, df_bench, pid, group_id)
+            tbox = render_triangulation_box(tri)
+            if tbox:
+                st.markdown(tbox, unsafe_allow_html=True)
+
+            # Confidence badge
+            n_pid = int(df_qs["N"].max()) if not df_qs.empty else len(df_unit)
+            st.markdown(confidence_badge(n_pid), unsafe_allow_html=True)
+
+
+# ── P4: Nhóm rủi ro ───────────────────────────────────────────────────
+
+def _render_unit_p4_risk(df_unit, df_bench, group_id, unit_level, sel_dept):
+    """P4 — Flight risk, burnout, intent gap; heatmap sub-units."""
+    import plotly.graph_objects as go
+    import plotly.express as px
+    from shared.codebook import PILLAR_META, PILLAR_ORDER, get_pillar_questions
+
+    st.markdown(_part_header("P4", "Nhóm rủi ro trong đơn vị",
+                             "Ai đang có nguy cơ cao nhất? Burnout, muốn nghỉ, khoảng cách ý định",
+                             color="#9333EA"), unsafe_allow_html=True)
+
+    n_unit = len(df_unit)
+
+    # ── Mini KPIs rủi ro ──────────────────────────────────────────────
+    if "intent" in df_unit.columns:
+        n_quit = int((pd.to_numeric(df_unit["intent"], errors="coerce") <= 2).sum())
+    else:
+        n_quit = 0
+
+    burnout_col = next((c for c in ["burnout_proxy", "burnout_risk"] if c in df_unit.columns), None)
+    if burnout_col:
+        n_burnout = int(pd.to_numeric(df_unit[burnout_col], errors="coerce")
+                        .map({True: 1, False: 0, 1: 1, 0: 0}).fillna(0).sum())
+    else:
+        n_burnout = 0
+
+    col1, col2, col3 = st.columns(3)
+    for col, (label, val, total, accent) in zip(
+        [col1, col2, col3],
+        [
+            ("Muốn nghỉ (intent 1–2)", n_quit, n_unit, "#DC2626"),
+            ("Có dấu hiệu Burnout",    n_burnout, n_unit, "#EA580C"),
+            ("Tổng khảo sát",          n_unit, n_unit, "#2563EB"),
+        ],
+    ):
+        pct = round(val / total * 100, 1) if total > 0 else 0
+        with col:
+            st.markdown(
+                f'<div style="background:#fff;border:1px solid #E2E8F0;border-top:3px solid {accent};'
+                f'border-radius:10px;padding:14px;text-align:center;">'
+                f'<div style="font-size:.68rem;font-weight:700;color:#94A3B8;text-transform:uppercase;'
+                f'letter-spacing:.07em;margin-bottom:6px;">{label}</div>'
+                f'<div style="font-size:1.6rem;font-weight:900;color:{accent};line-height:1.1;">{val:,}</div>'
+                f'<div style="font-size:.78rem;color:#64748B;margin-top:3px;">{pct:.1f}% / {total:,} người</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Intent gap per pillar ─────────────────────────────────────────
+    # Tìm trụ cột yếu nhất để visualize intent gap
+    from views.pillar_renderer import _render_pillar_intent_gap
+    from utils.unit_report import pillar_scores_comparison as _psc
+
+    pcomp = _psc(df_unit, df_bench, group_id)
+    if pcomp:
+        weakest_pid = min(
+            [r for r in pcomp if r["delta"] is not None],
+            key=lambda x: x["delta"],
+            default=None,
+        )
+        if weakest_pid:
+            st.markdown(
+                f'<div style="font-size:.78rem;font-weight:700;color:#64748B;'
+                f'text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">'
+                f'Khoảng cách ý định — {weakest_pid["name"]} (trụ cột yếu nhất)</div>',
+                unsafe_allow_html=True,
+            )
+            # cfg mock để pass
+            _render_pillar_intent_gap(df_unit, {}, group_id, weakest_pid["pillar_id"])
+
+    # ── Heatmap sub-units (adaptive) ──────────────────────────────────
+    if unit_level == "division" and "department" in df_unit.columns:
+        sub_col, sub_label = "department", "Phòng ban"
+    elif unit_level == "department" and "section" in df_unit.columns:
+        sub_col, sub_label = "section", "Section"
+    else:
+        sub_col, sub_label = None, None
+
+    if sub_col:
+        subs = [
+            v for v in df_unit[sub_col].dropna().unique()
+            if str(v).strip().lower() not in {"nan","none","","n/a"}
+        ]
+        if len(subs) >= 2:
+            st.markdown(
+                f'<div style="font-size:.78rem;font-weight:700;color:#64748B;'
+                f'text-transform:uppercase;letter-spacing:.07em;margin:14px 0 8px;">'
+                f'So sánh {sub_label} trong đơn vị</div>',
+                unsafe_allow_html=True,
+            )
+            heatmap_rows = []
+            for sv in sorted(subs):
+                sub_df = df_unit[df_unit[sub_col] == sv]
+                if len(sub_df) < 5:
+                    continue
+                row = {sub_label: sv, "N": len(sub_df)}
+                ei_vals = pd.to_numeric(sub_df.get("EI", pd.Series(dtype=float)), errors="coerce")
+                row["EI (%)"] = round(float(ei_vals.mean()), 1) if ei_vals.notna().sum() >= 3 else None
+                if "intent" in sub_df.columns:
+                    row["% Muốn nghỉ"] = round(
+                        (pd.to_numeric(sub_df["intent"], errors="coerce") <= 2).mean() * 100, 1
+                    )
+                for p in PILLAR_ORDER:
+                    qs = [q for q in get_pillar_questions(group_id, p) if q in sub_df.columns]
+                    if qs:
+                        vals = sub_df[qs].apply(pd.to_numeric, errors="coerce").mean(axis=1).dropna()
+                        if len(vals) >= 3:
+                            row[PILLAR_META[p]["name"]] = round(float(vals.mean()), 2)
+                heatmap_rows.append(row)
+
+            if heatmap_rows:
+                hmdf = pd.DataFrame(heatmap_rows).set_index(sub_label)
+                num_cols = [c for c in hmdf.columns if c != "N" and hmdf[c].dtype in [float, "float64"]]
+                if num_cols:
+                    styled = hmdf[num_cols].style.background_gradient(
+                        cmap="RdYlGn", axis=None, vmin=2.5, vmax=5.0
+                    ).format("{:.2f}", na_rep="—")
+                    st.dataframe(styled, use_container_width=True)
+
+
+# ── P5: Nghịch lý & Điểm mù ──────────────────────────────────────────
+
+def _render_unit_p5_contradictions(df_unit, group_id, cfg):
+    """P5 — Contradictions tại unit level."""
+    from utils.contradiction_engine import detect_contradictions
+
+    st.markdown(_part_header("P5", "Nghịch lý & Điểm mù",
+                             "Những gì dữ liệu 'trái chiều' tại đơn vị này",
+                             color="#DC2626"), unsafe_allow_html=True)
+
+    if len(df_unit) < 20:
+        st.info(f"Cần ít nhất 20 người tham gia để phát hiện nghịch lý (đơn vị hiện có {len(df_unit):,}).")
+        return
+
+    try:
+        contradictions = detect_contradictions(df_unit, group_id, cfg)
+    except Exception:
+        contradictions = []
+
+    if not contradictions:
+        st.success("✅ Không phát hiện mâu thuẫn dữ liệu nghiêm trọng tại đơn vị này.")
+        return
+
+    for c in contradictions[:4]:
+        border = "#DC2626" if c["severity"] == "critical" else "#D97706"
+        bg     = "#FEF2F2" if c["severity"] == "critical" else "#FFFBEB"
+        st.markdown(
+            f'<div style="background:{bg};border-left:4px solid {border};'
+            f'border:1px solid {border}30;border-left:4px solid {border};'
+            f'border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
+            f'<div style="font-size:.88rem;font-weight:700;color:#0A1F44;margin-bottom:5px;">'
+            f'{c["title"]}</div>'
+            f'<div style="font-size:.8rem;color:#475569;line-height:1.6;">{c["narrative"]}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+
+# ── P6: Tiếng nói nhân viên (tái dùng) ───────────────────────────────
+
+def _render_unit_p6_voice(df_unit, group_id, cfg, unit_label):
+    """P6 — Open text đã filter sẵn theo unit."""
+    st.markdown(_part_header("P6", "Tiếng nói nhân viên",
+                             "Phản hồi mở đã được lọc theo đơn vị này",
+                             color="#059669"), unsafe_allow_html=True)
+
+    open_col = None
+    for cand in ["Q34", "Q33", "Q32"]:
+        if cand in df_unit.columns:
+            open_col = cand
+            break
+
+    if open_col is None:
+        st.info("Không tìm thấy câu hỏi mở trong dữ liệu.")
+        return
+
+    _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg)
+
+
+# ── P7: Kế hoạch hành động 30 ngày ───────────────────────────────────
+
+def _render_unit_p7_actions(df_unit, df_bench, group_id, pillar_comp, unit_label):
+    """P7 — Top 3 actions có evidence chain traceable từ dữ liệu unit."""
+    from utils.pillar_analysis import build_action_evidence
+    from utils.ai_generator import render_ai_insight_card
+
+    st.markdown(_part_header("P7", "Kế hoạch hành động 30 ngày",
+                             "Ưu tiên từ dữ liệu thực tế của đơn vị này",
+                             color="#D97706"), unsafe_allow_html=True)
+
+    # Lấy 2–3 trụ cột yếu nhất
+    weak_pillars = sorted(
+        [r for r in pillar_comp if r["delta"] is not None and r["delta"] < 0],
+        key=lambda x: x["delta"],
+    )[:3]
+
+    if not weak_pillars:
+        weak_pillars = sorted(pillar_comp, key=lambda x: x["score_unit"])[:2]
+
+    if not weak_pillars:
+        st.info("Không đủ dữ liệu để gợi ý hành động.")
+        return
+
+    action_items = []
+    for r in weak_pillars:
+        pid = r["pillar_id"]
+        try:
+            ev = build_action_evidence(df_unit, group_id, pid)
+        except Exception:
+            ev = {"enabled": False, "profile": {"actions": {}}}
+
+        if ev.get("enabled"):
+            weakest = ev.get("weakest", {})
+            owner   = ev.get("owner", "Pillar Owner")
+            action  = ev.get("action", "Xem xét dữ liệu và can thiệp.")
+            evidence_parts = [
+                f"{r['name']} = {r['score_unit']:.2f}/5 "
+                f"(thấp hơn nhóm {abs(r['delta']):.2f} điểm)",
+            ]
+            if weakest:
+                evidence_parts.append(
+                    f"Tín hiệu yếu nhất: {weakest.get('Tín hiệu','')} "
+                    f"({weakest.get('Điểm TB',0):.2f}/5, {weakest.get('% Tiêu cực',0):.1f}% tiêu cực)"
+                )
+            # flight risk
+            if "intent" in df_unit.columns:
+                fr = (pd.to_numeric(df_unit["intent"], errors="coerce") <= 2).mean() * 100
+                evidence_parts.append(f"Flight risk tại đơn vị: {fr:.1f}%")
+
+            action_items.append({
+                "pillar": r["name"],
+                "action": action,
+                "owner": owner,
+                "evidence": " · ".join(evidence_parts),
+                "score": r["score_unit"],
+                "delta": r["delta"],
+            })
+
+    if not action_items:
+        st.info("Không đủ dữ liệu để xây dựng kế hoạch hành động cụ thể.")
+        return
+
+    for i, item in enumerate(action_items, 1):
+        accent = ["#DC2626", "#EA580C", "#D97706"][i - 1]
+        st.markdown(
+            f'<div style="background:#fff;border:1px solid #E2E8F0;'
+            f'border-left:4px solid {accent};border-radius:10px;padding:16px 18px;margin-bottom:12px;">'
+            f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+            f'<span style="background:{accent};color:white;border-radius:6px;'
+            f'padding:3px 10px;font-size:.72rem;font-weight:800;">Ưu tiên {i}</span>'
+            f'<span style="font-size:.88rem;font-weight:700;color:#0A1F44;">{item["pillar"]}</span>'
+            f'</div>'
+            f'<div style="font-size:.84rem;color:#334155;line-height:1.65;margin-bottom:8px;">'
+            f'{item["action"]}</div>'
+            f'<div style="font-size:.75rem;color:#64748B;margin-bottom:6px;">'
+            f'<strong>Owner đề xuất:</strong> {item["owner"]}</div>'
+            f'<div style="background:#F8FAFC;border-radius:6px;padding:8px 10px;'
+            f'font-size:.72rem;color:#475569;line-height:1.6;">'
+            f'<strong>📊 Bằng chứng:</strong> {item["evidence"]}'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    # AI tổng hợp
+    action_summary = "\n".join([
+        f"{i}. [{it['pillar']}] {it['action']} (Owner: {it['owner']})"
+        for i, it in enumerate(action_items, 1)
+    ])
+    evidence_summary = "\n".join([
+        f"  • {it['pillar']}: score={it['score']:.2f}, delta={it['delta']:.2f}"
+        for it in action_items
+    ])
+    prompt = (
+        f"Bạn là HRBP đang chuẩn bị brief cho trưởng phòng '{unit_label}'.\n"
+        f"DỮ LIỆU THỰC TẾ:\n{evidence_summary}\n"
+        f"Kế hoạch hành động đề xuất:\n{action_summary}\n\n"
+        "Viết 1 đoạn tóm tắt ngắn (tối đa 100 từ) bằng tiếng Việt:\n"
+        "Giải thích TẠI SAO 3 hành động này là ưu tiên đúng — liên kết với dữ liệu, "
+        "và điều gì sẽ xảy ra nếu không làm trong 30 ngày tới.\n"
+        "Chỉ dùng số đã cung cấp. Không chung chung."
+    )
+    render_ai_insight_card(
+        f"AI · Tóm tắt kế hoạch — {unit_label[:30]}",
+        {"actions": action_items}, prompt,
+        custom_style="margin-top:12px;",
+    )
+
+
+# ── Shared UI helper ──────────────────────────────────────────────────
+
+def _part_header(number: str, title: str, subtitle: str, color: str = "#FF5200") -> str:
+    return (
+        f'<div style="display:flex;align-items:flex-start;gap:14px;'
+        f'margin:28px 0 16px;padding-bottom:12px;border-bottom:2px solid #F1F5F9;">'
+        f'<div style="background:{color};color:white;border-radius:8px;'
+        f'padding:5px 12px;font-size:.7rem;font-weight:800;letter-spacing:.07em;'
+        f'text-transform:uppercase;white-space:nowrap;flex-shrink:0;margin-top:3px;">{number}</div>'
+        f'<div>'
+        f'<div style="font-size:1rem;font-weight:800;color:#0A1F44;letter-spacing:-.02em;">{title}</div>'
+        f'<div style="font-size:.8rem;color:#64748B;margin-top:3px;">{subtitle}</div>'
+        f'</div></div>'
+    )
