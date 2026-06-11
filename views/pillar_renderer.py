@@ -1084,11 +1084,149 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
 
 
 # ─────────────────────────────────────────────────────────────
+# BLOCK B: INTENT GAP ANALYSIS (pillar-specific)
+# ─────────────────────────────────────────────────────────────
+
+def _render_pillar_intent_gap(df, cfg, group_id, pillar_id):
+    """Phân tích khoảng cách ý định theo từng câu hỏi của trụ cột — muốn nghỉ vs gắn bó."""
+    profile = get_analysis_profile(pillar_id)
+    meta = PILLAR_META.get(pillar_id, {})
+    pillar_name = meta.get('name', pillar_id)
+
+    # Lấy danh sách câu hỏi của trụ cột này
+    qs = [q for q in get_pillar_questions(group_id, pillar_id) if q in df.columns]
+    if not qs:
+        st.info(f"Không tìm thấy câu hỏi nào cho trụ cột {pillar_name} trong nhóm {group_id}.")
+        return
+
+    # Tạo cột intent_risk nếu chưa có
+    df_work = df.copy()
+    if 'intent_risk' not in df_work.columns:
+        def _classify_intent(x):
+            v = pd.to_numeric(x, errors='coerce')
+            if pd.isna(v):
+                return None
+            if v <= 2:
+                return 'Muốn nghỉ (1-2)'
+            if v >= 4:
+                return 'Gắn bó (4-5)'
+            return 'Trung lập (3)'
+        df_work['intent_risk'] = df_work['intent'].apply(_classify_intent)
+
+    df_quit = df_work[df_work['intent_risk'].astype(str).str.contains('Muốn nghỉ', na=False)]
+    df_stay = df_work[df_work['intent_risk'].astype(str).str.contains('Gắn bó', na=False)]
+    N_quit = len(df_quit)
+    N_stay = len(df_stay)
+
+    if N_quit < 10 and N_stay < 10:
+        st.info("Không đủ mẫu hai nhóm (muốn nghỉ / gắn bó) để phân tích khoảng cách.")
+        return
+
+    # Tính điểm TB mỗi câu cho từng nhóm
+    rows = []
+    for q in qs:
+        label = (get_question_label(group_id, q) or q)
+        label_short = label[:50] if len(label) > 50 else label
+        quit_vals = pd.to_numeric(df_quit[q], errors='coerce').dropna()
+        stay_vals = pd.to_numeric(df_stay[q], errors='coerce').dropna()
+        quit_mean = float(quit_vals.mean()) if len(quit_vals) >= 5 else None
+        stay_mean = float(stay_vals.mean()) if len(stay_vals) >= 5 else None
+        if quit_mean is None and stay_mean is None:
+            continue
+        gap = round(stay_mean - quit_mean, 2) if (quit_mean is not None and stay_mean is not None) else None
+        rows.append({
+            'Câu': q,
+            'Nội dung': label_short,
+            'Muốn nghỉ': round(quit_mean, 2) if quit_mean is not None else None,
+            'Gắn bó': round(stay_mean, 2) if stay_mean is not None else None,
+            'Khoảng cách': gap,
+        })
+
+    if not rows:
+        st.info("Không đủ dữ liệu để tính khoảng cách theo nhóm ý định.")
+        return
+
+    df_gap = pd.DataFrame(rows).sort_values('Khoảng cách', ascending=False, na_position='last')
+    top3 = df_gap.head(3)[['Nội dung', 'Muốn nghỉ', 'Gắn bó', 'Khoảng cách']].to_dict(orient='records')
+
+    # AI insight — dữ liệu hoàn toàn theo pillar_id này
+    ai_data = {
+        "Pillar": pillar_name,
+        "Lens": profile['lens'],
+        "N_muon_nghi": N_quit,
+        "N_gan_bo": N_stay,
+        "Top3_Khoang_Cach": top3,
+    }
+    prompt = (
+        f"Bạn là chuyên gia HR phân tích dữ liệu trụ cột **{pillar_name}** (GHN Express).\n"
+        f"Lăng kính: {profile['lens']}\n"
+        f"Phạm vi phân tích: {profile['focus']}\n\n"
+        f"DỮ LIỆU THỰC TẾ — TUYỆT ĐỐI KHÔNG bịa thêm số:\n"
+        f"- Nhóm muốn nghỉ (intent 1-2): N={N_quit:,} người\n"
+        f"- Nhóm gắn bó (intent 4-5): N={N_stay:,} người\n"
+        f"- 3 câu hỏi khoảng cách lớn nhất:\n"
+        + "".join([
+            f"  • {r['Nội dung']}: muốn_nghỉ={r['Muốn nghỉ']}, gắn_bó={r['Gắn bó']}, Δ={r['Khoảng cách']}\n"
+            for r in top3
+        ])
+        + f"\nHãy trả lời 3 điểm bằng tiếng Việt, ngắn gọn:\n"
+        f"(1) Khoảng cách nào rõ nhất và điều đó nói lên vấn đề cụ thể gì?\n"
+        f"(2) Nguyên nhân gốc rễ theo lăng kính '{profile['focus']}'?\n"
+        f"(3) Một hành động ưu tiên trong 30 ngày — owner là ai, làm gì?\n"
+        f"Dẫn chứng bằng số, tránh nhận xét chung chung, chỉ phân tích trong phạm vi {pillar_name}."
+    )
+    render_ai_insight_card(
+        f"AI · Khoảng cách ý định — {pillar_name}",
+        ai_data, prompt,
+        custom_style="margin-bottom: 20px;"
+    )
+
+    # Grouped bar chart
+    df_melt = df_gap.melt(
+        id_vars=['Câu', 'Nội dung'],
+        value_vars=['Muốn nghỉ', 'Gắn bó'],
+        var_name='Nhóm', value_name='Điểm TB'
+    ).dropna(subset=['Điểm TB'])
+
+    color_map = {
+        'Muốn nghỉ': COLORS.get('red', '#E74C3C'),
+        'Gắn bó': COLORS.get('green', '#27AE60'),
+    }
+    fig = px.bar(
+        df_melt, x='Điểm TB', y='Nội dung', color='Nhóm',
+        barmode='group', orientation='h',
+        color_discrete_map=color_map,
+        hover_data={'Câu': True, 'Điểm TB': ':.2f'},
+        labels={'Điểm TB': 'Điểm trung bình (1–5)', 'Nội dung': ''},
+    )
+    fig = fig_card(
+        fig,
+        f'KHOẢNG CÁCH Ý ĐỊNH — {pillar_name.upper()}',
+        f'Nhóm muốn nghỉ (N={N_quit:,}) · Nhóm gắn bó (N={N_stay:,})'
+    )
+    fig.update_layout(
+        height=max(320, len(df_gap) * 55 + 100),
+        yaxis=dict(autorange='reversed'),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+        xaxis=dict(range=[1, 5]),
+    )
+    st.plotly_chart(fig, width='stretch', key=f"intent_gap_chart_{group_id}_{pillar_id}")
+
+    # Detail table
+    st.markdown("**Chi tiết khoảng cách theo từng câu hỏi**")
+    df_display = df_gap[['Câu', 'Nội dung', 'Muốn nghỉ', 'Gắn bó', 'Khoảng cách']].copy()
+    styled = df_display.style.background_gradient(
+        cmap='RdYlGn', subset=['Khoảng cách'], vmin=0, vmax=1.5
+    ).format({'Muốn nghỉ': '{:.2f}', 'Gắn bó': '{:.2f}', 'Khoảng cách': '{:.2f}'}, na_rep='–')
+    st.dataframe(styled, width='stretch', hide_index=True)
+
+
+# ─────────────────────────────────────────────────────────────
 # TAB 4: NGUYÊN NHÂN & HÀNH ĐỘNG
 # ─────────────────────────────────────────────────────────────
 
 def _render_tab_root_cause(df, cfg, group_id, pillar_id):
-    from views import view_d_root_cause, view_f_action_priority
+    from views import view_f_action_priority
 
     evidence = build_action_evidence(df, group_id, pillar_id)
     profile = evidence["profile"]
@@ -1132,11 +1270,8 @@ def _render_tab_root_cause(df, cfg, group_id, pillar_id):
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("#### Phân tích nguyên nhân gốc rễ")
-    try:
-        view_d_root_cause.render(df, cfg, group_id, pillar_filter=pillar_id)
-    except TypeError:
-        view_d_root_cause.render(df, cfg, group_id)
+    st.markdown("#### Phân tích khoảng cách ý định")
+    _render_pillar_intent_gap(df, cfg, group_id, pillar_id)
 
     st.markdown("---")
     st.markdown("#### Ưu tiên hành động")
@@ -1316,11 +1451,11 @@ def render(df, cfg, group_id, pillar_id):
     _render_pillar_header(pillar_id, df, cfg, group_id)
 
     section_names = [
-        "Chẩn đoán Nhanh",
-        "Chi tiết Từng câu",
-        "Nhóm Rủi ro",
-        "Nguyên nhân & Hành động",
-        "Bất thường",
+        "Tổng quan & Tín hiệu",
+        "Phân tích từng chỉ số",
+        "Phân tích rủi ro nhóm",
+        "Nguyên nhân & Ưu tiên",
+        "Phát hiện bất thường",
     ]
     if pillar_id == 'TC4':
         section_names.append("HRIS & Rủi ro")
