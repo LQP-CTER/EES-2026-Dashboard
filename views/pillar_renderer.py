@@ -343,7 +343,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, width='stretch', key="diag_bar_chart")
+    st.plotly_chart(fig, width='stretch', key=f"diag_bar_chart_{group_id}_{pillar_id}")
 
     # Highlight câu yếu nhất & câu có tiềm năng cải thiện cao nhất
     weakest = q_df.iloc[0]
@@ -416,7 +416,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig2, width='stretch', key="tenure_cliff_chart")
+            st.plotly_chart(fig2, width='stretch', key=f"tenure_cliff_chart_{group_id}_{pillar_id}")
 
             # Cliff alert
             if cliff_drop is not None and cliff_drop < -0.4:
@@ -636,7 +636,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 showlegend=False, font=dict(family='Inter', size=11),
             )
-            st.plotly_chart(fig, width='stretch', key=f"dist_chart_{i}")
+            st.plotly_chart(fig, width='stretch', key=f"dist_chart_{group_id}_{pillar_id}_{i}")
 
         # ── Breakdown table by segment ──────────────────────────
         seg_col = None
@@ -725,6 +725,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
     df_work = df.copy()
     df_work['_pillar_score'] = df_work[q_cols].mean(axis=1)
 
+    _render_analysis_lens(df, group_id, pillar_id)
     st.markdown(f"#### Nhóm rủi ro theo lăng kính {meta['short']}")
     st.caption(profile["focus"])
     specialized_risk = build_specialized_risk_segments(df, group_id, pillar_id)
@@ -1070,7 +1071,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(family='Inter'),
             )
-            st.plotly_chart(fig, width='stretch', key="region_risk_chart")
+            st.plotly_chart(fig, width='stretch', key=f"region_risk_chart_{group_id}_{pillar_id}")
 
     st.markdown("---")
 
@@ -1218,7 +1219,56 @@ def _render_tab_anomaly(df, cfg, group_id, pillar_id):
             )
         st.markdown("---")
 
-    render_anomaly_tab(pillar_anomalies, pillar_id=pillar_id, show_cross=False)
+    if pillar_anomalies:
+        render_anomaly_tab(pillar_anomalies, pillar_id=pillar_id, show_cross=False)
+    else:
+        # Fallback: show pillar-specific risk signals from live data
+        qs = get_pillar_questions(group_id, pillar_id)
+        q_cols_a = [q for q in qs if q in df.columns]
+        meta_a = PILLAR_META[pillar_id]
+        color_a = meta_a['color']
+        st.markdown(f"""
+        <div style="background:#FFFBEB;border:1px solid #FDE68A;border-left:4px solid #D97706;
+                    border-radius:10px;padding:14px 17px;margin-bottom:16px;">
+            <div style="font-size:.68rem;font-weight:850;color:#D97706;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">
+                Không phát hiện bất thường đặc thù cho {pillar_id}
+            </div>
+            <div style="font-size:.84rem;color:#334155;line-height:1.6;">
+                Dữ liệu hiện tại không có tín hiệu bất thường rõ ràng theo ngưỡng thống kê.
+                Đây có thể là dấu hiệu tích cực, hoặc mẫu chưa đủ lớn để phát hiện outlier.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if q_cols_a:
+            # Show question-level risk quick view
+            q_risks = []
+            for q in q_cols_a:
+                vals = df[q].dropna()
+                if len(vals) < 5:
+                    continue
+                neg_pct = (vals <= 2).sum() / len(vals) * 100
+                mean_v = vals.mean()
+                if neg_pct >= 15 or mean_v < 3.5:
+                    from shared.codebook import get_question_label
+                    q_risks.append({
+                        'Câu': q,
+                        'Tên câu': get_question_label(group_id, q),
+                        'Điểm TB': round(mean_v, 2),
+                        '% tiêu cực': round(neg_pct, 1),
+                        'N': len(vals),
+                    })
+            if q_risks:
+                st.markdown(f"##### Tín hiệu cần theo dõi trong {meta_a['name']}")
+                st.caption("Câu có điểm TB < 3.5 hoặc % tiêu cực ≥ 15% — chưa đến ngưỡng 'bất thường' nhưng cần giám sát.")
+                q_risk_df = pd.DataFrame(q_risks).sort_values('% tiêu cực', ascending=False)
+                st.dataframe(
+                    q_risk_df.style.format({'Điểm TB': '{:.2f}', '% tiêu cực': '{:.1f}%', 'N': '{:,}'}),
+                    width='stretch', hide_index=True,
+                )
+            else:
+                st.success(f"Tất cả câu hỏi trong {meta_a['name']} đều ở mức ổn định (điểm TB ≥ 3.5 và % tiêu cực < 15%).")
+
     if cross_anomalies:
         with st.expander("Bất thường liên trụ cột có liên quan", expanded=False):
             render_anomaly_tab(cross_anomalies, pillar_id=pillar_id, show_cross=True)

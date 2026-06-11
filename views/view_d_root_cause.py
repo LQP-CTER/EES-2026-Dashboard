@@ -116,7 +116,7 @@ def _render_non_1a(df_clean, cfg, sel_group, pillar_filter=None):
         margin=dict(l=300),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    st.plotly_chart(fig, width='stretch', key="view_d_root_cause_chart_118")
+    st.plotly_chart(fig, width='stretch', key=f"view_d_rc_gap_{sel_group}_{pillar_filter or 'all'}")
 
     # Thêm AI Insight theo định dạng báo cáo
     top_3_gaps = df_gaps.head(3).to_dict('records')
@@ -231,11 +231,11 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.plotly_chart(_plot_risk(df_m, 'income_label', "Theo Thu Nhập"), width='stretch', key="view_d_root_cause_chart_225")
+        st.plotly_chart(_plot_risk(df_m, 'income_label', "Theo Thu Nhập"), width='stretch', key=f"view_d_rc_income_{sel_group}_{pillar_filter or 'all'}")
     with c2:
-        st.plotly_chart(_plot_risk(df_m, 'phat_label', "Theo Mức Phạt"), width='stretch', key="view_d_root_cause_chart_227")
+        st.plotly_chart(_plot_risk(df_m, 'phat_label', "Theo Mức Phạt"), width='stretch', key=f"view_d_rc_phat_{sel_group}_{pillar_filter or 'all'}")
     with c3:
-        st.plotly_chart(_plot_risk(df_m, 'tenure_label', "Theo Thâm Niên"), width='stretch', key="view_d_root_cause_chart_229")
+        st.plotly_chart(_plot_risk(df_m, 'tenure_label', "Theo Thâm Niên"), width='stretch', key=f"view_d_rc_tenure_{sel_group}_{pillar_filter or 'all'}")
 
     st.markdown("#### Bước 3: So sánh nhóm Muốn nghỉ vs Gắn bó")
     df_risk = df_m[df_m['intent_risk'].str.contains('Muốn nghỉ', na=False)]
@@ -361,7 +361,7 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
             margin=dict(t=50, b=40, l=40, r=40),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-        st.plotly_chart(fig, width='stretch', key="view_d_root_cause_chart_355")
+        st.plotly_chart(fig, width='stretch', key=f"view_d_rc_corr_{sel_group}_{pillar_filter or 'all'}")
         
         # Thêm AI Insight cho biểu đồ chênh lệch
         ai_data_comp = {
@@ -625,7 +625,7 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
                             paper_bgcolor='#FFFFFF',
                         )
                     
-                    st.plotly_chart(fig, width='stretch', key="view_d_root_cause_chart_610")
+                    st.plotly_chart(fig, width='stretch', key=f"view_d_rc_nonlinear_{sel_group}_{pillar_filter or 'all'}")
                     
                     st.caption("Chỉ hiển thị các nhóm có ≥ 30 người. Lương gộp = lương thực nhận + phạt + truy thu, giúp 2 trục phân tích độc lập.")
                     
@@ -653,8 +653,4 @@ def render(df_clean, cfg, sel_group, pillar_filter=None, **kwargs):
                     render_ai_insight_card("AI Predictive Insight", ai_data_hm, prompt_hm, badge="Predictive AI", custom_style="margin-top: 24px; margin-bottom: 24px;")
                 
                 else:
-                    st.info("Không đủ dữ liệu (N≥30) ở bất kỳ ô nào để vẽ bản đồ rủi ro.")
-        else:
-            st.info("Không đủ dữ liệu kết hợp Thu nhập & Mức phạt để chạy mô hình.")
-
-
+                    st.info("Không đủ dữ liệu (N≥30) ở bất kỳ ô nào để vẽ heatmap.")

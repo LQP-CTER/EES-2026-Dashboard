@@ -272,7 +272,7 @@ def render(df, cfg, group_id=None, pillar_filter=None):
         fig = fig_card(fig, f'{metric} theo {level}', f'Biểu đồ so sánh {metric} giữa các {level}')
         fig.update_traces(textposition='outside')
         fig.update_layout(height=500, xaxis_tickangle=-45, xaxis_title=level, yaxis_title=metric, showlegend=False, coloraxis_showscale=False)
-        st.plotly_chart(fig, width='stretch', key="view_b_problem_groups_chart_91")
+        st.plotly_chart(fig, width='stretch', key=f"view_b_seg_bar_{group_id or 'all'}_{pillar_filter or 'all'}")
 
         df_display_cols = ['name', 'n', 'ei_mean', 'enps_score', 'mei_avg', 'intent_pct_low', 'burnout_pct']
         rename_dict = {'name': level, 'n': 'N', 'ei_mean': 'EI (%)', 'enps_score': 'eNPS',
@@ -324,7 +324,7 @@ def render(df, cfg, group_id=None, pillar_filter=None):
             fig = px.imshow(df_heat, color_continuous_scale='RdYlGn', aspect='auto', text_auto='.1f')
             fig = fig_card(fig, 'HEATMAP: Section × Trụ cột EI', 'Đánh giá điểm mạnh/yếu của từng đơn vị')
             fig.update_layout(height=max(400, len(df_heat) * 25 + 150))
-            st.plotly_chart(fig, width='stretch', key="view_b_problem_groups_chart_141")
+            st.plotly_chart(fig, width='stretch', key=f"view_b_heatmap_{group_id or 'all'}_{pillar_filter or 'all'}")
             
             ai_data_heat = {
                 "Dimensions": list(df_heat.columns),
@@ -336,5 +336,4 @@ def render(df, cfg, group_id=None, pillar_filter=None):
                 f"Phân tích: (1) Rủi ro khi một đơn vị có điểm thấp ở nhiều cột liên tiếp. "
                 f"(2) Khuyến nghị hành động cho quản lý cấp cao."
             )
-            render_ai_insight_card("AI Heatmap Analysis", ai_data_heat, prompt_heat, custom_style="margin-top: 16px; margin-bottom: 24px;")
-            
+            render_ai_insight_card("AI Heatmap Analysis", ai_data_heat, prompt_heat)

@@ -105,7 +105,7 @@ def render(df, cfg, pillar_filter=None, **kwargs):
         fig.update_layout(height=550, xaxis_title='Điểm trung bình (1-5)',
                           yaxis_title='Tương quan Spearman với EI',
                           xaxis=dict(tickformat='.1f', showgrid=True), yaxis=dict(tickformat='.2f', showgrid=True))
-        st.plotly_chart(fig, width='stretch', key="view_f_action_priority_chart_86")
+        st.plotly_chart(fig, width='stretch', key=f"view_f_action_priority_chart_{pillar_filter or 'all'}")
     
     with c2:
         import textwrap
@@ -170,5 +170,3 @@ def render(df, cfg, pillar_filter=None, **kwargs):
     }
 
     st.dataframe(styled_priorities, width='stretch', hide_index=True, column_config=col_config)
-
-
