@@ -4,6 +4,7 @@ import pandas as pd
 from shared.nlp_utils import detect_warning_signals
 from utils.ai_generator import render_ai_insight_card, validate_warning_signals_with_ai
 
+@st.fragment
 def render(df, cfg, pillar_filter=None):
     codebook = cfg.get('codebook', {})
     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']

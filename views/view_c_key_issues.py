@@ -13,6 +13,7 @@ from shared.nlp_utils import (
 from utils.ai_generator import render_ai_insight_card
 
 
+@st.fragment
 def render(df, cfg, pillar_filter=None):
     codebook = cfg.get('codebook', {})
     open_cols = [q for q, info in codebook.items() if info['loại'] == 'open']

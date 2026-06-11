@@ -59,14 +59,21 @@ st.set_page_config(page_title="GHN EES 2026", page_icon="./img/Logo_EES.png", la
 # Spinner mặc định được dùng như loading overlay toàn màn hình.
 st.markdown("""
 <style>
-    /* Ẩn frame cũ để tránh trộn nội dung giữa hai trang. */
-    [data-stale="true"], 
-    [data-testid="stale-element-container"], 
-    .stale-element, 
-    .stale {
+    /* Ẩn frame cũ để tránh trộn nội dung giữa hai trang.
+       Chỉ áp dụng cho top-level stale (khi chuyển trang),
+       không ảnh hưởng tới @st.fragment partial reruns. */
+    .stApp > [data-stale="true"],
+    .stApp > [data-testid="stale-element-container"] {
         display: none !important;
         opacity: 0 !important;
         visibility: hidden !important;
+    }
+
+    /* Fragment reruns: chỉ fade nhẹ thay vì ẩn hoàn toàn */
+    [data-stale="true"] {
+        opacity: 0.6 !important;
+        transition: opacity 0.15s ease !important;
+        pointer-events: none !important;
     }
 
     /* Loading overlay toàn màn hình trong lúc Streamlit xử lý. */
@@ -963,6 +970,25 @@ from views import (
 from shared.codebook import PILLAR_META, PILLAR_ORDER
 from shared.loading import TerminalLoader
 
+# --- BACKGROUND DATA PRELOADING ---
+if "data_preloaded" not in st.session_state:
+    st.session_state.data_preloaded = True
+    try:
+        from streamlit.runtime.scriptrunner import add_script_run_ctx
+        import threading
+        
+        def _preload_task():
+            try:
+                load_all_available()
+            except Exception as e:
+                pass
+                
+        preload_thread = threading.Thread(target=_preload_task, daemon=True)
+        add_script_run_ctx(preload_thread)
+        preload_thread.start()
+    except Exception:
+        pass
+
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""<style>
 /* ═══════ BASE ═══════ */
@@ -977,12 +1003,10 @@ footer {visibility: hidden !important;}
 .viewerBadge_link {display: none !important;}
 [class*="viewerBadge"] {display: none !important;}
 
-/* Hide stale elements while the newly selected page is loading. */
-[data-testid="stale-element-container"], 
-[data-stale="true"], 
-.stale, 
-[data-testid*="stale"],
-div.st-emotion-cache-1kyxreq {
+/* Hide stale elements while the newly selected page is loading.
+   Scoped to top-level to avoid interfering with @st.fragment. */
+.stApp > [data-testid="stale-element-container"], 
+.stApp > div.st-emotion-cache-1kyxreq[data-stale="true"] {
     opacity: 0 !important;
     transition: none !important;
     visibility: hidden !important;
@@ -1334,8 +1358,6 @@ div[data-baseweb="select"] > div:hover {
     font-size: 0.875rem !important;
     line-height: 1.7 !important;
     color: #475569 !important;
-    max-height: 300px !important;
-    overflow-y: auto !important;
     padding-right: 8px !important;
 }
 .ai-content::-webkit-scrollbar {

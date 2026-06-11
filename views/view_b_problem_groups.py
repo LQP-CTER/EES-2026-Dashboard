@@ -6,6 +6,7 @@ from utils.segment_risk import MIN_SEGMENT_N, build_segment_driver_profile, scan
 from shared.plotly_theme import COLORS, apply_theme, fig_card
 from utils.ai_generator import render_ai_insight_card
 
+@st.fragment
 def render(df, cfg, group_id=None, pillar_filter=None):
     apply_theme()
 

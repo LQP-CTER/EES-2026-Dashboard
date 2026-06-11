@@ -950,6 +950,7 @@ def _render_weakness_deep_dive(df, group_id):
 # ACT 5: EMPLOYEE VOICE — MONG MUỐN THEO ĐƠN VỊ
 # ═══════════════════════════════════════════════════════════════
 
+@st.fragment
 def _render_employee_voice(df, group_id, cfg):
     """
     Phần "Tiếng nói nhân viên" — chọn đơn vị rồi AI phân tích

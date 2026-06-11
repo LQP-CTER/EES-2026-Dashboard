@@ -138,6 +138,7 @@ _DEFAULT_FACTORS = {
 }
 
 
+@st.fragment
 def render(df, cfg, pillar_filter=None):
     apply_theme()
     st.markdown('<div class="sec-h3"><div class="sec-accent"></div>MÔ PHỎNG TÁC ĐỘNG (KPI SIMULATOR)</div>', unsafe_allow_html=True)

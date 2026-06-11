@@ -90,6 +90,7 @@ def _build_department_question_diagnostics(df_department: pd.DataFrame) -> pd.Da
     ).reset_index(drop=True)
 
 
+@st.fragment
 def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame):
     """Render an evidence-led department diagnosis without changing source data."""
     department_options = tbl_dept["Phòng Ban"].dropna().astype(str).tolist()
@@ -115,9 +116,15 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
 
     selected_department = st.selectbox(
         "Chọn phòng ban để phân tích sâu",
-        department_options,
+        options=[None] + department_options,
+        format_func=lambda x: "— Chọn phòng ban —" if x is None else x,
+        index=0,
         key="company_department_deep_dive",
     )
+    if selected_department is None:
+        st.caption("Chọn một phòng ban từ dropdown để xem chẩn đoán chi tiết.")
+        return
+
     df_department = df_total[df_total["department"].astype(str) == selected_department].copy()
     if len(df_department) < MIN_DEPARTMENT_N:
         st.info("Phòng ban này không đủ tối thiểu 3 mẫu để phân tích.")
@@ -501,35 +508,40 @@ def _render_data_processing_section(headcount, raw, cleaned, all_data, effective
         )
     )
 
-    # Bảng chất lượng dữ liệu theo nhóm — dùng số liệu thực tế từ all_data
-    from config.groups import GROUP_REGISTRY
-    group_rows = []
-    for group_id, (df, n_before) in all_data.items():
-        n_clean = len(df)
-        n_dropped = n_before - n_clean
-        grp_label = GROUP_REGISTRY.get(group_id, {}).get("short", group_id)
-        group_rows.append(
-            {
-                "Nhóm khảo sát": f"{group_id} · {grp_label}",
-                "Mẫu thu thập": n_before,
-                "Mẫu bị loại": n_dropped,
-                "Tỷ lệ loại": _pct(n_dropped, n_before),
-                "Mẫu sau loại": n_clean,
-                "Tỷ lệ giữ": _pct(n_clean, n_before),
-            }
-        )
+    # Bảng chất lượng dữ liệu theo nhóm — đồng bộ với trang Độ tin cậy dữ liệu
+    from views.view_i_data_trust import DEEPDIVE_GROUP_BASE
+    
+    df_table = pd.DataFrame(DEEPDIVE_GROUP_BASE)
+    df_table["Drop %"] = df_table["Dropped"] / df_table["Raw submissions"].clip(lower=1) * 100
+    df_table["Cleaned %"] = df_table["Cleaned base"] / df_table["Raw submissions"].clip(lower=1) * 100
+    df_table = df_table[[
+        "Nhóm", "Raw submissions", "Dropped", "Drop %", "Cleaned base",
+        "Cleaned %", "EI", "eNPS", "Leave %", "Silence %", "MEI", "Flight Risk %"
+    ]].rename(columns={
+        "Raw submissions": "Phản hồi thô",
+        "Dropped": "Bị loại",
+        "Drop %": "Tỷ lệ loại",
+        "Cleaned base": "Mẫu phân tích",
+        "Cleaned %": "Tỷ lệ giữ",
+        "Leave %": "Ý định nghỉ",
+        "Silence %": "Im lặng",
+        "Flight Risk %": "Rủi ro rời bỏ",
+    })
 
-    df_groups = pd.DataFrame(group_rows)
     st.dataframe(
-        df_groups.style.format(
-            {
-                "Mẫu thu thập": "{:,.0f}",
-                "Mẫu bị loại": "{:,.0f}",
-                "Tỷ lệ loại": "{:.1f}%",
-                "Mẫu sau loại": "{:,.0f}",
-                "Tỷ lệ giữ": "{:.1f}%",
-            }
-        ),
+        df_table.style.format({
+            "Phản hồi thô": "{:,.0f}",
+            "Bị loại": "{:,.0f}",
+            "Tỷ lệ loại": "{:.1f}%",
+            "Mẫu phân tích": "{:,.0f}",
+            "Tỷ lệ giữ": "{:.1f}%",
+            "EI": "{:.1f}",
+            "eNPS": "{:+.1f}",
+            "Ý định nghỉ": "{:.1f}%",
+            "Im lặng": "{:.1f}%",
+            "MEI": "{:.1f}",
+            "Rủi ro rời bỏ": "{:.1f}%",
+        }, na_rep="-"),
         width="stretch",
         hide_index=True,
     )

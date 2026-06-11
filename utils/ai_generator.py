@@ -14,16 +14,14 @@ def get_master_report_voice_prompt():
     """Editorial voice derived from GHN_EES_2026_Master_Report_Outstanding.docx."""
     return """
 GIỌNG VĂN CHUẨN GHN EES 2026 MASTER REPORT:
-1. Viết như chuyên gia tư vấn EX và People Analytics đang trình bày cho Ban Lãnh đạo GHN. Giọng văn sắc sảo, có lập trường, giàu tính chẩn đoán và hướng đến vận hành.
-2. Mở thẳng bằng phát hiện quan trọng nhất. Không mở đầu bằng lời chào, câu dẫn chung chung, hoặc cụm "Dựa trên dữ liệu".
-3. Mỗi insight đi theo mạch: Hiện tượng quan sát được, cơ chế hoặc nguyên nhân có bằng chứng, hàm ý đối với vận hành hoặc trải nghiệm nhân viên, hành động ưu tiên.
-4. Có thể đặt một tên chẩn đoán ngắn cho hiện tượng, ví dụ "Điểm nghẽn Truyền thông", "Khoảng trống Thực thi", "Rủi ro Công bằng Điều phối", "Vòng lặp Suy giảm Gắn kết". Tên phải phản ánh đúng dữ liệu, không được tạo kịch tính vô căn cứ.
-5. Ưu tiên động từ chủ động và rõ lực: "chỉ ra", "vạch rõ", "bộc lộ", "kích hoạt", "làm suy giảm", "củng cố", "chuyển hóa". Không viết kiểu chatbot trung tính, vòng vo.
-6. Có thể dùng thuật ngữ tiếng Anh trong ngoặc khi thật sự giúp định danh khái niệm, ví dụ Employee Experience, Systemic Risk, Cohort Analysis, Psychological Safety. Luôn giải thích bằng tiếng Việt và không lạm dụng.
-7. Kết nối chỉ số với câu chuyện tổ chức. Không chỉ lặp lại con số; phải nói rõ con số đó đang phản ánh trải nghiệm nào và quyết định quản trị nào cần được ưu tiên.
-8. Khuyến nghị phải cụ thể, gắn với chủ thể thực thi hoặc điểm chạm vận hành nếu dữ liệu cho phép. Tránh các câu rỗng như "cần tiếp tục theo dõi", "nâng cao hơn nữa", "tăng cường truyền thông".
-9. Giữ chất văn mạnh nhưng có kiểm soát. Không dùng các từ cường điệu như "kinh hoàng", "thảm họa", "chí mạng" nếu dữ liệu không chứng minh mức độ đó. Không khẳng định quan hệ nhân quả khi dữ liệu chỉ thể hiện tương quan.
-10. Tôn trọng cấu trúc đầu ra mà nhiệm vụ yêu cầu. Nếu nhiệm vụ không quy định cấu trúc, viết 2 đoạn ngắn, mỗi đoạn 2 đến 3 câu: đoạn đầu là chẩn đoán, đoạn sau là hàm ý và hành động.
+1. Viết như chuyên gia tư vấn EX và People Analytics đang trình bày cho Ban Lãnh đạo GHN. Giọng văn sắc sảo, có lập trường, giàu tính chẩn đoán và hướng đến vận hành (action-oriented).
+2. TRÌNH BÀY DƯỚI DẠNG BULLET POINTS CÓ TIÊU ĐỀ: Luôn sử dụng định dạng `• **[Tên Chẩn Đoán Cụ Thể]**: [Nội dung phân tích]`. (VD: `• **Vòng lặp Hụt hẫng Onboarding (Cú sốc Năng suất)**: Phân tích Cohort vạch trần...`). KHÔNG viết thành một khối văn bản dài dằng dặc.
+3. KHÔNG có câu chào hỏi, KHÔNG có câu kết luận chung chung (VD: "Tóm lại...", "Nhìn chung..."). Mở thẳng bằng phát hiện quan trọng nhất.
+4. Tên chẩn đoán phải sắc bén, phản ánh đúng dữ liệu. VD: "Điểm nghẽn Truyền thông", "Khoảng trống Thực thi", "Rủi ro Công bằng Điều phối", "Vòng lặp Suy giảm Gắn kết".
+5. Ưu tiên động từ mạnh, chủ động: "vạch trần", "chỉ ra", "bộc lộ", "kích hoạt", "làm suy giảm", "củng cố", "chuyển hóa". Không viết kiểu chatbot trung tính.
+6. Khi nhắc đến các khái niệm nhân sự, có thể kèm thuật ngữ chuyên môn (Employee Experience, Systemic Risk, Cohort Analysis...) nếu phù hợp.
+7. Kết nối chỉ số với thực tế vận hành (VD: Thay vì nói "Lương thấp", hãy nói "Cú sốc thu nhập tháng đầu do chưa quen tuyến").
+8. Đưa ra hệ quả/hàm ý cụ thể cho quản trị và đề xuất hành động thực tiễn.
 """
 # ============================================================
 # DUAL GROQ KEY — ROUND-ROBIN LOAD BALANCER
@@ -282,13 +280,14 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
 # ============================================================
 
 def format_ai_html(text):
+    # Remove excessive blank lines
+    text = re.sub(r'\n{3,}', '\n\n', text.strip())
     html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
     html = re.sub(r'\*(.*?)\*', r'<em>\1</em>', html)
-    html = re.sub(r'(?m)^[-*]\s+', '<br>• ', html)
-    html = re.sub(r'(?m)^\d+\.\s+', '<br> ', html)
+    html = re.sub(r'(?m)^[-*]\s+', '• ', html)
     html = html.replace('\n', '<br>')
+    html = html.replace('<br><br>•', '<br>•')
     return html
-
 
 def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer-v2.0", custom_style="", target_container=None):
     """
