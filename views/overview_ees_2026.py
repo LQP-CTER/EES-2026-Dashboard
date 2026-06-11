@@ -486,7 +486,7 @@ def render():
                     <div class="ed-command-top">
                         <div>
                             <span class="ed-command-label">Engagement Intelligence</span>
-                            <div class="ed-command-score">72.3</div>
+                            <div class="ed-command-score">73.3</div>
                             <div class="ed-command-unit">EI score · Validated dataset</div>
                         </div>
                         <span class="ed-command-chip">Live Overview</span>
@@ -527,7 +527,7 @@ def render():
                     </div>
                     <div class="ed-metric-item">
                         <span class="ed-metric-label">Mức gắn kết</span>
-                        <span class="ed-metric-val">72.3</span>
+                        <span class="ed-metric-val">73.3</span>
                         <span class="ed-metric-sub">Điểm EI tổng thể</span>
                     </div>
                 </div>
