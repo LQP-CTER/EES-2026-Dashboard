@@ -169,6 +169,15 @@ def render_narrative(df, cfg, group_id):
                 )
                 render_ai_insight_card("CHRO Strategic Summary", {"kpis": kpis, "pillars": pdf.to_dict('records')}, ai_prompt, badge="Act 1 Insight")
 
+        # ── Supplementary charts row (radar + EI distribution) ──
+        if pdf is not None:
+            st.markdown("<br>", unsafe_allow_html=True)
+            _r_col, _e_col = st.columns(2)
+            with _r_col:
+                _render_act1_radar_chart(pdf, group_name)
+            with _e_col:
+                _render_ei_distribution_chart(df, "_act1")
+
     # ── ACT 2 ──────────────────────────────────────────────────────
     with tab_act2:
         st.markdown(_act_header(
@@ -396,7 +405,14 @@ def _render_deep_dive(df, contradiction, group_id, index):
     </div>
     """, unsafe_allow_html=True)
 
-    # Render regional breakdown visualization
+    # Metric chart + EI distribution (always visible in Act 3)
+    _ch_col, _ei_col = st.columns([55, 45])
+    with _ch_col:
+        _render_deep_dive_metric_chart(df, metrics, c_id, index)
+    with _ei_col:
+        _render_ei_distribution_chart(df, f"_{c_id}_{index}")
+
+    # Regional breakdown (if sub-groups available)
     _render_regional_breakdown_chart(df, c_id)
 
     # AI deep dive
@@ -475,7 +491,7 @@ def _render_regional_breakdown_chart(df, c_id):
     st.plotly_chart(fig, use_container_width=True, key=f"regional_breakdown_{c_id}")
 
 
-def _render_tenure_cliff_chart(df, metrics):
+def _render_tenure_cliff_chart(df, metrics, key_suffix=''):
     """Render biểu đồ tenure cliff."""
     if 'Q5' not in df.columns:
         return
@@ -516,10 +532,10 @@ def _render_tenure_cliff_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter'),
     )
-    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_tenure_cliff")
+    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_tenure_cliff{key_suffix}")
 
 
-def _render_gap_chart(df, metrics, c_id):
+def _render_gap_chart(df, metrics, c_id, key_suffix=''):
     """Render biểu đồ gap (info gap hoặc fairness gap)."""
     if c_id == 'INFO_GAP':
         labels = ['Q9: Tin BLĐ', 'Q10: Thông báo']
@@ -545,10 +561,10 @@ def _render_gap_chart(df, metrics, c_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_gap_{c_id}")
+    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_gap_{c_id}{key_suffix}")
 
 
-def _render_paradox_chart(df, metrics, c_id):
+def _render_paradox_chart(df, metrics, c_id, key_suffix=''):
     """Render biểu đồ paradox."""
     if c_id == 'PRIDE_PARADOX':
         labels = ['Q28: Tự hào', 'Ý định nghỉ (%)']
@@ -589,10 +605,10 @@ def _render_paradox_chart(df, metrics, c_id):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_paradox_{c_id}")
+    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_paradox_{c_id}{key_suffix}")
 
 
-def _render_burnout_blind_chart(df, metrics):
+def _render_burnout_blind_chart(df, metrics, key_suffix=''):
     """Render biểu đồ burnout blind spot."""
     labels = ['Q29: Nói ổn', 'Burnout thực tế (%)']
     values = [metrics.get('Q29_ap_luc', 0), metrics.get('burnout_pct', 0)]
@@ -611,10 +627,10 @@ def _render_burnout_blind_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_burnout_blind")
+    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_burnout_blind{key_suffix}")
 
 
-def _render_glass_ceiling_chart(df, metrics):
+def _render_glass_ceiling_chart(df, metrics, key_suffix=''):
     """Render biểu đồ glass ceiling."""
     labels = ['NV mới (< 1 năm)', 'NV cũ (> 2 năm)']
     values = [metrics.get('junior_Q19', 0), metrics.get('senior_Q19', 0)]
@@ -635,7 +651,7 @@ def _render_glass_ceiling_chart(df, metrics):
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         font=dict(family='Inter', size=12),
     )
-    st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_glass_ceiling")
+    st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_glass_ceiling{key_suffix}")
 
 
 def _render_ai_deep_dive(contradiction, group_id):
@@ -1121,6 +1137,9 @@ def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
     ).hexdigest()
     cache_key  = f"ev_voice_{group_id}_{prompt_key}"
 
+    # Theme frequency chart (no AI, always visible)
+    _render_voice_theme_chart(responses, group_id, unit_label)
+
     # Các button phân tích theo loại
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
@@ -1309,6 +1328,181 @@ TUYỆT ĐỐI:
     else:
         st.info("Chọn đơn vị rồi bấm **Phân tích Mong muốn** hoặc **Phân tích Cảm xúc** để xem kết quả.")
 
+
+
+
+# ═══════════════════════════════════════════════════════════════
+# CHART HELPERS — GROUP OVERVIEW (enhancements for Acts 1–5)
+# ═══════════════════════════════════════════════════════════════
+
+def _render_deep_dive_metric_chart(df, metrics, c_id, index):
+    """
+    Act 3 — always-visible metric chart for each contradiction.
+    Dispatches to existing chart functions with a unique key suffix
+    so Act 2 and Act 3 can both render the same contradiction type.
+    """
+    ks = f"_act3_{index}"
+    if c_id == 'TENURE_CLIFF':
+        _render_tenure_cliff_chart(df, metrics, key_suffix=ks)
+    elif c_id in ('INFO_GAP', 'FAIRNESS_GAP'):
+        _render_gap_chart(df, metrics, c_id, key_suffix=ks)
+    elif c_id in ('PRIDE_PARADOX', 'INCOME_PARADOX', 'SILENT_DISENGAGED',
+                  'MEI_SHIELD_FAIL', 'BURNOUT_TRAP', 'LEADERSHIP_HALO'):
+        _render_paradox_chart(df, metrics, c_id, key_suffix=ks)
+    elif c_id == 'BURNOUT_BLIND_SPOT':
+        _render_burnout_blind_chart(df, metrics, key_suffix=ks)
+    elif c_id == 'GLASS_CEILING':
+        _render_glass_ceiling_chart(df, metrics, key_suffix=ks)
+    # Unknown type → EI distribution still shows in right column
+
+
+def _render_ei_distribution_chart(df, key_suffix=""):
+    """
+    Phân phối Engagement Index — 3 nhóm: Không gắn kết / Trung lập / Gắn kết.
+    Luôn hiển thị nếu có cột EI — không phụ thuộc sub-group hay region.
+    """
+    if 'EI' not in df.columns:
+        return
+    ei = df['EI'].dropna()
+    if len(ei) < 5:
+        return
+    total = len(ei)
+    d_pct = (ei < 50).sum() / total * 100
+    n_pct = ((ei >= 50) & (ei < 75)).sum() / total * 100
+    e_pct = (ei >= 75).sum() / total * 100
+    avg_ei = ei.mean()
+
+    fig = go.Figure(go.Bar(
+        x=['Không gắn kết', 'Trung lập', 'Gắn kết'],
+        y=[d_pct, n_pct, e_pct],
+        marker=dict(color=['#EF4444', '#F59E0B', '#10B981'], cornerradius=6),
+        text=[f"{v:.1f}%<br>({int(v / 100 * total)})" for v in [d_pct, n_pct, e_pct]],
+        textposition='outside',
+        textfont=dict(size=11, color='#0A1F44', family='Inter'),
+        hovertemplate='<b>%{x}</b><br>%{y:.1f}%<extra></extra>',
+    ))
+    fig.update_layout(
+        title=dict(text=f"Phân phối EI  (TB: {avg_ei:.1f}%)",
+                   font=dict(size=13, color='#475569', family='Inter')),
+        height=270,
+        margin=dict(l=10, r=10, t=45, b=30),
+        yaxis=dict(range=[0, max(d_pct, n_pct, e_pct) * 1.4],
+                   ticksuffix='%', gridcolor='rgba(226,232,240,0.5)'),
+        xaxis=dict(tickfont=dict(size=11, color='#475569')),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter', size=12),
+    )
+    st.plotly_chart(fig, use_container_width=True,
+                    key=f"ei_dist_chart{key_suffix}")
+
+
+def _render_act1_radar_chart(pdf, group_name):
+    """
+    Radar (spider) chart cho 5 trụ cột.
+    Hiển thị 'hình dạng' cân bằng / mất cân bằng của trải nghiệm — bổ sung cho bar chart.
+    """
+    if pdf is None or len(pdf) < 3:
+        return
+    categories = pdf['Trụ cột'].tolist()
+    values     = pdf['Điểm TB'].tolist()
+    cats_c = categories + [categories[0]]
+    vals_c = values     + [values[0]]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=vals_c, theta=cats_c,
+        fill='toself',
+        fillcolor='rgba(67,24,255,0.10)',
+        line=dict(color='#4318FF', width=2.5),
+        marker=dict(size=7, color='#4318FF'),
+        name='Điểm TB',
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r=[4.0] * len(cats_c), theta=cats_c,
+        fill='none',
+        line=dict(color='#10B981', width=1.5, dash='dot'),
+        name='Ngưỡng Tốt (4.0)',
+        marker=dict(size=0),
+    ))
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(range=[1, 5], dtick=1,
+                            gridcolor='rgba(226,232,240,0.7)',
+                            tickfont=dict(size=9)),
+            angularaxis=dict(tickfont=dict(size=11, color='#475569', family='Inter')),
+            bgcolor='rgba(0,0,0,0)',
+        ),
+        title=dict(text=f"Hình dạng trải nghiệm — {group_name}",
+                   font=dict(size=13, color='#475569', family='Inter')),
+        height=310,
+        margin=dict(l=40, r=40, t=55, b=20),
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter'),
+        showlegend=True,
+        legend=dict(orientation='h', yanchor='bottom', y=-0.12,
+                    xanchor='center', x=0.5, font=dict(size=11)),
+    )
+    st.plotly_chart(fig, use_container_width=True, key="narrative_act1_radar_chart")
+
+
+def _render_voice_theme_chart(responses, group_id, unit_label=""):
+    """
+    Theme-bucket frequency chart từ open-text — hiển thị ngay, không cần AI.
+    Buckets 8 chủ đề HR cốt lõi bằng Vietnamese keyword matching.
+    """
+    import re
+
+    THEMES = {
+        'Lương & Phúc lợi':      ['lương', 'thưởng', 'thu nhập', 'tăng lương', 'phúc lợi', 'đãi ngộ', 'chế độ', 'trợ cấp'],
+        'Quản lý & Lãnh đạo':    ['quản lý', 'sếp', 'lãnh đạo', 'quản lí', 'cấp trên', 'giám sát'],
+        'Đào tạo & Phát triển':  ['đào tạo', 'học', 'phát triển', 'kỹ năng', 'thăng tiến', 'lộ trình', 'cơ hội'],
+        'Khối lượng & Áp lực':   ['áp lực', 'quá tải', 'khối lượng', 'stress', 'mệt', 'kiệt sức', 'tăng ca'],
+        'Môi trường làm việc':   ['môi trường', 'văn phòng', 'không khí', 'đồng nghiệp', 'đội nhóm', 'văn hóa', 'thiết bị'],
+        'Thông tin & Minh bạch': ['thông tin', 'minh bạch', 'rõ ràng', 'thông báo', 'giao tiếp', 'truyền thông'],
+        'Ghi nhận & Công nhận':  ['ghi nhận', 'công nhận', 'khen', 'đánh giá', 'kpi', 'đóng góp'],
+        'Quy trình & Công cụ':   ['quy trình', 'hệ thống', 'công cụ', 'phần mềm', 'ứng dụng', 'bất hợp lý'],
+    }
+
+    if len(responses) < 3:
+        return
+
+    all_text = ' '.join(responses.tolist()).lower()
+    all_text = re.sub(r'[^\w\s]', ' ', all_text)
+
+    theme_counts = {t: sum(all_text.count(kw) for kw in kws)
+                    for t, kws in THEMES.items()}
+    theme_counts = {t: c for t, c in theme_counts.items() if c > 0}
+
+    if not theme_counts:
+        return
+
+    sorted_t = sorted(theme_counts.items(), key=lambda x: x[1], reverse=True)
+    labels  = [t[0] for t in sorted_t]
+    counts  = [t[1] for t in sorted_t]
+    max_c   = max(counts)
+    colors  = ['#EF4444' if c / max_c >= 0.7 else '#F59E0B' if c / max_c >= 0.4 else '#6366F1'
+               for c in counts]
+
+    fig = go.Figure(go.Bar(
+        x=counts, y=labels, orientation='h',
+        marker=dict(color=colors, cornerradius=4),
+        text=counts, textposition='outside',
+        textfont=dict(size=11, color='#475569', family='Inter'),
+    ))
+    fig.update_layout(
+        title=dict(text=f"Chủ đề nổi bật từ {len(responses)} phản hồi — {unit_label}",
+                   font=dict(size=13, color='#475569', family='Inter')),
+        height=max(280, len(sorted_t) * 38 + 60),
+        margin=dict(l=10, r=50, t=45, b=10),
+        xaxis=dict(title='Số lần đề cập (ước tính)', gridcolor='rgba(226,232,240,0.5)'),
+        yaxis=dict(automargin=True, autorange='reversed'),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter', size=12),
+    )
+    # Use a stable key: group_id + first 20 chars of unit_label (spaces replaced)
+    safe_label = unit_label[:20].replace(' ', '_').replace('/', '_')
+    st.plotly_chart(fig, use_container_width=True,
+                    key=f"voice_theme_chart_{group_id}_{safe_label}")
 
 
 # ═══════════════════════════════════════════════════════════════════════
