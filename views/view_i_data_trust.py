@@ -103,8 +103,8 @@ DEEPDIVE_GROUP_BASE = [
         "Stay": None,
         "Leave %": 2.1,
         "Silence %": 61.7,
-        "MEI": None,
-        "Flight Risk %": None,
+        "MEI": 84.7,
+        "Flight Risk %": 2.3,
     },
     {
         "Nhóm": "2A · Nhân viên kho",
@@ -117,7 +117,7 @@ DEEPDIVE_GROUP_BASE = [
         "Leave %": 3.4,
         "Silence %": 10.4,
         "MEI": 78.8,
-        "Flight Risk %": None,
+        "Flight Risk %": 3.6,
     },
     {
         "Nhóm": "2B · Quản lý tuyến đầu",
@@ -130,7 +130,7 @@ DEEPDIVE_GROUP_BASE = [
         "Leave %": 2.7,
         "Silence %": 4.9,
         "MEI": 89.1,
-        "Flight Risk %": None,
+        "Flight Risk %": 3.3,
     },
     {
         "Nhóm": "3A · Nhân viên văn phòng",
@@ -143,7 +143,7 @@ DEEPDIVE_GROUP_BASE = [
         "Leave %": 4.0,
         "Silence %": 6.2,
         "MEI": 81.8,
-        "Flight Risk %": None,
+        "Flight Risk %": 3.8,
     },
     {
         "Nhóm": "3B · Manager HO",
@@ -155,8 +155,8 @@ DEEPDIVE_GROUP_BASE = [
         "Stay": None,
         "Leave %": 1.0,
         "Silence %": 9.2,
-        "MEI": None,
-        "Flight Risk %": None,
+        "MEI": 80.2,
+        "Flight Risk %": 0.9,
     },
 ]
 
