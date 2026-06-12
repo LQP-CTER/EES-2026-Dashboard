@@ -989,6 +989,28 @@ if "data_preloaded" not in st.session_state:
     except Exception:
         pass
 
+# ── WebSocket Keepalive — ping mỗi 25s để tránh idle disconnect ─────────────
+st.markdown("""
+<script>
+(function() {
+    var _kes_interval = null;
+    function _kes_start() {
+        if (_kes_interval) return;
+        _kes_interval = setInterval(function() {
+            fetch('/_stcore/health')
+                .then(function() {})
+                .catch(function() {});
+        }, 25000);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _kes_start);
+    } else {
+        _kes_start();
+    }
+})();
+</script>
+""", unsafe_allow_html=True)
+
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""<style>
 /* ═══════ BASE ═══════ */
