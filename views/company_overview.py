@@ -6,7 +6,7 @@ from textwrap import dedent
 from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025
-from utils.ai_generator import render_ai_insight_card
+from utils.ai_generator import render_ai_insight_card, render_ai_insight_card_dual
 from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
 from shared.codebook import get_codebook, get_question_label
 
@@ -926,23 +926,41 @@ def render(all_data, available_groups):
             "Total_Attrition_Risk": round(total_intent, 1)
         }
         
-        prompt = (
-            f"Viết một đoạn Tóm tắt Điều hành (Executive Summary) DỰA CHÍNH XÁC vào các chỉ số sau "
-            f"(KHÔNG bịa thêm chỉ số nào khác):\n"
-            f"- EI tổng = {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} so với 2025)\n"
-            f"- eNPS tổng = {ai_data['Total_eNPS']:+.0f}\n"
-            f"- Rủi ro nghỉ việc (Attrition Risk) = {ai_data['Total_Attrition_Risk']:.1f}%\n"
-            f"- Division xuất sắc nhất: {ai_data['Top_Division']} (EI {ai_data['Top_Division_EI']:.1f}%)\n"
-            f"- Division yếu nhất: {ai_data['Bottom_Division']} (EI {ai_data['Bottom_Division_EI']:.1f}%)\n"
-            f"- Trụ cột mạnh nhất hệ thống: {ai_data['Top_Pillar']}\n"
-            f"- Trụ cột yếu nhất hệ thống: {ai_data['Bottom_Pillar']}\n\n"
-            f"Yêu cầu: (1) Phân tích ý nghĩa của sự thay đổi EI/eNPS. "
-            f"(2) Đánh giá khoảng cách giữa Division dẫn đầu và Division chót bảng. "
-            f"(3) Đề xuất 1 chiến lược cải thiện cấp bách dựa trên Gartner Human Deal cho Division yếu nhất. "
-            f"CHỈ dùng đúng các con số đã liệt kê, KHÔNG tự suy diễn thêm."
+        _data_short = (
+            f"Bạn là chuyên gia phân tích nhân sự GHN Express. Dựa vào đúng các số liệu sau — KHÔNG thêm số liệu ngoài danh sách:\n"
+            f"- EI toàn tổ chức: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
+            f"- eNPS: {ai_data['Total_eNPS']:+.0f}\n"
+            f"- Tỷ lệ nhân viên có nguy cơ nghỉ việc: {ai_data['Total_Attrition_Risk']:.1f}%\n"
+            f"- Đơn vị EI cao nhất: {ai_data['Top_Division']} ({ai_data['Top_Division_EI']:.1f}%)\n"
+            f"- Đơn vị EI thấp nhất: {ai_data['Bottom_Division']} ({ai_data['Bottom_Division_EI']:.1f}%)\n"
+            f"- Trụ cột gắn kết mạnh nhất: {ai_data['Top_Pillar']}\n"
+            f"- Trụ cột gắn kết yếu nhất: {ai_data['Bottom_Pillar']}\n\n"
+            f"Viết theo đúng 5 mục sau, mỗi mục 1-2 câu, ngôn ngữ tự nhiên như analyst đang báo cáo nhanh cho Ban Giám Đốc:\n"
+            f"- **Sự suy giảm gắn kết:** [nhận định ngắn về EI, xu hướng và ý nghĩa]\n"
+            f"- **Rủi ro nghỉ việc:** [đánh giá nhanh mức độ nguy cơ attrition]\n"
+            f"- **Khoảng cách giữa các phòng ban:** [so sánh đơn vị cao nhất và thấp nhất, khoảng cách đó lớn hay nhỏ]\n"
+            f"- **Trụ cột mạnh nhất và yếu nhất:** [nhận định ngắn — giải thích trụ cột là khía cạnh trải nghiệm nào để người không làm HR cũng hiểu]\n"
+            f"- **Chiến lược cải thiện cấp bách:** [1-2 ưu tiên rõ ràng nhất cần hành động ngay]\n\n"
+            f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
         )
-        
-        render_ai_insight_card("AI Executive Summary & Insight", ai_data, prompt)
+        _data_long = (
+            f"Bạn là chuyên gia phân tích nhân sự GHN Express. Dựa vào đúng các số liệu sau — KHÔNG thêm số liệu ngoài danh sách:\n"
+            f"- EI toàn tổ chức: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
+            f"- eNPS: {ai_data['Total_eNPS']:+.0f}\n"
+            f"- Tỷ lệ nhân viên có nguy cơ nghỉ việc: {ai_data['Total_Attrition_Risk']:.1f}%\n"
+            f"- Đơn vị EI cao nhất: {ai_data['Top_Division']} ({ai_data['Top_Division_EI']:.1f}%)\n"
+            f"- Đơn vị EI thấp nhất: {ai_data['Bottom_Division']} ({ai_data['Bottom_Division_EI']:.1f}%)\n"
+            f"- Trụ cột gắn kết mạnh nhất: {ai_data['Top_Pillar']}\n"
+            f"- Trụ cột gắn kết yếu nhất: {ai_data['Bottom_Pillar']}\n\n"
+            f"Viết theo đúng 5 mục sau, mỗi mục 3-4 câu phân tích sâu, tự nhiên như analyst đang giải thích bối cảnh cho Ban Giám Đốc:\n"
+            f"- **Sự suy giảm gắn kết:** [phân tích EI và eNPS — con số đang nói lên điều gì, và tại sao xu hướng này đáng lo hoặc đáng chú ý]\n"
+            f"- **Rủi ro nghỉ việc:** [phân tích mức độ rủi ro, ý nghĩa với tổ chức, và nhóm nào cần theo dõi trước]\n"
+            f"- **Khoảng cách giữa các phòng ban:** [phân tích khoảng cách EI, điều đó phản ánh gì, và hệ quả nếu không can thiệp]\n"
+            f"- **Trụ cột mạnh nhất và yếu nhất:** [giải thích ý nghĩa của trụ cột này trong trải nghiệm hàng ngày của nhân viên, và hàm ý cho tổ chức]\n"
+            f"- **Chiến lược cải thiện cấp bách:** [phân tích lý do ưu tiên, đề xuất hành động cụ thể có thể triển khai trong ngắn hạn]\n\n"
+            f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
+        )
+        render_ai_insight_card_dual("AI Executive Summary & Insight", ai_data, _data_short, _data_long)
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: ORG DRILLDOWN (KHỐI / DIVISION)
@@ -1006,15 +1024,16 @@ def render(all_data, available_groups):
                 "Lowest_System_Pillar": lowest_pillar
             }
             prompt = (
-                f"Phân tích khoảng cách sức khỏe tổ chức DỰA VÀO CÁC CON SỐ SAU "
-                f"(KHÔNG đề cập đến chỉ số nào khác):\n"
-                f"- Khối dẫn đầu: {org_ai_data['Top_Division']} (EI = {org_ai_data['Top_EI']:.1f}%)\n"
-                f"- Khối đứng chót: {org_ai_data['Bottom_Division']} (EI = {org_ai_data['Bottom_EI']:.1f}%)\n"
-                f"- Trụ cột thấp nhất toàn hệ thống: {org_ai_data['Lowest_System_Pillar']}\n\n"
-                f"Yêu cầu: (1) Lượng hóa khoảng cách EI giữa 2 khối. "
-                f"(2) Phát cảnh báo 'Pillar Alert' cho trụ cột yếu nhất, giải thích TẠI SAO nó thấp. "
-                f"(3) Đề xuất chiến lược xuyên suốt thay vì giải quyết cục bộ. "
-                f"CHỈ dùng đúng 3 dữ kiện trên."
+                f"Bạn là chuyên gia phân tích nhân sự GHN. Người đọc vừa xem biểu đồ EI và heatmap trụ cột theo khối."
+                f" Dưới đây là các số liệu thực tế — chỉ dùng đúng những con số này:\n"
+                f"- Đơn vị EI cao nhất: {org_ai_data['Top_Division']} ({org_ai_data['Top_EI']:.1f}%)\n"
+                f"- Đơn vị EI thấp nhất: {org_ai_data['Bottom_Division']} ({org_ai_data['Bottom_EI']:.1f}%)\n"
+                f"- Trụ cột điểm thấp nhất toàn hệ thống: {org_ai_data['Lowest_System_Pillar']}\n\n"
+                f"Viết theo 3 mục sau, mỗi mục 2-3 câu, tự nhiên như analyst đang tóm tắt biểu đồ vừa xem:\n"
+                f"- **Khoảng cách EI giữa các khối:** [con số đó lớn hay nhỏ, và điều gì có thể đang xảy ra bên dưới]\n"
+                f"- **Trụ cột yếu nhất toàn hệ thống:** [giải thích trụ cột {org_ai_data['Lowest_System_Pillar']} ảnh hưởng như thế nào đến trải nghiệm nhân viên hàng ngày]\n"
+                f"- **Ưu tiên can thiệp:** [đơn vị nào và vấn đề gì cần xử lý trước, lý do ngắn gọn]\n\n"
+                f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
             )
             render_ai_insight_card("AI Organization Insight", org_ai_data, prompt, custom_style="margin-top: 24px; padding: 20px;")
 
@@ -1304,14 +1323,15 @@ def render(all_data, available_groups):
                         "Bottom_EI": round(df_demo.iloc[-1]['ei_mean'], 1)
                     }
                     prompt = (
-                        f"Dựa trên phân mảnh nhân khẩu học, phân tích DỰA VÀO CÁC CON SỐ SAU "
-                        f"(KHÔNG bịa thêm chỉ số):\n"
-                        f"- Nhóm gắn kết CAO nhất: {demo_ai_data['Highest_Engagement_Group']} (EI = {demo_ai_data['Top_EI']:.1f}%)\n"
-                        f"- Nhóm gắn kết THẤP nhất: {demo_ai_data['Lowest_Engagement_Group']} (EI = {demo_ai_data['Bottom_EI']:.1f}%)\n\n"
-                        f"Yêu cầu: (1) Giải thích khoảng cách EI giữa 2 nhóm. "
-                        f"(2) Đưa ra góc nhìn Employee Life-cycle: tại sao nhóm thấp lại ở giai đoạn 'kỳ vọng không được đáp ứng' (honeymoon phase)? "
-                        f"(3) Đề xuất 1 cách can thiệp giữ chân cụ thể. "
-                        f"CHỈ phân tích từ 2 con số EI đã cho."
+                        f"Bạn là chuyên gia phân tích nhân sự GHN. Người đọc vừa xem biểu đồ EI theo thâm niên."
+                        f" Dưới đây là số liệu thực tế — chỉ dùng đúng những con số này:\n"
+                        f"- Nhóm có EI cao nhất: {demo_ai_data['Highest_Engagement_Group']} ({demo_ai_data['Top_EI']:.1f}%)\n"
+                        f"- Nhóm có EI thấp nhất: {demo_ai_data['Lowest_Engagement_Group']} ({demo_ai_data['Bottom_EI']:.1f}%)\n\n"
+                        f"Viết theo 3 mục sau, mỗi mục 2-3 câu, tự nhiên như analyst đang tóm tắt cho Giám Đốc Nhân Sự:\n"
+                        f"- **Nhóm gắn kết cao và thấp:** [so sánh hai nhóm, khoảng cách đó lớn hay nhỏ trong bối cảnh tổ chức]\n"
+                        f"- **Ý nghĩa với hành trình nhân viên:** [nhóm {demo_ai_data['Lowest_Engagement_Group']} đang trải qua giai đoạn gì, điều gì có thể đang xảy ra với họ]\n"
+                        f"- **Đề xuất can thiệp:** [ưu tiên cụ thể cho nhóm có EI thấp, lý do ngắn gọn]\n\n"
+                        f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
                     )
                     render_ai_insight_card("AI Demographic Insight", demo_ai_data, prompt, custom_style="margin-top: 16px; padding: 20px;")
 
@@ -1381,17 +1401,16 @@ def render(all_data, available_groups):
                     "Bottom_Bucket_with_mentions": df_evp_ai.iloc[0]['EVP_Factor']
                 }
                 prompt = (
-                    f"Phân tích dữ liệu đếm từ khóa EVP từ câu hỏi mở của nhân viên. "
-                    f"Dữ liệu thực tế:\n"
+                    f"Bạn là chuyên gia phân tích nhân sự GHN. Người đọc vừa xem biểu đồ tần suất chủ đề từ các câu trả lời mở của nhân viên."
+                    f" Dưới đây là dữ liệu thực tế — chỉ nhắc đến các chủ đề có mentions > 0:\n"
                     f"{nlp_ai_data['EVP_Buckets_Frequencies']}\n\n"
-                    f"YÊU CẦU NGHIÊM NGẶT:\n"
-                    f"- CHỈ phân tích các yếu tố CÓ mentions > 0 trong dữ liệu trên.\n"
-                    f"- TUYỆT ĐỐI KHÔNG nhắc đến, ám chỉ, hoặc suy diễn về các yếu tố có 0 mentions.\n"
-                    f"- Nêu bật yếu tố được nhắc nhiều nhất (điểm mạnh EVP) và yếu tố ít được nhắc nhất (rủi ro tiềm ẩn).\n"
-                    f"- Mọi con số trích dẫn PHẢI khớp với dữ liệu đã cho."
+                    f"Viết theo 3 mục sau, mỗi mục 2-3 câu, tự nhiên như analyst đang giải thích biểu đồ cho Giám Đốc:\n"
+                    f"- **Chủ đề được nhắc nhiều nhất:** [đây là chủ đề {nlp_ai_data['Top_Bucket']} — điều đó phản ánh gì về điều nhân viên đang thực sự quan tâm hoặc muốn nói]\n"
+                    f"- **Chủ đề ít được nhắc nhất:** [đó là tín hiệu tốt hay là khoảng trống cần chú ý — phân tích ngắn gọn]\n"
+                    f"- **Định hướng EVP:** [dựa trên toàn bộ dữ liệu, tổ chức nên ưu tiên cải thiện hoặc duy trì yếu tố nào để thu hút và giữ chân nhân tài]\n\n"
+                    f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
                 )
                 render_ai_insight_card("AI NLP Insight: Định Vị Thương Hiệu (EVP)", nlp_ai_data, prompt, badge="NLP Engine", custom_style="height: 100%; margin-bottom: 0; padding: 24px;")
     else:
         st.info("Chưa có dữ liệu câu hỏi mở (NLP) để phân tích EVP.")
-
 

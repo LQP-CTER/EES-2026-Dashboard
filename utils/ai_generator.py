@@ -321,3 +321,70 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
             container.markdown(_build_html(full_text, is_typing=True), unsafe_allow_html=True)
         st.session_state[cache_key] = full_text
         container.markdown(_build_html(full_text), unsafe_allow_html=True)
+
+def render_ai_insight_card_dual(
+        title, data_dict, prompt_short, prompt_long,
+        badge="EES-Analyzer-v2.0", custom_style=""):
+    # Short: auto-streams on load.  Long: lazy on button click.  Both cached.
+    data_json = json.dumps(data_dict, ensure_ascii=False)
+    ck_s = f"ai_insight_{get_cache_key(data_json, prompt_short)}"
+    ck_l = f"ai_insight_long_{get_cache_key(data_json, prompt_long)}"
+    ekey = f"ai_expand_{ck_s[:14]}"
+    dbrd = "margin-top:12px;border-top:2px solid rgba(67,24,255,0.18);"
+
+    def _html(content, is_typing=False, xs=''):
+        cur = (
+            "<span style='border-right:2px solid #FF5200;"
+            "margin-left:2px;opacity:0.7'></span>"
+            if is_typing else ''
+        )
+        s = f"{custom_style} {xs}".strip()
+        return (
+            f'<div class="ai-insight-container" style="{s}">'
+            f'<div class="ai-header">'
+            f'<h4 class="ai-title">{title}</h4>'
+            f'<div class="ai-badge">{badge}</div>'
+            '</div>'
+            f'<div class="ai-content">{format_ai_html(content)}{cur}</div>'
+            '</div>'
+        )
+
+    sc = st.empty()
+    if ck_s in st.session_state:
+        sc.markdown(_html(st.session_state[ck_s]), unsafe_allow_html=True)
+    else:
+        txt = ""
+        for chunk in generate_ees_insight_stream(data_json, prompt_short):
+            txt += chunk
+            sc.markdown(_html(txt, is_typing=True), unsafe_allow_html=True)
+        st.session_state[ck_s] = txt
+        sc.markdown(_html(txt), unsafe_allow_html=True)
+
+    col_btn, _ = st.columns([1, 4])
+    with col_btn:
+        if not st.session_state.get(ekey):
+            if st.button("Xem phan tich chi tiet",
+                         key=f"btn_exp_{ck_s[:12]}"):
+                st.session_state[ekey] = True
+        else:
+            if st.button("Thu gon",
+                         key=f"btn_col_{ck_s[:12]}"):
+                del st.session_state[ekey]
+
+    if st.session_state.get(ekey):
+        lc = st.empty()
+        if ck_l in st.session_state:
+            lc.markdown(
+                _html(st.session_state[ck_l], xs=dbrd),
+                unsafe_allow_html=True
+            )
+        else:
+            txt = ""
+            for chunk in generate_ees_insight_stream(data_json, prompt_long):
+                txt += chunk
+                lc.markdown(
+                    _html(txt, is_typing=True, xs=dbrd),
+                    unsafe_allow_html=True
+                )
+            st.session_state[ck_l] = txt
+            lc.markdown(_html(txt, xs=dbrd), unsafe_allow_html=True)
