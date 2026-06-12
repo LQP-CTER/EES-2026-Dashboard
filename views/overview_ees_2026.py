@@ -479,7 +479,9 @@ def render():
             <div class="ed-hero-shell">
                 <div class="ed-hero-copy">
                     <span class="ed-kicker">Employee Engagement Survey 2026</span>
-                    <h1 class="ed-headline">Hành trình EES 2026 Phía sau những con số</h1>
+                    <h1 class="ed-headline">Hành trình EES 2026 
+                    <br>
+                    Phía sau những con số</h1>
                     <p class="ed-hero-sub">Một lớp tổng quan điều hành về quy mô triển khai, chất lượng dữ liệu và những nguyên tắc được áp dụng để đảm bảo kết quả EES 2026 phản ánh trung thực tiếng nói của nhân viên GHN.</p>
                 </div>
                 <div class="ed-command-panel">
