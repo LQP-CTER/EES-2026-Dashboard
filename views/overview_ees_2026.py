@@ -1077,7 +1077,7 @@ def render():
         '.gc-viewport { overflow:hidden; width:100%; }'
         '.gc-track { display:flex; gap:20px; transition:transform 0.45s cubic-bezier(0.25,0.8,0.25,1); }'
         '.gc-item { flex:0 0 auto; width:calc((100% - 40px)/3); height:420px; position:relative;'
-        '  border-radius:18px; overflow:hidden; cursor:pointer;'
+        '  border-radius:18px; overflow:hidden; cursor:zoom-in;'
         '  box-shadow:0 8px 28px -8px rgba(10,31,68,.22);'
         '  transition:transform 0.35s ease,box-shadow 0.35s ease; }'
         '.gc-item:hover { transform:translateY(-6px) scale(1.012); box-shadow:0 22px 48px -12px rgba(10,31,68,.28); }'
@@ -1103,10 +1103,37 @@ def render():
         '  cursor:pointer; transition:background 0.25s,transform 0.25s; border:none; }'
         '.gc-dot.on { background:#FF5200; transform:scale(1.35); }'
         '.gc-ctr { text-align:center; margin-top:8px; font-size:0.72rem; font-weight:700; color:#94A3B8; letter-spacing:0.12em; }'
+        '.lb { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:9999;'
+        '  align-items:center; justify-content:center; flex-direction:column; }'
+        '.lb.open { display:flex; }'
+        '.lb-inner { position:relative; display:flex; align-items:center; justify-content:center;'
+        '  max-width:92vw; max-height:82vh; }'
+        '.lb-img { max-width:100%; max-height:82vh; object-fit:contain; border-radius:10px;'
+        '  box-shadow:0 32px 80px rgba(0,0,0,0.6); display:block; }'
+        '.lb-cap { color:rgba(255,255,255,0.85); font-size:0.88rem; font-weight:600;'
+        '  margin-top:16px; text-align:center; max-width:80vw; }'
+        '.lb-x { position:fixed; top:20px; right:24px; width:44px; height:44px;'
+        '  background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.2);'
+        '  border-radius:50%; color:white; font-size:1.4rem; cursor:pointer;'
+        '  display:flex; align-items:center; justify-content:center;'
+        '  transition:background 0.2s; z-index:10000; }'
+        '.lb-x:hover { background:rgba(255,82,0,0.85); }'
+        '.lb-arr { position:fixed; top:50%; transform:translateY(-50%);'
+        '  width:52px; height:52px; background:rgba(255,255,255,0.12);'
+        '  border:1.5px solid rgba(255,255,255,0.2); border-radius:50%;'
+        '  color:white; font-size:1.5rem; cursor:pointer;'
+        '  display:flex; align-items:center; justify-content:center;'
+        '  transition:background 0.2s; z-index:10000; }'
+        '.lb-arr:hover { background:rgba(255,82,0,0.85); }'
+        '.lb-lft { left:20px; } .lb-rgt { right:20px; }'
+        '.lb-counter { position:fixed; bottom:20px; left:50%; transform:translateX(-50%);'
+        '  color:rgba(255,255,255,0.55); font-size:0.72rem; font-weight:700; letter-spacing:0.15em; }'
         '</style></head><body>'
         '<div class="gc-shell">'
-        '<div class=\"gc-header\"><span class=\"gc-title\">Góc nhìn hậu trường</span>'
-        '<span class=\"gc-tag\">Ảnh thực tế</span></div>'
+        '<div class="gc-header">'
+        '<span class="gc-title">G\u00f3c nh\u00ecn h\u1eadu tr\u01b0\u1eddng</span>'
+        '<span class="gc-tag">\u1ea2nh th\u1ef1c t\u1ebf</span>'
+        '</div>'
         '<div class="gc-stage">'
         '<button class="gc-btn gc-prev dis" id="gP" onclick="gM(-1)">&#8592;</button>'
         '<div class="gc-viewport"><div class="gc-track" id="gT"></div></div>'
@@ -1115,17 +1142,28 @@ def render():
         '<div class="gc-dots" id="gD"></div>'
         '<div class="gc-ctr" id="gC"></div>'
         '</div>'
+        '<div class="lb" id="lb" onclick="lbBg(event)">'
+        '  <button class="lb-x" onclick="lbClose()">&#215;</button>'
+        '  <button class="lb-arr lb-lft" onclick="lbNav(-1);event.stopPropagation()">&#8592;</button>'
+        '  <div class="lb-inner">'
+        '    <img class="lb-img" id="lbImg" src="" alt="">'
+        '  </div>'
+        '  <button class="lb-arr lb-rgt" onclick="lbNav(1);event.stopPropagation()">&#8594;</button>'
+        '  <div class="lb-cap" id="lbCap"></div>'
+        '  <div class="lb-counter" id="lbN"></div>'
+        '</div>'
         '<script>'
-        f'var D={_items_data},PER=3,cur=0;'
+        f'var D={_items_data},PER=3,cur=0,lbI=0;'
         'var n=D.length,pages=Math.max(1,n-PER+1);'
         'var T=document.getElementById("gT");'
         'var dEl=document.getElementById("gD");'
         'var cEl=document.getElementById("gC");'
         'var bP=document.getElementById("gP"),bN=document.getElementById("gN");'
-        'D.forEach(function(it){'
+        'D.forEach(function(it,idx){'
         '  var el=document.createElement("div"); el.className="gc-item";'
         '  el.innerHTML="<img class=\'gc-img\' src=\'"+(it.url)+"\' loading=\'lazy\'>'
         '    <div class=\'gc-caption\'>"+it.cap+"</div>";'
+        '  (function(i){el.onclick=function(){lbOpen(i);};})(idx);'
         '  T.appendChild(el);'
         '});'
         'for(var i=0;i<pages;i++){'
@@ -1143,10 +1181,34 @@ def render():
         '  cEl.textContent=(Math.min(cur+PER,n))+\" / \"+n+\" ảnh\";'
         '}'
         'function gM(d){gTo(cur+d);}'
+        'function lbOpen(i){'
+        '  lbI=i; var it=D[i];'
+        '  document.getElementById("lbImg").src=it.url;'
+        '  document.getElementById("lbCap").textContent=it.cap;'
+        '  document.getElementById(\"lbN\").textContent=(i+1)+\" / \"+n;'
+        '  document.getElementById("lb").className="lb open";'
+        '}'
+        'function lbClose(){'
+        '  document.getElementById("lb").className="lb";'
+        '}'
+        'function lbBg(e){'
+        '  if(e.target===document.getElementById("lb"))lbClose();'
+        '}'
+        'function lbNav(dir){'
+        '  lbOpen((lbI+dir+n)%n);'
+        '}'
+        'document.addEventListener("keydown",function(e){'
+        '  var o=document.getElementById("lb");'
+        '  if(!o.classList.contains("open"))return;'
+        '  if(e.key==="Escape")lbClose();'
+        '  if(e.key==="ArrowLeft")lbNav(-1);'
+        '  if(e.key==="ArrowRight")lbNav(1);'
+        '});'
         'gTo(0);'
         '</script></body></html>'
     )
     components.html(gallery_html, height=600, scrolling=False)
+
 
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
@@ -1821,26 +1883,26 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">EX</div>
                     <div class="ed-team-role">Project Lead</div>
-                    <div class="ed-team-name">Team EX &amp; L&amp;D</div>
-                    <div class="ed-team-desc">Thiết kế bộ câu hỏi, phối hợp triển khai khảo sát và điều phối thu thập phản hồi toàn GHN.</div>
+                    <div class="ed-team-name">EX</div>
+                    <div class="ed-team-desc">Thiết kế nội dung khảo sát, điều phối triển khai và theo dõi tiến độ thực hiện trên toàn GHN.</div>
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">HR</div>
-                    <div class="ed-team-role">Truyền thông &amp; Lan tỏa</div>
-                    <div class="ed-team-name">HRBP các khối phòng ban</div>
-                    <div class="ed-team-desc">Hỗ trợ truyền thông nội bộ, thúc đẩy nhân viên tham gia khảo sát và đảm bảo tỉ lệ phản hồi đạt mức cao nhất tại từng đơn vị.</div>
+                    <div class="ed-team-role">Truyền thông &amp; Kết nối</div>
+                    <div class="ed-team-name">HRBP các khối / phòng ban</div>
+                    <div class="ed-team-desc">Phối hợp truyền thông, kết nối các phòng ban và thúc đẩy sự tham gia của nhân viên trong chương trình khảo sát.</div>
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">IT</div>
                     <div class="ed-team-role">Hạ tầng &amp; Hệ thống</div>
-                    <div class="ed-team-name">Team IT, Product</div>
-                    <div class="ed-team-desc">Đảm bảo hạ tầng server, băng thông mạng và hỗ trợ kỹ thuật liên tục trong suốt quá trình triển khai khảo sát.</div>
+                    <div class="ed-team-name">Team IT, Product, L&amp;D</div>
+                    <div class="ed-team-desc">Đồng hành hỗ trợ về hệ thống, kỹ thuật và các công cụ trong suốt chương trình khảo sát.</div>
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">CPO</div>
                     <div class="ed-team-role">Project Sponsor</div>
                     <div class="ed-team-name">CPO</div>
-                    <div class="ed-team-desc">Bảo trợ dự án, định hướng chiến lược và đảm bảo kết quả EES 2026 được ứng dụng vào các quyết định nhân sự cấp cao.</div>
+                    <div class="ed-team-desc">Định hướng mục tiêu, hỗ trợ nguồn lực và đồng hành cùng chương trình trong suốt quá trình triển khai.</div>
                 </div>
             </div>
         </div>
