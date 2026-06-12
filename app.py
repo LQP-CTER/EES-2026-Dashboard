@@ -2234,12 +2234,28 @@ with st.sidebar:
                         sessions = _load_active_sessions()
                         sessions.pop(token, None)
                         _save_active_sessions(sessions)
-                
+
                 # Dọn sạch session state, cookie và query parameters
                 _clear_user_session()
                 _clear_remember_cookie()
                 st.query_params.clear()
                 st.query_params["logout"] = "1"
+                st.rerun()
+        with col2:
+            if st.button("Làm mới quyền"):
+                from utils.authorization import load_authorization_table
+                load_authorization_table.clear()
+                _email = st.session_state.get("user_email", "")
+                if _email:
+                    _new_auth = _get_authorization(_email)
+                    st.session_state.user_authorization = _new_auth
+                    token = st.session_state.get("current_token")
+                    if token:
+                        with _sessions_lock:
+                            sessions = _load_active_sessions()
+                            if token in sessions:
+                                sessions[token]["authorization"] = _new_auth
+                                _save_active_sessions(sessions)
                 st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
