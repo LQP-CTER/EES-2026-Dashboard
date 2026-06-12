@@ -2155,11 +2155,6 @@ with st.sidebar:
             st.code(traceback.format_exc())
             st.stop()
 
-        # User bị giới hạn nhưng nhóm này không có dữ liệu thuộc phạm vi được cấp
-        if scope_restricted and (df_raw is None or df_raw.empty):
-            page_loader.clear()
-            st.info("Bạn không có dữ liệu thuộc phạm vi được cấp quyền trong nhóm khảo sát này.")
-            st.stop()
 
         sel_tenure_sb = st.selectbox(
             "Thâm niên", tenure_opts,
@@ -2327,6 +2322,15 @@ elif is_company:
 else:
     cfg    = available[sel_group]
     n_resp = df_filtered.shape[0] if df_filtered is not None else 0
+
+    # User bị giới hạn và nhóm này không có dữ liệu trong phạm vi
+    if scope_restricted and (df_filtered is None or df_filtered.empty):
+        if page_loader is not None: page_loader.clear()
+        st.warning(
+            "Nhóm khảo sát này không có dữ liệu thuộc phạm vi bạn được cấp quyền xem. "
+            "Vui lòng chọn nhóm khảo sát khác từ sidebar."
+        )
+        st.stop()
 
     if page_loader is not None:
         page_loader.add("Đang áp dụng bộ lọc thâm niên / phòng ban...")
