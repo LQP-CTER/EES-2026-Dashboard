@@ -1969,6 +1969,13 @@ st.markdown("""
 available = get_available_groups()
 group_opts = list(available.keys())
 
+# Lọc nhóm khảo sát theo survey_groups của user (nếu bị giới hạn)
+_auth_info_groups = st.session_state.get("user_authorization", {})
+if isinstance(_auth_info_groups, dict):
+    _allowed_groups = _auth_info_groups.get("survey_groups", ["ALL"])
+    if _allowed_groups and "ALL" not in _allowed_groups:
+        group_opts = [g for g in group_opts if g in _allowed_groups]
+
 def _safe_tenure_index(value):
     try:
         return tenure_opts.index(value)
@@ -2357,11 +2364,11 @@ else:
         elif sel_pillar:
             from views import pillar_renderer
             pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
-        elif sel_nav and "\u0110o l\u01b0\u1eddng Impact" in sel_nav:
+        elif sel_nav and "Đo lường Impact" in sel_nav:
             view_g_kpi_impact.render(df_filtered, cfg)
         else:
-            st.info("Ch\u1ecdn m\u1ed9t tr\u1ee5 c\u1ed9t t\u1eeb sidebar b\u00ean tr\u00e1i.")
+            st.info("Chọn một trụ cột từ sidebar bên trái.")
     except Exception as e:
-        st.error(f"L\u1ed7i khi t\u1ea3i ph\u00e2n t\u00edch: {e}")
+        st.error(f"Lỗi khi tải phân tích: {e}")
         import traceback
         st.code(traceback.format_exc())

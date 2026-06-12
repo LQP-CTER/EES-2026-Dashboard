@@ -57,7 +57,7 @@ def load_authorization_table() -> pd.DataFrame:
     if missing:
         raise ValueError(f"Authorization sheet thiếu cột bắt buộc: {', '.join(sorted(missing))}")
 
-    for col in ["email", "status", "role", "division", "department", "section", "survey_view", "full_name", "idnv", "job_title"]:
+    for col in ["email", "status", "role", "division", "department", "section", "survey_view", "survey_groups", "full_name", "idnv", "job_title"]:
         if col not in df.columns:
             df[col] = ""
         df[col] = df[col].fillna("").map(_normalize_text)
@@ -66,6 +66,7 @@ def load_authorization_table() -> pd.DataFrame:
     df["status_norm"] = df["status"].str.upper()
     df["role_norm"] = df["role"].str.upper()
     df["survey_view_norm"] = df["survey_view"].str.upper()
+    df["survey_groups_norm"] = df["survey_groups"].str.upper()
     return df
 
 
@@ -81,6 +82,13 @@ def get_authorized_user(email: str) -> Optional[dict]:
         return None
 
     first = matched.iloc[0]
+
+    # Parse survey_groups: hỗ trợ comma-separated trong 1 cell ("3A,3B") VÀ nhiều rows
+    raw_groups = [v for v in matched["survey_groups_norm"].tolist() if v]
+    all_groups: list[str] = []
+    for v in raw_groups:
+        all_groups.extend([g.strip() for g in v.split(",") if g.strip()])
+
     return {
         "email": email_norm,
         "idnv": first.get("idnv", ""),
@@ -91,6 +99,7 @@ def get_authorized_user(email: str) -> Optional[dict]:
         "departments": sorted({v for v in matched["department"].tolist() if v}),
         "sections": sorted({v for v in matched["section"].tolist() if v}),
         "survey_view": sorted({v for v in matched["survey_view_norm"].tolist() if v}) or ["ALL"],
+        "survey_groups": sorted(set(all_groups)) or ["ALL"],
         "rows": len(matched),
     }
 
