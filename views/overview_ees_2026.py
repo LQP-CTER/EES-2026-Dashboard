@@ -1085,7 +1085,7 @@ def render():
         '  box-shadow:0 8px 28px -8px rgba(10,31,68,.22);'
         '  transition:transform 0.35s ease,box-shadow 0.35s ease; }'
         '.gc-item:hover { transform:translateY(-6px) scale(1.012); box-shadow:0 22px 48px -12px rgba(10,31,68,.28); }'
-        '.gc-img { width:100%; height:100%; object-fit:cover; display:block; }'
+        '.gc-img { width:100%; height:100%; object-fit:contain; background:#f8fafc; display:block; }'
         '.gc-caption { position:absolute; bottom:0; left:0; right:0;'
         '  background:linear-gradient(transparent,rgba(10,31,68,.82));'
         '  color:#fff; padding:32px 16px 14px; font-size:0.82rem; font-weight:600;'
