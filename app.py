@@ -2224,39 +2224,21 @@ with st.sidebar:
             </div>
         </div>
         """, unsafe_allow_html=True)
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            if st.button("Đăng xuất"):
-                # Xóa token khỏi server-side registry
-                token = st.session_state.get("current_token")
-                if token:
-                    with _sessions_lock:
-                        sessions = _load_active_sessions()
-                        sessions.pop(token, None)
-                        _save_active_sessions(sessions)
+        if st.button("Đăng xuất"):
+            # Xóa token khỏi server-side registry
+            token = st.session_state.get("current_token")
+            if token:
+                with _sessions_lock:
+                    sessions = _load_active_sessions()
+                    sessions.pop(token, None)
+                    _save_active_sessions(sessions)
 
-                # Dọn sạch session state, cookie và query parameters
-                _clear_user_session()
-                _clear_remember_cookie()
-                st.query_params.clear()
-                st.query_params["logout"] = "1"
-                st.rerun()
-        with col2:
-            if st.button("Làm mới quyền"):
-                from utils.authorization import load_authorization_table
-                load_authorization_table.clear()
-                _email = st.session_state.get("user_email", "")
-                if _email:
-                    _new_auth = _get_authorization(_email)
-                    st.session_state.user_authorization = _new_auth
-                    token = st.session_state.get("current_token")
-                    if token:
-                        with _sessions_lock:
-                            sessions = _load_active_sessions()
-                            if token in sessions:
-                                sessions[token]["authorization"] = _new_auth
-                                _save_active_sessions(sessions)
-                st.rerun()
+            # Dọn sạch session state, cookie và query parameters
+            _clear_user_session()
+            _clear_remember_cookie()
+            st.query_params.clear()
+            st.query_params["logout"] = "1"
+            st.rerun()
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
 if is_overview:
@@ -2346,6 +2328,23 @@ else:
             "Nhóm khảo sát này không có dữ liệu thuộc phạm vi bạn được cấp quyền xem. "
             "Vui lòng chọn nhóm khảo sát khác từ sidebar."
         )
+        # Diagnostic: show what we're searching for vs what exists
+        _auth_diag = st.session_state.get("user_authorization", {})
+        _scope_diag = user_scope
+        with st.expander("Thông tin chẩn đoán (dành cho Admin)", expanded=True):
+            st.markdown(f"**Đang tìm kiếm:** cột `{_scope_diag.get('column')}` = `{_scope_diag.get('values')}`")
+            try:
+                from utils.data_loader import load_group as _lg
+                _df_raw_diag, _ = _lg(sel_group)
+                _col = _scope_diag.get("column")
+                if _col and _col in _df_raw_diag.columns:
+                    _existing = sorted(_df_raw_diag[_col].dropna().unique().tolist())
+                    st.markdown(f"**Giá trị thực tế trong nhóm `{sel_group}`** (cột `{_col}`):")
+                    st.code("\n".join(_existing))
+                else:
+                    st.markdown(f"Cột `{_col}` không tồn tại trong data. Các cột có sẵn: `{list(_df_raw_diag.columns[:20])}`")
+            except Exception as _e:
+                st.error(f"Không load được data để chẩn đoán: {_e}")
         st.stop()
 
     if page_loader is not None:
@@ -2369,7 +2368,6 @@ else:
     """, unsafe_allow_html=True)
 
     try:
-        # Detect which pillar is selected
         sel_pillar = None
         for p_id in PILLAR_ORDER:
             if sel_nav and PILLAR_META[p_id]['name'] in sel_nav:
