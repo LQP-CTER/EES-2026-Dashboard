@@ -1877,7 +1877,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
         <div class="ed-team-section">
             <div class="ed-section-header">
                 <h2 class="ed-section-title">Đội ngũ thực hiện</h2>
-                <span class="ed-section-tag">Những người đứng sau dữ liệu</span>
+                <span class="ed-section-tag">Những người đứng sau</span>
             </div>
             <div class="ed-team-grid">
                 <div class="ed-team-card">
