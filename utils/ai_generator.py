@@ -289,11 +289,50 @@ def format_ai_html(text):
     html = html.replace('<br><br>•', '<br>•')
     return html
 
+
+def _get_scope_prefix() -> str:
+    """Trả về context prefix phạm vi nếu user bị giới hạn.
+
+    Inject vào đầu mọi AI prompt để model biết đây là phân tích
+    cho một đơn vị cụ thể, không suy luận toàn GHN.
+    """
+    try:
+        auth = st.session_state.get("user_authorization", {})
+        if not isinstance(auth, dict):
+            return ""
+        if auth.get("role", "").upper() == "ADMIN":
+            return ""
+        views = [str(v).strip().upper() for v in auth.get("survey_view", []) if str(v).strip()]
+        if not views or "ALL" in views:
+            return ""
+        _level_map = {
+            "SECTION": ("sections", "Team/Section"),
+            "DEPARTMENT": ("departments", "Phòng ban"),
+            "PHONG_BAN": ("departments", "Phòng ban"),
+            "DIVISION": ("divisions", "Khối"),
+            "KHOI": ("divisions", "Khối"),
+        }
+        for lk in ("SECTION", "DEPARTMENT", "PHONG_BAN", "DIVISION", "KHOI"):
+            if lk in views:
+                field, label = _level_map[lk]
+                units = [u for u in auth.get(field, []) if u]
+                if units:
+                    unit_str = ", ".join(units)
+                    return (
+                        f"[BỐI CẢNH PHÂN TÍCH: Dữ liệu dưới đây CHỈ thuộc {label} '{unit_str}'. "
+                        f"Phân tích theo góc nhìn của {label} này — "
+                        f"KHÔNG suy luận hoặc so sánh sang các đơn vị ngoài phạm vi cung cấp.]\n\n"
+                    )
+        return ""
+    except Exception:
+        return ""
+
 def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer-v2.0", custom_style="", target_container=None):
     """
     Render AI insight card với Groq dual-key streaming.
     Cache kết quả trong session_state để không gọi lại API khi F5.
     """
+    context_prompt = _get_scope_prefix() + context_prompt
     data_json = json.dumps(data_dict, ensure_ascii=False)
     cache_key = f"ai_insight_{get_cache_key(data_json, context_prompt)}"
 
@@ -326,6 +365,9 @@ def render_ai_insight_card_dual(
         title, data_dict, prompt_short, prompt_long,
         badge="EES-Analyzer-v2.0", custom_style=""):
     # Short: auto-streams on load.  Long: lazy on button click.  Both cached.
+    _sp = _get_scope_prefix()
+    prompt_short = _sp + prompt_short
+    prompt_long  = _sp + prompt_long
     data_json = json.dumps(data_dict, ensure_ascii=False)
     ck_s = f"ai_insight_{get_cache_key(data_json, prompt_short)}"
     ck_l = f"ai_insight_long_{get_cache_key(data_json, prompt_long)}"
