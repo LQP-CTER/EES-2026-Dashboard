@@ -82,7 +82,7 @@ def render(df, cfg, pillar_filter=None, group_id=None):
         _n_removed = DEEPDIVE_QUALITY_TOTALS['dropped']
         _n_final = DEEPDIVE_QUALITY_TOTALS['cleaned']
         _pct_removed = round(_n_removed / _n_before * 100, 1) if _n_before > 0 else 0.0
-        _filter_desc = 'Số mẫu trước/sau loại theo EES_2026_DeepDive_v13_Final'
+        _filter_desc = 'Số mẫu trước/sau loại theo kết quả làm sạch'
         _filter_meth = 'deepdive'
     else:
         _q_group = next((g for g in DEEPDIVE_GROUP_BASE if g['Nhóm'].split(' · ')[0].strip().upper() == _gid), None)
@@ -91,7 +91,7 @@ def render(df, cfg, pillar_filter=None, group_id=None):
             _n_removed = int(_q_group['Dropped'])
             _n_final = int(_q_group['Cleaned base'])
             _pct_removed = round(_n_removed / _n_before * 100, 1) if _n_before > 0 else 0.0
-            _filter_desc = 'Số mẫu trước/sau loại theo EES_2026_DeepDive_v13_Final'
+            _filter_desc = 'Số mẫu trước/sau loại theo kết quả làm sạch'
             _filter_meth = 'deepdive'
         else:
             _n_before = df.attrs.get('n_before', len(df))
@@ -104,7 +104,7 @@ def render(df, cfg, pillar_filter=None, group_id=None):
     _keep_pct    = round(_n_final / _n_before * 100, 1) if _n_before > 0 else 100
 
     _meth_color = {"none": "#0EA5E9", "straight_and_empty": "#8B5CF6", "standard": "#10B981", "deepdive": "#1D4ED8"}.get(_filter_meth, "#64748B")
-    _meth_label = {"none": "Không lọc", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn", "deepdive": "Theo DeepDive v13"}.get(_filter_meth, "Lọc chuẩn")
+    _meth_label = {"none": "Không lọc", "straight_and_empty": "Lọc straight-line + mở trống", "standard": "Lọc chuẩn", "deepdive": "Đã làm sạch sâu"}.get(_filter_meth, "Lọc chuẩn")
 
     st.markdown(f"""
     <div class="sample-flow-panel" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 18px;margin-bottom:14px;">

@@ -1050,12 +1050,19 @@ button[title="Thu nhỏ thanh bên"] {
     padding: 22px 20px 16px;
     border-bottom: 1px solid #F1F5F9;
     margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 .sb-logo {
     height: 36px;
     object-fit: contain;
-    margin-bottom: 12px;
     display: block;
+}
+.sb-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 .sb-title {
     font-size: 0.875rem;
@@ -1687,11 +1694,12 @@ st.markdown("""
 
     .sb-brand {
         padding: 16px 16px 12px !important;
+        gap: 8px !important;
     }
 
     .sb-logo {
         height: 30px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 0 !important;
     }
 
     .sb-section {
@@ -1998,9 +2006,11 @@ with st.sidebar:
     # Brand block
     st.markdown("""
     <div class="sb-brand">
-        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/v1772773708/LOGO%20GHN/Logo/LOGO_INAN_sep2os.png" class="sb-logo" alt="GHN Logo">
-        <span class="sb-title">EES 2026 Dashboard</span>
-        <span class="sb-sub">Employee Engagement Survey · 2026</span>
+        <img src="https://res.cloudinary.com/dd7gti2kn/image/upload/t_justlog/LOGO%20GHN/Logo/LOGO_INAN_1_lghbnf.png" class="sb-logo" alt="GHN Logo">
+        <div class="sb-text">
+            <span class="sb-title">EES 2026 Dashboard</span>
+            <span class="sb-sub">Employee Engagement Survey · 2026</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 

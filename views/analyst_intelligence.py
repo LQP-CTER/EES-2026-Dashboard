@@ -20,10 +20,10 @@ from shared.plotly_theme import section_header
 GROUP_INSIGHTS = {
     "1A": {
         "title": "Nhóm 1A - Nhân viên giao nhận",
-        "source": "EES2026_1A1B_Analysis + EES2026_ThuNhap_NVPTTT_Full",
+        "source": "Phân tích 1A/1B & Thu nhập",
         "headline": "Không phải câu chuyện lương thấp đơn thuần. Rủi ro chính nằm ở biến động thu nhập, phạt/truy thu, minh bạch đơn giá và công bằng tuyến.",
         "metrics": [
-            ("Mẫu hợp lệ 1A", "12,262", "DeepDive v13"),
+            ("Mẫu hợp lệ 1A", "12,262", "Dữ liệu chuẩn"),
             ("EI 1A", "73.5", "toàn nhóm"),
             ("Straight-line", "52.3%", "rủi ro im lặng"),
             ("Flight Risk", "5.5%", "toàn nhóm"),
@@ -42,10 +42,10 @@ GROUP_INSIGHTS = {
     },
     "1B": {
         "title": "Nhóm 1B - Tài xế xe tải",
-        "source": "EES2026_1A1B_Analysis",
+        "source": "Phân tích chuyên sâu 1B",
         "headline": "1B có EI/eNPS tốt hơn 1A, nhưng rủi ro nằm ở công bằng chuyến, xe cũ, COD settlement và phụ cấp tuyến dài.",
         "metrics": [
-            ("Mẫu hợp lệ 1B", "784", "DeepDive v13"),
+            ("Mẫu hợp lệ 1B", "784", "Dữ liệu chuẩn"),
             ("EI 1B", "75.9", "toàn nhóm"),
             ("eNPS", "+47.8", "toàn nhóm"),
             ("Leave intent", "2.1%", "thấp"),
@@ -63,10 +63,10 @@ GROUP_INSIGHTS = {
     },
     "2A": {
         "title": "Nhóm 2A - Nhân viên vận hành kho",
-        "source": "EES2026_KTC_NVPH_Analysis + EES2026_KTC_Master_Analysis + DeepDive v13",
+        "source": "Phân tích chuyên sâu KTC",
         "headline": "2A không chỉ là câu chuyện thu nhập. Các điểm vật lý như nóng, quạt, nhà vệ sinh, bữa ăn và thiết bị là tín hiệu rất thật trong open-text.",
         "metrics": [
-            ("Mẫu hợp lệ 2A", "4,819", "DeepDive v13"),
+            ("Mẫu hợp lệ 2A", "4,819", "Dữ liệu chuẩn"),
             ("EI 2A", "72.4", "toàn nhóm"),
             ("MEI 2A", "78.8", "toàn nhóm"),
             ("Trapped Worker", "5.6%", "~268 người"),
@@ -84,7 +84,7 @@ GROUP_INSIGHTS = {
     },
     "2B": {
         "title": "Nhóm 2B - Quản lý vận hành tuyến đầu",
-        "source": "EES2026_2B_Analysis + DeepDive v13",
+        "source": "Phân tích chuyên sâu 2B",
         "headline": "2B là nhóm 'Proud but Pressured': EI/eNPS cao nhưng đang hấp thụ áp lực từ nhân viên tuyến dưới, thiếu công cụ và thiếu chuẩn vận hành.",
         "metrics": [
             ("Mẫu hợp lệ 2B", "425", "toàn nhóm"),
@@ -95,7 +95,7 @@ GROUP_INSIGHTS = {
         "cards": [
             ("Áp lực quản trị bị che bởi EI cao", "Open-text cho thấy nhu cầu lớn về công cụ quản lý, data/reporting, chuẩn hóa quy trình và staffing. EI cao không đồng nghĩa đã hết rủi ro."),
             ("ĐCL là hotspot", "ĐCL 2B có EI 68.3, MEI 77.5 và nhiều phản hồi về thu nhập, nhân sự, chính sách NVPTTT. Đây là tín hiệu hệ thống, không chỉ cá nhân quản lý."),
-            ("Manager gap cần được đọc cùng 1A", "DeepDive ghi nhận tương quan EI 2B vs 1A theo vùng có thể lệch chiều. Nơi quản lý thấy ổn nhưng nhân viên tuyến dưới thấp là vùng cần kiểm tra 'manager bubble'."),
+            ("Manager gap cần được đọc cùng 1A", "Phân tích ghi nhận tương quan EI 2B vs 1A theo vùng có thể lệch chiều. Nơi quản lý thấy ổn nhưng nhân viên tuyến dưới thấp là vùng cần kiểm tra 'manager bubble'."),
         ],
         "actions": [
             "Pulse 5 câu cho 2B trong 2 tuần để đo áp lực giữ chân.",
@@ -105,7 +105,7 @@ GROUP_INSIGHTS = {
     },
     "3A": {
         "title": "Nhóm 3A - Nhân viên văn phòng",
-        "source": "DeepDive v13",
+        "source": "Phân tích chuyên sâu",
         "headline": "3A là rủi ro chiến lược ở khối văn phòng: eNPS thấp, burnout cao và TC5 là driver mạnh nhất cho ý định ở lại.",
         "metrics": [
             ("Mẫu hợp lệ 3A", "822", "toàn nhóm"),
@@ -116,7 +116,7 @@ GROUP_INSIGHTS = {
         "cards": [
             ("HR Division paradox", "HR n=151 có Stay 3.41, Leave 13.3%, eNPS +8.7. Đây là nghịch lý quan trọng vì nhóm thiết kế EX lại có trải nghiệm EX yếu."),
             ("Product và AI/Data cần đọc dù mẫu nhỏ", "Product n=12 eNPS -18.6, AI & Data n=15 eNPS -6.7. Mẫu nhỏ nhưng chiến lược, cần coi là early signal thay vì bỏ qua."),
-            ("TC5 là driver giữ chân", "KDA trong DeepDive cho thấy TC5 liên quan mạnh nhất tới Stay của 3A. Cần ưu tiên văn hóa, ghi nhận, belonging và career/process."),
+            ("TC5 là driver giữ chân", "Phân tích KDA cho thấy TC5 liên quan mạnh nhất tới Stay của 3A. Cần ưu tiên văn hóa, ghi nhận, belonging và career/process."),
         ],
         "actions": [
             "Can thiệp HR Division trong 30 ngày bằng listening session kín và action owner rõ.",
@@ -126,7 +126,7 @@ GROUP_INSIGHTS = {
     },
     "3B": {
         "title": "Nhóm 3B - Quản lý HQ",
-        "source": "DeepDive v13",
+        "source": "Phân tích chuyên sâu",
         "headline": "3B nhìn ổn ở Leave intent nhưng có rủi ro im lặng chiến lược: Q26 silence cao, TC3 thấp và nhóm Product/AI/Data có tín hiệu yếu dù mẫu nhỏ.",
         "metrics": [
             ("Mẫu hợp lệ 3B", "109", "toàn nhóm"),
@@ -422,7 +422,7 @@ def render_company_analyst_intelligence(all_data):
                         <div class="aiq-kicker">Tổng hợp điều hành</div>
                         <h3 class="aiq-title">Các phát hiện chiến lược từ bộ analyst</h3>
                         <p class="aiq-headline">
-                            Lớp này gom các insight từ DeepDive v13, báo cáo 1A/1B, 2B, KTC và thu nhập NVPTTT.
+                            Lớp này gom các insight từ phân tích chuyên sâu các nhóm, KTC và thu nhập NVPTTT.
                             Mục tiêu là giúp trang Tổng quan GHN không chỉ hiển thị KPI, mà còn nói đúng câu chuyện phân tích phía sau.
                         </p>
                     </div>

@@ -497,7 +497,7 @@ def _render_data_processing_section(headcount, raw, cleaned, all_data, effective
                     </div>
                     <div class="ghn-process-desc">
                         Database hiện tại đang là bảng đã làm sạch, nên phần này dùng số chuẩn từ
-                        EES_2026_DeepDive_v13_Final để thể hiện đúng mẫu thực nhận trước loại và mẫu sau loại.
+                        tài liệu tổng hợp để thể hiện đúng mẫu thực nhận trước loại và mẫu sau loại.
                     </div>
                 </div>
                 <div class="ghn-process-flow">
