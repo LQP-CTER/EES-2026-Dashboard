@@ -479,8 +479,8 @@ def render():
             <div class="ed-hero-shell">
                 <div class="ed-hero-copy">
                     <span class="ed-kicker">Employee Engagement Survey 2026</span>
-                    <h1 class="ed-headline">Dấu ấn hành trình EES 2026<br>&amp; những nỗ lực từ phía sau</h1>
-                    <p class="ed-hero-sub">Một lớp tổng quan điều hành cho thấy quy mô tham gia, chất lượng dữ liệu và câu chuyện triển khai phía sau bộ báo cáo gắn kết toàn GHN.</p>
+                    <h1 class="ed-headline">Hành trình EES 2026 - Phía sau những con số</h1>
+                    <p class="ed-hero-sub">Một lớp tổng quan điều hành về quy mô triển khai, chất lượng dữ liệu và những nguyên tắc được áp dụng để đảm bảo kết quả EES 2026 phản ánh trung thực tiếng nói của nhân viên GHN.</p>
                 </div>
                 <div class="ed-command-panel">
                     <div class="ed-command-top">
@@ -1054,134 +1054,100 @@ def render():
         (img4,  "Giám đốc vùng — Mr. Nguyễn Văn Tân"),
     ]
 
-    gallery_items_html = ""
-    for url, caption in gallery_images * 2:
-        gallery_items_html += f'''
-<div class="gl-item">
-<img class="gl-img" src="{url}" alt="{caption}" loading="lazy">
-<div class="gl-caption">{caption}</div>
-</div>'''
+    # Build carousel (no duplication)
+    import json as _json
+    _items_data = _json.dumps([{"url": u, "cap": c} for u, c in gallery_images])
 
-    gallery_html = f'''
-<style>
-  /* ── Section header ── */
-  .gl-header {{
-    display: flex; align-items: baseline; justify-content: space-between;
-    margin-bottom: 24px; padding: 0 6px;
-  }}
-  .gl-title {{
-    font-size: 2rem; font-weight: 900; letter-spacing: -0.03em; color: #0A1F44;
-  }}
-  .gl-tag {{
-    font-size: 0.72rem; font-weight: 800; color: #FF5200;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    background: #FFF4EF; padding: 4px 12px; border-radius: 999px;
-    border: 1px solid #FFD5BF;
-  }}
+    gallery_html = (
+        '<!DOCTYPE html><html><head><meta charset="utf-8">'
+        '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">'
+        '<style>'
+        '* { box-sizing:border-box; margin:0; padding:0; }'
+        "body { font-family:'Montserrat',sans-serif; background:transparent; overflow:hidden; }"
+        '.gc-shell { padding:0 4px 8px; }'
+        '.gc-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:20px; padding:0 2px; }'
+        '.gc-title { font-size:2rem; font-weight:900; letter-spacing:-0.03em; color:#0A1F44; }'
+        '.gc-tag { font-size:0.72rem; font-weight:800; color:#FF5200; text-transform:uppercase; letter-spacing:0.15em;'
+        '  background:#FFF4EF; padding:4px 12px; border-radius:999px; border:1px solid #FFD5BF; }'
+        '.gc-stage { position:relative; border-radius:24px;'
+        '  background: radial-gradient(circle at 16% 0%,rgba(255,82,0,.10),transparent 28%),'
+        '    linear-gradient(135deg,rgba(255,255,255,.95),rgba(248,250,252,.92));'
+        '  border:1px solid rgba(226,232,240,.9); box-shadow:0 22px 58px rgba(10,31,68,.10);'
+        '  padding:28px 72px; overflow:hidden; }'
+        '.gc-viewport { overflow:hidden; width:100%; }'
+        '.gc-track { display:flex; gap:20px; transition:transform 0.45s cubic-bezier(0.25,0.8,0.25,1); }'
+        '.gc-item { flex:0 0 auto; width:calc((100% - 40px)/3); height:420px; position:relative;'
+        '  border-radius:18px; overflow:hidden; cursor:pointer;'
+        '  box-shadow:0 8px 28px -8px rgba(10,31,68,.22);'
+        '  transition:transform 0.35s ease,box-shadow 0.35s ease; }'
+        '.gc-item:hover { transform:translateY(-6px) scale(1.012); box-shadow:0 22px 48px -12px rgba(10,31,68,.28); }'
+        '.gc-img { width:100%; height:100%; object-fit:cover; display:block; }'
+        '.gc-caption { position:absolute; bottom:0; left:0; right:0;'
+        '  background:linear-gradient(transparent,rgba(10,31,68,.82));'
+        '  color:#fff; padding:32px 16px 14px; font-size:0.82rem; font-weight:600;'
+        '  opacity:0; transform:translateY(6px); transition:opacity 0.35s ease,transform 0.35s ease; }'
+        '.gc-item:hover .gc-caption { opacity:1; transform:translateY(0); }'
+        '.gc-btn { position:absolute; top:50%; transform:translateY(-50%);'
+        '  width:48px; height:48px; background:rgba(255,255,255,.95);'
+        '  border:1.5px solid rgba(226,232,240,.9); border-radius:50%;'
+        '  cursor:pointer; font-size:1.3rem; font-weight:700; color:#0A1F44;'
+        '  box-shadow:0 4px 16px rgba(10,31,68,.14);'
+        '  transition:background 0.2s,box-shadow 0.2s,transform 0.2s;'
+        '  display:flex; align-items:center; justify-content:center; z-index:10; }'
+        '.gc-btn:hover { background:#FF5200; color:#fff; box-shadow:0 6px 20px rgba(255,82,0,.35);'
+        '  transform:translateY(-50%) scale(1.08); }'
+        '.gc-btn.dis { opacity:0.3; pointer-events:none; }'
+        '.gc-prev { left:14px; } .gc-next { right:14px; }'
+        '.gc-dots { display:flex; justify-content:center; gap:8px; margin-top:16px; }'
+        '.gc-dot { width:8px; height:8px; border-radius:50%; background:#CBD5E1;'
+        '  cursor:pointer; transition:background 0.25s,transform 0.25s; border:none; }'
+        '.gc-dot.on { background:#FF5200; transform:scale(1.35); }'
+        '.gc-ctr { text-align:center; margin-top:8px; font-size:0.72rem; font-weight:700; color:#94A3B8; letter-spacing:0.12em; }'
+        '</style></head><body>'
+        '<div class="gc-shell">'
+        '<div class=\"gc-header\"><span class=\"gc-title\">Góc nhìn hậu trường</span>'
+        '<span class=\"gc-tag\">Ảnh thực tế</span></div>'
+        '<div class="gc-stage">'
+        '<button class="gc-btn gc-prev dis" id="gP" onclick="gM(-1)">&#8592;</button>'
+        '<div class="gc-viewport"><div class="gc-track" id="gT"></div></div>'
+        '<button class="gc-btn gc-next" id="gN" onclick="gM(1)">&#8594;</button>'
+        '</div>'
+        '<div class="gc-dots" id="gD"></div>'
+        '<div class="gc-ctr" id="gC"></div>'
+        '</div>'
+        '<script>'
+        f'var D={_items_data},PER=3,cur=0;'
+        'var n=D.length,pages=Math.max(1,n-PER+1);'
+        'var T=document.getElementById("gT");'
+        'var dEl=document.getElementById("gD");'
+        'var cEl=document.getElementById("gC");'
+        'var bP=document.getElementById("gP"),bN=document.getElementById("gN");'
+        'D.forEach(function(it){'
+        '  var el=document.createElement("div"); el.className="gc-item";'
+        '  el.innerHTML="<img class=\'gc-img\' src=\'"+(it.url)+"\' loading=\'lazy\'>'
+        '    <div class=\'gc-caption\'>"+it.cap+"</div>";'
+        '  T.appendChild(el);'
+        '});'
+        'for(var i=0;i<pages;i++){'
+        '  var d=document.createElement("button"); d.className="gc-dot"+(i===0?" on":"");'
+        '  d.setAttribute("data-i",i); d.onclick=function(){gTo(+this.getAttribute("data-i"));};'
+        '  dEl.appendChild(d);'
+        '}'
+        'function gTo(idx){'
+        '  cur=Math.max(0,Math.min(idx,pages-1));'
+        '  var iw=T.children.length>0?T.children[0].getBoundingClientRect().width+20:0;'
+        '  T.style.transform="translateX(-"+(cur*iw)+"px)";'
+        '  [].forEach.call(dEl.children,function(d,i){d.className="gc-dot"+(i===cur?" on":"");});'
+        '  bP.className="gc-btn gc-prev"+(cur===0?" dis":"");'
+        '  bN.className="gc-btn gc-next"+(cur>=pages-1?" dis":"");'
+        '  cEl.textContent=(Math.min(cur+PER,n))+\" / \"+n+\" ảnh\";'
+        '}'
+        'function gM(d){gTo(cur+d);}'
+        'gTo(0);'
+        '</script></body></html>'
+    )
+    components.html(gallery_html, height=600, scrolling=False)
 
-  /* ── Premium Horizontal Scroll Gallery ── */
-  .gl-wrap-container {{
-    overflow-x: hidden;
-    width: 100%;
-    margin-bottom: 36px;
-    padding: 18px 0 8px;
-    border-radius: 28px;
-    background:
-      radial-gradient(circle at 18% 0%, rgba(255,82,0,.12), transparent 30%),
-      linear-gradient(135deg, rgba(255,255,255,.94), rgba(248,250,252,.92));
-    border: 1px solid rgba(226,232,240,.9);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 22px 58px rgba(10,31,68,.10);
-    perspective: 1400px;
-  }}
-  .gl-wrap {{
-    display: flex;
-    gap: 24px;
-    padding: 24px 18px 62px 18px;
-    width: max-content;
-    animation: autoScroll 30s linear infinite;
-  }}
-  .gl-wrap:hover {{
-    animation-play-state: paused;
-  }}
-  @keyframes autoScroll {{
-    0% {{ transform: translateX(0); }}
-    100% {{ transform: translateX(calc(-50% - 12px)); }}
-  }}
-
-  .gl-item {{
-    position: relative;
-    flex: 0 0 auto;
-    height: 500px; 
-    scroll-snap-align: center;
-    border-radius: 20px;
-    transform: rotateY(-7deg) translateZ(0);
-    transform-style: preserve-3d;
-    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease, filter 0.5s ease;
-  }}
-  .gl-item:hover {{
-    transform: scale(1.025) translateY(-12px) rotateY(0deg) translateZ(48px);
-    box-shadow: 0 30px 60px -12px rgba(10, 31, 68, 0.25);
-    z-index: 10;
-  }}
-  .gl-img {{
-    width: auto;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 20px;
-    box-shadow: 0 22px 44px -16px rgba(0,0,0,0.28);
-    border: 1px solid rgba(255,255,255,0.55);
-  }}
-  .gl-item::after {{
-    content: '';
-    position: absolute;
-    inset: auto 16px -18px;
-    height: 28px;
-    border-radius: 50%;
-    background: rgba(10,31,68,.20);
-    filter: blur(16px);
-    z-index: -1;
-  }}
-  .gl-caption {{
-    position: absolute;
-    bottom: 24px; left: 24px;
-    background: rgba(10, 31, 68, 0.78);
-    backdrop-filter: blur(12px);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.18);
-    font-size: 0.95rem; font-weight: 600;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.4s ease;
-    pointer-events: none;
-    white-space: nowrap;
-  }}
-  .gl-item:hover .gl-caption {{
-    opacity: 1;
-    transform: translateY(0);
-  }}
-  @media (max-width: 768px) {{
-    .gl-item {{ height: 400px; }}
-    .gl-wrap {{ gap: 16px; padding-bottom: 40px; }}
-    .gl-caption {{ bottom: 12px; left: 12px; font-size: 0.85rem; padding: 8px 16px; }}
-  }}
-</style>
-
-<!-- Section header -->
-<div class="gl-header">
-  <span class="gl-title">Góc nhìn hậu trường</span>
-  <span class="gl-tag">Team EX Showcase</span>
-</div>
-
-<!-- Horizontal scroll container -->
-<div class="gl-wrap-container">
-<div class="gl-wrap">
-{gallery_items_html}
-</div>
-</div>
-'''
-    components.html(gallery_html, height=640, scrolling=False)
 
     # ── 4. TIMELINE ──────────────────────────────────────────────────────────
     st.markdown("<hr style='border:none;border-top:2px solid #F1F5F9;margin:8px 0 0 0;'>", unsafe_allow_html=True)
@@ -1849,7 +1815,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
         <div class="ed-team-section">
             <div class="ed-section-header">
                 <h2 class="ed-section-title">Đội ngũ thực hiện</h2>
-                <span class="ed-section-tag">People Behind the Data</span>
+                <span class="ed-section-tag">Những người đứng sau dữ liệu</span>
             </div>
             <div class="ed-team-grid">
                 <div class="ed-team-card">
@@ -1857,28 +1823,24 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
                     <div class="ed-team-role">Project Lead</div>
                     <div class="ed-team-name">Team EX &amp; L&amp;D</div>
                     <div class="ed-team-desc">Thiết kế bộ câu hỏi, phối hợp triển khai khảo sát và điều phối thu thập phản hồi toàn GHN.</div>
-                    
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">HR</div>
                     <div class="ed-team-role">Truyền thông &amp; Lan tỏa</div>
-                    <div class="ed-team-name">HRBP các vùng &amp; KTC</div>
-                    <div class="ed-team-desc">Hỗ trợ truyền thông nội bộ, thúc đẩy nhân viên tham gia khảo sát và đảm bảo tỉ lệ phản hồi đạt mức cao nhất tại từng khu vực.</div>
-                    
+                    <div class="ed-team-name">HRBP các khối phòng ban</div>
+                    <div class="ed-team-desc">Hỗ trợ truyền thông nội bộ, thúc đẩy nhân viên tham gia khảo sát và đảm bảo tỉ lệ phản hồi đạt mức cao nhất tại từng đơn vị.</div>
                 </div>
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">IT</div>
                     <div class="ed-team-role">Hạ tầng &amp; Hệ thống</div>
-                    <div class="ed-team-name">Team IT</div>
+                    <div class="ed-team-name">Team IT, Product</div>
                     <div class="ed-team-desc">Đảm bảo hạ tầng server, băng thông mạng và hỗ trợ kỹ thuật liên tục trong suốt quá trình triển khai khảo sát.</div>
-                    
                 </div>
                 <div class="ed-team-card">
-                    <div class="ed-team-avatar">BI</div>
-                    <div class="ed-team-role">Kỹ thuật Dữ liệu</div>
-                    <div class="ed-team-name">Team BI</div>
-                    <div class="ed-team-desc">Xây dựng kiến trúc cơ sở dữ liệu, tối ưu hóa đường ống xử lý dữ liệu (data pipeline) và kết nối API.</div>
-                    
+                    <div class="ed-team-avatar">CPO</div>
+                    <div class="ed-team-role">Project Sponsor</div>
+                    <div class="ed-team-name">CPO</div>
+                    <div class="ed-team-desc">Bảo trợ dự án, định hướng chiến lược và đảm bảo kết quả EES 2026 được ứng dụng vào các quyết định nhân sự cấp cao.</div>
                 </div>
             </div>
         </div>
