@@ -479,7 +479,7 @@ def render():
             <div class="ed-hero-shell">
                 <div class="ed-hero-copy">
                     <span class="ed-kicker">Employee Engagement Survey 2026</span>
-                    <h1 class="ed-headline">Hành trình EES 2026 - Phía sau những con số</h1>
+                    <h1 class="ed-headline">Hành trình EES 2026 Phía sau những con số</h1>
                     <p class="ed-hero-sub">Một lớp tổng quan điều hành về quy mô triển khai, chất lượng dữ liệu và những nguyên tắc được áp dụng để đảm bảo kết quả EES 2026 phản ánh trung thực tiếng nói của nhân viên GHN.</p>
                 </div>
                 <div class="ed-command-panel">
@@ -1040,6 +1040,7 @@ def render():
 
     # ── 3. GALLERY ───────────────────────────────────────────────────────────
     gallery_images = [
+        ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1781258273/LOGO%20GHN/2065370755986722816_u07hix.jpg", "Tổng kết toàn bộ các nhóm"),
         ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780541184/LOGO%20GHN/EES_2026_-_Thie%CC%A3%CC%82p_ca%CC%89m_o%CC%9Bn_Final_1_kiihrk.png",        "Thư cảm ơn"),
 
         ("https://res.cloudinary.com/dd7gti2kn/image/upload/v1780392695/LOGO%20GHN/IMG_1493_ldeq70.jpg",        "Khoảnh khắc hậu trường"),
