@@ -1889,7 +1889,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
                 <div class="ed-team-card">
                     <div class="ed-team-avatar">HR</div>
                     <div class="ed-team-role">Truyền thông &amp; Kết nối</div>
-                    <div class="ed-team-name">HRBP các khối / phòng ban</div>
+                    <div class="ed-team-name">HRBP các khối phòng ban</div>
                     <div class="ed-team-desc">Phối hợp truyền thông, kết nối các phòng ban và thúc đẩy sự tham gia của nhân viên trong chương trình khảo sát.</div>
                 </div>
                 <div class="ed-team-card">
