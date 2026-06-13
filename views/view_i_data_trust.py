@@ -42,25 +42,6 @@ def _info_box(body: str) -> str:
     </div>"""
 
 
-def _metric_tile(label: str, value: str, note: str, accent: str, bg: str, val_size: str = "clamp(1.7rem, 2vw, 2.25rem)") -> str:
-    return f"""
-    <div style="background:{bg};border:1px solid {accent}33;border-radius:18px;
-                padding:18px 18px 20px;box-shadow:0 16px 30px rgba(10,31,68,.08);
-                position:relative;overflow:hidden;min-width:0;">
-        <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,{accent},#FFB38B);"></div>
-        <div style="font-size:.68rem;font-weight:800;color:{accent};text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">
-            {label}
-        </div>
-        <div style="font-size:{val_size};font-weight:900;color:#0A1F44;line-height:.95;letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap;">
-            {value}
-        </div>
-        <div style="font-size:.78rem;color:#64748B;line-height:1.45;margin-top:8px;">
-            {note}
-        </div>
-    </div>
-    """
-
-
 _RELIABILITY_GROUPS = [
     ('1A', 'Shipper',       12955),
     ('1B', 'Tài xế',         801),
@@ -73,8 +54,8 @@ _RELIABILITY_GROUPS = [
 DEEPDIVE_QUALITY_TOTALS = {
     "headcount": 21353,
     "raw": 20005,
-    "dropped": 795,
-    "cleaned": 19210,
+    "dropped": 784,
+    "cleaned": 19221,
     "straightline_weighted": 8757,
 }
 
@@ -346,12 +327,6 @@ def render(summary_df=None):
         font-weight:800;
         backdrop-filter:blur(10px);
     }
-    .dt-metrics {
-        display:grid;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:16px;
-        margin-top:18px;
-    }
     .dt-card {
         background:#fff;
         border:1px solid #E2E8F0;
@@ -383,11 +358,9 @@ def render(summary_df=None):
     }
     @media (max-width: 1080px) {
         .dt-hero { grid-template-columns:1fr; }
-        .dt-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
     }
     @media (max-width: 760px) {
         .dt-shell { padding:20px; border-radius:22px; }
-        .dt-metrics { grid-template-columns:1fr; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -430,15 +403,6 @@ def render(summary_df=None):
                 </div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class="dt-metrics">
-        {_metric_tile("Tổng nhân sự", f"{headcount_total:,}", "Quy mô nhân sự toàn GHN (HRIS)", "#0A1F44", "#F8FAFC")}
-        {_metric_tile("Phản hồi thu thập", f"{raw_total:,}", f"{participation_pct:.1f}% / tổng nhân sự HRIS", "#1D4ED8", "#EFF6FF")}
-        {_metric_tile("Mẫu phân tích", f"{cleaned_total:,}", f"sau loại {drop_total:,} phản hồi ({drop_pct:.1f}%)", "#10B981", "#F0FDF4")}
-        {_metric_tile("Phản hồi trùng lặp", f"{straightline_total:,}", f"{straightline_pct:.1f}% / mẫu đã làm sạch", "#F97316", "#FFF7ED")}
     </div>
     """, unsafe_allow_html=True)
 
