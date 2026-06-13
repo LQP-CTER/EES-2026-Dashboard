@@ -18,7 +18,7 @@ REPORT_METRICS = {
     "2B": {"EI": 78.9, "eNPS": 59.6, "Stay": 4.36, "Leave": 2.7, "MEI": 89.1, "Silence": 4.9,  "FlightRisk": 3.3},
     "3A": {"EI": 71.5, "eNPS": 16.3, "Stay": 4.01, "Leave": 4.0, "MEI": 81.8, "Silence": 6.2,  "FlightRisk": 4.0},
     "3B": {"EI": 73.6, "eNPS": 32.7, "Stay": 4.27, "Leave": 0.9, "MEI": 79.7, "Silence": 9.2,  "FlightRisk": 0.9},
-    "Total": {"EI": 73.4, "eNPS": 31.7, "Stay": 4.04, "Leave": 4.57, "MEI": 81.3, "Silence": 43.1, "EffN": 16435}
+    "Total": {"EI": 73.4, "eNPS": 31.7, "Stay": 4.04, "Leave": 4.57, "MEI": 81.3, "Silence": 43.1, "EffN": 16424}
 }
 
 print("=" * 80)

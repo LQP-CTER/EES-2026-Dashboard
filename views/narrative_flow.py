@@ -47,7 +47,7 @@ def _act_header(number: str, title: str, subtitle: str, color: str = "#FF5200") 
     </div>"""
 
 
-def render_narrative(df, cfg, group_id):
+def render_narrative(df, cfg, group_id, df_bench=None):
     """Render toàn bộ narrative flow cho một nhóm."""
     group_name = cfg.get('label', group_id)
 
@@ -59,7 +59,7 @@ def render_narrative(df, cfg, group_id):
         key=f"narrative_mode_{group_id}",
     )
     if mode == "Báo cáo đơn vị":
-        _render_unit_report(df, cfg, group_id)
+        _render_unit_report(df, cfg, group_id, df_bench=df_bench)
         return
 
     from utils.data_loader import compute_kpis
@@ -1509,7 +1509,7 @@ def _render_voice_theme_chart(responses, group_id, unit_label=""):
 # UNIT REPORT MODE  —  7 phần báo cáo đơn vị (department / section)
 # ═══════════════════════════════════════════════════════════════════════
 
-def _render_unit_report(df, cfg, group_id):
+def _render_unit_report(df, cfg, group_id, df_bench=None):
     """
     Entry point cho chế độ 'Báo cáo đơn vị'.
     Người dùng chọn Division → Department → Section → toàn bộ báo cáo
@@ -1522,6 +1522,10 @@ def _render_unit_report(df, cfg, group_id):
     )
     from utils.credibility import confidence_badge, triangulate_pillar
 
+    # Use full group df as benchmark (or fall back to scoped df)
+    if df_bench is None:
+        df_bench = df
+
     org = get_org_options(df)
     has_div  = bool(org["division"])
     has_dept = bool(org["department"])
@@ -1531,64 +1535,151 @@ def _render_unit_report(df, cfg, group_id):
         st.info("Nhóm này không có phân cấp đơn vị. Vui lòng dùng chế độ 'Tổng quan nhóm'.")
         return
 
+    # ── Scope detection for restricted users ─────────────────────────────
+    _auth = st.session_state.get("user_authorization", {})
+    from utils.authorization import resolve_data_scope as _rds
+    _scope = _rds(_auth) if isinstance(_auth, dict) else {"unrestricted": True}
+    _restricted = not _scope.get("unrestricted", True)
+    _scope_level = (_scope.get("level") or "").upper()
+
+    def _first_val(col):
+        return (
+            df[col].dropna().iloc[0]
+            if col in df.columns and not df[col].dropna().empty else None
+        )
+
     # ── Unit selector ──────────────────────────────────────────────────
-    col1, col2, col3 = st.columns(3)
     sel_div = sel_dept = sel_sec = None
 
-    with col1:
-        if has_div:
-            opt_div = ["— Chọn khối —"] + org["division"]
-            sel_div_raw = st.selectbox("Khối / Division", opt_div,
-                                       key=f"ur_div_{group_id}")
-            if sel_div_raw != "— Chọn khối —":
-                sel_div = sel_div_raw
-
-    df_after_div = df[df["division"] == sel_div] if sel_div and has_div else df
-
-    with col2:
-        if has_dept and sel_div is not None:
-            depts_avail = sorted([
-                v for v in df_after_div["department"].dropna().unique()
-                if str(v).strip().lower() not in {"nan","none","","n/a"}
-            ])
-            opt_dept = ["— Tất cả phòng ban —"] + depts_avail
-            sel_dept_raw = st.selectbox("Phòng ban", opt_dept,
-                                        key=f"ur_dept_{group_id}")
-            if sel_dept_raw != "— Tất cả phòng ban —":
-                sel_dept = sel_dept_raw
-        elif has_dept and not has_div:
-            opt_dept = ["— Chọn phòng ban —"] + org["department"]
-            sel_dept_raw = st.selectbox("Phòng ban", opt_dept,
-                                        key=f"ur_dept_nodiv_{group_id}")
-            if sel_dept_raw != "— Chọn phòng ban —":
-                sel_dept = sel_dept_raw
-
-    df_after_dept = df_after_div.copy()
-    if sel_dept and has_dept:
-        df_after_dept = df_after_dept[df_after_dept["department"] == sel_dept]
-
-    with col3:
-        if has_sec and sel_dept is not None:
-            secs_avail = sorted([
-                v for v in df_after_dept["section"].dropna().unique()
-                if str(v).strip().lower() not in {"nan","none","","n/a"}
-            ])
-            if secs_avail:
-                opt_sec = ["— Tất cả section —"] + secs_avail
-                sel_sec_raw = st.selectbox("Section / Vùng", opt_sec,
-                                           key=f"ur_sec_{group_id}")
-                if sel_sec_raw != "— Tất cả section —":
-                    sel_sec = sel_sec_raw
-
-    if sel_div is None and sel_dept is None:
+    # SECTION-scoped: skip dropdowns, auto-lock to authorized section
+    if _restricted and _scope_level == "SECTION" and len(df) > 0:
+        sel_div  = _first_val("division")
+        sel_dept = _first_val("department")
+        sel_sec  = _first_val("section")
+        _locked_label = sel_sec or sel_dept or sel_div or "đơn vị của bạn"
         st.markdown(
-            '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;'
-            'padding:12px 18px;margin-top:10px;font-size:0.83rem;color:#1D4ED8;">'
-            '👆 Chọn ít nhất <strong>Khối</strong> hoặc <strong>Phòng ban</strong> để xem báo cáo đơn vị.'
-            '</div>',
+            f'<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;'
+            f'padding:10px 18px;margin-bottom:8px;font-size:0.83rem;color:#1D4ED8;">'
+            f'📍 Báo cáo đơn vị: <strong>{_locked_label}</strong>'
+            f'</div>',
             unsafe_allow_html=True,
         )
-        return
+
+    # DEPARTMENT-scoped: auto-lock division+dept, allow section drill-down
+    elif _restricted and _scope_level in ("DEPARTMENT", "PHONG_BAN") and len(df) > 0:
+        sel_div  = _first_val("division")
+        sel_dept = _first_val("department")
+        df_after_dept = df[df["department"] == sel_dept] if sel_dept else df
+        _, _, _c3 = st.columns(3)
+        with _c3:
+            if has_sec and sel_dept is not None:
+                secs_avail = sorted([
+                    v for v in df_after_dept["section"].dropna().unique()
+                    if str(v).strip().lower() not in {"nan", "none", "", "n/a"}
+                ])
+                if secs_avail:
+                    opt_sec = ["— Tất cả section —"] + secs_avail
+                    sel_sec_raw = st.selectbox("Section / Vùng", opt_sec,
+                                               key=f"ur_sec_{group_id}_{sel_dept or 'all'}")
+                    if sel_sec_raw != "— Tất cả section —":
+                        sel_sec = sel_sec_raw
+
+    # DIVISION-scoped: auto-lock division, allow dept/section drill-down
+    elif _restricted and _scope_level in ("DIVISION", "KHOI") and len(df) > 0:
+        sel_div = _first_val("division")
+        df_after_div = df[df["division"] == sel_div] if sel_div else df
+        _c2, _c3 = st.columns([1, 1])
+        with _c2:
+            if has_dept:
+                depts_avail = sorted([
+                    v for v in df_after_div["department"].dropna().unique()
+                    if str(v).strip().lower() not in {"nan", "none", "", "n/a"}
+                ])
+                opt_dept = ["— Tất cả phòng ban —"] + depts_avail
+                sel_dept_raw = st.selectbox("Phòng ban", opt_dept,
+                                            key=f"ur_dept_{group_id}_{sel_div or 'all'}")
+                if sel_dept_raw != "— Tất cả phòng ban —":
+                    sel_dept = sel_dept_raw
+        df_after_dept = df_after_div.copy()
+        if sel_dept and has_dept:
+            df_after_dept = df_after_dept[df_after_dept["department"] == sel_dept]
+        with _c3:
+            if has_sec and sel_dept is not None:
+                secs_avail = sorted([
+                    v for v in df_after_dept["section"].dropna().unique()
+                    if str(v).strip().lower() not in {"nan", "none", "", "n/a"}
+                ])
+                if secs_avail:
+                    opt_sec = ["— Tất cả section —"] + secs_avail
+                    sel_sec_raw = st.selectbox("Section / Vùng", opt_sec,
+                                               key=(
+                                                   f"ur_sec_{group_id}_"
+                                                   f"{sel_div or 'all'}_{sel_dept or 'all'}"
+                                               ))
+                    if sel_sec_raw != "— Tất cả section —":
+                        sel_sec = sel_sec_raw
+
+    # UNRESTRICTED (Admin / ALL): full dropdown selectors
+    else:
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            if has_div:
+                opt_div = ["— Chọn khối —"] + org["division"]
+                sel_div_raw = st.selectbox("Khối / Division", opt_div,
+                                           key=f"ur_div_{group_id}")
+                if sel_div_raw != "— Chọn khối —":
+                    sel_div = sel_div_raw
+
+        df_after_div = df[df["division"] == sel_div] if sel_div and has_div else df
+
+        with col2:
+            if has_dept and sel_div is not None:
+                depts_avail = sorted([
+                    v for v in df_after_div["department"].dropna().unique()
+                    if str(v).strip().lower() not in {"nan","none","","n/a"}
+                ])
+                opt_dept = ["— Tất cả phòng ban —"] + depts_avail
+                sel_dept_raw = st.selectbox("Phòng ban", opt_dept,
+                                            key=f"ur_dept_{group_id}_{sel_div or 'all'}")
+                if sel_dept_raw != "— Tất cả phòng ban —":
+                    sel_dept = sel_dept_raw
+            elif has_dept and not has_div:
+                opt_dept = ["— Chọn phòng ban —"] + org["department"]
+                sel_dept_raw = st.selectbox("Phòng ban", opt_dept,
+                                            key=f"ur_dept_nodiv_{group_id}")
+                if sel_dept_raw != "— Chọn phòng ban —":
+                    sel_dept = sel_dept_raw
+
+        df_after_dept = df_after_div.copy()
+        if sel_dept and has_dept:
+            df_after_dept = df_after_dept[df_after_dept["department"] == sel_dept]
+
+        with col3:
+            if has_sec and sel_dept is not None:
+                secs_avail = sorted([
+                    v for v in df_after_dept["section"].dropna().unique()
+                    if str(v).strip().lower() not in {"nan","none","","n/a"}
+                ])
+                if secs_avail:
+                    opt_sec = ["— Tất cả section —"] + secs_avail
+                    sel_sec_raw = st.selectbox("Section / Vùng", opt_sec,
+                                               key=(
+                                                   f"ur_sec_{group_id}_"
+                                                   f"{sel_div or 'all'}_{sel_dept or 'all'}"
+                                               ))
+                    if sel_sec_raw != "— Tất cả section —":
+                        sel_sec = sel_sec_raw
+
+        if sel_div is None and sel_dept is None:
+            st.markdown(
+                '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;'
+                'padding:12px 18px;margin-top:10px;font-size:0.83rem;color:#1D4ED8;">'
+                '👆 Chọn ít nhất <strong>Khối</strong> hoặc <strong>Phòng ban</strong> để xem báo cáo đơn vị.'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+            return
 
     # ── Build unit dataframe ───────────────────────────────────────────
     df_unit = build_unit_df(df, sel_div, sel_dept, sel_sec)
@@ -1603,9 +1694,9 @@ def _render_unit_report(df, cfg, group_id):
         )
         return
 
-    part_rate = get_participation_rate(df_unit, df)
-    kpis_d    = kpis_with_delta(df_unit, df)
-    pillar_comp = pillar_scores_comparison(df_unit, df, group_id)
+    part_rate = get_participation_rate(df_unit, df_bench)
+    kpis_d    = kpis_with_delta(df_unit, df_bench)
+    pillar_comp = pillar_scores_comparison(df_unit, df_bench, group_id)
 
     # ── Header banner ──────────────────────────────────────────────────
     badge_html = confidence_badge(n_unit, part_rate)
@@ -1622,13 +1713,13 @@ def _render_unit_report(df, cfg, group_id):
     )
 
     # ── Render 7 phần ─────────────────────────────────────────────────
-    _render_unit_p1_context(df_unit, df, unit_label, kpis_d, n_unit)
+    _render_unit_p1_context(df_unit, df_bench, unit_label, kpis_d, n_unit)
     _render_unit_p2_radar(pillar_comp, unit_label, group_id)
-    _render_unit_p3_pillars(df_unit, df, group_id, cfg, pillar_comp)
-    _render_unit_p4_risk(df_unit, df, group_id, unit_level, sel_dept)
+    _render_unit_p3_pillars(df_unit, df_bench, group_id, cfg, pillar_comp)
+    _render_unit_p4_risk(df_unit, df_bench, group_id, unit_level, sel_dept)
     _render_unit_p5_contradictions(df_unit, group_id, cfg)
     _render_unit_p6_voice(df_unit, group_id, cfg, unit_label)
-    _render_unit_p7_actions(df_unit, df, group_id, pillar_comp, unit_label)
+    _render_unit_p7_actions(df_unit, df_bench, group_id, pillar_comp, unit_label)
 
 
 # ── P1: Bối cảnh & Vị trí ────────────────────────────────────────────
@@ -1654,16 +1745,16 @@ def _render_unit_p1_context(df_unit, df_bench, unit_label, kpis_d, n_unit):
         )
 
     metrics = [
-        ("Engagement Index", f"{kpis_d['ei_mean']:.1f}%",
-         kpis_d["delta_ei"], kpis_d["bench_ei"], False, "#2563EB"),
+        ("Engagement Index", f"{kpis_d['ei_mean']:.2f}%",
+         kpis_d["delta_ei"], f"{kpis_d['bench_ei']:.2f}%", False, "#2563EB"),
         ("eNPS", f"{kpis_d['enps_score']:+.0f}",
-         kpis_d["delta_enps"], kpis_d["bench_enps"], False, "#7C3AED"),
-        ("% Muốn nghỉ", f"{kpis_d['intent_pct_low']:.1f}%",
-         kpis_d["delta_flight"], kpis_d["bench_flight"], True, "#DC2626"),
-        ("% Burnout", f"{kpis_d['burnout_pct']:.1f}%",
-         kpis_d["delta_burnout"], kpis_d["bench_burnout"], True, "#EA580C"),
-        ("MEI (QL)", f"{kpis_d.get('mei_avg',0):.1f}%",
-         kpis_d["delta_mei"], kpis_d["bench_mei"], False, "#059669"),
+         kpis_d["delta_enps"], f"{kpis_d['bench_enps']:+.0f}", False, "#7C3AED"),
+        ("% Muốn nghỉ", f"{kpis_d['intent_pct_low']:.2f}%",
+         kpis_d["delta_flight"], f"{kpis_d['bench_flight']:.2f}%", True, "#DC2626"),
+        ("% Burnout", f"{kpis_d['burnout_pct']:.2f}%",
+         kpis_d["delta_burnout"], f"{kpis_d['bench_burnout']:.2f}%", True, "#EA580C"),
+        ("MEI (QL)", f"{kpis_d.get('mei_avg',0):.2f}%",
+         kpis_d["delta_mei"], f"{kpis_d['bench_mei']:.2f}%", False, "#059669"),
     ]
 
     cols = st.columns(5)

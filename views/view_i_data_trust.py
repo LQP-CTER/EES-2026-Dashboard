@@ -73,10 +73,9 @@ _RELIABILITY_GROUPS = [
 DEEPDIVE_QUALITY_TOTALS = {
     "headcount": 21353,
     "raw": 20005,
-    "dropped": 889,
+    "dropped": 795,
     "cleaned": 19210,
     "straightline_weighted": 8757,
-    "effective_base": 16424,
 }
 
 DEEPDIVE_GROUP_BASE = [
@@ -159,7 +158,6 @@ DEEPDIVE_GROUP_BASE = [
         "Flight Risk %": 0.9,
     },
 ]
-
 
 def _reliability_row(gid, label, df, n_raw):
     report = df.attrs.get('memo_report', {})
@@ -350,7 +348,7 @@ def render(summary_df=None):
     }
     .dt-metrics {
         display:grid;
-        grid-template-columns:repeat(5,minmax(0,1fr));
+        grid-template-columns:repeat(3,minmax(0,1fr));
         gap:16px;
         margin-top:18px;
     }
@@ -405,11 +403,9 @@ def render(summary_df=None):
     drop_total = totals["dropped"]
     cleaned_total = totals["cleaned"]
     straightline_total = totals["straightline_weighted"]
-    eff_total = totals["effective_base"]
     participation_pct = raw_total / max(headcount_total, 1) * 100
     drop_pct = drop_total / max(raw_total, 1) * 100
     straightline_pct = straightline_total / max(cleaned_total, 1) * 100
-    effective_pct = eff_total / max(cleaned_total, 1) * 100
 
     st.markdown(f"""
     <div class="dt-shell">
@@ -423,13 +419,13 @@ def render(summary_df=None):
                 <div class="dt-hero-panel-inner">
                     <span class="dt-hero-label">EES 2026 · Bảng chất lượng dữ liệu</span>
                     <div>
-                        <div class="dt-hero-score">19,221</div>
-                        <div class="dt-hero-mini">Mẫu phân tích hợp lệ sau khi qua đầy đủ các bước kiểm định và làm sạch dữ liệu.</div>
+                        <div class="dt-hero-score">{cleaned_total:,}</div>
+                        <div class="dt-hero-mini">Mẫu phân tích hợp lệ từ {raw_total:,} phản hồi thu thập, sau khi loại {drop_total:,} phản hồi không đạt tiêu chí.</div>
                     </div>
                     <div class="dt-hero-pills">
-                        <span class="dt-pill">Phản hồi thô 20,005</span>
-                        <span class="dt-pill">Bị loại 878</span>
-                        <span class="dt-pill">n hiệu dụng 16,435</span>
+                        <span class="dt-pill">Người tham gia {raw_total:,}</span>
+                        <span class="dt-pill">Bị loại {drop_total:,}</span>
+                        <span class="dt-pill">Mẫu phân tích {cleaned_total:,}</span>
                     </div>
                 </div>
             </div>
@@ -440,10 +436,9 @@ def render(summary_df=None):
     st.markdown(f"""
     <div class="dt-metrics">
         {_metric_tile("Tổng nhân sự", f"{headcount_total:,}", "Quy mô nhân sự toàn GHN (HRIS)", "#0A1F44", "#F8FAFC")}
-        {_metric_tile("Phản hồi thu thập", f"{raw_total:,}", f"{participation_pct:.1f}% tỷ lệ tham gia", "#1D4ED8", "#EFF6FF")}
+        {_metric_tile("Phản hồi thu thập", f"{raw_total:,}", f"{participation_pct:.1f}% / tổng nhân sự HRIS", "#1D4ED8", "#EFF6FF")}
         {_metric_tile("Mẫu phân tích", f"{cleaned_total:,}", f"sau loại {drop_total:,} phản hồi ({drop_pct:.1f}%)", "#10B981", "#F0FDF4")}
         {_metric_tile("Phản hồi trùng lặp", f"{straightline_total:,}", f"{straightline_pct:.1f}% / mẫu đã làm sạch", "#F97316", "#FFF7ED")}
-        {_metric_tile("Mẫu hiệu dụng", f"{eff_total:,}", f"{effective_pct:.1f}% / mẫu đã làm sạch", "#7C3AED", "#F5F3FF")}
     </div>
     """, unsafe_allow_html=True)
 
@@ -451,9 +446,9 @@ def render(summary_df=None):
     <div class="dt-card" style="margin:18px 0 26px;">
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin:0">
             Các chỉ số được cố định theo kết quả phân tích chính thức của EES 2026:
-            21,353 nhân sự, 20,005 phản hồi thu thập, 19,221 mẫu phân tích sau làm sạch,
-            8,757 phản hồi trùng lặp và 16,435 mẫu hiệu dụng.
-            Bảng runtime bên dưới chỉ dùng để đối chiếu kỹ thuật khi cần.
+            {headcount_total:,} nhân sự, {raw_total:,} phản hồi thu thập,
+            {cleaned_total:,} mẫu phân tích sau làm sạch,
+            và {straightline_total:,} phản hồi trùng lặp được ghi nhận để đối chiếu chất lượng.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -472,22 +467,22 @@ def render(summary_df=None):
     with tab1:
         st.markdown(_sec("Tỷ lệ tham gia & Tính đại diện"), unsafe_allow_html=True)
 
-        st.markdown("""
+        st.markdown(f"""
         <p style="font-size:0.88rem;color:#475569;line-height:1.75">
-            Tỷ lệ tham gia toàn công ty đạt <strong>93.7%</strong> với <strong>20,005</strong>
-            phản hồi trên tổng <strong>21,353</strong> nhân sự. Sau bước làm sạch và kiểm định
-            chất lượng, base phân tích còn <strong>19,221</strong> mẫu hợp lệ — phần bị loại
-            là <strong>878</strong> phản hồi, chiếm khoảng <strong>4.4%</strong> tổng thu thập.
+            Tỷ lệ tham gia toàn công ty đạt <strong>{participation_pct:.1f}%</strong> với
+            <strong>{raw_total:,}</strong> phản hồi trên tổng
+            <strong>{headcount_total:,}</strong> nhân sự. Sau khi loại
+            <strong>{drop_total:,}</strong> phản hồi không đạt tiêu chí,
+            base phân tích chính thức còn <strong>{cleaned_total:,}</strong> mẫu.
         </p>
         """, unsafe_allow_html=True)
 
         # KPI cards
-        cols = st.columns(4)
+        cols = st.columns(3)
         kpi_data = [
-            ("Tỷ lệ tham gia", "93.7%", "20,005 / 21,353 nhân sự", "#FF5200", "#FFF3EE"),
-            ("Mẫu phân tích", "19,221", "sau loại 878 phản hồi", "#10B981", "#F0FDF4"),
-            ("Phản hồi trùng lặp", "8,757", "45.6% / mẫu đã làm sạch", "#3B82F6", "#EFF6FF"),
-            ("Mẫu hiệu dụng", "16,435", "85.5% / mẫu đã làm sạch", "#8B5CF6", "#F5F3FF"),
+            ("Tỷ lệ tham gia", f"{participation_pct:.1f}%", f"{raw_total:,} / {headcount_total:,} nhân sự", "#FF5200", "#FFF3EE"),
+            ("Mẫu phân tích", f"{cleaned_total:,}", f"sau loại {drop_total:,} phản hồi", "#10B981", "#F0FDF4"),
+            ("Phản hồi trùng lặp", f"{straightline_total:,}", f"{straightline_pct:.1f}% / mẫu đã làm sạch", "#3B82F6", "#EFF6FF"),
         ]
         for col, (label, val, sub, color, bg) in zip(cols, kpi_data):
             with col:
@@ -530,13 +525,12 @@ def render(summary_df=None):
         <p style="font-size:0.88rem;color:#475569;line-height:1.75;margin-bottom:12px">
             Bảng dưới tổng hợp số liệu theo từng nhóm khảo sát, từ phản hồi thu thập ban đầu đến
             mẫu phân tích cuối cùng sau khi qua các bước kiểm định chất lượng dữ liệu.
-            Luồng đọc: Tổng nhân sự HRIS → Phản hồi thu thập → Phản hồi bị loại → Mẫu phân tích → Mẫu hiệu dụng.
+            Luồng đọc: Tổng nhân sự HRIS → Phản hồi thu thập → Phản hồi bị loại → Mẫu phân tích.
         </p>
         <ul style="font-size:0.85rem;color:#475569;line-height:1.7;margin-bottom:20px;padding-left:20px">
             <li><strong>Phản hồi thô:</strong> toàn bộ phản hồi thu thập được từ mỗi nhóm khảo sát.</li>
             <li><strong>Bị loại:</strong> phản hồi không đạt tiêu chí chất lượng, loại ra khỏi base phân tích chính thức.</li>
             <li><strong>Mẫu phân tích:</strong> base chính thức dùng để tính EI, eNPS, ý định nghỉ việc và các trụ cột.</li>
-            <li><strong>Mẫu hiệu dụng:</strong> tổng n sau hiệu chỉnh trọng số chất lượng, dùng cho các chỉ số tổng thể.</li>
         </ul>
         """, unsafe_allow_html=True)
 
@@ -576,16 +570,6 @@ def render(summary_df=None):
             hide_index=True,
         )
 
-        st.markdown("""
-        <p style="font-size:0.78rem;color:#94A3B8;margin-top:12px;line-height:1.6;font-style:italic">
-            * Mẫu hiệu dụng ở cấp tổng thể là 16,435; bảng nhóm phía trên dùng mẫu phân tích
-            (cleaned base) theo từng nhóm riêng — phân bổ mẫu hiệu dụng chi tiết theo nhóm
-            không được công bố trong tài liệu phân tích chính thức.
-        </p>
-        """, unsafe_allow_html=True)
-
-
-
         st.markdown("<br>", unsafe_allow_html=True)
 
         # Two validation points callout
@@ -595,7 +579,7 @@ def render(summary_df=None):
             <div style="font-size:0.9rem;font-weight:700;color:#0A1F44;margin-bottom:14px;
                         display:flex;align-items:center;gap:8px">
                 <img src="{_AI_LOGO_B64}" style="width:16px;height:16px">
-                Hai điểm cần xác nhận trước khi trình chính thức
+                Những điểm cần lưu ý
             </div>
             <div style="font-size:0.85rem;color:#475569;line-height:1.75">
                 <strong>(1)</strong> File nhóm 2B chứa một bảng "test" 223 phản hồi không trùng

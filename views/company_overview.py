@@ -91,43 +91,98 @@ def _build_department_question_diagnostics(df_department: pd.DataFrame) -> pd.Da
 
 
 @st.fragment
-def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame):
-    """Render an evidence-led department diagnosis without changing source data."""
-    department_options = tbl_dept["Phòng Ban"].dropna().astype(str).tolist()
-    if not department_options:
+def _render_org_deep_dive(df_total: pd.DataFrame):
+    """Render an evidence-led diagnosis by division, department, or section."""
+    if not any(col in df_total.columns for col in ("division", "department", "section")):
         return
 
     st.markdown(
         """
         <div style="margin:34px 0 14px;padding-top:24px;border-top:1px solid #E2E8F0;">
             <div style="font-size:.72rem;font-weight:850;color:#FF5200;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">
-                Deep Dive Phòng Ban
+                Deep Dive Đơn Vị
             </div>
             <div style="font-size:1.35rem;font-weight:900;color:#0A1F44;letter-spacing:-.02em;">
-                Chẩn đoán một phòng ban cụ thể
+                Chẩn đoán theo Khối, Phòng ban và Section
             </div>
             <div style="font-size:.84rem;color:#64748B;line-height:1.6;margin-top:6px;">
-                Đọc đồng thời KPI, trụ cột, câu hỏi yếu, section và thâm niên để nhận diện nguyên nhân có khả năng.
+                Chọn tuần tự cấp tổ chức để đọc đồng thời KPI, trụ cột, câu hỏi yếu và thâm niên.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    selected_department = st.selectbox(
-        "Chọn phòng ban để phân tích sâu",
-        options=[None] + department_options,
-        format_func=lambda x: "— Chọn phòng ban —" if x is None else x,
-        index=0,
-        key="company_department_deep_dive",
-    )
-    if selected_department is None:
-        st.caption("Chọn một phòng ban từ dropdown để xem chẩn đoán chi tiết.")
+    col_div, col_dept, col_sec = st.columns(3)
+    selected_division = None
+    selected_department = None
+    selected_section = None
+
+    def _org_options(frame: pd.DataFrame, column: str) -> list[str]:
+        if column not in frame.columns:
+            return []
+        valid = frame[frame[column].notna()].copy()
+        valid = valid[
+            ~valid[column].astype(str).str.strip().str.lower().isin(_ORG_BAD_VALUES)
+        ]
+        return sorted(
+            str(value)
+            for value, group in valid.groupby(column, dropna=True)
+            if len(group) >= MIN_DEPARTMENT_N
+        )
+
+    df_selection = df_total
+    division_options = _org_options(df_total, "division")
+    if division_options:
+        with col_div:
+            selected_division = st.selectbox(
+                "Khối",
+                options=[None] + division_options,
+                format_func=lambda x: "— Chọn Khối —" if x is None else x,
+                key="company_deep_dive_division",
+            )
+        if selected_division:
+            df_selection = df_selection[df_selection["division"].astype(str) == selected_division]
+
+    department_enabled = bool(selected_division) or not division_options
+    department_options = _org_options(df_selection, "department") if department_enabled else []
+    with col_dept:
+        selected_department = st.selectbox(
+            "Phòng ban",
+            options=[None] + department_options,
+            format_func=lambda x: "— Tất cả phòng ban —" if x is None else x,
+            key=f"company_deep_dive_department_{selected_division or 'all'}",
+            disabled=not department_enabled,
+        )
+    if selected_department:
+        df_selection = df_selection[df_selection["department"].astype(str) == selected_department]
+
+    section_enabled = bool(selected_department) or (department_enabled and not department_options)
+    section_options = _org_options(df_selection, "section") if section_enabled else []
+    with col_sec:
+        selected_section = st.selectbox(
+            "Section",
+            options=[None] + section_options,
+            format_func=lambda x: "— Tất cả Section —" if x is None else x,
+            key=(
+                f"company_deep_dive_section_"
+                f"{selected_division or 'all'}_{selected_department or 'all'}"
+            ),
+            disabled=not section_enabled,
+        )
+    if selected_section:
+        df_selection = df_selection[df_selection["section"].astype(str) == selected_section]
+
+    if not (selected_division or selected_department or selected_section):
+        first_level = "Khối" if division_options else "Phòng ban" if department_options else "Section"
+        st.caption(f"Chọn {first_level}, sau đó có thể thu hẹp tiếp theo cấp tổ chức bên dưới.")
         return
 
-    df_department = df_total[df_total["department"].astype(str) == selected_department].copy()
+    df_department = df_selection.copy()
+    selected_unit = selected_section or selected_department or selected_division
+    selected_level = "Section" if selected_section else "Phòng ban" if selected_department else "Khối"
     if len(df_department) < MIN_DEPARTMENT_N:
-        st.info("Phòng ban này không đủ tối thiểu 3 mẫu để phân tích.")
+        st.info(f"{selected_level} này không đủ tối thiểu 3 mẫu để phân tích.")
         return
 
     kpis = compute_kpis(df_department)
@@ -173,7 +228,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
                     y=df_pillars_plot["Trụ cột"],
                     x=df_pillars_plot["Điểm phòng ban"],
                     orientation="h",
-                    name=selected_department,
+                    name=selected_unit,
                     marker_color=[
                         "#10B981" if score >= 75 else "#F59E0B" if score >= 65 else "#EF4444"
                         for score in df_pillars_plot["Điểm phòng ban"]
@@ -194,7 +249,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
             fig_pillar = fig_card(
                 fig_pillar,
                 "Hồ sơ 5 Trụ Cột",
-                "Thanh màu là phòng ban, điểm kim cương là toàn GHN",
+                f"Thanh màu là {selected_level.lower()}, điểm kim cương là toàn GHN",
             )
             fig_pillar.update_layout(
                 xaxis=dict(range=[0, 105]),
@@ -204,7 +259,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
             )
             st.plotly_chart(fig_pillar, width="stretch", key="department_deep_dive_pillars")
         else:
-            st.info("Phòng ban chưa có dữ liệu tổng hợp 5 trụ cột.")
+            st.info("Đơn vị chưa có dữ liệu tổng hợp 5 trụ cột.")
 
     with col_segment:
         section_rows = []
@@ -245,7 +300,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
             )
             st.plotly_chart(fig_section, width="stretch", key="department_deep_dive_sections")
         else:
-            st.info("Không có section nào trong phòng ban đạt N > 2.")
+            st.info("Không có Section trực thuộc nào đạt N > 2.")
 
     question_diagnostics = _build_department_question_diagnostics(df_department)
     st.markdown("##### Câu hỏi đang kéo trải nghiệm xuống")
@@ -263,7 +318,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
         )
     else:
         weakest_questions = pd.DataFrame()
-        st.info("Chưa có đủ raw question data để xếp hạng câu hỏi của phòng ban này.")
+        st.info("Chưa có đủ dữ liệu câu hỏi để xếp hạng cho đơn vị này.")
 
     tenure_rows = []
     if "Q5" in df_department.columns:
@@ -302,7 +357,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
         fig_tenure = fig_card(
             fig_tenure,
             "Lát cắt Thâm niên",
-            "Tìm cohort đang kéo trải nghiệm của phòng ban xuống",
+            "Tìm nhóm thâm niên đang kéo trải nghiệm của đơn vị xuống",
         )
         fig_tenure.update_layout(
             xaxis=dict(range=[0, 100]),
@@ -324,7 +379,11 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
         ].to_dict("records")
 
     ai_data = {
+        "Cấp đơn vị": selected_level,
+        "Đơn vị": selected_unit,
+        "Khối": selected_division,
         "Phòng ban": selected_department,
+        "Section": selected_section,
         "N": int(kpis["n"]),
         "EI": round(kpis["ei_mean"], 1),
         "Chênh lệch EI so với GHN": ei_gap,
@@ -343,7 +402,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
         ),
     }
     prompt = (
-        "Viết chẩn đoán Deep Dive cho phòng ban này theo phong cách Master Report. "
+        "Viết chẩn đoán Deep Dive cho đơn vị tổ chức này theo phong cách Master Report. "
         "Mở bằng một tên chẩn đoán ngắn phản ánh vấn đề nổi bật nhất. "
         "Phân tích lần lượt hiện tượng, các bằng chứng đang kéo EI/eNPS xuống, nguyên nhân có khả năng "
         "từ trụ cột, câu hỏi hoặc section, và hai hành động ưu tiên có thể triển khai. "
@@ -351,7 +410,7 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
         "phải dùng cách diễn đạt 'tín hiệu', 'có khả năng' hoặc 'cần kiểm chứng', không khẳng định quan hệ nhân quả."
     )
     render_ai_insight_card(
-        f"AI Deep Dive Phòng Ban · {selected_department}",
+        f"AI Deep Dive {selected_level} · {selected_unit}",
         ai_data,
         prompt,
         badge="Department Diagnosis",
@@ -359,19 +418,18 @@ def _render_department_deep_dive(df_total: pd.DataFrame, tbl_dept: pd.DataFrame)
     )
 
 
-def _render_data_processing_section(headcount, raw, cleaned, all_data, effective=None, straightline=None):
-    dropped = raw - cleaned
-    if effective is None:
-        effective = cleaned
-    if straightline is None:
-        straightline = effective
-
+def _render_data_processing_section(
+    headcount,
+    raw,
+    dropped,
+    cleaned,
+    all_data,
+):
     cards = [
         ("HRIS / Headcount", headcount, "Nền nhân sự dùng để đối chiếu độ phủ", "#0A1F44"),
-        ("Mẫu thu thập", raw, f"{_pct(raw, headcount):.1f}% / HRIS trước khi loại", "#1D4ED8"),
+        ("Mẫu thu thập", raw, f"{_pct(raw, headcount):.1f}% / tổng nhân sự HRIS", "#1D4ED8"),
         ("Mẫu bị loại", dropped, f"{_pct(dropped, raw):.1f}% mẫu không đưa vào phân tích", "#FF5200"),
         ("Mẫu sau loại", cleaned, f"{_pct(cleaned, headcount):.1f}% / HRIS dùng cho dashboard", "#10B981"),
-        ("N hiệu dụng", effective, f"Sau hiệu chỉnh straight-line: {_fmt_num(straightline)}", "#64748B"),
     ]
     card_html = "\n".join(
         f"""
@@ -428,7 +486,7 @@ def _render_data_processing_section(headcount, raw, cleaned, all_data, effective
         }
         .ghn-process-flow {
             display:grid;
-            grid-template-columns:repeat(5,minmax(0,1fr));
+            grid-template-columns:repeat(4,minmax(0,1fr));
             gap:14px;
         }
         .ghn-process-card {
@@ -496,8 +554,8 @@ def _render_data_processing_section(headcount, raw, cleaned, all_data, effective
                         <div class="ghn-process-title">Từ mẫu thu thập đến mẫu phân tích</div>
                     </div>
                     <div class="ghn-process-desc">
-                        Database hiện tại đang là bảng đã làm sạch, nên phần này dùng số chuẩn từ
-                        tài liệu tổng hợp để thể hiện đúng mẫu thực nhận trước loại và mẫu sau loại.
+                        Số liệu sử dụng cùng một base đã truyền thông, từ mẫu thu thập
+                        đến mẫu sau làm sạch dùng cho phân tích.
                     </div>
                 </div>
                 <div class="ghn-process-flow">
@@ -547,7 +605,7 @@ def _render_data_processing_section(headcount, raw, cleaned, all_data, effective
     )
 
 
-def render(all_data, available_groups):
+def render(all_data, available_groups, scope_restricted=False):
     if not all_data:
         st.error("Không tìm thấy dữ liệu nào.")
         return
@@ -569,25 +627,64 @@ def render(all_data, available_groups):
     total_intent = total_kpis['intent_pct_low']
     total_mei = total_kpis.get('mei_avg', 0.0)
 
-    # Số liệu đồng bộ từ dữ liệu thực tế
+    # Số liệu toàn công ty chỉ được dùng cho tài khoản không bị giới hạn scope.
     from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
-    total_participants = DEEPDIVE_QUALITY_TOTALS["raw"]  # raw submissions từ tất cả nhóm
-    total_cleaned = DEEPDIVE_QUALITY_TOTALS["cleaned"]   # mẫu sau lọc dùng cho phân tích
-
-    # Headcount từ HRIS (không thay đổi theo dữ liệu khảo sát)
-    try:
-        from shared.workforce_mapper import load_workforce_and_mapping
-        df_wf, _, _ = load_workforce_and_mapping()
-        total_headcount = len(df_wf) if df_wf is not None and not df_wf.empty else DEEPDIVE_QUALITY_TOTALS["headcount"]
-    except Exception:
+    if scope_restricted:
+        total_participants = len(df_total)
+        total_cleaned = len(df_total)
+        total_headcount = None
+        total_rr = None
+        cleaned_rr = None
+    else:
+        total_participants = DEEPDIVE_QUALITY_TOTALS["raw"]
+        total_cleaned = DEEPDIVE_QUALITY_TOTALS["cleaned"]
+        # Workforce runtime có thể chứa nhân sự phát sinh sau kỳ khảo sát.
         total_headcount = DEEPDIVE_QUALITY_TOTALS["headcount"]
-
-    total_rr = round((total_participants / total_headcount) * 100, 1) if total_headcount > 0 else 0
-    cleaned_rr = round((total_cleaned / total_headcount) * 100, 1) if total_headcount > 0 else 0
+        total_rr = round((total_participants / total_headcount) * 100, 1)
+        cleaned_rr = round((total_cleaned / total_headcount) * 100, 1)
     bm = get_company_benchmark_2025()
     ei_delta = total_ei - bm['ei_mean']
     enps_delta = total_enps - bm['enps_score']
-    rr_delta = total_rr - bm['response_rate']
+    scope_display = "phạm vi được cấp quyền" if scope_restricted else "toàn tổ chức"
+
+    if scope_restricted:
+        hero_kicker = "GHN · Phạm vi được cấp quyền"
+        hero_title = "Tổng quan dữ liệu<br/>trong phạm vi của bạn"
+        hero_subtitle = (
+            "Các chỉ số và phân tích bên dưới chỉ sử dụng dữ liệu thuộc Khối, "
+            "Phòng ban hoặc Section đã được cấp quyền."
+        )
+        hero_mini_html = f"""
+            <div class="ghn-mini"><span>Mẫu trong phạm vi</span><strong>{total_cleaned:,}</strong></div>
+            <div class="ghn-mini"><span>Số nhóm có dữ liệu</span><strong>{len(all_data)}</strong></div>
+            <div class="ghn-mini"><span>EI so với 2025</span><strong>{ei_delta:+.1f}</strong></div>
+            <div class="ghn-mini"><span>Phạm vi</span><strong>Đã giới hạn</strong></div>
+        """
+        hero_metrics_html = f"""
+            <div class="ghn-metric" style="--accent:#1D4ED8"><div class="ghn-metric-label">Mẫu trong phạm vi</div><div class="ghn-metric-value">{total_cleaned:,}</div><div class="ghn-metric-sub">Chỉ gồm dữ liệu tài khoản được phép xem</div></div>
+            <div class="ghn-metric" style="--accent:#10B981"><div class="ghn-metric-label">Số nhóm khảo sát</div><div class="ghn-metric-value">{len(all_data)}</div><div class="ghn-metric-sub">Nhóm có dữ liệu trong phạm vi hiện tại</div></div>
+            <div class="ghn-metric" style="--accent:#F97316"><div class="ghn-metric-label">EI trong phạm vi</div><div class="ghn-metric-value">{total_ei:.1f}</div><div class="ghn-metric-sub">Tính trên mẫu được cấp quyền</div></div>
+            <div class="ghn-metric" style="--accent:#64748B"><div class="ghn-metric-label">eNPS trong phạm vi</div><div class="ghn-metric-value">{total_enps:+.0f}</div><div class="ghn-metric-sub">Không bao gồm đơn vị ngoài phạm vi</div></div>
+        """
+    else:
+        hero_kicker = "GHN · Tổng quan tổ chức"
+        hero_title = "Tổng quan GHN<br/>trên nền dữ liệu EES 2026"
+        hero_subtitle = (
+            "Một lớp điều hành tổng hợp cho thấy quy mô tham gia, sức khỏe gắn kết, "
+            "khoảng cách giữa các đơn vị và các điểm cần ưu tiên trước khi đi sâu vào từng nhóm khảo sát."
+        )
+        hero_mini_html = f"""
+            <div class="ghn-mini"><span>Tỷ lệ phản hồi</span><strong>{total_rr:.1f}%</strong></div>
+            <div class="ghn-mini"><span>EI so với 2025</span><strong>{ei_delta:+.1f}</strong></div>
+            <div class="ghn-mini"><span>Mẫu hợp lệ</span><strong>{total_cleaned:,}</strong></div>
+            <div class="ghn-mini"><span>Độ phủ dữ liệu</span><strong>{cleaned_rr:.1f}%</strong></div>
+        """
+        hero_metrics_html = f"""
+            <div class="ghn-metric" style="--accent:#0A1F44"><div class="ghn-metric-label">Tổng nhân sự</div><div class="ghn-metric-value">{total_headcount:,}</div><div class="ghn-metric-sub">Headcount toàn tổ chức GHN</div></div>
+            <div class="ghn-metric" style="--accent:#1D4ED8"><div class="ghn-metric-label">Đã tham gia</div><div class="ghn-metric-value">{total_participants:,}</div><div class="ghn-metric-sub">{total_rr:.1f}% tỷ lệ phản hồi</div></div>
+            <div class="ghn-metric" style="--accent:#10B981"><div class="ghn-metric-label">Mẫu phân tích</div><div class="ghn-metric-value">{total_cleaned:,}</div><div class="ghn-metric-sub">{cleaned_rr:.1f}% / headcount sau lọc memo</div></div>
+            <div class="ghn-metric" style="--accent:#64748B"><div class="ghn-metric-label">Chưa tham gia</div><div class="ghn-metric-value">{max(total_headcount - total_participants, 0):,}</div><div class="ghn-metric-sub">{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</div></div>
+        """
 
     st.markdown('''
     <style>
@@ -819,54 +916,47 @@ def render(all_data, available_groups):
     <div class="ghn-shell">
         <div class="ghn-hero">
             <div>
-                <span class="ghn-kicker">GHN · Tổng quan tổ chức</span>
-                <h1 class="ghn-title">Tổng quan GHN<br/>trên nền dữ liệu EES 2026</h1>
-                <p class="ghn-subtitle">
-                    Một lớp điều hành tổng hợp cho thấy quy mô tham gia, sức khỏe gắn kết,
-                    khoảng cách giữa các đơn vị và các điểm cần ưu tiên trước khi đi sâu vào từng nhóm khảo sát.
-                </p>
+                <span class="ghn-kicker">{hero_kicker}</span>
+                <h1 class="ghn-title">{hero_title}</h1>
+                <p class="ghn-subtitle">{hero_subtitle}</p>
             </div>
             <div class="ghn-command">
                 <div class="ghn-command-label">Trung tâm điều hành gắn kết</div>
                 <div class="ghn-command-score">{total_ei:.1f}</div>
-                <div class="ghn-command-sub">EI tổng thể · eNPS {total_enps:+.0f} · Rủi ro nghỉ việc {total_intent:.1f}%</div>
+                <div class="ghn-command-sub">EI {scope_display} · eNPS {total_enps:+.0f} · Rủi ro nghỉ việc {total_intent:.1f}%</div>
                 <div class="ghn-mini-grid">
-                    <div class="ghn-mini"><span>Tỷ lệ phản hồi</span><strong>{total_rr:.1f}%</strong></div>
-                    <div class="ghn-mini"><span>EI so với 2025</span><strong>{ei_delta:+.1f}</strong></div>
-                    <div class="ghn-mini"><span>Mẫu hợp lệ</span><strong>{total_cleaned:,}</strong></div>
-                    <div class="ghn-mini"><span>Độ phủ dữ liệu</span><strong>{cleaned_rr:.1f}%</strong></div>
+                    {hero_mini_html}
                 </div>
             </div>
         </div>
 
         <div class="ghn-metrics">
-            <div class="ghn-metric" style="--accent:#0A1F44"><div class="ghn-metric-label">Tổng nhân sự</div><div class="ghn-metric-value">{total_headcount:,}</div><div class="ghn-metric-sub">Headcount toàn tổ chức GHN</div></div>
-            <div class="ghn-metric" style="--accent:#1D4ED8"><div class="ghn-metric-label">Đã tham gia</div><div class="ghn-metric-value">{total_participants:,}</div><div class="ghn-metric-sub">{total_rr:.1f}% tỷ lệ phản hồi</div></div>
-            <div class="ghn-metric" style="--accent:#10B981"><div class="ghn-metric-label">Mẫu phân tích</div><div class="ghn-metric-value">{total_cleaned:,}</div><div class="ghn-metric-sub">{cleaned_rr:.1f}% / headcount sau lọc memo</div></div>
-            <div class="ghn-metric" style="--accent:#64748B"><div class="ghn-metric-label">Chưa tham gia</div><div class="ghn-metric-value">{max(total_headcount - total_participants, 0):,}</div><div class="ghn-metric-sub">{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</div></div>
+            {hero_metrics_html}
         </div>
 
 
     </div>
     ''')
     st.html(hero_html)
-    _render_data_processing_section(
-        headcount=total_headcount,
-        raw=total_participants,
-        cleaned=total_cleaned,
-        all_data=all_data,
-    )
+    if not scope_restricted:
+        _render_data_processing_section(
+            headcount=total_headcount,
+            raw=total_participants,
+            dropped=DEEPDIVE_QUALITY_TOTALS["dropped"],
+            cleaned=total_cleaned,
+            all_data=all_data,
+        )
 
     # Executive company overview section
     from shared.plotly_theme import make_html_kpi
-    st.html(dedent("""
+    st.html(dedent(f"""
     <div class="ghn-band">
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
             <div>
                 <div style="font-size:.72rem;font-weight:850;color:#FF5200;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">TỔNG QUAN GIAO HÀNG NHANH</div>
                 <div style="font-size:1.35rem;font-weight:900;color:#0A1F44;letter-spacing:-.02em;">Bốn chỉ số chiến lược</div>
             </div>
-            <div style="font-size:.82rem;color:#64748B;font-weight:550;">So sánh với baseline 2025 và trạng thái hiện tại của toàn tổ chức.</div>
+            <div style="font-size:.82rem;color:#64748B;font-weight:550;">So sánh với baseline 2025 và trạng thái hiện tại của {scope_display}.</div>
         </div>
     </div>
     """))
@@ -882,12 +972,13 @@ def render(all_data, available_groups):
 
     # Calculate dynamic insights across divisions
     div_stats = []
-    for div, df_div in df_total.groupby('division', dropna=True):
-        if len(df_div) < MIN_ORG_SEGMENT_N:
-            continue
-        kpis = compute_kpis(df_div)
-        kpis['division'] = div
-        div_stats.append(kpis)
+    if 'division' in df_total.columns:
+        for div, df_div in df_total.groupby('division', dropna=True):
+            if len(df_div) < MIN_ORG_SEGMENT_N:
+                continue
+            kpis = compute_kpis(df_div)
+            kpis['division'] = div
+            div_stats.append(kpis)
     df_div_stats = pd.DataFrame(div_stats)
 
     if not df_div_stats.empty:
@@ -928,7 +1019,7 @@ def render(all_data, available_groups):
         
         _data_short = (
             f"Bạn là chuyên gia phân tích nhân sự GHN Express. Dựa vào đúng các số liệu sau — KHÔNG thêm số liệu ngoài danh sách:\n"
-            f"- EI toàn tổ chức: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
+            f"- EI {scope_display}: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
             f"- eNPS: {ai_data['Total_eNPS']:+.0f}\n"
             f"- Tỷ lệ nhân viên có nguy cơ nghỉ việc: {ai_data['Total_Attrition_Risk']:.1f}%\n"
             f"- Đơn vị EI cao nhất: {ai_data['Top_Division']} ({ai_data['Top_Division_EI']:.1f}%)\n"
@@ -945,7 +1036,7 @@ def render(all_data, available_groups):
         )
         _data_long = (
             f"Bạn là chuyên gia phân tích nhân sự GHN Express. Dựa vào đúng các số liệu sau — KHÔNG thêm số liệu ngoài danh sách:\n"
-            f"- EI toàn tổ chức: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
+            f"- EI {scope_display}: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
             f"- eNPS: {ai_data['Total_eNPS']:+.0f}\n"
             f"- Tỷ lệ nhân viên có nguy cơ nghỉ việc: {ai_data['Total_Attrition_Risk']:.1f}%\n"
             f"- Đơn vị EI cao nhất: {ai_data['Top_Division']} ({ai_data['Top_Division_EI']:.1f}%)\n"
@@ -996,22 +1087,25 @@ def render(all_data, available_groups):
                         row[plabel] = df_div[col].mean()
                 hm_data.append(row)
             df_hm = pd.DataFrame(hm_data).set_index('division')
-            
-            fig_hm = go.Figure(data=go.Heatmap(
-                z=df_hm.values,
-                x=df_hm.columns,
-                y=df_hm.index,
-                colorscale='RdYlGn',
-                zmin=50, zmax=90,
-                text=df_hm.round(1).values,
-                texttemplate="%{text}",
-                showscale=False
-            ))
-            fig_hm = fig_card(fig_hm, 'Heatmap 5 Trụ Cột theo Khối', 'Phân bổ sức khỏe tổ chức')
-            st.plotly_chart(fig_hm, width='stretch', key="company_overview_chart_276")
+
+            if df_hm.shape[1] > 0:
+                fig_hm = go.Figure(data=go.Heatmap(
+                    z=df_hm.values,
+                    x=df_hm.columns,
+                    y=df_hm.index,
+                    colorscale='RdYlGn',
+                    zmin=50, zmax=90,
+                    text=df_hm.round(1).values,
+                    texttemplate="%{text}",
+                    showscale=False
+                ))
+                fig_hm = fig_card(fig_hm, 'Heatmap 5 Trụ Cột theo Khối', 'Phân bổ sức khỏe tổ chức')
+                st.plotly_chart(fig_hm, width='stretch', key="company_overview_chart_276")
+            else:
+                st.info("Chưa có dữ liệu trụ cột theo Khối để dựng heatmap.")
             
         # --- AI Insight for Division ---
-        if len(df_div_stats) > 1:
+        if len(df_div_stats) > 1 and df_hm.shape[1] > 0:
             top_div = df_div_stats.iloc[-1]['division']
             bot_div = df_div_stats.iloc[0]['division']
             lowest_pillar = df_hm.mean().idxmin()
@@ -1028,10 +1122,10 @@ def render(all_data, available_groups):
                 f" Dưới đây là các số liệu thực tế — chỉ dùng đúng những con số này:\n"
                 f"- Đơn vị EI cao nhất: {org_ai_data['Top_Division']} ({org_ai_data['Top_EI']:.1f}%)\n"
                 f"- Đơn vị EI thấp nhất: {org_ai_data['Bottom_Division']} ({org_ai_data['Bottom_EI']:.1f}%)\n"
-                f"- Trụ cột điểm thấp nhất toàn hệ thống: {org_ai_data['Lowest_System_Pillar']}\n\n"
+                f"- Trụ cột điểm thấp nhất trong {scope_display}: {org_ai_data['Lowest_System_Pillar']}\n\n"
                 f"Viết theo 3 mục sau, mỗi mục 2-3 câu, tự nhiên như analyst đang tóm tắt biểu đồ vừa xem:\n"
                 f"- **Khoảng cách EI giữa các khối:** [con số đó lớn hay nhỏ, và điều gì có thể đang xảy ra bên dưới]\n"
-                f"- **Trụ cột yếu nhất toàn hệ thống:** [giải thích trụ cột {org_ai_data['Lowest_System_Pillar']} ảnh hưởng như thế nào đến trải nghiệm nhân viên hàng ngày]\n"
+                f"- **Trụ cột yếu nhất trong phạm vi:** [giải thích trụ cột {org_ai_data['Lowest_System_Pillar']} ảnh hưởng như thế nào đến trải nghiệm nhân viên hàng ngày]\n"
                 f"- **Ưu tiên can thiệp:** [đơn vị nào và vấn đề gì cần xử lý trước, lý do ngắn gọn]\n\n"
                 f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
             )
@@ -1185,7 +1279,6 @@ def render(all_data, available_groups):
                 styled_dept = _make_styler(tbl_dept_fmt, tbl_dept.reset_index(drop=True),
                                            'EI (%)', 'eNPS', avail_pillar_cols)
                 st.dataframe(styled_dept, width='stretch', hide_index=True)
-                _render_department_deep_dive(df_total, tbl_dept)
             else:
                 st.info("Không có phòng ban nào có số mẫu trên 2.")
         else:
@@ -1257,6 +1350,8 @@ def render(all_data, available_groups):
                 st.info(f"Không đủ mẫu theo section (tối thiểu {MIN_ORG_SEGMENT_N} người / section).")
         else:
             st.info("Dữ liệu chưa có cột 'section'.")
+
+    _render_org_deep_dive(df_total)
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 3: DEMOGRAPHICS (THÂM NIÊN & CẤP BẬC)

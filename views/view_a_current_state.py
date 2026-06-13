@@ -32,9 +32,11 @@ def _make_table_col_cfg(row_label_key, pillars_seen):
     return cfg
 
 
-def render(df, cfg, pillar_filter=None, group_id=None):
+def render(df, cfg, pillar_filter=None, group_id=None, df_bench=None):
     apply_theme()
     kpis = compute_kpis(df)
+    if df_bench is None:
+        df_bench = df  # fallback: benchmark = scoped df (e.g. for admin)
     from shared.plotly_theme import make_html_kpi, section_header
 
     _ei_v      = kpis['ei_mean']
@@ -770,50 +772,87 @@ def render(df, cfg, pillar_filter=None, group_id=None):
         _MIN_N = 5
         _BAD_DD = {None, 'None', 'Khác', 'Chưa xác định', 'Không xác định', 'nan', ''}
 
-        # Build hierarchical unit list: hiển thị cả Section lẫn Department
-        _unit_options = []
-        _unit_map = {}  # label -> (col, value)
-
-        for _col, _prefix in [('section', '[Section]'), ('department', '[Phòng ban]')]:
-            if _col in df.columns and df[_col].notna().sum() > 0:
-                _df_col = df[df[_col].notna() & ~df[_col].isin(_BAD_DD)]
-                for _uval, _g in _df_col.groupby(_col):
-                    if len(_g) >= _MIN_N:
-                        _label = f"{_prefix} {_uval}"
-                        _unit_options.append(_label)
-                        _unit_map[_label] = (_col, _uval)
-
-        # Deduplicate và sort
-        _unit_options = sorted(list(dict.fromkeys(_unit_options)))
-
-        if _unit_options:
-            st.markdown(section_header(
-                "Deep Dive — Phân tích chi tiết theo đơn vị",
-                "Chọn một bộ phận để xem phân tích chuyên sâu về các chỉ số và dấu hiệu bất thường"
-            ), unsafe_allow_html=True)
-
-            _sel_unit_label = st.selectbox(
-                f"Chọn đơn vị cần phân tích: ({len(_unit_options)} đơn vị có đủ dữ liệu)",
-                options=["— Chọn bộ phận —"] + _unit_options,
-                key=f"deepdive_unit_{cfg.get('id','')}"
+        def _org_options(frame, column):
+            if column not in frame.columns:
+                return []
+            valid = frame[frame[column].notna() & ~frame[column].isin(_BAD_DD)]
+            return sorted(
+                str(value)
+                for value, group in valid.groupby(column, dropna=True)
+                if len(group) >= _MIN_N
             )
 
-            if _sel_unit_label and _sel_unit_label != "— Chọn bộ phận —":
-                _sec_col, _sel_unit = _unit_map[_sel_unit_label]
-                _df_valid = df[df[_sec_col].notna() & ~df[_sec_col].isin(_BAD_DD)]
-                _udf = _df_valid[_df_valid[_sec_col] == _sel_unit].copy()
+        _has_org_data = any(_org_options(df, col) for col in ("division", "department", "section"))
+
+        if _has_org_data:
+            st.markdown(section_header(
+                "Deep Dive — Phân tích chi tiết theo đơn vị",
+                "Chọn tuần tự Khối, Phòng ban và Section để xem phân tích chuyên sâu"
+            ), unsafe_allow_html=True)
+
+            _c_div, _c_dept, _c_sec = st.columns(3)
+            _df_selected = df.copy()
+            _sel_div = None
+            _sel_dept = None
+            _sel_sec = None
+
+            _div_options = _org_options(_df_selected, "division")
+            with _c_div:
+                _sel_div = st.selectbox(
+                    "Khối",
+                    options=[None] + _div_options,
+                    format_func=lambda value: "— Chọn Khối —" if value is None else value,
+                    key=f"deepdive_division_{cfg.get('id', '')}",
+                )
+            if _sel_div:
+                _df_selected = _df_selected[_df_selected["division"].astype(str) == _sel_div]
+
+            _dept_enabled = bool(_sel_div) or not _div_options
+            _dept_options = _org_options(_df_selected, "department") if _dept_enabled else []
+            with _c_dept:
+                _sel_dept = st.selectbox(
+                    "Phòng ban",
+                    options=[None] + _dept_options,
+                    format_func=lambda value: "— Tất cả phòng ban —" if value is None else value,
+                    key=f"deepdive_department_{cfg.get('id', '')}_{_sel_div or 'all'}",
+                    disabled=not _dept_enabled,
+                )
+            if _sel_dept:
+                _df_selected = _df_selected[_df_selected["department"].astype(str) == _sel_dept]
+
+            _sec_enabled = bool(_sel_dept) or (not _dept_options and _dept_enabled)
+            _sec_options = _org_options(_df_selected, "section") if _sec_enabled else []
+            with _c_sec:
+                _sel_sec = st.selectbox(
+                    "Section",
+                    options=[None] + _sec_options,
+                    format_func=lambda value: "— Tất cả Section —" if value is None else value,
+                    key=(
+                        f"deepdive_section_{cfg.get('id', '')}_"
+                        f"{_sel_div or 'all'}_{_sel_dept or 'all'}"
+                    ),
+                    disabled=not _sec_enabled,
+                )
+            if _sel_sec:
+                _df_selected = _df_selected[_df_selected["section"].astype(str) == _sel_sec]
+
+            _sel_unit = _sel_sec or _sel_dept or _sel_div
+            _sel_level = "Section" if _sel_sec else "Phòng ban" if _sel_dept else "Khối"
+
+            if _sel_unit:
+                _udf = _df_selected.copy()
                 _ukpis = compute_kpis(_udf)
-                _grp_kpis = kpis  # so sánh với toàn nhóm
+                _grp_kpis = compute_kpis(df_bench)  # so sánh với toàn nhóm (full group)
 
                 # ── Header card ──
                 st.markdown(f"""
                 <div style="background:linear-gradient(135deg,#1D4ED8 0%,#3B82F6 100%);
                             border-radius:12px;padding:16px 20px;margin:10px 0 14px 0;">
                     <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;font-weight:600;
-                                text-transform:uppercase;letter-spacing:0.08em;">Đơn vị được chọn</div>
+                                text-transform:uppercase;letter-spacing:0.08em;">{_sel_level} được chọn</div>
                     <div style="color:#fff;font-size:1.2rem;font-weight:800;margin-top:4px;">{_sel_unit}</div>
                     <div style="color:rgba(255,255,255,0.65);font-size:0.78rem;margin-top:2px;">
-                        N = {len(_udf):,} nhân sự &nbsp;·&nbsp; Toàn nhóm: N = {len(df):,}
+                        N = {len(_udf):,} nhân sự &nbsp;·&nbsp; Toàn nhóm: N = {len(df_bench):,}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -866,7 +905,7 @@ def render(df, cfg, pillar_filter=None, group_id=None):
                         _pillar_rows.append({
                             'Trụ cột': _plabel,
                             'Đơn vị': round(_udf[_pcol].mean(), 1),
-                            'Toàn nhóm': round(df[_pcol].mean(), 1) if _pcol in df.columns else 0
+                            'Toàn nhóm': round(df_bench[_pcol].mean(), 1) if _pcol in df_bench.columns else 0
                         })
                 if _pillar_rows:
                     st.markdown("**5 Trụ cột Gắn kết:**")
@@ -944,6 +983,8 @@ def render(df, cfg, pillar_filter=None, group_id=None):
                 )
                 
                 render_ai_insight_card("Phân tích Đơn vị & Tiếng nói nhân viên", ai_data, prompt)
+            else:
+                st.caption("Chọn Khối, sau đó có thể thu hẹp tiếp theo Phòng ban và Section.")
 
 
     except Exception as _dd_err:

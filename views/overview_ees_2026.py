@@ -1457,28 +1457,28 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
   <div class="jt-left">
     <span class="jt-kicker">EES 2026 · Hành trình</span>
     <h2 class="jt-heading">Nhìn lại<br>Hành trình</h2>
-    <p class="jt-sub">Những con số và dấu mốc đại diện cho khối lượng công việc khổng lồ mà Team đã thực hiện để biến dữ liệu thô thành các nhóm hành động chiến lược.</p>
+    <p class="jt-sub">Từ thiết kế khảo sát, triển khai trên toàn hệ thống đến tổng hợp kết quả, EES 2026 là hành trình phối hợp của nhiều đội ngũ nhằm lắng nghe và ghi nhận ý kiến của nhân viên trên toàn GHN.</p>
 
     <div class="jt-stats">
       <div class="jt-stat">
         <div class="jt-stat-num">19</div>
         <div class="jt-stat-label">Ngày Khảo Sát</div>
-        <div class="jt-stat-desc">Thu thập hơn 20,000 phản hồi hợp lệ trên toàn quốc</div>
+        <div class="jt-stat-desc">Ghi nhận hơn 20.000 phản hồi hợp lệ từ nhân viên trên toàn hệ thống GHN.</div>
       </div>
       <div class="jt-stat">
         <div class="jt-stat-num">20k+</div>
         <div class="jt-stat-label">Nhân Viên Lên Tiếng</div>
-        <div class="jt-stat-desc">Tỷ lệ tham gia kỷ lục 93.7% — cao nhất lịch sử GHN</div>
+        <div class="jt-stat-desc">93,7% nhân viên tham gia khảo sát - tỷ lệ cao nhất từ trước đến nay.</div>
       </div>
       <div class="jt-stat">
         <div class="jt-stat-num">5</div>
-        <div class="jt-stat-label">Trụ Cột Phân Tích</div>
-        <div class="jt-stat-desc">Niềm tin lãnh đạo · Quản lý trực tiếp · Công việc &amp; phát triển · Thu nhập &amp; minh bạch · Môi trường &amp; phát triển</div>
+        <div class="jt-stat-label">Trọng Tâm Khảo Sát</div>
+        <div class="jt-stat-desc">Niềm tin lãnh đạo · Quản lý trực tiếp · Công việc &amp; phát triển · Thu nhập &amp; minh bạch · Môi trường làm việc</div>
       </div>
       <div class="jt-stat">
         <div class="jt-stat-num">01</div>
-        <div class="jt-stat-label">Dashboard Hợp Nhất</div>
-        <div class="jt-stat-desc">Toàn bộ báo cáo & phân tích chéo trong một nền tảng duy nhất</div>
+        <div class="jt-stat-label">Nền Tảng Báo Cáo</div>
+        <div class="jt-stat-desc">Tổng hợp kết quả khảo sát và các góc nhìn phân tích trên một nền tảng thống nhất.</div>
       </div>
     </div>
   </div>
@@ -1491,8 +1491,8 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
       <div class="jt-body">
         <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 01</div>
         <div class="jt-milestone">Kick-off</div>
-        <div class="jt-title">Phát Động Chiến Dịch</div>
-        <div class="jt-desc">CPO trực tiếp gửi thông điệp đến toàn bộ nhân sự GHN. Các Giám đốc Vùng tiếp lửa và dẫn dắt team tham gia khảo sát đồng loạt.</div>
+        <div class="jt-title">Phát Động Chương Trình Khảo Sát</div>
+        <div class="jt-desc">Chương trình được khởi động với sự đồng hành của Ban Lãnh đạo và các cấp quản lý, lan tỏa đến toàn thể nhân viên trên toàn quốc.</div>
       </div>
     </div>
 
@@ -1501,8 +1501,8 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
       <div class="jt-body">
         <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 02</div>
         <div class="jt-milestone">19 ngày</div>
-        <div class="jt-title">Thu Thập Thần Tốc</div>
-        <div class="jt-desc">Phối hợp với các khối Vận hành trên toàn quốc, đạt 20,005 phản hồi thu thập và 19,221 mẫu phân tích sau làm sạch — vượt mọi kỳ vọng ban đầu về quy mô lẫn tốc độ.</div>
+        <div class="jt-title">19 Ngày Thu Thập Phản Hồi</div>
+        <div class="jt-desc">Sau 19 ngày triển khai, chương trình ghi nhận hơn 20.000 phản hồi từ nhân viên trên toàn hệ thống, vượt kỳ vọng ban đầu về quy mô tham gia.</div>
       </div>
     </div>
 
@@ -1511,8 +1511,8 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
       <div class="jt-body">
         <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 03</div>
         <div class="jt-milestone">Data Processing</div>
-        <div class="jt-title">Xử Lý & Làm Sạch Dữ Liệu</div>
-        <div class="jt-desc">Chuẩn hóa dữ liệu thô qua nhiều vòng kiểm tra, map với HRIS và thiết lập cấu trúc phân nhóm Division/Section chính xác tuyệt đối.</div>
+        <div class="jt-title">Xử Lý &amp; Làm Sạch Dữ Liệu</div>
+        <div class="jt-desc">Các phản hồi được rà soát, chuẩn hóa và tổng hợp để đảm bảo dữ liệu đầy đủ, chính xác trước khi đưa vào phân tích.</div>
       </div>
     </div>
 
@@ -1521,8 +1521,8 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
       <div class="jt-body">
         <div style="font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF5200;margin-bottom:8px;">Mốc 04</div>
         <div class="jt-milestone">Now</div>
-        <div class="jt-title">Dashboard & Executive Report</div>
-        <div class="jt-desc">Hội tụ toàn bộ báo cáo, phân tích chéo và câu chuyện dữ liệu vào một giao diện thông minh — sẵn sàng cho cuộc họp điều hành.</div>
+        <div class="jt-title">Tổng Hợp &amp; Báo Cáo Kết Quả</div>
+        <div class="jt-desc">Toàn bộ kết quả khảo sát được tổng hợp thành 1 bảng phân tích và báo cáo, giúp Ban Lãnh đạo có cái nhìn rõ hơn về trải nghiệm và mức độ gắn kết của nhân viên.</div>
       </div>
     </div>
 

@@ -2082,10 +2082,15 @@ with st.sidebar:
         menu_items.append(sac.MenuItem("Admin Panel", icon="gear"))
 
     # Format function: hiển thị title, bỏ qua value prefix
+    _PILLAR_MENU_LABELS = {
+        PILLAR_META[pillar_id]["name"]: f"{pillar_id} - {PILLAR_META[pillar_id]['name']}"
+        for pillar_id in PILLAR_ORDER
+    }
+
     def _menu_format(v):
         if isinstance(v, str) and "__" in v:
-            return v.split("__", 1)[1]
-        return v
+            v = v.split("__", 1)[1]
+        return _PILLAR_MENU_LABELS.get(v, v)
 
     # return_index=False → trả về value của MenuItem được chọn
     sel_value = sac.menu(
@@ -2185,37 +2190,51 @@ with st.sidebar:
         )
         st.session_state.global_tenure = sel_tenure_sb
         df_filtered_tenure = apply_global_filters(df_raw)
+        # Benchmark phải nằm trong đúng phạm vi được cấp quyền. Với user toàn quyền,
+        # đây vẫn là toàn nhóm; với user giới hạn, không làm lộ số liệu ngoài scope.
+        df_bench_group = df_filtered_tenure.copy()
 
         div_opts = ['Tất cả Khối']
         if 'division' in df_filtered_tenure.columns:
             div_opts += sorted(df_filtered_tenure['division'].dropna().unique().tolist())
-        sel_div = st.selectbox("Khối", div_opts)
+        sel_div = st.selectbox("Khối", div_opts, key=f"filter_div_{sel_group}")
 
         dept_opts = ['Tất cả Phòng ban']
-        if sel_div != 'Tất cả Khối':
+        if sel_div != 'Tất cả Khối' and 'department' in df_filtered_tenure.columns:
             dept_opts += sorted(
                 df_filtered_tenure[df_filtered_tenure['division'] == sel_div]
                 ['department'].dropna().unique().tolist()
             )
         elif 'department' in df_filtered_tenure.columns:
             dept_opts += sorted(df_filtered_tenure['department'].dropna().unique().tolist())
-        sel_dept = st.selectbox("Phòng ban", dept_opts)
+        sel_dept = st.selectbox(
+            "Phòng ban",
+            dept_opts,
+            key=f"filter_dept_{sel_group}_{sel_div}",
+        )
 
         sec_opts = ['Tất cả Section']
-        if sel_dept != 'Tất cả Phòng ban':
+        if sel_dept != 'Tất cả Phòng ban' and 'section' in df_filtered_tenure.columns:
             sec_opts += sorted(
                 df_filtered_tenure[df_filtered_tenure['department'] == sel_dept]
                 ['section'].dropna().unique().tolist()
             )
         elif 'section' in df_filtered_tenure.columns:
             sec_opts += sorted(df_filtered_tenure['section'].dropna().unique().tolist())
-        sel_sec = st.selectbox("Section", sec_opts)
+        sel_sec = st.selectbox(
+            "Section",
+            sec_opts,
+            key=f"filter_sec_{sel_group}_{sel_div}_{sel_dept}",
+        )
 
         # Apply all filters
         df_filtered = df_filtered_tenure.copy()
-        if sel_div  != 'Tất cả Khối':      df_filtered = df_filtered[df_filtered['division']    == sel_div]
-        if sel_dept != 'Tất cả Phòng ban': df_filtered = df_filtered[df_filtered['department']  == sel_dept]
-        if sel_sec  != 'Tất cả Section':   df_filtered = df_filtered[df_filtered['section']     == sel_sec]
+        if sel_div != 'Tất cả Khối' and 'division' in df_filtered.columns:
+            df_filtered = df_filtered[df_filtered['division'] == sel_div]
+        if sel_dept != 'Tất cả Phòng ban' and 'department' in df_filtered.columns:
+            df_filtered = df_filtered[df_filtered['department'] == sel_dept]
+        if sel_sec != 'Tất cả Section' and 'section' in df_filtered.columns:
+            df_filtered = df_filtered[df_filtered['section'] == sel_sec]
 
     # Spacer
     st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
@@ -2332,7 +2351,11 @@ elif is_company:
             loader.clear()
             st.info("Bạn không có dữ liệu thuộc phạm vi được cấp quyền.")
         else:
-            company_overview.render(filtered_all_data, available)
+            company_overview.render(
+                filtered_all_data,
+                available,
+                scope_restricted=scope_restricted,
+            )
             loader.clear()  # Clear AFTER render hoàn thành — tránh trang trắng
     except Exception as e:
         st.error(f"Lỗi khi tải view Tổng quan: {e}")
@@ -2350,23 +2373,6 @@ else:
             "Nhóm khảo sát này không có dữ liệu thuộc phạm vi bạn được cấp quyền xem. "
             "Vui lòng chọn nhóm khảo sát khác từ sidebar."
         )
-        # Diagnostic: show what we're searching for vs what exists
-        _auth_diag = st.session_state.get("user_authorization", {})
-        _scope_diag = user_scope
-        with st.expander("Thông tin chẩn đoán (dành cho Admin)", expanded=True):
-            st.markdown(f"**Đang tìm kiếm:** cột `{_scope_diag.get('column')}` = `{_scope_diag.get('values')}`")
-            try:
-                from utils.data_loader import load_group as _lg
-                _df_raw_diag, _ = _lg(sel_group)
-                _col = _scope_diag.get("column")
-                if _col and _col in _df_raw_diag.columns:
-                    _existing = sorted(_df_raw_diag[_col].dropna().unique().tolist())
-                    st.markdown(f"**Giá trị thực tế trong nhóm `{sel_group}`** (cột `{_col}`):")
-                    st.code("\n".join(_existing))
-                else:
-                    st.markdown(f"Cột `{_col}` không tồn tại trong data. Các cột có sẵn: `{list(_df_raw_diag.columns[:20])}`")
-            except Exception as _e:
-                st.error(f"Không load được data để chẩn đoán: {_e}")
         st.stop()
 
     if page_loader is not None:
@@ -2397,10 +2403,10 @@ else:
                 break
 
         if sel_nav == "Tổng quan Khảo sát":
-            view_a_current_state.render(df_filtered, cfg, group_id=sel_group)
+            view_a_current_state.render(df_filtered, cfg, group_id=sel_group, df_bench=df_bench_group)
         elif sel_nav == "Xem Báo Cáo":
             from views import narrative_flow
-            narrative_flow.render_narrative(df_filtered, cfg, sel_group)
+            narrative_flow.render_narrative(df_filtered, cfg, sel_group, df_bench=df_bench_group)
         elif sel_pillar:
             from views import pillar_renderer
             pillar_renderer.render(df_filtered, cfg, sel_group, sel_pillar)
