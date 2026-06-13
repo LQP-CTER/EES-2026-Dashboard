@@ -34,10 +34,30 @@ BENCHMARK_2025 = {
     }
 }
 
+# Mốc đối sánh bên ngoài dùng trong Executive Summary của Benchmark.
+# Chỉ giữ các mốc có thể so sánh trực tiếp với thang điểm đang hiển thị.
+EXTERNAL_BENCHMARKS = {
+    'ei_logistics': {
+        'value': 69.0,
+        'label': 'Mốc tham chiếu ngành logistics',
+    },
+    'enps_transportation': {
+        'value': 33.0,
+        'label': 'Mốc tham chiếu ngành vận tải',
+    },
+}
+
+
 def get_company_benchmark_2025():
     """Return the overall GHN benchmark for 2025."""
     return BENCHMARK_2025['GHN']
 
+
 def get_group_benchmark_2025(group_id):
     """Return the group-specific benchmark for 2025 if available."""
     return BENCHMARK_2025.get(group_id)
+
+
+def get_external_benchmarks():
+    """Return external comparison points used by the Benchmark summary."""
+    return EXTERNAL_BENCHMARKS

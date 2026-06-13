@@ -5,13 +5,91 @@ import pandas as pd
 from textwrap import dedent
 from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import fig_card, apply_theme, COLORS
-from utils.benchmark_2025 import get_company_benchmark_2025
+from utils.benchmark_2025 import get_company_benchmark_2025, get_external_benchmarks
 from utils.ai_generator import render_ai_insight_card, render_ai_insight_card_dual
 from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
 from shared.codebook import get_codebook, get_question_label
 
 MIN_DEPARTMENT_N = 3  # Chỉ hiển thị phòng ban có N > 2
 MIN_ORG_SEGMENT_N = 5
+
+
+def _render_benchmark_executive_summary(
+    total_ei,
+    total_enps,
+    total_participants,
+    total_cleaned,
+    total_dropped,
+):
+    """Executive Summary nhẹ, chỉ dùng số chính thức và mốc đối sánh trực tiếp."""
+    external = get_external_benchmarks()
+    ei_benchmark = external["ei_logistics"]["value"]
+    enps_benchmark = external["enps_transportation"]["value"]
+    ei_gap = total_ei - ei_benchmark
+    enps_gap = total_enps - enps_benchmark
+    retained_rate = (total_cleaned / total_participants * 100) if total_participants else 0.0
+
+    ei_read = (
+        f"cao hơn {abs(ei_gap):.1f} điểm"
+        if ei_gap >= 0
+        else f"thấp hơn {abs(ei_gap):.1f} điểm"
+    )
+    enps_read = (
+        f"cao hơn {abs(enps_gap):.0f} điểm"
+        if enps_gap >= 0
+        else f"thấp hơn {abs(enps_gap):.0f} điểm"
+    )
+
+    st.html(dedent(f"""
+    <section class="benchmark-summary">
+        <div class="benchmark-summary-head">
+            <div>
+                <div class="benchmark-summary-kicker">EXECUTIVE SUMMARY · ĐỐI SÁNH</div>
+                <h3>Tóm tắt vị thế EES 2026</h3>
+                <p>Đọc nhanh vị thế gắn kết của GHN so với mốc tham chiếu ngành và quy mô dữ liệu chính thức đang được sử dụng.</p>
+            </div>
+            <div class="benchmark-summary-status">Dữ liệu đã đồng bộ</div>
+        </div>
+
+        <div class="benchmark-summary-grid">
+            <article class="benchmark-summary-card benchmark-summary-card--blue">
+                <span>EI - Chỉ số gắn kết</span>
+                <strong>{total_ei:.1f}</strong>
+                <p>{ei_read} so với mốc logistics {ei_benchmark:.0f}.</p>
+            </article>
+            <article class="benchmark-summary-card benchmark-summary-card--orange">
+                <span>eNPS - Mức sẵn sàng giới thiệu</span>
+                <strong>{total_enps:+.0f}</strong>
+                <p>{enps_read} so với mốc vận tải {enps_benchmark:+.0f}.</p>
+            </article>
+            <article class="benchmark-summary-card benchmark-summary-card--green">
+                <span>Mẫu thu thập</span>
+                <strong>{total_participants:,}</strong>
+                <p>Nguồn phản hồi chính thức đã truyền thông.</p>
+            </article>
+            <article class="benchmark-summary-card benchmark-summary-card--navy">
+                <span>Mẫu phân tích</span>
+                <strong>{total_cleaned:,}</strong>
+                <p>Giữ lại {retained_rate:.1f}% sau khi loại {total_dropped:,} phản hồi.</p>
+            </article>
+        </div>
+
+        <div class="benchmark-summary-reading">
+            <div>
+                <span>Vị thế hiện tại</span>
+                <p>EI đang cao hơn mốc ngành logistics, trong khi eNPS ở sát mốc vận tải. Khoảng cách này cho thấy trải nghiệm nội bộ nhìn chung tích cực nhưng mức sẵn sàng giới thiệu GHN vẫn còn dư địa cải thiện.</p>
+            </div>
+            <div>
+                <span>Ưu tiên điều hành</span>
+                <p>Không nên chỉ nhìn điểm tổng. Cần tiếp tục đọc chênh lệch giữa Khối, Phòng ban và Section để xác định nơi điểm gắn kết chưa chuyển thành niềm tin và ý định gắn bó.</p>
+            </div>
+            <div>
+                <span>Nguyên tắc sử dụng</span>
+                <p>Executive Summary dùng cùng một base với dashboard: {total_participants:,} mẫu thu thập và {total_cleaned:,} mẫu phân tích. Không sử dụng các base cũ từ phiên bản Benchmark trước.</p>
+            </div>
+        </div>
+    </section>
+    """))
 UNKNOWN_ORG_VALUE = "Chưa xác định"
 
 # Tập hợp các giá trị "rác" xuất phát từ pipeline cũ hoặc HRIS không xác định được.
@@ -900,14 +978,144 @@ def render(all_data, available_groups, scope_restricted=False):
         border:1px solid #E2E8F0;
         box-shadow:0 18px 42px rgba(10,31,68,.08);
     }
+    .benchmark-summary {
+        margin:26px 0 30px;
+        padding:24px;
+        border:1px solid #DCE6F4;
+        border-radius:20px;
+        background:#FFFFFF;
+        box-shadow:0 18px 42px rgba(10,31,68,.07);
+    }
+    .benchmark-summary-head {
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:20px;
+        margin-bottom:18px;
+    }
+    .benchmark-summary-kicker {
+        color:#FF5200;
+        font-size:.68rem;
+        font-weight:850;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+        margin-bottom:6px;
+    }
+    .benchmark-summary-head h3 {
+        margin:0;
+        color:#0A1F44;
+        font-size:1.35rem;
+        font-weight:900;
+    }
+    .benchmark-summary-head p {
+        max-width:760px;
+        margin:7px 0 0;
+        color:#64748B;
+        font-size:.84rem;
+        line-height:1.55;
+    }
+    .benchmark-summary-status {
+        flex:0 0 auto;
+        padding:7px 11px;
+        border:1px solid #A7F3D0;
+        border-radius:999px;
+        background:#ECFDF5;
+        color:#047857;
+        font-size:.7rem;
+        font-weight:800;
+    }
+    .benchmark-summary-grid {
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:12px;
+    }
+    .benchmark-summary-card {
+        min-width:0;
+        padding:16px;
+        border:1px solid #E2E8F0;
+        border-top:3px solid var(--benchmark-accent);
+        border-radius:12px;
+        background:#F8FAFC;
+    }
+    .benchmark-summary-card--blue { --benchmark-accent:#2563EB; }
+    .benchmark-summary-card--orange { --benchmark-accent:#F97316; }
+    .benchmark-summary-card--green { --benchmark-accent:#10B981; }
+    .benchmark-summary-card--navy { --benchmark-accent:#0A1F44; }
+    .benchmark-summary-card span {
+        display:block;
+        min-height:34px;
+        color:#64748B;
+        font-size:.67rem;
+        font-weight:800;
+        letter-spacing:.06em;
+        text-transform:uppercase;
+        line-height:1.35;
+    }
+    .benchmark-summary-card strong {
+        display:block;
+        margin-top:8px;
+        color:#0A1F44;
+        font-size:clamp(1.55rem,2vw,2.15rem);
+        font-weight:900;
+        line-height:1;
+        font-variant-numeric:tabular-nums;
+    }
+    .benchmark-summary-card p {
+        margin:8px 0 0;
+        color:#64748B;
+        font-size:.76rem;
+        line-height:1.5;
+    }
+    .benchmark-summary-reading {
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:0;
+        margin-top:18px;
+        padding-top:18px;
+        border-top:1px solid #E2E8F0;
+    }
+    .benchmark-summary-reading > div {
+        padding:0 18px;
+        border-left:1px solid #E2E8F0;
+    }
+    .benchmark-summary-reading > div:first-child {
+        padding-left:0;
+        border-left:0;
+    }
+    .benchmark-summary-reading > div:last-child { padding-right:0; }
+    .benchmark-summary-reading span {
+        color:#0A1F44;
+        font-size:.78rem;
+        font-weight:850;
+    }
+    .benchmark-summary-reading p {
+        margin:6px 0 0;
+        color:#64748B;
+        font-size:.78rem;
+        line-height:1.58;
+    }
     @media (max-width:1080px) {
         .ghn-hero { grid-template-columns:1fr; }
         .ghn-command { transform:none; }
         .ghn-metrics, .ghn-context { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        .benchmark-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
     }
     @media (max-width:720px) {
         .ghn-shell { padding:20px; border-radius:22px; }
         .ghn-metrics, .ghn-context, .ghn-mini-grid { grid-template-columns:1fr; }
+        .benchmark-summary { padding:18px; border-radius:16px; }
+        .benchmark-summary-head { display:block; }
+        .benchmark-summary-status { display:inline-flex; margin-top:12px; }
+        .benchmark-summary-grid, .benchmark-summary-reading { grid-template-columns:1fr; }
+        .benchmark-summary-reading > div {
+            padding:14px 0;
+            border-left:0;
+            border-top:1px solid #E2E8F0;
+        }
+        .benchmark-summary-reading > div:first-child {
+            padding-top:0;
+            border-top:0;
+        }
     }
     </style>
     ''', unsafe_allow_html=True)
@@ -969,6 +1177,15 @@ def render(all_data, available_groups, scope_restricted=False):
         st.markdown(make_html_kpi("Attrition Risk - Rủi ro nghỉ việc", f"{total_intent:.1f}%", delta="N/A", color="red", icon="", progress_val=total_intent), unsafe_allow_html=True)
     with kpi_c4:
         st.markdown(make_html_kpi("MEI - Quản lý trực tiếp", f"{total_mei:.1f}", delta="N/A", color="green", icon="", progress_val=total_mei), unsafe_allow_html=True)
+
+    if not scope_restricted:
+        _render_benchmark_executive_summary(
+            total_ei=total_ei,
+            total_enps=total_enps,
+            total_participants=total_participants,
+            total_cleaned=total_cleaned,
+            total_dropped=DEEPDIVE_QUALITY_TOTALS["dropped"],
+        )
 
     # Calculate dynamic insights across divisions
     div_stats = []
