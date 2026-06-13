@@ -1085,20 +1085,24 @@ button[title="Thu nhỏ thanh bên"] {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-width: 0;
 }
 .sb-title {
-    font-size: 0.875rem;
-    font-weight: 700;
+    font-size: 1.05rem;
+    font-weight: 800;
     color: #0A1F44;
     display: block;
-    line-height: 1.3;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 .sb-sub {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: #94A3B8;
     display: block;
-    margin-top: 3px;
+    margin-top: 5px;
     font-weight: 500;
+    line-height: 1.25;
+    white-space: nowrap;
 }
 
 /* ═══════ SIDEBAR NAV LABELS — Executive Style ═══════ */
@@ -1722,6 +1726,15 @@ st.markdown("""
     .sb-logo {
         height: 30px !important;
         margin-bottom: 0 !important;
+    }
+
+    .sb-title {
+        font-size: 0.98rem !important;
+    }
+
+    .sb-sub {
+        font-size: 0.61rem !important;
+        margin-top: 4px !important;
     }
 
     .sb-section {
