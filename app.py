@@ -2063,12 +2063,12 @@ with st.sidebar:
     menu_items = []
 
     # Top-level items (value = label, không cần prefix)
-    menu_items.append(sac.MenuItem(OVERVIEW_LABEL))
+    menu_items.append(sac.MenuItem(OVERVIEW_LABEL, icon='house'))
 
     if not scope_restricted:
-        menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu"))
+        menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu", icon='shield-check'))
 
-    menu_items.append(sac.MenuItem(COMPANY_LABEL, tag=sac.Tag("Core", color="blue", bordered=False)))
+    menu_items.append(sac.MenuItem(COMPANY_LABEL, icon='graph-up', tag=sac.Tag("Core", color="blue", bordered=False)))
 
     # Group items với child có value duy nhất: "{group_id}__{child_label}"
     for g in group_opts:
@@ -2087,9 +2087,9 @@ with st.sidebar:
         group_children.append(sac.MenuItem(f"{g}__Đo lường Impact"))
         group_children.append(sac.MenuItem(f"{g}__Xem Báo Cáo"))
 
-        menu_items.append(sac.MenuItem(label, children=group_children))
+        menu_items.append(sac.MenuItem(label, icon='diagram-3', children=group_children))
 
-    menu_items.append(sac.MenuItem("Phụ lục"))
+    menu_items.append(sac.MenuItem("Phụ lục", icon='book'))
 
     if is_real_admin:
         menu_items.append(sac.MenuItem("Admin Panel", icon="gear"))

@@ -490,7 +490,7 @@ PILLAR_META = {
     'TC1': {
         'name': 'Niềm tin lãnh đạo',
         'short': 'Niềm tin LĐ',
-        'icon': '',
+        'icon': 'flag',
         'color': '#6366F1',
         'description': 'Niềm tin vào Ban Lãnh đạo và định hướng chiến lược của tổ chức',
         'group_descriptions': {
@@ -505,7 +505,7 @@ PILLAR_META = {
     'TC2': {
         'name': 'Quản lý trực tiếp (MEI)',
         'short': 'QL trực tiếp',
-        'icon': '',
+        'icon': 'people',
         'color': '#0EA5E9',
         'description': 'Năng lực hỗ trợ, công bằng và phản hồi của quản lý trực tiếp (AM/TBC/Leader)',
         'group_descriptions': {
@@ -520,7 +520,7 @@ PILLAR_META = {
     'TC3': {
         'name': 'Công việc & phát triển',
         'short': 'CV & Phát triển',
-        'icon': '',
+        'icon': 'tools',
         'color': '#F59E0B',
         'description': 'Công cụ, quy trình, lộ trình thăng tiến và điều kiện làm việc hàng ngày',
         'group_descriptions': {
@@ -535,7 +535,7 @@ PILLAR_META = {
     'TC4': {
         'name': 'Thu nhập & minh bạch',
         'short': 'Thu nhập & MB',
-        'icon': '',
+        'icon': 'cash-coin',
         'color': '#10B981',
         'description': 'Mức thu nhập, cách tính lương, minh bạch phạt/truy thu và hỗ trợ sự cố tài chính',
         'group_descriptions': {
@@ -550,7 +550,7 @@ PILLAR_META = {
     'TC5': {
         'name': 'Môi trường & gắn kết',
         'short': 'Môi trường & GK',
-        'icon': '',
+        'icon': 'heart',
         'color': '#EF4444',
         'description': 'An toàn, đồng nghiệp, niềm tự hào và sức khỏe tinh thần',
         'group_descriptions': {
