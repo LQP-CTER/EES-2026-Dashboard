@@ -37,23 +37,62 @@ def _callout(title: str, body: str, color: str = "#FF5200", bg: str = "#FFF8F5")
 def _info_box(body: str) -> str:
     return f"""
     <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;
+"""
+View: Thẩm định & Độ tin cậy dữ liệu — EES 2026
+Trình bày cách xử lý và thẩm định dữ liệu của từng nhóm để tăng độ tin cậy.
+"""
+
+import streamlit as st
+import pandas as pd
+
+# Base64 AI logo (same as ai_generator.py)
+_AI_LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg=="
+
+
+def _sec(title: str, subtitle: str = "") -> str:
+    accent = '<span style="width:3px;height:15px;background:#FF5200;border-radius:2px;display:inline-block;flex-shrink:0"></span>'
+    html = (
+        f'<h3 style="font-size:0.92rem;font-weight:700;color:#0A1F44;'
+        f'margin:28px 0 12px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;'
+        f'display:flex;align-items:center;gap:8px">{accent}{title}</h3>'
+    )
+    if subtitle:
+        html += f'<p style="font-size:0.82rem;color:#64748B;margin:-6px 0 16px;font-weight:500">{subtitle}</p>'
+    return html
+
+
+def _callout(title: str, body: str, color: str = "#FF5200", bg: str = "#FFF8F5") -> str:
+    return f"""
+    <div style="background:{bg};border:1px solid {color}33;border-left:4px solid {color};
+                border-radius:10px;padding:18px 22px;margin:16px 0;">
+        <div style="font-size:0.88rem;font-weight:700;color:#0A1F44;margin-bottom:8px;
+                    display:flex;align-items:center;gap:8px;">
+            <img src="{_AI_LOGO_B64}" style="width:16px;height:16px"> {title}
+        </div>
+        <div style="font-size:0.84rem;color:#475569;line-height:1.7">{body}</div>
+    </div>"""
+
+
+def _info_box(body: str) -> str:
+    return f"""
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;
                 padding:16px 20px;margin:12px 0;font-size:0.85rem;color:#475569;line-height:1.7">
         {body}
     </div>"""
 
 
 _RELIABILITY_GROUPS = [
-    ('1A', 'Shipper',       12955),
-    ('1B', 'Tài xế',         801),
-    ('2A', 'NV Kho',         4892),
+    ('1A', 'Shipper',       12262),
+    ('1B', 'Tài xế',         784),
+    ('2A', 'NV Kho',         4819),
     ('2B', 'QL Tuyến đầu',   425),
-    ('3A', 'NV Văn phòng',   917),
-    ('3B', 'Manager HO',     109),
+    ('3A', 'NV Văn phòng',   822),
+    ('3B', 'Manager HO',     98),
 ]
 
 DEEPDIVE_QUALITY_TOTALS = {
     "headcount": 21353,
-    "raw": 20005,
+    "raw": 19210,
     "dropped": 784,
     "cleaned": 19221,
     "straightline_weighted": 8757,
@@ -447,38 +486,6 @@ def render(summary_df=None):
             ("Tỷ lệ tham gia", f"{participation_pct:.1f}%", f"{raw_total:,} / {headcount_total:,} nhân sự", "#FF5200", "#FFF3EE"),
             ("Mẫu phân tích", f"{cleaned_total:,}", f"sau loại {drop_total:,} phản hồi", "#10B981", "#F0FDF4"),
             ("Phản hồi trùng lặp", f"{straightline_total:,}", f"{straightline_pct:.1f}% / mẫu đã làm sạch", "#3B82F6", "#EFF6FF"),
-        ]
-        for col, (label, val, sub, color, bg) in zip(cols, kpi_data):
-            with col:
-                st.markdown(f"""
-                <div style="background:{bg};border:1px solid {color}33;border-radius:12px;
-                            padding:18px 20px;text-align:center;">
-                    <div style="font-size:0.68rem;font-weight:700;color:{color};text-transform:uppercase;
-                                letter-spacing:0.08em;margin-bottom:8px">{label}</div>
-                    <div style="font-size:2rem;font-weight:900;color:#0A1F44;line-height:1;
-                                letter-spacing:-0.03em">{val}</div>
-                    <div style="font-size:0.75rem;color:#64748B;margin-top:6px">{sub}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("""
-        <p style="font-size:0.88rem;color:#475569;line-height:1.75">
-            <strong>Hai nhóm nhỏ cần thận trọng khi đọc lát cắt sâu:</strong>
-            Manager HO (3B, n=109, biên sai số ±3.4%) và Quản lý tuyến đầu (2B, n=425).
-            Với các nhóm này, chênh lệch nhỏ giữa các đơn vị con có thể chỉ là nhiễu thống kê —
-            không nên đọc như sự khác biệt cấu trúc mà không kiểm tra thêm.
-        </p>
-        """, unsafe_allow_html=True)
-
-        st.markdown(_callout(
-            "Lưu ý khi đọc dữ liệu nhóm Shipper (1A)",
-            "Nhóm 1A ghi nhận 12,955 phản hồi thô và 12,262 mẫu sau làm sạch. "
-            "Tỷ lệ phản hồi trùng lặp cao trong nhóm này nên được hiểu là tín hiệu cần hiệu chỉnh trọng số "
-            "khi phân tích — không đồng nghĩa với việc toàn bộ dữ liệu nhóm thiếu tin cậy.",
-            color="#10B981", bg="#F0FDF4"
-        ), unsafe_allow_html=True)
-
     # ═══════════════════════════════════════════════════
     # TAB 2: PHÂN HẠNG ĐỘ TIN CẬY & BASE PHÂN TÍCH
     # ═══════════════════════════════════════════════════

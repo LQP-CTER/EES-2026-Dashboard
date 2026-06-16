@@ -34,12 +34,12 @@ def _compute_reliability_table():
     from utils.data_loader import load_group
 
     GROUPS = [
-        ('1A', 'Shipper',       12955),
-        ('1B', 'Tài xế',         801),
-        ('2A', 'NV Kho',         4892),
+        ('1A', 'Shipper',       12262),
+        ('1B', 'Tài xế',         784),
+        ('2A', 'NV Kho',         4819),
         ('2B', 'QL Tuyến đầu',   425),
-        ('3A', 'NV Văn phòng',   917),
-        ('3B', 'Manager HO',     109),
+        ('3A', 'NV Văn phòng',   822),
+        ('3B', 'Manager HO',     98),
     ]
 
     rows = []
