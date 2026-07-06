@@ -482,7 +482,7 @@ def render():
                     <h1 class="ed-headline">Hành trình EES 2026 
                     <br>
                     Phía sau những con số</h1>
-                    <p class="ed-hero-sub">Một lớp tổng quan điều hành về quy mô triển khai, chất lượng dữ liệu và những nguyên tắc được áp dụng để đảm bảo kết quả EES 2026 phản ánh trung thực tiếng nói của nhân viên GHN.</p>
+                    <p class="ed-hero-sub">EES là khảo sát thường niên giúp GHN hiểu mức độ gắn kết, niềm tin và trải nghiệm của nhân viên. Kết quả là cơ sở để Ban Lãnh đạo và các Khối xác định vấn đề ưu tiên và xây dựng hành động cải thiện.</p>
                 </div>
                 <div class="ed-command-panel">
                     <div class="ed-command-top">
@@ -1457,7 +1457,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
   <div class="jt-left">
     <span class="jt-kicker">EES 2026 · Hành trình</span>
     <h2 class="jt-heading">Nhìn lại<br>Hành trình</h2>
-    <p class="jt-sub">Từ thiết kế khảo sát, triển khai trên toàn hệ thống đến tổng hợp kết quả, EES 2026 là hành trình phối hợp của nhiều đội ngũ nhằm lắng nghe và ghi nhận ý kiến của nhân viên trên toàn GHN.</p>
+    <p class="jt-sub">EES 2026 được thiết kế lại để đo lường sâu hơn, sát thực tế hơn và đủ tin cậy để dẫn dắt quyết định. Từ 19 ngày thu thập đến phân tích theo 5 trụ cột và 6 nhóm nhân sự — mỗi bước đều hướng đến một bức tranh trung thực về trải nghiệm nhân viên GHN.</p>
 
     <div class="jt-stats">
       <div class="jt-stat">
@@ -1730,7 +1730,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     line-height: 1.5;
 }
 .vt-list li::before {
-    content: '❯';
+    content: '>';
     position: absolute;
     left: 0;
     color: #0052CC;
@@ -2000,8 +2000,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
                 <div class="ed-footer-item">BAN TỔ CHỨC EES 2026</div>
                 <div class="ed-footer-highlight-dark">people@ghn.vn</div>
                 <div class="ed-footer-item">ỨNG DỤNG GTALK</div>
-                <div class="ed-footer-highlight-orange">gtalk.ghn.vn</div>
             </div>
         </div>
     </div>
-    """)
+    """, unsafe_allow_html=True)

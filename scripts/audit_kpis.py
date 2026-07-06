@@ -93,7 +93,7 @@ for group in list(groups) + ["Total"]:
         diff = dash_val - rep_val
         tol = TOLERANCE.get(metric, 1.0)
         ok = abs(diff) <= tol
-        status = "✅ OK" if ok else "❌ LỆCH"
+        status = "OK" if ok else "LECH"
         print(f"{group:<8} {metric:<12} {dash_val:>12.2f} {rep_val:>12.2f} {diff:>+12.2f}  {status}")
         all_checks.append((group, metric, ok, diff))
 

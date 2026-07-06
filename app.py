@@ -687,7 +687,7 @@ def _render_security_error_page():
     </style>
     <div class="login-wrap">
         <div class="login-card">
-            <div style="font-size: 3.5rem; margin-bottom: 10px;">🔒</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #64748B; margin-bottom: 10px;">[Khoa]</div>
             <div class="login-title">Liên Kết Đã Được Sử Dụng</div>
             <div class="login-subtitle">
                 Đường dẫn đăng nhập này hiện đang được mở ở một trình duyệt hoặc thiết bị khác để bảo vệ an toàn thông tin.<br><br>
@@ -916,9 +916,9 @@ if not is_admin:
                 is_err = st.query_params.get("error") == "1"
                 st.query_params.clear()
                 if is_err:
-                    st.toast("Phiên đăng nhập hết hạn hoặc xảy ra lỗi. Vui lòng đăng nhập lại.", icon="⚠️")
+                    st.toast("Phiên đăng nhập hết hạn hoặc xảy ra lỗi. Vui lòng đăng nhập lại.")
                 else:
-                    st.toast("Đăng xuất thành công.", icon="✅")
+                    st.toast("Đăng xuất thành công.")
 
                 _render_login_page()
                 st.stop()
@@ -2428,6 +2428,4 @@ else:
         else:
             st.info("Chọn một trụ cột từ sidebar bên trái.")
     except Exception as e:
-        st.error(f"Lỗi khi tải phân tích: {e}")
-        import traceback
-        st.code(traceback.format_exc())
+        st

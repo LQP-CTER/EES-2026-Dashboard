@@ -3,44 +3,6 @@ View: Thẩm định & Độ tin cậy dữ liệu — EES 2026
 Trình bày cách xử lý và thẩm định dữ liệu của từng nhóm để tăng độ tin cậy.
 """
 
-import streamlit as st
-import pandas as pd
-
-# Base64 AI logo (same as ai_generator.py)
-_AI_LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg=="
-
-
-def _sec(title: str, subtitle: str = "") -> str:
-    accent = '<span style="width:3px;height:15px;background:#FF5200;border-radius:2px;display:inline-block;flex-shrink:0"></span>'
-    html = (
-        f'<h3 style="font-size:0.92rem;font-weight:700;color:#0A1F44;'
-        f'margin:28px 0 12px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;'
-        f'display:flex;align-items:center;gap:8px">{accent}{title}</h3>'
-    )
-    if subtitle:
-        html += f'<p style="font-size:0.82rem;color:#64748B;margin:-6px 0 16px;font-weight:500">{subtitle}</p>'
-    return html
-
-
-def _callout(title: str, body: str, color: str = "#FF5200", bg: str = "#FFF8F5") -> str:
-    return f"""
-    <div style="background:{bg};border:1px solid {color}33;border-left:4px solid {color};
-                border-radius:10px;padding:18px 22px;margin:16px 0;">
-        <div style="font-size:0.88rem;font-weight:700;color:#0A1F44;margin-bottom:8px;
-                    display:flex;align-items:center;gap:8px;">
-            <img src="{_AI_LOGO_B64}" style="width:16px;height:16px"> {title}
-        </div>
-        <div style="font-size:0.84rem;color:#475569;line-height:1.7">{body}</div>
-    </div>"""
-
-
-def _info_box(body: str) -> str:
-    return f"""
-    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;
-"""
-View: Thẩm định & Độ tin cậy dữ liệu — EES 2026
-Trình bày cách xử lý và thẩm định dữ liệu của từng nhóm để tăng độ tin cậy.
-"""
 
 import streamlit as st
 import pandas as pd
@@ -486,6 +448,21 @@ def render(summary_df=None):
             ("Tỷ lệ tham gia", f"{participation_pct:.1f}%", f"{raw_total:,} / {headcount_total:,} nhân sự", "#FF5200", "#FFF3EE"),
             ("Mẫu phân tích", f"{cleaned_total:,}", f"sau loại {drop_total:,} phản hồi", "#10B981", "#F0FDF4"),
             ("Phản hồi trùng lặp", f"{straightline_total:,}", f"{straightline_pct:.1f}% / mẫu đã làm sạch", "#3B82F6", "#EFF6FF"),
+        ]
+        for col, (label, value, sub, color, bg) in zip(cols, kpi_data):
+            with col:
+                st.markdown(f"""
+                <div style="background:{bg};border:1px solid {color}33;border-left:4px solid {color};
+                            border-radius:10px;padding:16px 20px;margin-bottom:8px;">
+                    <p style="font-size:0.72rem;font-weight:700;color:{color};text-transform:uppercase;
+                              letter-spacing:0.08em;margin:0 0 6px">{label}</p>
+                    <p style="font-size:1.6rem;font-weight:900;color:#0A1F44;margin:0 0 4px;
+                              letter-spacing:-0.03em">{value}</p>
+                    <p style="font-size:0.78rem;color:#64748B;margin:0">{sub}</p>
+                </div>""", unsafe_allow_html=True)
+
+
+            ("Phản hồi trùng lặp", f"{straightline_total:,}", f"{straightline_pct:.1f}% / mẫu đã làm sạch", "#3B82F6", "#EFF6FF"),
     # ═══════════════════════════════════════════════════
     # TAB 2: PHÂN HẠNG ĐỘ TIN CẬY & BASE PHÂN TÍCH
     # ═══════════════════════════════════════════════════
@@ -745,7 +722,7 @@ def render(summary_df=None):
                 (n &gt; 500) có thể được đọc trực tiếp. Lát cắt nhỏ (phòng ban, section)
                 cần thêm bước xác nhận định tính. Phân tích AI trong dashboard
                 <strong style="color:white">không thay thế phán đoán của HR/người quản lý</strong> —
-                đây là công cụ hỗ trợ nhận diện tín hiệu, không phải kết luận cuối cùng.
+                đây là công cụ hỗ trợ ra quyết định, không thay thế.
             </p>
         </div>
         """, unsafe_allow_html=True)

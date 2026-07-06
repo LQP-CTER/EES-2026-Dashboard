@@ -748,8 +748,9 @@ def render(all_data, available_groups, scope_restricted=False):
         hero_kicker = "GHN · Tổng quan tổ chức"
         hero_title = "Tổng quan GHN<br/>trên nền dữ liệu EES 2026"
         hero_subtitle = (
-            "Một lớp điều hành tổng hợp cho thấy quy mô tham gia, sức khỏe gắn kết, "
-            "khoảng cách giữa các đơn vị và các điểm cần ưu tiên trước khi đi sâu vào từng nhóm khảo sát."
+            "Bức tranh chung khá tích cực, nhưng chưa đồng đều. "
+            "EI đạt 73,3 điểm, eNPS +31,7 — nền tảng gắn kết ổn định. "
+            "Cơ hội cải thiện tập trung vào niềm tin lãnh đạo, truyền thông thay đổi và chiến lược giữ chân theo từng nhóm."
         )
         hero_mini_html = f"""
             <div class="ghn-mini"><span>Tỷ lệ phản hồi</span><strong>{total_rr:.1f}%</strong></div>

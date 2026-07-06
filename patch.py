@@ -1,4 +1,4 @@
-﻿import re
+import re
 
 with open('utils/data_loader.py', 'r', encoding='utf-8') as f:
     content = f.read()

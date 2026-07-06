@@ -212,7 +212,7 @@ def render_triangulation_box(tri: dict) -> str:
     }
     c, bg, bd = color_map.get(tri["strength"], ("#64748B", "#F8FAFC", "#E2E8F0"))
 
-    icons = {"Mạnh": "✅", "Vừa": "⚡", "Yếu": "⚠️", "Chưa rõ": "—"}
+    icons = {"Mạnh": "", "Vừa": "", "Yếu": "", "Chưa rõ": ""}
     icon = icons.get(tri["strength"], "")
 
     signals_html = "".join(
@@ -227,7 +227,7 @@ def render_triangulation_box(tri: dict) -> str:
         f'border-radius:8px;padding:10px 13px;margin-top:8px;">'
         f'<div style="font-size:.68rem;font-weight:800;color:{c};text-transform:uppercase;'
         f'letter-spacing:.07em;margin-bottom:5px;">'
-        f'{icon} Bằng chứng chéo: {tri["strength"]}'
+        f'Bằng chứng chéo: {tri["strength"]}'
         f"</div>"
         f'<ul style="font-size:.8rem;color:#334155;line-height:1.65;margin:0;padding-left:16px;">'
         f"{signals_html}"

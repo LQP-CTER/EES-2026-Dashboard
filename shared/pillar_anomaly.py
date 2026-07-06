@@ -1,7 +1,7 @@
 """
 Pillar Anomaly Detector — EES 2026  [DEPRECATED — KHÔNG DÙNG]
 
-⚠️  Module này KHÔNG còn được import ở bất kỳ đâu trong dashboard.
+Module này KHÔNG còn được import ở bất kỳ đâu trong dashboard.
     Engine anomaly chính thức (đã refactor theo role-based mapping cho cả 6
     nhóm) là `utils/anomaly_detector.py`. File này hard-code số câu theo
     layout 1A/1B nên KHÔNG đúng cho 2A/2B/3A/3B — giữ lại chỉ để tham khảo
