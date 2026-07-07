@@ -2428,4 +2428,6 @@ else:
         else:
             st.info("Chọn một trụ cột từ sidebar bên trái.")
     except Exception as e:
-        st
+        st.error(f"Lỗi khi tải phân tích: {e}")
+        import traceback
+        st.code(traceback.format_exc())

@@ -90,6 +90,309 @@ def _render_benchmark_executive_summary(
         </div>
     </section>
     """))
+
+
+def _render_report_content():
+    """Trinh bay noi dung bao cao EES 2026 — 6 chuong chinh."""
+    from shared.plotly_theme import section_header as _sh
+    st.markdown(
+        _sh(
+            "Bao Cao Phan Tich EES 2026",
+            "Noi dung day du tu tai lieu phan tich chinh thuc — GHN HR Division · Employee Experience",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    t1, t2, t3, t4, t5, t6 = st.tabs([
+        "Executive Summary",
+        "Buc tranh tong the",
+        "Theo nhom nhan su",
+        "Theo Khoi / Phong ban",
+        "Nhan vien dang noi gi",
+        "Ket luan & Hanh dong",
+    ])
+
+    # Tab 1
+    with t1:
+        st.markdown("""
+<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<p style="font-size:.93rem;color:#334155;margin-bottom:16px;">
+<strong>Buc tranh chung kha tich cuc, nhung chua dong deu.</strong>
+EI dat <strong>73,3/100</strong> (muc Khoe manh). eNPS dat <strong>+31,7</strong>, cao hon mat bang thi truong.
+Chua co dau hieu suy giam gan ket tren dien rong.
+Dieu dang chu y nam o <strong>khoang cach giua cac nhom, cac Khoi va tung giai doan tham nien.</strong>
+</p>
+<div style="background:#F0F7FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+  <div style="font-size:.7rem;font-weight:800;color:#1D4ED8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Luu y khi doc chi so 73,3</div>
+  <p style="font-size:.82rem;color:#1E3A5F;margin:0;line-height:1.65;">
+  Nhom 1A (Nhan vien giao nhan) chiem gan 2/3 tong mau. Khoang 52% phan hoi co xu huong chon cung mot muc diem cho hau het cau hoi.
+  Vi vay, chi so 73,3 nen duoc xem la chi so tong quan ve suc khoe gan ket, <strong>thay vi la co so de chan doan van de hoac uu tien hanh dong.</strong>
+  Gia tri phan tich nam o ket qua theo tung Khoi, nhom nhan su va don vi cu the.
+  </p>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:18px 0 12px;">04 dieu EES 2026 noi ro</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+  <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">01 — Diem manh nhat</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Quan ly truc tiep</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">MEI dat khoang 81 diem, cao hon EI o tat ca cac nhom. Quan ly truc tiep dang la yeu to giu on dinh muc do gan ket, dac biet tai tuyen dau.</div>
+  </div>
+  <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">02 — Can cai thien</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Niem tin lanh dao cap cao</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">TC1 dat 72,0 diem, thap nhat trong 5 tru cot. Khoang cach tap trung chu yeu o luc luong tuyen dau, noi thong tin ve thay doi chinh sach chua duoc truyen tai kip thoi.</div>
+  </div>
+  <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">03 — Moi quan tam lon nhat</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Thu nhap</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">Du khong hoi truc tiep ve luong, 36% y kien gop y van de cap den thu nhap va phuc loi. Nhan vien quan tam hon la tinh on dinh va kha nang du doan cua thu nhap.</div>
+  </div>
+  <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">04 — Loi the giu chan</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Con nguoi</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">Khoang 37% phan hoi tich cuc nhac den moi truong lam viec va dong nghiep. Day la diem manh san co nhung chua duoc chuyen hoa thanh thong diep gia tri giu chan thong nhat.</div>
+  </div>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #EF4444;padding-left:10px;margin:18px 0 12px;">04 diem nen luu y</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:9px;">
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">01 — Muc do gan ket khac biet ro giua cac Khoi</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Giao Hang Nang va Tai Chinh dan dau. AI &amp; Du lieu va San Pham thap nhat nhung quy mo mau nho (&lt;20 nguoi) — xem nhu tin hieu theo doi, chua phai ket luan.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:9px;">
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">02 — Khoi Nhan Luc co rui ro giu chan cao nhat</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Ty le y dinh roi cong ty 22,6%, cao nhat cac Khoi, tap trung ro o doi ngu HRBP — chinh doi ngu phu trach trai nghiem nhan vien lai co muc gan bo thap hon mat bang chung.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:9px;">
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">03 — Rui ro nghi viec tap trung o nhom da thanh thao cong viec</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Y dinh roi cao nhat o Shipper tham nien 1–5 nam, dac biet tai XBG va DCL. Nhom nay da tich luy kinh nghiem va tao gia tri van hanh — chi phi thay the cao.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:18px;">
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">04 — Khong phai moi y dinh nghi viec deu den tu thieu gan ket</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">O mot so don vi van co nhan vien gan ket cao nhung co y dinh roi. Nguyen nhan co the den tu co hoi nghe nghiep hoac yeu to ben ngoai — can chien luoc giu chan khac biet.</div>
+</div>
+<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:14px 16px;">
+  <div style="font-size:.7rem;font-weight:800;color:#15803D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Ket luan chung</div>
+  <p style="font-size:.82rem;color:#166534;margin:0;line-height:1.65;">
+  GHN co nen tang gan ket tich cuc, duoc nang do boi quan ly truc tiep va van hoa dong nghiep.
+  Co hoi cai thien lon nhat la <strong>tang niem tin vao lanh dao</strong>, nang chat luong truyen thong thay doi
+  va xay dung co che thu nhap on dinh, de du doan cho luc luong tuyen dau theo dac thu tung nhom nhan vien.
+  </p>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Tab 2
+    with t2:
+        st.markdown("""
+<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
+EI dat 73,3 diem, phan anh muc do gan ket tich cuc cua toan cong ty. Tuy nhien, chat luong trai nghiem khong dong deu theo 5 tru cot.
+Xu huong nhat quan: nhan vien danh gia tich cuc hon voi trai nghiem <em>hang ngay va gan gui</em> (quan ly truc tiep, dong nghiep),
+trong khi than trong hon voi nhung yeu to <em>mang tinh he thong</em> (dinh huong lanh dao, co che thu nhap).
+</p>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Diem tua nam o quan ly truc tiep, khong phai he thong</div>
+<p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
+Quan ly truc tiep la tru cot trai nghiem manh nhat va on dinh nhat giua cac nhom nhan su.
+Doi voi luc luong tuyen dau, quan ly truc tiep cung la nguoi dai dien gan gui nhat cua cong ty.
+Luc lanh dao va Niem tin la tru cot thap nhat, chu yeu do dac thu lam viec phan tan cua nhom giao nhan.
+</p>
+<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:13px 15px;margin-bottom:18px;">
+  <p style="font-size:.82rem;color:#78350F;margin:0;line-height:1.65;">
+  <strong>Luu y:</strong> Gan ket tai GHN hien duoc duy tri nhieu boi con nguoi hon la he thong.
+  Day la loi the, nhung cung la rui ro neu qua phu thuoc vao tung quan ly.
+  Tang cuong truyen thong tu cap lanh dao se giup tao nen tang gan ket ben vung hon.
+  </p>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Dat GHN trong boi canh thi truong</div>
+<p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:8px;">
+Voi eNPS +31,7, GHN cao hon cac moc tham chieu trong EES 2025 (doanh nghiep Viet Nam khoang +22, logistics toan cau khoang +8).
+Tuy nhien, cac so lieu nay chi mang tinh tham khao do khac biet ve phuong phap do.
+</p>
+<p style="font-size:.83rem;color:#475569;line-height:1.65;">
+GHN dang doi mat voi nhung van de pho bien cua nganh logistics: ap luc cong viec va thu nhap cua luc luong tuyen dau.
+Mot so doi thu nhu Xanh SM dang canh tranh bang cam ket ve thu nhap toi thieu va phuc loi — day la ap luc can quan sat sat sao.
+</p>
+</div>
+""", unsafe_allow_html=True)
+
+    # Tab 3
+    with t3:
+        st.markdown("""
+<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
+Ket qua giua 6 nhom nhan su cho thay muc do gan ket khong phan bo dong deu.
+Quan ly tuyen dau co muc gan ket cao nhat; khoi van phong thap nhat.
+Nhan vien giao nhan giu muc trung binh toan cong ty nhung co y dinh nghi viec cao nhat.
+</p>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">03 quan sat chinh</div>
+<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:9px;">
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Khoang cach EI khoang 7 diem, eNPS chenh hon 40 diem</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Moi nhom can mot cach tiep can rieng thay vi mot giai phap chung. MEI cao hon EI o moi nhom — dau tu cho quan ly cap trung la viec dang lam nhat. Nhom van phong can duoc quan tam hon: EI thap nhat, TC3 va TC4 deu duoi trung binh.</div>
+</div>
+<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:18px;">
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Y dinh roi cong ty khong hoan toan di cung muc do gan ket</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Nhan vien giao nhan co ty le y dinh roi cao nhat (5,3%) du EI khong thap nhat. Quyet dinh roi chiu tac dong cua co hoi viec lam, thu nhap va tinh linh hoat cua thi truong lao dong, khong chi trai nghiem noi bo.</div>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Muc do gan ket giam theo tham nien</div>
+<p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
+Ca EI va eNPS deu giam khi thoi gian lam viec tang, nhung eNPS giam nhanh hon.
+Trong hai nam dau, EI giam tu khoang 77 xuong 72 diem; eNPS giam tu +49 xuong +29.
+Muc gan ket thap nhat xuat hien o nhom tham nien 3–5 nam.
+Sau moc nay, ca EI va eNPS nhich len nhe — co the do nhung nhan vien it phu hop da roi truoc do.
+</p>
+<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:13px 15px;">
+  <p style="font-size:.82rem;color:#78350F;margin:0;line-height:1.65;">
+  <strong>Nhom can uu tien giu chan:</strong> Nhan vien co tham nien 1–5 nam.
+  Day la luc luong da tich luy kinh nghiem, tao ra gia tri van hanh va co chi phi thay the cao neu roi di.
+  </p>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Tab 4
+    with t4:
+        st.markdown("""
+<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
+GHN ap dung co cau to chuc moi tu 2026 voi 11 Khoi va Phong ban. Quy mo chenh lech rat lon — tu hon 17.000 nhan su tai Khoi Thi Truong den duoi 10 o mot so phong ban.
+EI chi nen dung de nhan dien xu huong, <strong>khong dung de xep hang truc tiep giua cac Khoi co quy mo khac nhau.</strong>
+</p>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #10B981;padding-left:10px;margin:16px 0 10px;">02 don vi co the tham khao</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
+  <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:13px 15px;">
+    <div style="font-size:.72rem;font-weight:800;color:#15803D;margin-bottom:5px;">GIAO HANG NANG (FREIGHT)</div>
+    <div style="font-size:.82rem;color:#166534;line-height:1.6;">EI 77,2 · eNPS +55,6 · MEI 86,7. Ca 5 tru cot deu dat tu 75/100. Khong ghi nhan diem yeu noi bat. Nhom Quan ly tuyen dau dat MEI 90,9 — cao nhat toan cong ty.</div>
+  </div>
+  <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:13px 15px;">
+    <div style="font-size:.72rem;font-weight:800;color:#15803D;margin-bottom:5px;">KHOI TAI CHINH</div>
+    <div style="font-size:.82rem;color:#166534;line-height:1.6;">EI 77,0 · eNPS +33,3 · Y dinh roi chi 1,9%. Khoi van phong co muc do gan ket cao nhat — muc gan ket phu thuoc nhieu vao boi canh cong viec va co hoi phat trien.</div>
+  </div>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #EF4444;padding-left:10px;margin:16px 0 10px;">05 don vi can uu tien theo doi</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Phong AI Cot loi &amp; Du lieu (n=19) — EI 66,2, eNPS -10,5</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Thap nhat toan cong ty. Diem yeu o Thu nhap &amp; Minh bach. MEI van o muc tuong doi — van de co the khong den tu quan ly. Can xac minh qua doi thoai dinh tinh.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Phong San Pham (n=14) — eNPS -14,3, BRI 14,3%</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">eNPS thap nhat, BRI cao nhat. Tru cot phat trien va gan ket to chuc deu muc thap. Nhat quan voi tin hieu EES 2025. Can doi thoai truc tiep.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khoi Cong Nghe (n=70) — EI 70,1, eNPS +11,4</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Tru cot Cong viec &amp; Phat trien la diem yeu noi bat — nhu cau lo trinh nghe nghiep. Co the xem la tin hieu he thong khi dat canh AI &amp; Du lieu va San Pham.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khoi Khach Hang (n=346) — Thap nhat trong cac Khoi quy mo lon</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Ba tru cot TC3, TC4 va TC5 deu duoi muc trung binh. Nhom van phong co ty le y dinh roi cong ty cao — can ra soat co che ghi nhan va phat trien.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:18px;">
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khoi Nhan Luc (n=84) — EI 71,3, doi ngu HRBP can chu y</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Diem yeu o lo trinh phat trien va gan ket to chuc. HRBP la nhom co EI thap va y dinh roi cao hon cac nhom con lai trong Khoi.</div>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Khoi Thi Truong theo Vung: diem nong o dau?</div>
+<p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
+Khoi Thi Truong chiem khoang 93% tong mau. Khi phan tich theo 14 Vung, su khac biet giua cac dia ban tro nen ro rang.
+</p>
+<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:13px 15px;">
+  <p style="font-size:.82rem;color:#1D4ED8;margin:0;line-height:1.65;">
+  <strong>XBG (Xuyen Bien Gioi) va DCL (Dong bang song Cuu Long)</strong> — EI thap nhat, ty le y dinh roi cao nhat.
+  Nhat quan voi phan tich tham nien: nhan vien giao nhan 1–5 nam tai hai Vung nay la nhom can uu tien giu chan.
+  </p>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Tab 5
+    with t5:
+        st.markdown("""
+<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
+EES 2026 thu thap phan hoi qua 3 cau hoi mo ve dieu hai long nhat, ly do gan bo va dieu mong muon cai thien.
+Phan tich 3 xu huong chinh sau.
+</p>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">03 xu huong chinh</div>
+<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:9px;">
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thu nhat — Con nguoi la diem manh nhat cua GHN</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Dong nghiep va quan ly truc tiep la hai chu de duoc nhac den nhieu nhat khi nhan vien chia se ly do gan bo. Nhat quan voi chi so dinh luong — MEI la mot trong nhung diem manh noi bat nhat.</div>
+</div>
+<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:9px;">
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thu hai — Nhu cau cai thien khac nhau giua cac nhom</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Tuyen dau: thu nhap la chu de nhac den nhieu nhat. Van phong va quan ly: quan tam den cong cu lam viec, quy trinh va co hoi phat trien nhieu hon.</div>
+</div>
+<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:18px;">
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thu ba — Nhan vien muon thu nhap ro rang va co the du doan</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Nhieu phan hoi tap trung vao cach tinh luong, thuong, phat va thoi gian chi tra. Tinh minh bach va kha nang du doan cua thu nhap co anh huong truc tiep den su hai long cong viec.</div>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Dinh vi thuong hieu tuyen dung (EVP)</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+  <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 13px;">
+    <div style="font-size:.72rem;font-weight:800;color:#1D4ED8;margin-bottom:4px;">Dieu giu chan hien nay (60% co y kien)</div>
+    <div style="font-size:.79rem;color:#1E3A5F;line-height:1.6;">Moi truong &amp; con nguoi: 37% — On dinh cong viec: 20%. Loi the san co nhung chua duoc dinh vi nhu mot gia tri giu chan thong nhat (EVP).</div>
+  </div>
+  <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:8px;padding:11px 13px;">
+    <div style="font-size:.72rem;font-weight:800;color:#C2410C;margin-bottom:4px;">Dieu can thay doi (55% co y kien)</div>
+    <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Luong thuong &amp; phuc loi: 36%, du khao sat khong hoi truc tiep. Ket qua tuong tu EES 2025 — van la moi quan tam lon chua duoc giai quyet.</div>
+  </div>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Trich dan nguyen van tu nhan vien</div>
+<div style="background:#F0FDF4;border-left:3px solid #10B981;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#166534;font-style:italic;">"Moi truong than thien, NVXL ho tro nhiet tinh."</div>
+<div style="background:#F0FDF4;border-left:3px solid #10B981;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#166534;font-style:italic;">"Cong viec on dinh, co thu nhap tot, lam viec thoai mai."</div>
+<div style="background:#FFF8F5;border-left:3px solid #EF4444;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#7C2D12;font-style:italic;">"Hay bao ve nhan vien cua minh, phat it thoi — luc do nguoi ta moi bo suc vi cong viec."</div>
+<div style="background:#FFF8F5;border-left:3px solid #EF4444;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#7C2D12;font-style:italic;">"Tang thu nhap, giam phat, bo chup hinh POD."</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Tab 6
+    with t6:
+        st.markdown("""
+<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
+EES 2026 khong cho thay dau hieu khung hoang gan ket.
+Thach thuc cua GHN khong nam o viec gan ket suy giam tren dien rong,
+ma o viec <strong>xu ly dung cac diem nghen va uu tien dung nhom nhan su.</strong>
+</p>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 12px;">06 diem ket luan chinh thuc</div>
+<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.75rem;font-weight:800;color:#15803D;margin-bottom:3px;">01 — Nen tang gan ket van tich cuc</div>
+  <div style="font-size:.79rem;color:#166534;line-height:1.6;">EI dat 73,3 diem, eNPS dat +31,7 — phan anh muc do gan ket nhin chung on dinh va tich cuc.</div>
+</div>
+<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.75rem;font-weight:800;color:#15803D;margin-bottom:3px;">02 — Diem manh va diem can uu tien cai thien</div>
+  <div style="font-size:.79rem;color:#166534;line-height:1.6;">Quan ly truc tiep la diem manh nhat. Niem tin &amp; Lanh dao va Thu nhap &amp; Minh bach la hai tru cot can uu tien cai thien.</div>
+</div>
+<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:3px;">03 — Thu nhap va minh bach van la chu de lon nhat</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Tiep tuc la chu de duoc nhac den nhieu nhat, dac biet o luc luong tuyen dau. Tinh minh bach trong dai ngo anh huong truc tiep den su hai long.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">04 — Don vi can uu tien theo doi</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Khoi Khach Hang, Khoi Nhan Luc (dac biet HRBP), Phong AI Cot loi &amp; Du lieu va Phong San Pham — can hanh dong cu the, khong chi theo doi.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">05 — Nhom can uu tien giu chan</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Nhan vien giao nhan tham nien 1–5 nam, dac biet tai Xuyen Bien Gioi va Dong bang song Cuu Long. Nhom tao gia tri van hanh cao, chi phi thay the lon.</div>
+</div>
+<div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:18px;">
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">06 — Chuong trinh giu chan can duoc thiet ke theo nhom</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Y dinh roi khong chi xuat hien o nhom gan ket thap. Mot giai phap chung ap dung cho tat ca se khong hieu qua — can thiet ke rieng theo tung nhom nhan su.</div>
+</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:18px 0 10px;">Theo doi tiep theo</div>
+<p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
+To chuc buoi lam viec rieng voi tung Truong Khoi trong vong 2 tuan sau cong bo.
+Hang muc uu tien 1 cap nhat tien do sau 30 ngay.
+Ra soat toan bo ke hoach vao thang 12/2026 qua mot khao sat ngan.
+</p>
+<div style="background:#F0F7FF;border:1px solid #BFDBFE;border-radius:10px;padding:13px 15px;">
+  <p style="font-size:.82rem;color:#1E3A5F;margin:0;line-height:1.65;">
+  <strong>Gia tri cua EES khong nam o ban bao cao, ma o nhung hanh dong sau khao sat.</strong>
+  Chi khi ket qua duoc chuyen thanh cac chuong trinh cai thien cu the va tiep tuc duoc do luong,
+  EES moi thuc su tro thanh cong cu nang cao trai nghiem nhan vien.
+  EES 2026 la diem khoi dau cua vong lap: lang nghe — hanh dong — do luong.
+  </p>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
 UNKNOWN_ORG_VALUE = "Chưa xác định"
 
 # Tập hợp các giá trị "rác" xuất phát từ pipeline cũ hoặc HRIS không xác định được.
@@ -1188,6 +1491,8 @@ def render(all_data, available_groups, scope_restricted=False):
             total_dropped=DEEPDIVE_QUALITY_TOTALS["dropped"],
         )
 
+        _render_report_content()
+
     # Calculate dynamic insights across divisions
     div_stats = []
     if 'division' in df_total.columns:
@@ -1726,4 +2031,3 @@ def render(all_data, available_groups, scope_restricted=False):
                 render_ai_insight_card("AI NLP Insight: Định Vị Thương Hiệu (EVP)", nlp_ai_data, prompt, badge="NLP Engine", custom_style="height: 100%; margin-bottom: 0; padding: 24px;")
     else:
         st.info("Chưa có dữ liệu câu hỏi mở (NLP) để phân tích EVP.")
-

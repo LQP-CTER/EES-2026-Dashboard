@@ -86,13 +86,14 @@ def render(**kwargs):
     </div>
     """, unsafe_allow_html=True)
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "Chỉ số Cốt lõi",
         "Rủi ro & Ý định",
         "Độ tin cậy Dữ liệu",
         "Phân tích Chuyên sâu",
         "AI & Văn bản mở",
         "HRIS & Năng suất",
+        "Nguon & Mo hinh",
     ])
 
     with tab1:
@@ -107,6 +108,8 @@ def render(**kwargs):
         _render_nlp()
     with tab6:
         _render_hris()
+    with tab7:
+        _render_sources_models()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -321,6 +324,7 @@ def _render_risk_engagement():
         {"name": "JSI &mdash; Job Satisfaction Index", "formula": "Điểm tổng hợp từ các câu hài lòng", "questions": "Nhóm câu hài lòng", "new": True},
         {"name": "EWS &mdash; Early Warning Score", "formula": "EI thấp + Q30 thấp + Silence cao", "questions": "Toàn khảo sát", "new": True},
         {"name": "Engagement Quadrant", "formula": "Ma trận EI x Ý định ở lại", "questions": "EI + Q30", "new": True},
+        {"name": "Stay Intention", "formula": "Mean(Q30) — thang 1-5", "questions": "Q30"},
     ])
 
     _card(
@@ -335,8 +339,8 @@ chọn điểm 1 hoặc 2 ở câu hỏi về ý định ở lại.
 Khi chỉ số vượt 20%, đội ngũ HR và quản lý cần hành động trực tiếp với nhóm này trước khi mất người.
 """,
         formula="% Muốn nghỉ = Count(Q30 <= 2) / Count(Q30 hợp lệ) x 100%",
-        formula_note="Q30 hỏi: 'Bạn dự định gắn bó với GHN trong 6 tháng tới không?' Điểm 1-2 = Không có ý định ở lại. Điểm 4-5 = Ổn định. Điểm 3 = Chưa rõ.",
-        source="Q30 (Ý định ở lại, thang 1-5)",
+        formula_note="Flight Risk là chỉ số tổng hợp từ ý định nghỉ (Q30), eNPS cá nhân và thâm niên. Ở đơn vị mẫu nhỏ, gần như trùng với tỷ lệ Q30 <= 2. Q30: Điểm 1-2 = Muốn rời. Điểm 4-5 = Ổn định. Điểm 3 = Chưa rõ.",
+        source="Q30 + eNPS cá nhân + Thâm niên",
         scale="0-100%",
         thresholds=[
             {"label": "An toàn", "w": 10, "color": "#10B981", "desc": "<= 10%"},
@@ -357,7 +361,7 @@ Khác với "bận rộn": người bận nhưng được hỗ trợ tốt thư�
 Người bị kiệt sức thường là những người đang cố gắng nhất nhưng cảm thấy bị bỏ mặc.
 """,
         formula="Burnout % = % nhân viên có (Điểm áp lực cao) VÀ (Điểm nguồn lực thấp)",
-        formula_note="Áp lực đến từ Q18 (Cường độ duy trì được?) và Q29. Nguồn lực hỗ trợ đến từ Q11 (Quản lý hỗ trợ?) và Q16 (Công cụ đủ không?). Khi cả hai chiều đều lệch xấu cùng lúc thì nguy cơ burnout.",
+        formula_note="BRI = % nhân viên có điểm rủi ro kiệt sức vượt ngưỡng 0.5 (thang 0-1). Áp lực đến từ Q18 và Q29; nguồn lực từ Q11 và Q16. BRI <= 5% là thấp, đạt mức an toàn (GHN 2026: ~5.0%).",
         source="Q11, Q16, Q18, Q29",
         scale="0-100%",
         thresholds=[
@@ -430,6 +434,28 @@ và Ý định Ở lại (Q30 cao/thấp):
         source="EI + Q30",
         scale="4 nhóm phân loại",
         is_new=True
+    )
+
+    _card(
+        num=10, color="#0EA5E9",
+        title="Stay Intention (Y dinh Gan bo)", sub="Diem trung binh y dinh o lai tren thang 1-5",
+        badge="Intent",
+        hr_meaning="""
+Stay Intention do <b>diem trung binh</b> y dinh o lai, khac voi Flight Risk (do ty le nguoi o vung nguy hiem).
+Stay Intention cao (>= 4.0) cho thay doi ngu nhin chung muon gan bo.
+<br><br>
+Hai chi so nay bo sung nhau: Stay Intention phan anh <b>xu huong chung</b>, con Flight Risk phan anh
+<b>quy mo nhom rui ro cao</b>. GHN 2026: Stay Intention dat <b>4,03/5</b>.
+""",
+        formula="Stay Intention = Mean(Q30) tren thang 1-5",
+        formula_note="Q30 hoi y dinh gan bo trong 6 thang toi. Gia tri GHN 2026: 4,03/5. Day la diem trung binh toan cong ty; don vi co diem duoi 3,5 can theo doi. (Xem them: Flight Risk = % co Q30 <= 2).",
+        source="Q30 (thang 1-5)",
+        scale="1-5",
+        thresholds=[
+            {"label": "Rui ro cao", "w": 35, "color": "#DC2626", "desc": "< 3.5 — Nhieu nguoi dang can nhac roi"},
+            {"label": "Trung lap", "w": 30, "color": "#F59E0B", "desc": "3.5-3.9"},
+            {"label": "On dinh", "w": 35, "color": "#10B981", "desc": ">= 4.0 — Phan lon muon o lai"},
+        ]
     )
 
 
@@ -631,3 +657,119 @@ của burnout ẩn ở người làm tốt nhất. Đây là rủi ro nghiêm tr
         source="HRIS + ODS + Khảo sát EES",
         scale="Đơn/ngày & % nghỉ việc"
     )
+
+
+# ── Tab 7: Nguồn dữ liệu & Mô hình tham chiếu ──────────────────────────
+
+def _render_sources_models():
+    _sec("Nguon du lieu & Mo hinh tham chieu",
+         "Bao cao hop nhat EES 2026 duoc xay dung tu nhieu nguon phan tich doc lap — phan nay giai thich nguon goc va nen tang ly thuyet.")
+
+    st.markdown("""
+<div class="apx-quick-ref">
+<p class="apx-quick-ref-title">10.2. Nguon du lieu (Section 10.2 bao cao chinh thuc)</p>
+<table class="apx-quick-ref-table">
+<thead><tr>
+  <th>Nguon phan tich</th>
+  <th>Mo ta</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="apx-qr-name">Phan tich sau theo Khoi va Phong ban (BDA)</td>
+  <td style="color:#334155;font-size:0.79rem">Phan tich chi tiet EI, eNPS, Flight Risk theo 11 Khoi va cac phong ban truc thuoc</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Kiem dinh do tin cay &amp; Doi sanh thi truong (EX &amp; People Analytics)</td>
+  <td style="color:#334155;font-size:0.79rem">Kiem tra chat luong du lieu, straight-line, silence; doi sanh benchmark nganh logistics 2025-2026</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Phan tich trai nghiem nhan vien</td>
+  <td style="color:#334155;font-size:0.79rem">Phan tich hanh trinh nhan vien, EVP topics, open-text NLP theo 7 nhom nhan su</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Phan tich 11 Khoi voi he chi so nang cao</td>
+  <td style="color:#334155;font-size:0.79rem">Bao gom EWS, BRI, Engagement Quadrant va Root Cause Gap Score cho tung Khoi</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Tong hop phan hoi mo (7 nhom)</td>
+  <td style="color:#334155;font-size:0.79rem">Phan loai chu de tu dong + xac nhan thu cong; Warning Signals AI screening</td>
+</tr>
+</tbody>
+</table>
+<p style="font-size:0.77rem;color:#94A3B8;margin:10px 0 0;">
+So lieu chi tiet theo tung Khoi, phong ban, khu vuc va cau hoi duoc luu trong cac file Excel kem theo bao cao.
+</p>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("""
+<div class="apx-quick-ref" style="margin-top:20px;">
+<p class="apx-quick-ref-title">Thong tin thu thap du lieu</p>
+<table class="apx-quick-ref-table">
+<thead><tr>
+  <th>Hang muc</th>
+  <th>Chi tiet</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="apx-qr-name">Thoi gian khao sat</td>
+  <td style="color:#334155;font-size:0.79rem">19 ngay: 15/03 — 02/04/2026</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Do phu (Coverage)</td>
+  <td style="color:#334155;font-size:0.79rem">90% — 19.221 / 21.353 phieu hop le</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Ty le tham gia (Participation)</td>
+  <td style="color:#334155;font-size:0.79rem">93,7% tren tong so nhan vien duoc moi</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Trong so do tin cay</td>
+  <td style="color:#334155;font-size:0.79rem">
+    Sach (1.0) / Co van de nhe — giam trong so (0.8) / Downweight (0.5) / Drop (loai)
+  </td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Cong thuc quy doi YoY (2025 vs 2026)</td>
+  <td style="color:#334155;font-size:0.82rem;font-family:monospace;">
+    EI_2025 (quy doi) = Mean_Likert_2025 x 2 / 10 x 100
+  </td>
+</tr>
+</tbody>
+</table>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("""
+<div class="apx-quick-ref" style="margin-top:20px;">
+<p class="apx-quick-ref-title">10.3. Mo hinh tham chieu (Section 10.3 bao cao chinh thuc)</p>
+<table class="apx-quick-ref-table">
+<thead><tr>
+  <th>Mo hinh / Nguon</th>
+  <th>Ung dung trong EES 2026</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="apx-qr-name">AON Hewitt Engagement Model</td>
+  <td style="color:#334155;font-size:0.79rem">Nen tang phan loai ngu'ong EI (Say / Stay / Strive) va khung 5 tru cot</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">eNPS Framework (Bain &amp; Company)</td>
+  <td style="color:#334155;font-size:0.79rem">Cong thuc Promoter - Detractor; nguong phan loai Tieu cuc / Tot / Rat tot</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Best Employer Research (Kincentric &amp; WTW)</td>
+  <td style="color:#334155;font-size:0.79rem">Benchmark thi truong nganh Logistics Dong Nam A; tham chieu ngu'ong "Excellent Employer"</td>
+</tr>
+<tr>
+  <td class="apx-qr-name">Benchmark EES 2025 (du lieu 2024)</td>
+  <td style="color:#334155;font-size:0.79rem">So sanh YoY noi bo; chi de dinh huong, chua dung de ket luan chinh xac do thay doi thang do</td>
+</tr>
+</tbody>
+</table>
+<p style="font-size:0.77rem;color:#94A3B8;margin:10px 0 0;">
+Tat ca nguong phan loai va cach tinh chi so duoc dieu chinh cho phu hop dac thu nganh logistics cua GHN.
+Benchmark thi truong chi mang tinh tham khao do khac biet thang do, phuong phap va co cau mau.
+</p>
+</div>
+""", unsafe_allow_html=True)
