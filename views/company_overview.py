@@ -93,23 +93,23 @@ def _render_benchmark_executive_summary(
 
 
 def _render_report_content():
-    """Trinh bay noi dung bao cao EES 2026 — 6 chuong chinh."""
+    """Trình bày nội dung báo cáo EES 2026 — 6 chương chính."""
     from shared.plotly_theme import section_header as _sh
     st.markdown(
         _sh(
-            "Bao Cao Phan Tich EES 2026",
-            "Noi dung day du tu tai lieu phan tich chinh thuc — GHN HR Division · Employee Experience",
+            "Báo Cáo Phân Tích EES 2026",
+            "Nội dung đầy đủ từ tài liệu phân tích chính thức — GHN HR Division · Employee Experience",
         ),
         unsafe_allow_html=True,
     )
 
     t1, t2, t3, t4, t5, t6 = st.tabs([
         "Executive Summary",
-        "Buc tranh tong the",
-        "Theo nhom nhan su",
-        "Theo Khoi / Phong ban",
-        "Nhan vien dang noi gi",
-        "Ket luan & Hanh dong",
+        "Bức tranh tổng thể",
+        "Theo nhóm nhân sự",
+        "Theo Khối / Phòng ban",
+        "Nhân viên đang nói gì",
+        "Kết luận & Hành động",
     ])
 
     # Tab 1
@@ -117,65 +117,65 @@ def _render_report_content():
         st.markdown("""
 <div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:16px;">
-<strong>Buc tranh chung kha tich cuc, nhung chua dong deu.</strong>
-EI dat <strong>73,3/100</strong> (muc Khoe manh). eNPS dat <strong>+31,7</strong>, cao hon mat bang thi truong.
-Chua co dau hieu suy giam gan ket tren dien rong.
-Dieu dang chu y nam o <strong>khoang cach giua cac nhom, cac Khoi va tung giai doan tham nien.</strong>
+<strong>Bức tranh chung khá tích cực, nhưng chưa đồng đều.</strong>
+EI đạt <strong>73,3/100</strong> (mức Khoẻ mạnh). eNPS đạt <strong>+31,7</strong>, cao hơn mặt bằng thị trường.
+Chưa có dấu hiệu suy giảm gắn kết trên diện rộng.
+Điều đáng chú ý nằm ở <strong>khoảng cách giữa các nhóm, các Khối và từng giai đoạn thâm niên.</strong>
 </p>
 <div style="background:#F0F7FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
-  <div style="font-size:.7rem;font-weight:800;color:#1D4ED8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Luu y khi doc chi so 73,3</div>
+  <div style="font-size:.7rem;font-weight:800;color:#1D4ED8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Lưu ý khi đọc chỉ số 73,3</div>
   <p style="font-size:.82rem;color:#1E3A5F;margin:0;line-height:1.65;">
-  Nhom 1A (Nhan vien giao nhan) chiem gan 2/3 tong mau. Khoang 52% phan hoi co xu huong chon cung mot muc diem cho hau het cau hoi.
-  Vi vay, chi so 73,3 nen duoc xem la chi so tong quan ve suc khoe gan ket, <strong>thay vi la co so de chan doan van de hoac uu tien hanh dong.</strong>
-  Gia tri phan tich nam o ket qua theo tung Khoi, nhom nhan su va don vi cu the.
+  Nhóm 1A (Nhân viên giao nhận) chiếm gần 2/3 tổng mẫu. Khoảng 52% phản hồi có xu hướng chọn cùng một mức điểm cho hầu hết câu hỏi.
+  Vì vậy, chỉ số 73,3 nên được xem là chỉ số tổng quan về sức khoẻ gắn kết, <strong>thay vì là cơ sở để chẩn đoán vấn đề hoặc ưu tiên hành động.</strong>
+  Giá trị phân tích nằm ở kết quả theo từng Khối, nhóm nhân sự và đơn vị cụ thể.
   </p>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:18px 0 12px;">04 dieu EES 2026 noi ro</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:18px 0 12px;">04 điều EES 2026 nói rõ</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
   <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
-    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">01 — Diem manh nhat</div>
-    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Quan ly truc tiep</div>
-    <div style="font-size:.79rem;color:#475569;line-height:1.6;">MEI dat khoang 81 diem, cao hon EI o tat ca cac nhom. Quan ly truc tiep dang la yeu to giu on dinh muc do gan ket, dac biet tai tuyen dau.</div>
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">01 — Điểm mạnh nhất</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Quản lý trực tiếp</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">MEI đạt khoảng 81 điểm, cao hơn EI ở tất cả các nhóm. Quản lý trực tiếp đang là yếu tố giữ ổn định mức độ gắn kết, đặc biệt tại tuyến đầu.</div>
   </div>
   <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
-    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">02 — Can cai thien</div>
-    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Niem tin lanh dao cap cao</div>
-    <div style="font-size:.79rem;color:#475569;line-height:1.6;">TC1 dat 72,0 diem, thap nhat trong 5 tru cot. Khoang cach tap trung chu yeu o luc luong tuyen dau, noi thong tin ve thay doi chinh sach chua duoc truyen tai kip thoi.</div>
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">02 — Cần cải thiện</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Niềm tin lãnh đạo cấp cao</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">TC1 đạt 72,0 điểm, thấp nhất trong 5 trụ cột. Khoảng cách tập trung chủ yếu ở lực lượng tuyến đầu, nơi thông tin về thay đổi chính sách chưa được truyền tải kịp thời.</div>
   </div>
   <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
-    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">03 — Moi quan tam lon nhat</div>
-    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Thu nhap</div>
-    <div style="font-size:.79rem;color:#475569;line-height:1.6;">Du khong hoi truc tiep ve luong, 36% y kien gop y van de cap den thu nhap va phuc loi. Nhan vien quan tam hon la tinh on dinh va kha nang du doan cua thu nhap.</div>
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">03 — Mối quan tâm lớn nhất</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Thu nhập</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">Dù không hỏi trực tiếp về lương, 36% ý kiến góp ý vẫn đề cập đến thu nhập và phúc lợi. Nhân viên quan tâm hơn là tính ổn định và khả năng dự đoán của thu nhập.</div>
   </div>
   <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;">
-    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">04 — Loi the giu chan</div>
-    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Con nguoi</div>
-    <div style="font-size:.79rem;color:#475569;line-height:1.6;">Khoang 37% phan hoi tich cuc nhac den moi truong lam viec va dong nghiep. Day la diem manh san co nhung chua duoc chuyen hoa thanh thong diep gia tri giu chan thong nhat.</div>
+    <div style="font-size:.68rem;font-weight:800;color:#FF5200;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">04 — Lợi thế giữ chân</div>
+    <div style="font-size:.84rem;font-weight:700;color:#0A1F44;margin-bottom:4px;">Con người</div>
+    <div style="font-size:.79rem;color:#475569;line-height:1.6;">Khoảng 37% phản hồi tích cực nhắc đến môi trường làm việc và đồng nghiệp. Đây là điểm mạnh sẵn có nhưng chưa được chuyển hoá thành thông điệp giá trị giữ chân thống nhất.</div>
   </div>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #EF4444;padding-left:10px;margin:18px 0 12px;">04 diem nen luu y</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #EF4444;padding-left:10px;margin:18px 0 12px;">04 điểm nên lưu ý</div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:9px;">
-  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">01 — Muc do gan ket khac biet ro giua cac Khoi</div>
-  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Giao Hang Nang va Tai Chinh dan dau. AI &amp; Du lieu va San Pham thap nhat nhung quy mo mau nho (&lt;20 nguoi) — xem nhu tin hieu theo doi, chua phai ket luan.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">01 — Mức độ gắn kết khác biệt rõ giữa các Khối</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Giao Hàng Nặng và Tài Chính dẫn đầu. AI &amp; Dữ liệu và Sản Phẩm thấp nhất nhưng quy mô mẫu nhỏ (&lt;20 người) — xem như tín hiệu theo dõi, chưa phải kết luận.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:9px;">
-  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">02 — Khoi Nhan Luc co rui ro giu chan cao nhat</div>
-  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Ty le y dinh roi cong ty 22,6%, cao nhat cac Khoi, tap trung ro o doi ngu HRBP — chinh doi ngu phu trach trai nghiem nhan vien lai co muc gan bo thap hon mat bang chung.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">02 — Khối Nhân Lực có rủi ro giữ chân cao nhất</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Tỷ lệ ý định rời công ty 22,6%, cao nhất các Khối, tập trung rõ ở đội ngũ HRBP — chính đội ngũ phụ trách trải nghiệm nhân viên lại có mức gắn bó thấp hơn mặt bằng chung.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:9px;">
-  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">03 — Rui ro nghi viec tap trung o nhom da thanh thao cong viec</div>
-  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Y dinh roi cao nhat o Shipper tham nien 1–5 nam, dac biet tai XBG va DCL. Nhom nay da tich luy kinh nghiem va tao gia tri van hanh — chi phi thay the cao.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">03 — Rủi ro nghỉ việc tập trung ở nhóm đã thành thạo công việc</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Ý định rời cao nhất ở Shipper thâm niên 1–5 năm, đặc biệt tại XBG và DCL. Nhóm này đã tích luỹ kinh nghiệm và tạo giá trị vận hành — chi phí thay thế cao.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:18px;">
-  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">04 — Khong phai moi y dinh nghi viec deu den tu thieu gan ket</div>
-  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">O mot so don vi van co nhan vien gan ket cao nhung co y dinh roi. Nguyen nhan co the den tu co hoi nghe nghiep hoac yeu to ben ngoai — can chien luoc giu chan khac biet.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:4px;">04 — Không phải mọi ý định nghỉ việc đều đến từ thiếu gắn kết</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Ở một số đơn vị vẫn có nhân viên gắn kết cao nhưng có ý định rời. Nguyên nhân có thể đến từ cơ hội nghề nghiệp hoặc yếu tố bên ngoài — cần chiến lược giữ chân khác biệt.</div>
 </div>
 <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:14px 16px;">
-  <div style="font-size:.7rem;font-weight:800;color:#15803D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Ket luan chung</div>
+  <div style="font-size:.7rem;font-weight:800;color:#15803D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Kết luận chung</div>
   <p style="font-size:.82rem;color:#166534;margin:0;line-height:1.65;">
-  GHN co nen tang gan ket tich cuc, duoc nang do boi quan ly truc tiep va van hoa dong nghiep.
-  Co hoi cai thien lon nhat la <strong>tang niem tin vao lanh dao</strong>, nang chat luong truyen thong thay doi
-  va xay dung co che thu nhap on dinh, de du doan cho luc luong tuyen dau theo dac thu tung nhom nhan vien.
+  GHN có nền tảng gắn kết tích cực, được nâng đỡ bởi quản lý trực tiếp và văn hoá đồng nghiệp.
+  Cơ hội cải thiện lớn nhất là <strong>tăng niềm tin vào lãnh đạo</strong>, nâng chất lượng truyền thông thay đổi
+  và xây dựng cơ chế thu nhập ổn định, dễ dự đoán cho lực lượng tuyến đầu theo đặc thù từng nhóm nhân viên.
   </p>
 </div>
 </div>
@@ -186,31 +186,31 @@ Dieu dang chu y nam o <strong>khoang cach giua cac nhom, cac Khoi va tung giai d
         st.markdown("""
 <div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
-EI dat 73,3 diem, phan anh muc do gan ket tich cuc cua toan cong ty. Tuy nhien, chat luong trai nghiem khong dong deu theo 5 tru cot.
-Xu huong nhat quan: nhan vien danh gia tich cuc hon voi trai nghiem <em>hang ngay va gan gui</em> (quan ly truc tiep, dong nghiep),
-trong khi than trong hon voi nhung yeu to <em>mang tinh he thong</em> (dinh huong lanh dao, co che thu nhap).
+EI đạt 73,3 điểm, phản ánh mức độ gắn kết tích cực của toàn công ty. Tuy nhiên, chất lượng trải nghiệm không đồng đều theo 5 trụ cột.
+Xu hướng nhất quán: nhân viên đánh giá tích cực hơn với trải nghiệm <em>hàng ngày và gần gũi</em> (quản lý trực tiếp, đồng nghiệp),
+trong khi thận trọng hơn với những yếu tố <em>mang tính hệ thống</em> (định hướng lãnh đạo, cơ chế thu nhập).
 </p>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Diem tua nam o quan ly truc tiep, khong phai he thong</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Điểm tựa nằm ở quản lý trực tiếp, không phải hệ thống</div>
 <p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
-Quan ly truc tiep la tru cot trai nghiem manh nhat va on dinh nhat giua cac nhom nhan su.
-Doi voi luc luong tuyen dau, quan ly truc tiep cung la nguoi dai dien gan gui nhat cua cong ty.
-Luc lanh dao va Niem tin la tru cot thap nhat, chu yeu do dac thu lam viec phan tan cua nhom giao nhan.
+Quản lý trực tiếp là trụ cột trải nghiệm mạnh nhất và ổn định nhất giữa các nhóm nhân sự.
+Đối với lực lượng tuyến đầu, quản lý trực tiếp cũng là người đại diện gần gũi nhất của công ty.
+Lực lãnh đạo và Niềm tin là trụ cột thấp nhất, chủ yếu do đặc thù làm việc phân tán của nhóm giao nhận.
 </p>
 <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:13px 15px;margin-bottom:18px;">
   <p style="font-size:.82rem;color:#78350F;margin:0;line-height:1.65;">
-  <strong>Luu y:</strong> Gan ket tai GHN hien duoc duy tri nhieu boi con nguoi hon la he thong.
-  Day la loi the, nhung cung la rui ro neu qua phu thuoc vao tung quan ly.
-  Tang cuong truyen thong tu cap lanh dao se giup tao nen tang gan ket ben vung hon.
+  <strong>Lưu ý:</strong> Gắn kết tại GHN hiện được duy trì nhiều bởi con người hơn là hệ thống.
+  Đây là lợi thế, nhưng cũng là rủi ro nếu quá phụ thuộc vào từng quản lý.
+  Tăng cường truyền thông từ cấp lãnh đạo sẽ giúp tạo nền tảng gắn kết bền vững hơn.
   </p>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Dat GHN trong boi canh thi truong</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Đặt GHN trong bối cảnh thị trường</div>
 <p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:8px;">
-Voi eNPS +31,7, GHN cao hon cac moc tham chieu trong EES 2025 (doanh nghiep Viet Nam khoang +22, logistics toan cau khoang +8).
-Tuy nhien, cac so lieu nay chi mang tinh tham khao do khac biet ve phuong phap do.
+Với eNPS +31,7, GHN cao hơn các mốc tham chiếu trong EES 2025 (doanh nghiệp Việt Nam khoảng +22, logistics toàn cầu khoảng +8).
+Tuy nhiên, các số liệu này chỉ mang tính tham khảo do khác biệt về phương pháp đo.
 </p>
 <p style="font-size:.83rem;color:#475569;line-height:1.65;">
-GHN dang doi mat voi nhung van de pho bien cua nganh logistics: ap luc cong viec va thu nhap cua luc luong tuyen dau.
-Mot so doi thu nhu Xanh SM dang canh tranh bang cam ket ve thu nhap toi thieu va phuc loi — day la ap luc can quan sat sat sao.
+GHN đang đối mặt với những vấn đề phổ biến của ngành logistics: áp lực công việc và thu nhập của lực lượng tuyến đầu.
+Một số đối thủ như Xanh SM đang cạnh tranh bằng cam kết về thu nhập tối thiểu và phúc lợi — đây là áp lực cần quan sát sát sao.
 </p>
 </div>
 """, unsafe_allow_html=True)
@@ -220,30 +220,30 @@ Mot so doi thu nhu Xanh SM dang canh tranh bang cam ket ve thu nhap toi thieu va
         st.markdown("""
 <div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
-Ket qua giua 6 nhom nhan su cho thay muc do gan ket khong phan bo dong deu.
-Quan ly tuyen dau co muc gan ket cao nhat; khoi van phong thap nhat.
-Nhan vien giao nhan giu muc trung binh toan cong ty nhung co y dinh nghi viec cao nhat.
+Kết quả giữa 6 nhóm nhân sự cho thấy mức độ gắn kết không phân bổ đồng đều.
+Quản lý tuyến đầu có mức gắn kết cao nhất; khối văn phòng thấp nhất.
+Nhân viên giao nhận giữ mức trung bình toàn công ty nhưng có ý định nghỉ việc cao nhất.
 </p>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">03 quan sat chinh</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">03 quan sát chính</div>
 <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:9px;">
-  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Khoang cach EI khoang 7 diem, eNPS chenh hon 40 diem</div>
-  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Moi nhom can mot cach tiep can rieng thay vi mot giai phap chung. MEI cao hon EI o moi nhom — dau tu cho quan ly cap trung la viec dang lam nhat. Nhom van phong can duoc quan tam hon: EI thap nhat, TC3 va TC4 deu duoi trung binh.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Khoảng cách EI khoảng 7 điểm, eNPS chênh hơn 40 điểm</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Mỗi nhóm cần một cách tiếp cận riêng thay vì một giải pháp chung. MEI cao hơn EI ở mọi nhóm — đầu tư cho quản lý cấp trung là việc đáng làm nhất. Nhóm văn phòng cần được quan tâm hơn: EI thấp nhất, TC3 và TC4 đều dưới trung bình.</div>
 </div>
 <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:18px;">
-  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Y dinh roi cong ty khong hoan toan di cung muc do gan ket</div>
-  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Nhan vien giao nhan co ty le y dinh roi cao nhat (5,3%) du EI khong thap nhat. Quyet dinh roi chiu tac dong cua co hoi viec lam, thu nhap va tinh linh hoat cua thi truong lao dong, khong chi trai nghiem noi bo.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Ý định rời công ty không hoàn toàn đi cùng mức độ gắn kết</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Nhân viên giao nhận có tỷ lệ ý định rời cao nhất (5,3%) dù EI không thấp nhất. Quyết định rời chịu tác động của cơ hội việc làm, thu nhập và tính linh hoạt của thị trường lao động, không chỉ trải nghiệm nội bộ.</div>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Muc do gan ket giam theo tham nien</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Mức độ gắn kết giảm theo thâm niên</div>
 <p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
-Ca EI va eNPS deu giam khi thoi gian lam viec tang, nhung eNPS giam nhanh hon.
-Trong hai nam dau, EI giam tu khoang 77 xuong 72 diem; eNPS giam tu +49 xuong +29.
-Muc gan ket thap nhat xuat hien o nhom tham nien 3–5 nam.
-Sau moc nay, ca EI va eNPS nhich len nhe — co the do nhung nhan vien it phu hop da roi truoc do.
+Cả EI và eNPS đều giảm khi thời gian làm việc tăng, nhưng eNPS giảm nhanh hơn.
+Trong hai năm đầu, EI giảm từ khoảng 77 xuống 72 điểm; eNPS giảm từ +49 xuống +29.
+Mức gắn kết thấp nhất xuất hiện ở nhóm thâm niên 3–5 năm.
+Sau mốc này, cả EI và eNPS nhích lên nhẹ — có thể do những nhân viên ít phù hợp đã rời trước đó.
 </p>
 <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:13px 15px;">
   <p style="font-size:.82rem;color:#78350F;margin:0;line-height:1.65;">
-  <strong>Nhom can uu tien giu chan:</strong> Nhan vien co tham nien 1–5 nam.
-  Day la luc luong da tich luy kinh nghiem, tao ra gia tri van hanh va co chi phi thay the cao neu roi di.
+  <strong>Nhóm cần ưu tiên giữ chân:</strong> Nhân viên có thâm niên 1–5 năm.
+  Đây là lực lượng đã tích luỹ kinh nghiệm, tạo ra giá trị vận hành và có chi phí thay thế cao nếu rời đi.
   </p>
 </div>
 </div>
@@ -254,49 +254,49 @@ Sau moc nay, ca EI va eNPS nhich len nhe — co the do nhung nhan vien it phu ho
         st.markdown("""
 <div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
-GHN ap dung co cau to chuc moi tu 2026 voi 11 Khoi va Phong ban. Quy mo chenh lech rat lon — tu hon 17.000 nhan su tai Khoi Thi Truong den duoi 10 o mot so phong ban.
-EI chi nen dung de nhan dien xu huong, <strong>khong dung de xep hang truc tiep giua cac Khoi co quy mo khac nhau.</strong>
+GHN áp dụng cơ cấu tổ chức mới từ 2026 với 11 Khối và Phòng ban. Quy mô chênh lệch rất lớn — từ hơn 17.000 nhân sự tại Khối Thị Trường đến dưới 10 ở một số phòng ban.
+EI chỉ nên dùng để nhận diện xu hướng, <strong>không dùng để xếp hạng trực tiếp giữa các Khối có quy mô khác nhau.</strong>
 </p>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #10B981;padding-left:10px;margin:16px 0 10px;">02 don vi co the tham khao</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #10B981;padding-left:10px;margin:16px 0 10px;">02 đơn vị có thể tham khảo</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;">
   <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:13px 15px;">
-    <div style="font-size:.72rem;font-weight:800;color:#15803D;margin-bottom:5px;">GIAO HANG NANG (FREIGHT)</div>
-    <div style="font-size:.82rem;color:#166534;line-height:1.6;">EI 77,2 · eNPS +55,6 · MEI 86,7. Ca 5 tru cot deu dat tu 75/100. Khong ghi nhan diem yeu noi bat. Nhom Quan ly tuyen dau dat MEI 90,9 — cao nhat toan cong ty.</div>
+    <div style="font-size:.72rem;font-weight:800;color:#15803D;margin-bottom:5px;">GIAO HÀNG NẶNG (FREIGHT)</div>
+    <div style="font-size:.82rem;color:#166534;line-height:1.6;">EI 77,2 · eNPS +55,6 · MEI 86,7. Cả 5 trụ cột đều đạt từ 75/100. Không ghi nhận điểm yếu nổi bật. Nhóm Quản lý tuyến đầu đạt MEI 90,9 — cao nhất toàn công ty.</div>
   </div>
   <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:13px 15px;">
-    <div style="font-size:.72rem;font-weight:800;color:#15803D;margin-bottom:5px;">KHOI TAI CHINH</div>
-    <div style="font-size:.82rem;color:#166534;line-height:1.6;">EI 77,0 · eNPS +33,3 · Y dinh roi chi 1,9%. Khoi van phong co muc do gan ket cao nhat — muc gan ket phu thuoc nhieu vao boi canh cong viec va co hoi phat trien.</div>
+    <div style="font-size:.72rem;font-weight:800;color:#15803D;margin-bottom:5px;">KHỐI TÀI CHÍNH</div>
+    <div style="font-size:.82rem;color:#166534;line-height:1.6;">EI 77,0 · eNPS +33,3 · Ý định rời chỉ 1,9%. Khối văn phòng có mức độ gắn kết cao nhất — mức gắn kết phụ thuộc nhiều vào bối cảnh công việc và cơ hội phát triển.</div>
   </div>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #EF4444;padding-left:10px;margin:16px 0 10px;">05 don vi can uu tien theo doi</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #EF4444;padding-left:10px;margin:16px 0 10px;">05 đơn vị cần ưu tiên theo dõi</div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Phong AI Cot loi &amp; Du lieu (n=19) — EI 66,2, eNPS -10,5</div>
-  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Thap nhat toan cong ty. Diem yeu o Thu nhap &amp; Minh bach. MEI van o muc tuong doi — van de co the khong den tu quan ly. Can xac minh qua doi thoai dinh tinh.</div>
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Phòng AI Cốt lõi &amp; Dữ liệu (n=19) — EI 66,2, eNPS -10,5</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Thấp nhất toàn công ty. Điểm yếu ở Thu nhập &amp; Minh bạch. MEI vẫn ở mức tương đối — vấn đề có thể không đến từ quản lý. Cần xác minh qua đối thoại định tính.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Phong San Pham (n=14) — eNPS -14,3, BRI 14,3%</div>
-  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">eNPS thap nhat, BRI cao nhat. Tru cot phat trien va gan ket to chuc deu muc thap. Nhat quan voi tin hieu EES 2025. Can doi thoai truc tiep.</div>
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Phòng Sản Phẩm (n=14) — eNPS -14,3, BRI 14,3%</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">eNPS thấp nhất, BRI cao nhất. Trụ cột phát triển và gắn kết tổ chức đều ở mức thấp. Nhất quán với tín hiệu EES 2025. Cần đối thoại trực tiếp.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khoi Cong Nghe (n=70) — EI 70,1, eNPS +11,4</div>
-  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Tru cot Cong viec &amp; Phat trien la diem yeu noi bat — nhu cau lo trinh nghe nghiep. Co the xem la tin hieu he thong khi dat canh AI &amp; Du lieu va San Pham.</div>
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khối Công Nghệ (n=70) — EI 70,1, eNPS +11,4</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Trụ cột Công việc &amp; Phát triển là điểm yếu nổi bật — nhu cầu lộ trình nghề nghiệp. Có thể xem là tín hiệu hệ thống khi đặt cạnh AI &amp; Dữ liệu và Sản Phẩm.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khoi Khach Hang (n=346) — Thap nhat trong cac Khoi quy mo lon</div>
-  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Ba tru cot TC3, TC4 va TC5 deu duoi muc trung binh. Nhom van phong co ty le y dinh roi cong ty cao — can ra soat co che ghi nhan va phat trien.</div>
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khối Khách Hàng (n=346) — Thấp nhất trong các Khối quy mô lớn</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Ba trụ cột TC3, TC4 và TC5 đều dưới mức trung bình. Nhóm văn phòng có tỷ lệ ý định rời công ty cao — cần rà soát cơ chế ghi nhận và phát triển.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:18px;">
-  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khoi Nhan Luc (n=84) — EI 71,3, doi ngu HRBP can chu y</div>
-  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Diem yeu o lo trinh phat trien va gan ket to chuc. HRBP la nhom co EI thap va y dinh roi cao hon cac nhom con lai trong Khoi.</div>
+  <div style="font-size:.74rem;font-weight:800;color:#C2410C;margin-bottom:3px;">Khối Nhân Lực (n=84) — EI 71,3, đội ngũ HRBP cần chú ý</div>
+  <div style="font-size:.78rem;color:#7C2D12;line-height:1.6;">Điểm yếu ở lộ trình phát triển và gắn kết tổ chức. HRBP là nhóm có EI thấp và ý định rời cao hơn các nhóm còn lại trong Khối.</div>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Khoi Thi Truong theo Vung: diem nong o dau?</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Khối Thị Trường theo Vùng: điểm nóng ở đâu?</div>
 <p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
-Khoi Thi Truong chiem khoang 93% tong mau. Khi phan tich theo 14 Vung, su khac biet giua cac dia ban tro nen ro rang.
+Khối Thị Trường chiếm khoảng 93% tổng mẫu. Khi phân tích theo 14 Vùng, sự khác biệt giữa các địa bàn trở nên rõ ràng.
 </p>
 <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:13px 15px;">
   <p style="font-size:.82rem;color:#1D4ED8;margin:0;line-height:1.65;">
-  <strong>XBG (Xuyen Bien Gioi) va DCL (Dong bang song Cuu Long)</strong> — EI thap nhat, ty le y dinh roi cao nhat.
-  Nhat quan voi phan tich tham nien: nhan vien giao nhan 1–5 nam tai hai Vung nay la nhom can uu tien giu chan.
+  <strong>XBG (Xuyên Biên Giới) và DCL (Đồng bằng sông Cửu Long)</strong> — EI thấp nhất, tỷ lệ ý định rời cao nhất.
+  Nhất quán với phân tích thâm niên: nhân viên giao nhận 1–5 năm tại hai Vùng này là nhóm cần ưu tiên giữ chân.
   </p>
 </div>
 </div>
@@ -307,38 +307,38 @@ Khoi Thi Truong chiem khoang 93% tong mau. Khi phan tich theo 14 Vung, su khac b
         st.markdown("""
 <div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
-EES 2026 thu thap phan hoi qua 3 cau hoi mo ve dieu hai long nhat, ly do gan bo va dieu mong muon cai thien.
-Phan tich 3 xu huong chinh sau.
+EES 2026 thu thập phản hồi qua 3 câu hỏi mở về điều hài lòng nhất, lý do gắn bó và điều mong muốn cải thiện.
+Phân tích 3 xu hướng chính sau.
 </p>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">03 xu huong chinh</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">03 xu hướng chính</div>
 <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:9px;">
-  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thu nhat — Con nguoi la diem manh nhat cua GHN</div>
-  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Dong nghiep va quan ly truc tiep la hai chu de duoc nhac den nhieu nhat khi nhan vien chia se ly do gan bo. Nhat quan voi chi so dinh luong — MEI la mot trong nhung diem manh noi bat nhat.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thứ nhất — Con người là điểm mạnh nhất của GHN</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Đồng nghiệp và quản lý trực tiếp là hai chủ đề được nhắc đến nhiều nhất khi nhân viên chia sẻ lý do gắn bó. Nhất quán với chỉ số định lượng — MEI là một trong những điểm mạnh nổi bật nhất.</div>
 </div>
 <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:9px;">
-  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thu hai — Nhu cau cai thien khac nhau giua cac nhom</div>
-  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Tuyen dau: thu nhap la chu de nhac den nhieu nhat. Van phong va quan ly: quan tam den cong cu lam viec, quy trinh va co hoi phat trien nhieu hon.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thứ hai — Nhu cầu cải thiện khác nhau giữa các nhóm</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Tuyến đầu: thu nhập là chủ đề nhắc đến nhiều nhất. Văn phòng và quản lý: quan tâm đến công cụ làm việc, quy trình và cơ hội phát triển nhiều hơn.</div>
 </div>
 <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:13px 15px;margin-bottom:18px;">
-  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thu ba — Nhan vien muon thu nhap ro rang va co the du doan</div>
-  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Nhieu phan hoi tap trung vao cach tinh luong, thuong, phat va thoi gian chi tra. Tinh minh bach va kha nang du doan cua thu nhap co anh huong truc tiep den su hai long cong viec.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:4px;">Thứ ba — Nhân viên muốn thu nhập rõ ràng và có thể dự đoán</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Nhiều phản hồi tập trung vào cách tính lương, thưởng, phạt và thời gian chi trả. Tính minh bạch và khả năng dự đoán của thu nhập có ảnh hưởng trực tiếp đến sự hài lòng công việc.</div>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Dinh vi thuong hieu tuyen dung (EVP)</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Định vị thương hiệu tuyển dụng (EVP)</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
   <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 13px;">
-    <div style="font-size:.72rem;font-weight:800;color:#1D4ED8;margin-bottom:4px;">Dieu giu chan hien nay (60% co y kien)</div>
-    <div style="font-size:.79rem;color:#1E3A5F;line-height:1.6;">Moi truong &amp; con nguoi: 37% — On dinh cong viec: 20%. Loi the san co nhung chua duoc dinh vi nhu mot gia tri giu chan thong nhat (EVP).</div>
+    <div style="font-size:.72rem;font-weight:800;color:#1D4ED8;margin-bottom:4px;">Điều giữ chân hiện nay (60% có ý kiến)</div>
+    <div style="font-size:.79rem;color:#1E3A5F;line-height:1.6;">Môi trường &amp; con người: 37% — Ổn định công việc: 20%. Lợi thế sẵn có nhưng chưa được định vị như một giá trị giữ chân thống nhất (EVP).</div>
   </div>
   <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:8px;padding:11px 13px;">
-    <div style="font-size:.72rem;font-weight:800;color:#C2410C;margin-bottom:4px;">Dieu can thay doi (55% co y kien)</div>
-    <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Luong thuong &amp; phuc loi: 36%, du khao sat khong hoi truc tiep. Ket qua tuong tu EES 2025 — van la moi quan tam lon chua duoc giai quyet.</div>
+    <div style="font-size:.72rem;font-weight:800;color:#C2410C;margin-bottom:4px;">Điều cần thay đổi (55% có ý kiến)</div>
+    <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Lương thưởng &amp; phúc lợi: 36%, dù khảo sát không hỏi trực tiếp. Kết quả tương tự EES 2025 — vẫn là mối quan tâm lớn chưa được giải quyết.</div>
   </div>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Trich dan nguyen van tu nhan vien</div>
-<div style="background:#F0FDF4;border-left:3px solid #10B981;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#166534;font-style:italic;">"Moi truong than thien, NVXL ho tro nhiet tinh."</div>
-<div style="background:#F0FDF4;border-left:3px solid #10B981;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#166534;font-style:italic;">"Cong viec on dinh, co thu nhap tot, lam viec thoai mai."</div>
-<div style="background:#FFF8F5;border-left:3px solid #EF4444;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#7C2D12;font-style:italic;">"Hay bao ve nhan vien cua minh, phat it thoi — luc do nguoi ta moi bo suc vi cong viec."</div>
-<div style="background:#FFF8F5;border-left:3px solid #EF4444;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#7C2D12;font-style:italic;">"Tang thu nhap, giam phat, bo chup hinh POD."</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 10px;">Trích dẫn nguyên văn từ nhân viên</div>
+<div style="background:#F0FDF4;border-left:3px solid #10B981;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#166534;font-style:italic;">"Môi trường thân thiện, NVXL hỗ trợ nhiệt tình."</div>
+<div style="background:#F0FDF4;border-left:3px solid #10B981;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#166534;font-style:italic;">"Công việc ổn định, có thu nhập tốt, làm việc thoải mái."</div>
+<div style="background:#FFF8F5;border-left:3px solid #EF4444;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#7C2D12;font-style:italic;">"Hãy bảo vệ nhân viên của mình, phạt ít thôi — lúc đó người ta mới bỏ sức vì công việc."</div>
+<div style="background:#FFF8F5;border-left:3px solid #EF4444;padding:11px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:.8rem;color:#7C2D12;font-style:italic;">"Tăng thu nhập, giảm phạt, bỏ chụp hình POD."</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -347,47 +347,47 @@ Phan tich 3 xu huong chinh sau.
         st.markdown("""
 <div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
-EES 2026 khong cho thay dau hieu khung hoang gan ket.
-Thach thuc cua GHN khong nam o viec gan ket suy giam tren dien rong,
-ma o viec <strong>xu ly dung cac diem nghen va uu tien dung nhom nhan su.</strong>
+EES 2026 không cho thấy dấu hiệu khủng hoảng gắn kết.
+Thách thức của GHN không nằm ở việc gắn kết suy giảm trên diện rộng,
+mà ở việc <strong>xử lý đúng các điểm nghẽn và ưu tiên đúng nhóm nhân sự.</strong>
 </p>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 12px;">06 diem ket luan chinh thuc</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:16px 0 12px;">06 điểm kết luận chính thức</div>
 <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.75rem;font-weight:800;color:#15803D;margin-bottom:3px;">01 — Nen tang gan ket van tich cuc</div>
-  <div style="font-size:.79rem;color:#166534;line-height:1.6;">EI dat 73,3 diem, eNPS dat +31,7 — phan anh muc do gan ket nhin chung on dinh va tich cuc.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#15803D;margin-bottom:3px;">01 — Nền tảng gắn kết vẫn tích cực</div>
+  <div style="font-size:.79rem;color:#166534;line-height:1.6;">EI đạt 73,3 điểm, eNPS đạt +31,7 — phản ánh mức độ gắn kết nhìn chung ổn định và tích cực.</div>
 </div>
 <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.75rem;font-weight:800;color:#15803D;margin-bottom:3px;">02 — Diem manh va diem can uu tien cai thien</div>
-  <div style="font-size:.79rem;color:#166534;line-height:1.6;">Quan ly truc tiep la diem manh nhat. Niem tin &amp; Lanh dao va Thu nhap &amp; Minh bach la hai tru cot can uu tien cai thien.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#15803D;margin-bottom:3px;">02 — Điểm mạnh và điểm cần ưu tiên cải thiện</div>
+  <div style="font-size:.79rem;color:#166534;line-height:1.6;">Quản lý trực tiếp là điểm mạnh nhất. Niềm tin &amp; Lãnh đạo và Thu nhập &amp; Minh bạch là hai trụ cột cần ưu tiên cải thiện.</div>
 </div>
 <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:3px;">03 — Thu nhap va minh bach van la chu de lon nhat</div>
-  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Tiep tuc la chu de duoc nhac den nhieu nhat, dac biet o luc luong tuyen dau. Tinh minh bach trong dai ngo anh huong truc tiep den su hai long.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#0A1F44;margin-bottom:3px;">03 — Thu nhập và minh bạch vẫn là chủ đề lớn nhất</div>
+  <div style="font-size:.79rem;color:#475569;line-height:1.6;">Tiếp tục là chủ đề được nhắc đến nhiều nhất, đặc biệt ở lực lượng tuyến đầu. Tính minh bạch trong đãi ngộ ảnh hưởng trực tiếp đến sự hài lòng.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">04 — Don vi can uu tien theo doi</div>
-  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Khoi Khach Hang, Khoi Nhan Luc (dac biet HRBP), Phong AI Cot loi &amp; Du lieu va Phong San Pham — can hanh dong cu the, khong chi theo doi.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">04 — Đơn vị cần ưu tiên theo dõi</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Khối Khách Hàng, Khối Nhân Lực (đặc biệt HRBP), Phòng AI Cốt lõi &amp; Dữ liệu và Phòng Sản Phẩm — cần hành động cụ thể, không chỉ theo dõi.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:8px;">
-  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">05 — Nhom can uu tien giu chan</div>
-  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Nhan vien giao nhan tham nien 1–5 nam, dac biet tai Xuyen Bien Gioi va Dong bang song Cuu Long. Nhom tao gia tri van hanh cao, chi phi thay the lon.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">05 — Nhóm cần ưu tiên giữ chân</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Nhân viên giao nhận thâm niên 1–5 năm, đặc biệt tại Xuyên Biên Giới và Đồng bằng sông Cửu Long. Nhóm tạo giá trị vận hành cao, chi phí thay thế lớn.</div>
 </div>
 <div style="background:#FFF8F5;border:1px solid #FFD5BF;border-radius:10px;padding:12px 15px;margin-bottom:18px;">
-  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">06 — Chuong trinh giu chan can duoc thiet ke theo nhom</div>
-  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Y dinh roi khong chi xuat hien o nhom gan ket thap. Mot giai phap chung ap dung cho tat ca se khong hieu qua — can thiet ke rieng theo tung nhom nhan su.</div>
+  <div style="font-size:.75rem;font-weight:800;color:#C2410C;margin-bottom:3px;">06 — Chương trình giữ chân cần được thiết kế theo nhóm</div>
+  <div style="font-size:.79rem;color:#7C2D12;line-height:1.6;">Ý định rời không chỉ xuất hiện ở nhóm gắn kết thấp. Một giải pháp chung áp dụng cho tất cả sẽ không hiệu quả — cần thiết kế riêng theo từng nhóm nhân sự.</div>
 </div>
-<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:18px 0 10px;">Theo doi tiep theo</div>
+<div style="font-size:.78rem;font-weight:800;color:#0A1F44;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #FF5200;padding-left:10px;margin:18px 0 10px;">Theo dõi tiếp theo</div>
 <p style="font-size:.83rem;color:#475569;line-height:1.65;margin-bottom:10px;">
-To chuc buoi lam viec rieng voi tung Truong Khoi trong vong 2 tuan sau cong bo.
-Hang muc uu tien 1 cap nhat tien do sau 30 ngay.
-Ra soat toan bo ke hoach vao thang 12/2026 qua mot khao sat ngan.
+Tổ chức buổi làm việc riêng với từng Trưởng Khối trong vòng 2 tuần sau công bố.
+Hạng mục ưu tiên 1 cập nhật tiến độ sau 30 ngày.
+Rà soát toàn bộ kế hoạch vào tháng 12/2026 qua một khảo sát ngắn.
 </p>
 <div style="background:#F0F7FF;border:1px solid #BFDBFE;border-radius:10px;padding:13px 15px;">
   <p style="font-size:.82rem;color:#1E3A5F;margin:0;line-height:1.65;">
-  <strong>Gia tri cua EES khong nam o ban bao cao, ma o nhung hanh dong sau khao sat.</strong>
-  Chi khi ket qua duoc chuyen thanh cac chuong trinh cai thien cu the va tiep tuc duoc do luong,
-  EES moi thuc su tro thanh cong cu nang cao trai nghiem nhan vien.
-  EES 2026 la diem khoi dau cua vong lap: lang nghe — hanh dong — do luong.
+  <strong>Giá trị của EES không nằm ở bản báo cáo, mà ở những hành động sau khảo sát.</strong>
+  Chỉ khi kết quả được chuyển thành các chương trình cải thiện cụ thể và tiếp tục được đo lường,
+  EES mới thực sự trở thành công cụ nâng cao trải nghiệm nhân viên.
+  EES 2026 là điểm khởi đầu của vòng lặp: lắng nghe — hành động — đo lường.
   </p>
 </div>
 </div>

@@ -93,7 +93,7 @@ def render(**kwargs):
         "Phân tích Chuyên sâu",
         "AI & Văn bản mở",
         "HRIS & Năng suất",
-        "Nguon & Mo hinh",
+        "Nguồn & Mô hình",
     ])
 
     with tab1:
@@ -438,23 +438,23 @@ và Ý định Ở lại (Q30 cao/thấp):
 
     _card(
         num=10, color="#0EA5E9",
-        title="Stay Intention (Y dinh Gan bo)", sub="Diem trung binh y dinh o lai tren thang 1-5",
+        title="Stay Intention (Ý định Gắn bó)", sub="Điểm trung bình ý định ở lại trên thang 1-5",
         badge="Intent",
         hr_meaning="""
-Stay Intention do <b>diem trung binh</b> y dinh o lai, khac voi Flight Risk (do ty le nguoi o vung nguy hiem).
-Stay Intention cao (>= 4.0) cho thay doi ngu nhin chung muon gan bo.
+Stay Intention đo <b>điểm trung bình</b> ý định ở lại, khác với Flight Risk (đo tỷ lệ người ở vùng nguy hiểm).
+Stay Intention cao (&ge; 4.0) cho thấy đội ngũ nhìn chung muốn gắn bó.
 <br><br>
-Hai chi so nay bo sung nhau: Stay Intention phan anh <b>xu huong chung</b>, con Flight Risk phan anh
-<b>quy mo nhom rui ro cao</b>. GHN 2026: Stay Intention dat <b>4,03/5</b>.
+Hai chỉ số này bổ sung nhau: Stay Intention phản ánh <b>xu hướng chung</b>, còn Flight Risk phản ánh
+<b>quy mô nhóm rủi ro cao</b>. GHN 2026: Stay Intention đạt <b>4,03/5</b>.
 """,
-        formula="Stay Intention = Mean(Q30) tren thang 1-5",
-        formula_note="Q30 hoi y dinh gan bo trong 6 thang toi. Gia tri GHN 2026: 4,03/5. Day la diem trung binh toan cong ty; don vi co diem duoi 3,5 can theo doi. (Xem them: Flight Risk = % co Q30 <= 2).",
+        formula="Stay Intention = Mean(Q30) trên thang 1-5",
+        formula_note="Q30 hỏi ý định gắn bó trong 6 tháng tới. Giá trị GHN 2026: 4,03/5. Đây là điểm trung bình toàn công ty; đơn vị có điểm dưới 3,5 cần theo dõi. (Xem thêm: Flight Risk = % có Q30 &le; 2).",
         source="Q30 (thang 1-5)",
         scale="1-5",
         thresholds=[
-            {"label": "Rui ro cao", "w": 35, "color": "#DC2626", "desc": "< 3.5 — Nhieu nguoi dang can nhac roi"},
-            {"label": "Trung lap", "w": 30, "color": "#F59E0B", "desc": "3.5-3.9"},
-            {"label": "On dinh", "w": 35, "color": "#10B981", "desc": ">= 4.0 — Phan lon muon o lai"},
+            {"label": "Rủi ro cao", "w": 35, "color": "#DC2626", "desc": "< 3.5 — Nhiều người đang cân nhắc rời"},
+            {"label": "Trung lập", "w": 30, "color": "#F59E0B", "desc": "3.5-3.9"},
+            {"label": "Ổn định", "w": 35, "color": "#10B981", "desc": ">= 4.0 — Phần lớn muốn ở lại"},
         ]
     )
 
@@ -662,77 +662,77 @@ của burnout ẩn ở người làm tốt nhất. Đây là rủi ro nghiêm tr
 # ── Tab 7: Nguồn dữ liệu & Mô hình tham chiếu ──────────────────────────
 
 def _render_sources_models():
-    _sec("Nguon du lieu & Mo hinh tham chieu",
-         "Bao cao hop nhat EES 2026 duoc xay dung tu nhieu nguon phan tich doc lap — phan nay giai thich nguon goc va nen tang ly thuyet.")
+    _sec("Nguồn dữ liệu & Mô hình tham chiếu",
+         "Báo cáo hợp nhất EES 2026 được xây dựng từ nhiều nguồn phân tích độc lập — phần này giải thích nguồn gốc và nền tảng lý thuyết.")
 
     st.markdown("""
 <div class="apx-quick-ref">
-<p class="apx-quick-ref-title">10.2. Nguon du lieu (Section 10.2 bao cao chinh thuc)</p>
+<p class="apx-quick-ref-title">10.2. Nguồn dữ liệu (Section 10.2 báo cáo chính thức)</p>
 <table class="apx-quick-ref-table">
 <thead><tr>
-  <th>Nguon phan tich</th>
-  <th>Mo ta</th>
+  <th>Nguồn phân tích</th>
+  <th>Mô tả</th>
 </tr></thead>
 <tbody>
 <tr>
-  <td class="apx-qr-name">Phan tich sau theo Khoi va Phong ban (BDA)</td>
-  <td style="color:#334155;font-size:0.79rem">Phan tich chi tiet EI, eNPS, Flight Risk theo 11 Khoi va cac phong ban truc thuoc</td>
+  <td class="apx-qr-name">Phân tích sâu theo Khối và Phòng ban (BDA)</td>
+  <td style="color:#334155;font-size:0.79rem">Phân tích chi tiết EI, eNPS, Flight Risk theo 11 Khối và các phòng ban trực thuộc</td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Kiem dinh do tin cay &amp; Doi sanh thi truong (EX &amp; People Analytics)</td>
-  <td style="color:#334155;font-size:0.79rem">Kiem tra chat luong du lieu, straight-line, silence; doi sanh benchmark nganh logistics 2025-2026</td>
+  <td class="apx-qr-name">Kiểm định độ tin cậy &amp; Đối sánh thị trường (EX &amp; People Analytics)</td>
+  <td style="color:#334155;font-size:0.79rem">Kiểm tra chất lượng dữ liệu, straight-line, silence; đối sánh benchmark ngành logistics 2025-2026</td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Phan tich trai nghiem nhan vien</td>
-  <td style="color:#334155;font-size:0.79rem">Phan tich hanh trinh nhan vien, EVP topics, open-text NLP theo 7 nhom nhan su</td>
+  <td class="apx-qr-name">Phân tích trải nghiệm nhân viên</td>
+  <td style="color:#334155;font-size:0.79rem">Phân tích hành trình nhân viên, EVP topics, open-text NLP theo 7 nhóm nhân sự</td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Phan tich 11 Khoi voi he chi so nang cao</td>
-  <td style="color:#334155;font-size:0.79rem">Bao gom EWS, BRI, Engagement Quadrant va Root Cause Gap Score cho tung Khoi</td>
+  <td class="apx-qr-name">Phân tích 11 Khối với hệ chỉ số nâng cao</td>
+  <td style="color:#334155;font-size:0.79rem">Bao gồm EWS, BRI, Engagement Quadrant và Root Cause Gap Score cho từng Khối</td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Tong hop phan hoi mo (7 nhom)</td>
-  <td style="color:#334155;font-size:0.79rem">Phan loai chu de tu dong + xac nhan thu cong; Warning Signals AI screening</td>
+  <td class="apx-qr-name">Tổng hợp phản hồi mở (7 nhóm)</td>
+  <td style="color:#334155;font-size:0.79rem">Phân loại chủ đề tự động + xác nhận thủ công; Warning Signals AI screening</td>
 </tr>
 </tbody>
 </table>
 <p style="font-size:0.77rem;color:#94A3B8;margin:10px 0 0;">
-So lieu chi tiet theo tung Khoi, phong ban, khu vuc va cau hoi duoc luu trong cac file Excel kem theo bao cao.
+Số liệu chi tiết theo từng Khối, phòng ban, khu vực và câu hỏi được lưu trong các file Excel kèm theo báo cáo.
 </p>
 </div>
 """, unsafe_allow_html=True)
 
     st.markdown("""
 <div class="apx-quick-ref" style="margin-top:20px;">
-<p class="apx-quick-ref-title">Thong tin thu thap du lieu</p>
+<p class="apx-quick-ref-title">Thông tin thu thập dữ liệu</p>
 <table class="apx-quick-ref-table">
 <thead><tr>
-  <th>Hang muc</th>
-  <th>Chi tiet</th>
+  <th>Hạng mục</th>
+  <th>Chi tiết</th>
 </tr></thead>
 <tbody>
 <tr>
-  <td class="apx-qr-name">Thoi gian khao sat</td>
-  <td style="color:#334155;font-size:0.79rem">19 ngay: 15/03 — 02/04/2026</td>
+  <td class="apx-qr-name">Thời gian khảo sát</td>
+  <td style="color:#334155;font-size:0.79rem">19 ngày: 15/03 — 02/04/2026</td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Do phu (Coverage)</td>
-  <td style="color:#334155;font-size:0.79rem">90% — 19.221 / 21.353 phieu hop le</td>
+  <td class="apx-qr-name">Độ phủ (Coverage)</td>
+  <td style="color:#334155;font-size:0.79rem">90% — 19.221 / 21.353 phiếu hợp lệ</td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Ty le tham gia (Participation)</td>
-  <td style="color:#334155;font-size:0.79rem">93,7% tren tong so nhan vien duoc moi</td>
+  <td class="apx-qr-name">Tỷ lệ tham gia (Participation)</td>
+  <td style="color:#334155;font-size:0.79rem">93,7% trên tổng số nhân viên được mời</td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Trong so do tin cay</td>
+  <td class="apx-qr-name">Trọng số độ tin cậy</td>
   <td style="color:#334155;font-size:0.79rem">
-    Sach (1.0) / Co van de nhe — giam trong so (0.8) / Downweight (0.5) / Drop (loai)
+    Sạch (1.0) / Có vấn đề nhẹ — giảm trọng số (0.8) / Downweight (0.5) / Drop (loại)
   </td>
 </tr>
 <tr>
-  <td class="apx-qr-name">Cong thuc quy doi YoY (2025 vs 2026)</td>
+  <td class="apx-qr-name">Công thức quy đổi YoY (2025 vs 2026)</td>
   <td style="color:#334155;font-size:0.82rem;font-family:monospace;">
-    EI_2025 (quy doi) = Mean_Likert_2025 x 2 / 10 x 100
+    EI_2025 (quy đổi) = Mean_Likert_2025 &times; 2 / 10 &times; 100
   </td>
 </tr>
 </tbody>
@@ -742,34 +742,30 @@ So lieu chi tiet theo tung Khoi, phong ban, khu vuc va cau hoi duoc luu trong ca
 
     st.markdown("""
 <div class="apx-quick-ref" style="margin-top:20px;">
-<p class="apx-quick-ref-title">10.3. Mo hinh tham chieu (Section 10.3 bao cao chinh thuc)</p>
+<p class="apx-quick-ref-title">10.3. Mô hình tham chiếu (Section 10.3 báo cáo chính thức)</p>
 <table class="apx-quick-ref-table">
 <thead><tr>
-  <th>Mo hinh / Nguon</th>
-  <th>Ung dung trong EES 2026</th>
+  <th>Mô hình / Nguồn</th>
+  <th>Ứng dụng trong EES 2026</th>
 </tr></thead>
 <tbody>
 <tr>
   <td class="apx-qr-name">AON Hewitt Engagement Model</td>
-  <td style="color:#334155;font-size:0.79rem">Nen tang phan loai ngu'ong EI (Say / Stay / Strive) va khung 5 tru cot</td>
+  <td style="color:#334155;font-size:0.79rem">Nền tảng phân loại ngưỡng EI (Say / Stay / Strive) và khung 5 trụ cột</td>
 </tr>
 <tr>
   <td class="apx-qr-name">eNPS Framework (Bain &amp; Company)</td>
-  <td style="color:#334155;font-size:0.79rem">Cong thuc Promoter - Detractor; nguong phan loai Tieu cuc / Tot / Rat tot</td>
+  <td style="color:#334155;font-size:0.79rem">Công thức Promoter - Detractor; ngưỡng phân loại Tiêu cực / Tốt / Rất tốt</td>
 </tr>
 <tr>
   <td class="apx-qr-name">Best Employer Research (Kincentric &amp; WTW)</td>
-  <td style="color:#334155;font-size:0.79rem">Benchmark thi truong nganh Logistics Dong Nam A; tham chieu ngu'ong "Excellent Employer"</td>
-</tr>
-<tr>
-  <td class="apx-qr-name">Benchmark EES 2025 (du lieu 2024)</td>
-  <td style="color:#334155;font-size:0.79rem">So sanh YoY noi bo; chi de dinh huong, chua dung de ket luan chinh xac do thay doi thang do</td>
+  <td style="color:#334155;font-size:0.79rem">Benchmark thị trường ngành Logistics Đông Nam Á; tham chiếu ngưỡng "Excellent Employer"</td>
 </tr>
 </tbody>
 </table>
 <p style="font-size:0.77rem;color:#94A3B8;margin:10px 0 0;">
-Tat ca nguong phan loai va cach tinh chi so duoc dieu chinh cho phu hop dac thu nganh logistics cua GHN.
-Benchmark thi truong chi mang tinh tham khao do khac biet thang do, phuong phap va co cau mau.
+Tất cả ngưỡng phân loại và cách tính chỉ số được điều chỉnh cho phù hợp đặc thù ngành logistics của GHN.
+Benchmark thị trường chỉ mang tính tham khảo do khác biết thang đo, phương pháp và cơ cấu mẫu.
 </p>
 </div>
 """, unsafe_allow_html=True)
