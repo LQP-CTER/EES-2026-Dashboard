@@ -325,7 +325,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         marker=dict(color=bar_colors, cornerradius=4),
         text=[f"{m:.2f}" for m in q_df['Mean']],
         textposition='outside',
-        textfont=dict(size=12, color='#0A1F44', family='Inter'),
+        textfont=dict(size=12, color='#0A1F44', family='Exo 2'),
         hovertemplate='%{y}<br>Điểm TB: %{x:.2f}<br>N=%{customdata}<extra></extra>',
         customdata=q_df['N'],
     ))
@@ -341,7 +341,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         xaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)', zeroline=False),
         yaxis=dict(automargin=True),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     st.plotly_chart(fig, width='stretch', key=f"diag_bar_chart_{group_id}_{pillar_id}")
 
@@ -401,7 +401,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
                 line=dict(color=color, width=3),
                 text=[f"{v:.2f}" for v in t_df['Điểm TB']],
                 textposition='top center',
-                textfont=dict(size=11, color='#0A1F44', family='Inter'),
+                textfont=dict(size=11, color='#0A1F44', family='Exo 2'),
                 hovertemplate='%{x}<br>Điểm: %{y:.2f}<br>N=%{customdata}<extra></extra>',
                 customdata=t_df['N'],
             ))
@@ -414,7 +414,7 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
                 yaxis=dict(range=[max(1, t_df['Điểm TB'].min()-0.3), min(5, t_df['Điểm TB'].max()+0.3)],
                            dtick=0.2, gridcolor='rgba(226,232,240,0.6)'),
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter'),
+                font=dict(family='Exo 2'),
             )
             st.plotly_chart(fig2, width='stretch', key=f"tenure_cliff_chart_{group_id}_{pillar_id}")
 
@@ -457,8 +457,9 @@ def _render_tab_quick_diagnosis(df, cfg, group_id, pillar_id):
         f"YÊU CẦU (CHỈ dùng dữ liệu đã cung cấp): "
         f"(1) Trả lời trực tiếp câu hỏi điều hành của trụ cột. "
         f"(2) Tách rõ dữ liệu quan sát được, liên hệ thống kê và giả thuyết cần kiểm chứng. "
-        f"(3) Giải thích vì sao '{weakest['Label']}' là điểm đau trong bối cảnh {group_name}. "
+        f"(3) Nói rõ vì sao '{weakest['Label']}' đang là câu yếu nhất hoặc điểm cần lưu ý trong bối cảnh {group_name}, dùng cách diễn đạt tự nhiên như người thật. "
         f"(4) Đề xuất 1 hành động cụ thể trong 30 ngày, bám đúng phạm vi {analysis_profile['focus']}. "
+        f"(5) Không dùng các cụm như 'điểm đau', 'Nhìn chung', 'Đặc biệt', 'điều này phản ánh rằng', 'để cải thiện điểm này', 'điều này gợi ý rằng', 'điều này cho thấy rằng'. "
         f"Không dùng câu khuyến nghị chung có thể áp dụng cho mọi trụ cột."
     )
     ai_data = {
@@ -634,7 +635,7 @@ def _render_tab_detail(df, cfg, group_id, pillar_id):
                 xaxis=dict(range=[0, 100], title=None, showgrid=False),
                 yaxis=dict(title=None, automargin=True),
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                showlegend=False, font=dict(family='Inter', size=11),
+                showlegend=False, font=dict(family='Exo 2', size=11),
             )
             st.plotly_chart(fig, width='stretch', key=f"dist_chart_{group_id}_{pillar_id}_{i}")
 
@@ -919,7 +920,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
                            gridcolor='rgba(226,232,240,0.6)'),
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter'),
+                font=dict(family='Exo 2'),
             )
             st.plotly_chart(fig_life, width='stretch', key=f"lifecycle_risk_{pillar_id}")
 
@@ -1069,7 +1070,7 @@ def _render_tab_risk_groups(df, cfg, group_id, pillar_id):
                 xaxis=dict(range=[max(1, region_agg['Điểm TB'].min()-0.3), 5], gridcolor='rgba(226,232,240,0.6)'),
                 yaxis=dict(automargin=True),
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(family='Inter'),
+                font=dict(family='Exo 2'),
             )
             st.plotly_chart(fig, width='stretch', key=f"region_risk_chart_{group_id}_{pillar_id}")
 

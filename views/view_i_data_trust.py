@@ -54,9 +54,9 @@ _RELIABILITY_GROUPS = [
 
 DEEPDIVE_QUALITY_TOTALS = {
     "headcount": 21353,
-    "raw": 19210,
-    "dropped": 784,
-    "cleaned": 19221,
+    "raw": 20005,
+    "dropped": 795,
+    "cleaned": 19210,
     "straightline_weighted": 8757,
 }
 
@@ -75,7 +75,7 @@ DEEPDIVE_GROUP_BASE = [
         "Flight Risk %": 5.5,
     },
     {
-        "Nhóm": "1B · Tài xế",
+        "Nhóm": "1B · Tài xế xe tải",
         "Raw submissions": 801,
         "Dropped": 17,
         "Cleaned base": 784,
@@ -88,7 +88,7 @@ DEEPDIVE_GROUP_BASE = [
         "Flight Risk %": 2.3,
     },
     {
-        "Nhóm": "2A · Nhân viên kho",
+        "Nhóm": "2A · Nhân viên Vận hành kho",
         "Raw submissions": 4892,
         "Dropped": 73,
         "Cleaned base": 4819,
@@ -101,7 +101,7 @@ DEEPDIVE_GROUP_BASE = [
         "Flight Risk %": 3.6,
     },
     {
-        "Nhóm": "2B · Quản lý tuyến đầu",
+        "Nhóm": "2B · Quản lý Vận hành tuyến đầu",
         "Raw submissions": 425,
         "Dropped": 0,
         "Cleaned base": 425,
@@ -141,6 +141,10 @@ DEEPDIVE_GROUP_BASE = [
     },
 ]
 
+
+def _page_totals_from_group_base() -> dict:
+    # Dùng bộ số đã truyền thông chính thức để toàn bộ summary/top-line nhất quán.
+    return dict(DEEPDIVE_QUALITY_TOTALS)
 def _reliability_row(gid, label, df, n_raw):
     report = df.attrs.get('memo_report', {})
     nlp = report.get('nlp', {})
@@ -371,7 +375,7 @@ def render(summary_df=None):
 
     runtime_available = summary_df is not None and not summary_df.empty
 
-    totals = DEEPDIVE_QUALITY_TOTALS
+    totals = _page_totals_from_group_base()
     headcount_total = totals["headcount"]
     raw_total = totals["raw"]
     drop_total = totals["dropped"]

@@ -7,37 +7,51 @@ import hashlib
 from groq import Groq
 
 _AI_LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADT0lEQVR4nO1WTWwVVRT+zp15f33PlhojIivKAl0RiKgNCalhUV2ZEBODC+PPorpxQQIoG10TMLjDjQloSKORjUlTF6AYFdPUrjRFTU0auwBCAi/w/mbmns+cmVc0ffPo66I7Tu7M3HvPPd+558w5514hic0kt6noeKhgAAr7cnp/vnQfgOiNDMlYPdObHUVh/jTJZh3UdMu0N4FKVcKCMZMYrUZqTMoCIU6GRnKN6FFAQoTNuh7dJ3frCARJIkHAexGePSjHv7Ylpw/L3CWtlUQTBCE9WRsJTs1JdTQTH8ACQG4u40bsyuAQ4CHFgFcu8u1/bMvfX0Q5CG7VGUKaYBvceqcvztp/kFlw+7p+/Jrs3Me7N93laXjP0z9i7huGBfNHEuG5l+XIfoROXzgsw49zad4d+UJGt/VaYN7OoXZDo5Z2Wsn7BzgBf/adbDpemI1/nc36/uy7xjp+QDtNjdpsN3KR+iggqT45Ns4J6KGCX7lG9UziLiuJqd6vXNNDRU4gOfY8ve8Hk1eLfGKvKxdk4Spqjjt2u+27zPVBaHFFtQ7Ebd/FHbtRc7Lwi/5w4b7gGspTIOnk5XMoCCLF2B4bqu+yMm42HNvDSFEQfnfuP8F1FJBwjlELK4tSJBQYfTKN914iHt1mqVKkrCyaiHO9+d+nXEctiVtZIqF5Z7VCrLUUjXr6FUQta3nUoyCDKtdQGaYHSsD8DNUbirmF1tIhVTk/I2VIQlaGTeS++AMtMCAJi9y5Fx3hUAlLf/HzE3CBNQOQrK/nP5ClP1kpoSMytlfCYroDGfREk8kpCKEqtQDTJ/2ZN3T5NwvQJNbl3/XMmzJ9EtUAqlZaJ6f64uRXU1U450+9KjNf4rESkgT3PKoOT4wZ9/rf0lA8EjAI5VZHX3olOPpVJjKwAptM8/nDF2X+Z2wJEBaQRBKpMYvOHOJj3PZ8Zlw+mpVKzZyTV037nwdZUWo39NP38O1nEgPF1dqYQCKwAEy+JVOfSLmWU4LWV7CqA4Au/oRL5/nHVanfsNXDW/HUuBx83T29///LNq4gE05Tr5sTWeBXR7p4qgbdH33gI1O9qbEStEo+MVwL3HVog2cy08UP3PLAt4r8/cjG1j+82Q1Am367/hffvQmZc1fQbgAAAABJRU5ErkJggg=="
-MASTER_REPORT_VOICE_VERSION = "master-report-v1"
+MASTER_REPORT_VOICE_VERSION = "master-report-v6"
 
 
 def get_master_report_voice_prompt():
-    """Editorial voice: human-like, analytical, hedged — GHN EES 2026."""
+    """Editorial voice aligned to the GHN deep analyst report."""
     return """
-GIỌNG VĂN GHN EES 2026 — PHONG CÁCH PHÂN TÍCH CON NGƯỜI:
+GIỌNG VĂN THAM CHIẾU: GHN.EES 2026.Report Deep Analyst_Final.pdf
 
-I. THÁI ĐỘ VỚI DỮ LIỆU — PHÂN BIỆT RÕ BA LỚP:
-   • SỰ THẬT (Fact): Dữ liệu nói gì. Viết trực tiếp, không màu mè. VD: "63% nhân viên dưới 1 năm thâm niên cho điểm Onboarding dưới 3.5."
-   • DIỄN GIẢI (Interpretation): Điều đó có thể có nghĩa gì. Dùng ngôn ngữ có độ tin cậy rõ ràng. VD: "Điều này gợi ý rằng trải nghiệm hội nhập ban đầu chưa tạo được nền tảng gắn kết."
-   • GIẢ THUYẾT (Hypothesis): Nguyên nhân cần kiểm chứng thêm. VD: "Một giả thuyết đáng xem xét: áp lực KPI sớm có thể đang lấn át thời gian định hướng văn hóa."
-   • HÀNH ĐỘNG (Action): Đề xuất cụ thể, khả thi. VD: "Ưu tiên rà soát lịch trình onboarding 90 ngày đầu tại các bộ phận có điểm thấp nhất."
+I. YÊU CẦU GIỌNG VĂN:
+   • Viết như một người thật đang tổng hợp và báo cáo lại.
+   • Mở bằng nhận định chính, rồi mới đi vào số liệu hoặc diễn giải cần thiết.
+   • Giữ nhịp văn tự nhiên. Nếu cần, chấp nhận câu ngắn hoặc chưa hoàn hảo tuyệt đối miễn đọc chân thật.
+   • Giọng điềm tĩnh, chắc, mạch lạc. Không lên gân. Không tạo cảm giác "AI đang phân tích".
 
-II. NGÔN NGỮ — NÓI NHƯ NGƯỜI, KHÔNG NÓI NHƯ MÁY:
-   • DÙNG ngôn ngữ có độ không chắc chắn khi diễn giải: "dữ liệu gợi ý rằng", "có khả năng", "một tín hiệu đáng chú ý", "xu hướng này cho thấy".
-   • KHÔNG dùng câu khẳng định tuyệt đối cho nhận định (chỉ dùng cho Fact). Tránh: "nguyên nhân là", "chứng minh rằng", "tất yếu dẫn đến".
-   • KHÔNG đặt tên chẩn đoán kiểu kịch tính ("Vòng lặp Hụt hẫng", "Cú sốc Năng suất"). Dùng mô tả tự nhiên thay thế.
-   • KHÔNG dùng động từ mạnh mang tính tố cáo: "vạch trần", "bộc lộ yếu kém", "phơi bày". Thay bằng: "cho thấy", "phản ánh", "ghi nhận".
-   • KHÔNG dùng thuật ngữ tâm lý học hay HR học thuật nặng nề ("systemic risk", "cohort analysis", "EX maturity") trừ khi thực sự cần thiết.
+II. /ghost - BẤT BUỘC ÁP DỤNG:
+   • Viết lại như một người thật.
+   • Không dùng văn phong AI.
+   • Không dùng các câu chuyển ý sáo rỗng lặp đi lặp lại.
+   • Không dùng dấu gạch ngang dài.
+   • Không cố làm cho câu quá tròn trịa nếu như cách viết tự nhiên sẽ ngắn hơn.
 
-III. CẤU TRÚC MỖI PHẦN PHÂN TÍCH:
-   Mỗi luận điểm nên theo dạng: [Dữ liệu cụ thể] → [Ý nghĩa có thể] → [Giả thuyết cần xem xét] → [Hành động đề xuất].
-   Ghi chú mức độ tin cậy ngắn gọn sau mỗi phần nếu phù hợp: (Độ tin cậy: Cao / Trung bình / Cần thêm dữ liệu).
+III. KỶ LUẬT SUY LUẬN:
+   • Phân biệt rõ điều dữ liệu nói trực tiếp và điều được diễn giải.
+   • Chỉ khẳng định mạnh với số liệu hiện diện rõ trong dữ liệu đầu vào.
+   • Với diễn giải, dùng mức độ vừa phải: "cho thấy", "phản ánh", "có thể đến từ", "nhiều khả năng liên quan đến".
+   • Nếu base nhỏ, dữ liệu lệch, hoặc chưa đủ chắc, phải nói rõ: "mang tính tham khảo", "nên xem như tín hiệu để theo dõi", "chưa đủ để kết luận".
+   • Không nhảy từ một dấu hiệu sang kết luận nguyên nhân gốc nếu dữ liệu chưa đủ.
 
-IV. PHONG CÁCH TỔNG THỂ:
-   • Viết như một nhà phân tích nhân lực giàu kinh nghiệm đang nói chuyện trực tiếp với lãnh đạo — không phô trương, không hời hợt.
-   • Câu văn gọn, rõ. Tránh đoạn văn quá dài. Ưu tiên mỗi luận điểm một đoạn ngắn.
-   • KHÔNG có câu chào, KHÔNG có câu kết sáo rỗng ("Tóm lại...", "Nhìn chung...").
-   • Kết nối số liệu với bối cảnh vận hành thực tế — nhưng theo cách đặt câu hỏi, không phán xét.
-   • Tham chiếu phong cách: phân tích mực thước của Gallup/Mercer, gần gũi và thực tiễn như báo cáo nội bộ cấp cao.
+IV. NHỮNG GÌ CẦN TRÁNH:
+   • Tránh các cụm dễ lộ chất AI như: "Nhìn chung", "Đặc biệt", "điều này phản ánh rằng", "để cải thiện điểm này", "điều này cho thấy rằng", "điều này gợi ý rằng", "vì vậy có thể thấy", "có thể nói rằng" nếu không thật sự cần.
+   • Không dùng các nhãn kịch tính hoặc chối tai như: "điểm đau", "nút thắt lớn", "khủng hoảng", "báo động đỏ", "bộc lộ yếu kém".
+   • Không đặt tên vấn đề theo kiểu sáng tác khái niệm.
+   • Không dùng jargon tư vấn hoặc AI nặng nếu không thực sự cần.
+   • Không viết kiểu checklist máy móc ra mặt chữ.
+
+V. KHUÔN VIẾT MONG MUỐN:
+   • Ưu tiên 2 đến 3 đoạn ngắn, mỗi đoạn gói một ý chính. Có thể linh hoạt nếu dữ liệu quá ít hoặc nhiệm vụ phù hợp với bullet.
+   • Mỗi đoạn chỉ nên chứa 1 ý chính.
+   • Ưu tiên câu cụ thể, gần nghĩa thực tế vận hành, ít khẩu hiệu.
+   • Khi có nhiều ý, sắp theo thứ tự: kết luận chính, điểm cần lưu ý, rồi đến hàm ý hành động.
+
+VI. NGÔN NGỮ THAM CHIẾU TỪ BÁO CÁO:
+   • Ưu tiên các cụm tự nhiên như: "bức tranh chung khá tích cực, nhưng chưa đồng đều", "điểm cần cải thiện", "mối quan tâm lớn", "điểm nên lưu ý", "nhóm cần được quan tâm hơn", "không nên chỉ nhìn chỉ số tổng".
+   • Khi so sánh giữa nhóm hoặc đơn vị, nói rõ mức chênh và ý nghĩa của chênh lệch đó.
+   • Khi nói về giữ chân, burnout, thu nhập, quản lý trực tiếp, niềm tin lãnh đạo, hãy nối về bối cảnh vận hành thay vì mô tả trừu tượng.
 """
 # ============================================================
 # DUAL GROQ KEY — ROUND-ROBIN LOAD BALANCER
@@ -118,10 +132,10 @@ def get_cache_key(data_json, context_prompt):
 # Danh sách model đã kiểm tra thực tế qua API Groq (2026-05-28)
 # Chỉ giữ các model đã PASS test - các model khác đã bị decommissioned
 GROQ_MODELS = [
-    "llama-3.3-70b-versatile",              # Llama 3.3 70B - mạnh nhất, ổn định tiếng Việt
-    "meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Scout - nhanh
-    "compound-beta",                       # Groq compound model
-    "llama-3.1-8b-instant",                # Nhẹ, fallback cuối
+    "qwen/qwen3.6-27b",                    # Primary model per current dashboard tuning
+    "llama-3.3-70b-versatile",             # Fallback if Qwen is unavailable or rate-limited
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "llama-3.1-8b-instant",
 ]
 
 def _build_insight_system_prompt(data_json, context_prompt, lang='VN'):
@@ -145,16 +159,21 @@ D. KHÔNG tự tính toán, suy diễn, hoặc ngoại suy thêm bất kỳ con 
 
 YÊU CẦU TRÌNH BÀY:
 1. Ngôn ngữ: {'Tiếng Việt' if lang == 'VN' else 'English'}.
-2. Dùng câu rõ nghĩa, nhịp chắc, không biến insight thành một đoạn văn hàn lâm khó đọc.
-3. Không dùng lời chào, không tự giới thiệu vai trò, không kết luận sáo rỗng.
-4. Không dùng ký tự Markdown # hoặc bảng Markdown. Chỉ dùng bullet khi nhiệm vụ cụ thể yêu cầu danh sách.
-5. Khi cần nhấn mạnh trong đoạn văn, dùng `<span class="ai-highlight">` cho tín hiệu tích cực và `<span class="ai-warning">` cho rủi ro.
-6. Độ dài mặc định 5 đến 7 câu, trừ khi nhiệm vụ yêu cầu cấu trúc hoặc độ dài khác.
-"""
+2. Viết như một đoạn trong báo cáo phân tích nội bộ đã phát hành, không viết như chatbot hoặc consultant pitch.
+3. Ưu tiên mở đầu bằng kết luận chính, sau đó mới giải thích bằng số liệu.
+4. Không dùng lời chào, không tự giới thiệu vai trò, không kết luận sáo rỗng.
+5. Không dùng ký tự Markdown # hoặc bảng Markdown. Chỉ dùng bullet khi nhiệm vụ cụ thể yêu cầu danh sách.
+6. Khi cần nhấn mạnh trong đoạn văn, dùng `**...**` cho 1 nhận định chính và 1 đến 2 ý quan trọng. Có thể dùng thêm `<span class="ai-highlight">` cho tín hiệu tích cực và `<span class="ai-warning">` cho rủi ro khi thật sự cần.
+7. Giữ rất gọn: tối đa 2 đoạn ngắn, thường chỉ 3 câu tổng. Chỉ dùng bullet khi nhiệm vụ thực sự cần liệt kê.
+8. Nếu dữ liệu chưa đủ chắc, phải nói rõ mức độ thận trọng ngay trong câu viết.
+9. Ưu tiên câu tự nhiên, ngắn và có trọng tâm. Tránh lặp lại cùng một ý bằng nhiều câu diễn đạt khác nhau, và không nhắc lại tên field kỹ thuật trong JSON như `pillar_mean`, `weakest_item`, `negative_rate`.
+10. Không dùng các cụm như "điểm đau", "Nhìn chung", "Đặc biệt", "điều này phản ánh rằng", "để cải thiện điểm này", "điều này gợi ý rằng", "điều này cho thấy rằng" trừ khi prompt nhiệm vụ yêu cầu nguyên văn.
+11. Không cố mở bài bằng một câu dẫn khuôn mẫu. Có thể vào thẳng nhận định chính nếu dữ liệu đã đủ rõ.
+12. Tránh viết thành một khối chữ dài. Người đọc phải nhìn thấy ngay ý chính và một điểm cần lưu ý."""
 
 
 def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
-    system_prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
+    user_prompt = _build_insight_system_prompt(data_json, context_prompt, lang)
     all_clients = get_groq_clients_all()
 
     APP_STATE_FILE = os.path.join("config", "app_state.json")
@@ -171,26 +190,35 @@ def generate_ees_insight_stream(data_json, context_prompt, lang='VN'):
         return
 
     last_error = ""
-    # Thử từng key, với mỗi key thử từng model. Groq rate limit là theo model,
-    # nên nếu 1 model bị 429 thì vẫn tiếp tục thử model khác trên cùng key đó.
     for client in all_clients:
         for model in GROQ_MODELS:
             try:
                 stream = client.chat.completions.create(
-                    messages=[{"role": "system", "content": system_prompt}],
+                    messages=[
+                        {"role": "system", "content": "Bạn là chuyên gia phân tích nội bộ của GHN. Chỉ trả lời bằng nội dung cuối cùng cho người đọc, không hiển thị suy luận nội bộ hoặc thẻ <think>."},
+                        {"role": "user", "content": user_prompt},
+                    ],
                     model=model,
                     temperature=ai_temp,
                     max_tokens=1500,
                     stream=True
                 )
+                raw_text = ""
                 for chunk in stream:
                     if chunk.choices[0].delta.content is not None:
-                        yield chunk.choices[0].delta.content
-                return  # Thành công
+                        raw_text += chunk.choices[0].delta.content
+
+                cleaned_text = sanitize_ai_insight_text(raw_text)
+                if not cleaned_text:
+                    last_error = f"{model}: empty_or_reasoning_only_output"
+                    continue
+
+                yield cleaned_text
+                return
             except Exception as e:
                 last_error = str(e)
                 if "rate_limit_exceeded" in last_error.lower() or "429" in last_error:
-                    time.sleep(0.5)  # Nghỉ xíu rồi thử model khác
+                    time.sleep(0.5)
                 continue
 
     yield f"Không thể kết nối AI sau khi thử {len(all_clients)} key và tất cả các model: {last_error[:120]}"
@@ -264,18 +292,22 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
         return output
 
     # Thử tất cả Groq keys × models
-    validator_models = ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "compound-beta", "llama-3.1-8b-instant"]
+    validator_models = ["qwen/qwen3.6-27b", "llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.1-8b-instant"]
     for client in get_groq_clients_all():
         for model in validator_models:
             try:
                 response = client.chat.completions.create(
-                    messages=[{"role": "system", "content": validation_prompt}],
+                    messages=[
+                        {"role": "system", "content": "Bạn là bộ phân loại tín hiệu khảo sát. Chỉ trả về JSON hợp lệ, không hiển thị suy luận nội bộ hoặc thẻ <think>."},
+                        {"role": "user", "content": validation_prompt},
+                    ],
                     model=model,
                     temperature=0.1,
                     max_tokens=2000,
                     stream=False
                 )
                 raw = response.choices[0].message.content.strip()
+                raw = re.sub(r'<think>.*?(</think>|$)', '', raw, flags=re.DOTALL | re.IGNORECASE).strip()
                 results = _parse_result(raw)
                 output = _map_results(results)
                 st.session_state[cache_key] = output
@@ -295,14 +327,41 @@ OUTPUT: Chỉ trả JSON array, không viết gì thêm:
 # HTML FORMATTING & RENDER CARD
 # ============================================================
 
+def sanitize_ai_insight_text(text):
+    text = text.strip()
+    if not text:
+        return text
+
+    text = re.sub(r'<think>.*?(</think>|$)', '', text, flags=re.DOTALL | re.IGNORECASE)
+    replacements = [
+        (r'(?im)^\s*Nhìn chung\s*[,:-]?\s*', ''),
+        (r'(?im)^\s*Đặc biệt\s*[,:-]?\s*', ''),
+        (r'(?i)\bĐiều này phản ánh rằng\b', 'Điều này cho thấy'),
+        (r'(?i)\bĐiều này gợi ý rằng\b', 'Có thể hiểu rằng'),
+        (r'(?i)\bĐiều này cho thấy rằng\b', 'Điều này cho thấy'),
+        (r'(?i)\bĐể cải thiện điểm này\b', 'Để cải thiện'),
+        (r'(?i)\bđiểm đau\b', 'điểm cần lưu ý'),
+    ]
+    for pattern, replacement in replacements:
+        text = re.sub(pattern, replacement, text)
+
+    text = re.sub(r'\n\s*\n+', '\n', text)
+    text = re.sub(r'[ \t]{2,}', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip(' \n')
+
+
 def format_ai_html(text):
-    # Remove excessive blank lines
-    text = re.sub(r'\n{3,}', '\n\n', text.strip())
+    text = sanitize_ai_insight_text(text)
+    # Collapse blank paragraphs so insight text stays visually continuous.
+    text = re.sub(r'\n\s*\n+', '\n', text.strip())
     html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
     html = re.sub(r'\*(.*?)\*', r'<em>\1</em>', html)
+    html = re.sub(r'(?m)^(Điểm mạnh nhất|Điểm cần lưu ý|Mối cần lưu ý|Hàm ý hành động|Khuyến nghị)\s*:', r'<strong>\1:</strong>', html)
+    if '<strong>' not in html:
+        html = re.sub(r'^([^.!?]{20,140}[.!?])', r'<strong>\1</strong>', html, count=1)
     html = re.sub(r'(?m)^[-*]\s+', '• ', html)
     html = html.replace('\n', '<br>')
-    html = html.replace('<br><br>•', '<br>•')
     return html
 
 
@@ -319,7 +378,7 @@ def _get_scope_prefix() -> str:
         if auth.get("role", "").upper() == "ADMIN":
             return ""
         views = [str(v).strip().upper() for v in auth.get("survey_view", []) if str(v).strip()]
-        if not views or "ALL" in views:
+        if not views or "ALL" in views or "COMPANY" in views:
             return ""
         _level_map = {
             "SECTION": ("sections", "Team/Section"),
@@ -368,14 +427,15 @@ def render_ai_insight_card(title, data_dict, context_prompt, badge="EES-Analyzer
         )
 
     if cache_key in st.session_state:
-        container.markdown(_build_html(st.session_state[cache_key]), unsafe_allow_html=True)
+        container.markdown(_build_html(sanitize_ai_insight_text(st.session_state[cache_key])), unsafe_allow_html=True)
     else:
         full_text = ""
         for chunk in generate_ees_insight_stream(data_json, context_prompt):
             full_text += chunk
             container.markdown(_build_html(full_text, is_typing=True), unsafe_allow_html=True)
-        st.session_state[cache_key] = full_text
-        container.markdown(_build_html(full_text), unsafe_allow_html=True)
+        final_text = sanitize_ai_insight_text(full_text)
+        st.session_state[cache_key] = final_text
+        container.markdown(_build_html(final_text), unsafe_allow_html=True)
 
 def render_ai_insight_card_dual(
         title, data_dict, prompt_short, prompt_long,
@@ -409,23 +469,24 @@ def render_ai_insight_card_dual(
 
     sc = st.empty()
     if ck_s in st.session_state:
-        sc.markdown(_html(st.session_state[ck_s]), unsafe_allow_html=True)
+        sc.markdown(_html(sanitize_ai_insight_text(st.session_state[ck_s])), unsafe_allow_html=True)
     else:
         txt = ""
         for chunk in generate_ees_insight_stream(data_json, prompt_short):
             txt += chunk
             sc.markdown(_html(txt, is_typing=True), unsafe_allow_html=True)
-        st.session_state[ck_s] = txt
-        sc.markdown(_html(txt), unsafe_allow_html=True)
+        final_short = sanitize_ai_insight_text(txt)
+        st.session_state[ck_s] = final_short
+        sc.markdown(_html(final_short), unsafe_allow_html=True)
 
     col_btn, _ = st.columns([1, 4])
     with col_btn:
         if not st.session_state.get(ekey):
-            if st.button("Xem phan tich chi tiet",
+            if st.button("Xem phân tích chi tiết",
                          key=f"btn_exp_{ck_s[:12]}"):
                 st.session_state[ekey] = True
         else:
-            if st.button("Thu gon",
+            if st.button("Thu gọn",
                          key=f"btn_col_{ck_s[:12]}"):
                 del st.session_state[ekey]
 
@@ -433,7 +494,7 @@ def render_ai_insight_card_dual(
         lc = st.empty()
         if ck_l in st.session_state:
             lc.markdown(
-                _html(st.session_state[ck_l], xs=dbrd),
+                _html(sanitize_ai_insight_text(st.session_state[ck_l]), xs=dbrd),
                 unsafe_allow_html=True
             )
         else:
@@ -444,5 +505,6 @@ def render_ai_insight_card_dual(
                     _html(txt, is_typing=True, xs=dbrd),
                     unsafe_allow_html=True
                 )
-            st.session_state[ck_l] = txt
-            lc.markdown(_html(txt, xs=dbrd), unsafe_allow_html=True)
+            final_long = sanitize_ai_insight_text(txt)
+            st.session_state[ck_l] = final_long
+            lc.markdown(_html(final_long, xs=dbrd), unsafe_allow_html=True)

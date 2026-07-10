@@ -62,7 +62,7 @@ def create_vietnam_map():
         hoverlabel=dict(
             bgcolor="white",
             font_size=14,
-            font_family="Montserrat, sans-serif"
+            font_family="Exo 2, sans-serif"
         )
     )
 

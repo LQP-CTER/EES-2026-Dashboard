@@ -133,7 +133,7 @@ def resolve_data_scope(authorization: Optional[dict]) -> dict:
         {'unrestricted': bool, 'level': str|None, 'column': str|None, 'values': list,
          'misconfigured': bool}
 
-    - Admin hoặc survey_view rỗng/ALL  → unrestricted (xem hết).
+    - Admin hoặc survey_view rỗng/ALL/COMPANY  → unrestricted (xem hết).
     - survey_view = SECTION/DEPARTMENT/DIVISION → giới hạn theo cột tương ứng.
     - survey_view có cấp nhưng KHÔNG có giá trị đơn vị → misconfigured (fail-closed).
     """
@@ -145,7 +145,7 @@ def resolve_data_scope(authorization: Optional[dict]) -> dict:
         return {"unrestricted": True, "level": None, "column": None, "values": [], "misconfigured": False}
 
     views = [str(v).strip().upper() for v in authorization.get("survey_view", []) if str(v).strip()]
-    if not views or "ALL" in views:
+    if not views or "ALL" in views or "COMPANY" in views:
         return {"unrestricted": True, "level": None, "column": None, "values": [], "misconfigured": False}
 
     # Ưu tiên cấp HẸP nhất nếu khai báo nhiều cấp: Section > Department > Division
@@ -184,4 +184,6 @@ def apply_scope_filter(df, authorization):
 
     targets = {_norm_compare(v) for v in values}
     mask = df[col].map(lambda x: _norm_compare(x) in targets)
-    return df[mask].copy(), scope
+    result = df[mask].copy()
+
+    return result, scope

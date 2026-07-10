@@ -282,7 +282,7 @@ def _render_pillar_overview(df, group_id):
         marker=dict(color=colors, cornerradius=4),
         text=[f"{s:.2f}" for s in pdf['Điểm TB']],
         textposition='outside',
-        textfont=dict(size=12, color='#0A1F44', family='Inter'),
+        textfont=dict(size=12, color='#0A1F44', family='Exo 2'),
     ))
     fig.add_vline(x=4.0, line_dash="dot", line_color="#10B981", line_width=1.5,
                   annotation_text="Ngưỡng Tốt (4.0)", annotation_position="top right",
@@ -293,7 +293,7 @@ def _render_pillar_overview(df, group_id):
         xaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)', zeroline=False),
         yaxis=dict(automargin=True),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_146")
     return pdf
@@ -485,7 +485,7 @@ def _render_regional_breakdown_chart(df, c_id):
         title=f"Phân rã theo {group_col}",
         height=320, margin=dict(l=10, r=10, t=40, b=10),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig, use_container_width=True, key=f"regional_breakdown_{c_id}")
@@ -519,7 +519,7 @@ def _render_tenure_cliff_chart(df, metrics, key_suffix=''):
         line=dict(color='#4318FF', width=3),
         text=[f"{v:.1f}" for v in tdf['EI']],
         textposition='top center',
-        textfont=dict(size=11, color='#0A1F44', family='Inter'),
+        textfont=dict(size=11, color='#0A1F44', family='Exo 2'),
     ))
     fig.add_hline(y=65, line_dash="dot", line_color="#10B981", line_width=1.5,
                   annotation_text="Ngưỡng Khỏe mạnh (65%)")
@@ -530,7 +530,7 @@ def _render_tenure_cliff_chart(df, metrics, key_suffix=''):
         yaxis=dict(range=[max(0, tdf['EI'].min()-10), min(100, tdf['EI'].max()+10)],
                    dtick=10, gridcolor='rgba(226,232,240,0.6)'),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter'),
+        font=dict(family='Exo 2'),
     )
     st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_tenure_cliff{key_suffix}")
 
@@ -551,7 +551,7 @@ def _render_gap_chart(df, metrics, c_id, key_suffix=''):
         marker=dict(color=colors, cornerradius=4),
         text=[f"{v:.2f}" for v in values],
         textposition='outside',
-        textfont=dict(size=13, color='#0A1F44', family='Inter'),
+        textfont=dict(size=13, color='#0A1F44', family='Exo 2'),
     ))
     fig.add_hline(y=4.0, line_dash="dot", line_color="#10B981", line_width=1.5)
     fig.update_layout(
@@ -559,7 +559,7 @@ def _render_gap_chart(df, metrics, c_id, key_suffix=''):
         margin=dict(l=10, r=10, t=10, b=10),
         yaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)'),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_gap_{c_id}{key_suffix}")
 
@@ -597,13 +597,13 @@ def _render_paradox_chart(df, metrics, c_id, key_suffix=''):
         marker=dict(color=['#10B981', '#EF4444'], cornerradius=4),
         text=[f"{v:.1f}" for v in values],
         textposition='outside',
-        textfont=dict(size=13, color='#0A1F44', family='Inter'),
+        textfont=dict(size=13, color='#0A1F44', family='Exo 2'),
     ))
     fig.update_layout(
         height=280,
         margin=dict(l=10, r=10, t=10, b=10),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_paradox_{c_id}{key_suffix}")
 
@@ -619,13 +619,13 @@ def _render_burnout_blind_chart(df, metrics, key_suffix=''):
         marker=dict(color=['#10B981', '#EF4444'], cornerradius=4),
         text=[f"{v:.1f}" for v in values],
         textposition='outside',
-        textfont=dict(size=13, color='#0A1F44', family='Inter'),
+        textfont=dict(size=13, color='#0A1F44', family='Exo 2'),
     ))
     fig.update_layout(
         height=280,
         margin=dict(l=10, r=10, t=10, b=10),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_burnout_blind{key_suffix}")
 
@@ -640,7 +640,7 @@ def _render_glass_ceiling_chart(df, metrics, key_suffix=''):
         marker=dict(color=['#10B981', '#EF4444'], cornerradius=4),
         text=[f"{v:.2f}" for v in values],
         textposition='outside',
-        textfont=dict(size=13, color='#0A1F44', family='Inter'),
+        textfont=dict(size=13, color='#0A1F44', family='Exo 2'),
     ))
     fig.add_hline(y=3.5, line_dash="dot", line_color="#F59E0B", line_width=1.5,
                   annotation_text="Ngưỡng Cảnh báo (3.5)")
@@ -649,7 +649,7 @@ def _render_glass_ceiling_chart(df, metrics, key_suffix=''):
         margin=dict(l=10, r=10, t=10, b=10),
         yaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)'),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     st.plotly_chart(fig, use_container_width=True, key=f"narrative_flow_chart_glass_ceiling{key_suffix}")
 
@@ -750,7 +750,7 @@ def _render_action_priorities(df, group_id, contradictions):
                 marker=dict(size=14, color=color, line=dict(width=1.5, color='white')),
                 text=subset['Q'],
                 textposition="top center",
-                textfont=dict(size=10, color='#475569', family='Inter'),
+                textfont=dict(size=10, color='#475569', family='Exo 2'),
                 hovertemplate="<b>%{text}</b><br>Điểm: %{x:.2f}<br>Tương quan: %{y:.3f}<extra></extra>"
             ))
 
@@ -770,7 +770,7 @@ def _render_action_priorities(df, group_id, contradictions):
         xaxis=dict(range=[1, 5.3], gridcolor='rgba(226,232,240,0.5)'),
         yaxis=dict(gridcolor='rgba(226,232,240,0.5)'),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter'),
+        font=dict(family='Exo 2'),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_action_matrix")
@@ -828,14 +828,14 @@ def _render_hidden_risks(df, group_id):
         marker=dict(color='#EF4444', cornerradius=4),
         text=[f"{v:.2f}" for v in sdf['Score']],
         textposition='outside',
-        textfont=dict(size=12, color='#0A1F44', family='Inter')
+        textfont=dict(size=12, color='#0A1F44', family='Exo 2')
     ))
     fig.update_layout(
         height=300, margin=dict(l=10, r=40, t=10, b=10),
         xaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)'),
         yaxis=dict(automargin=True, autorange="reversed"),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter')
+        font=dict(family='Exo 2')
     )
     st.plotly_chart(fig, use_container_width=True, key="narrative_flow_chart_hidden_risks")
     
@@ -866,7 +866,7 @@ def _render_hidden_risks(df, group_id):
             margin=dict(l=10, r=10, t=10, b=80),
             xaxis=dict(tickangle=30),
             yaxis=dict(autorange="reversed"),
-            font=dict(family='Inter')
+            font=dict(family='Exo 2')
         )
         st.plotly_chart(fig_hm, use_container_width=True, key="narrative_flow_chart_hidden_risks_heatmap")
     
@@ -922,13 +922,13 @@ def _render_weakness_deep_dive(df, group_id):
         marker=dict(color='#8B5CF6', cornerradius=4),
         text=[f"{v:.1f}%" for v in dist.values],
         textposition='outside',
-        textfont=dict(size=12, color='#0A1F44', family='Inter')
+        textfont=dict(size=12, color='#0A1F44', family='Exo 2')
     ))
     fig_dist.update_layout(
         title=dict(text="Tỷ lệ phân bố điểm đánh giá", font=dict(size=14, color='#475569')),
         height=250, margin=dict(l=10, r=10, t=40, b=10),
         yaxis=dict(showgrid=True, gridcolor='rgba(226,232,240,0.6)', range=[0, max(dist.values)*1.2]),
-        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(family='Inter')
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(family='Exo 2')
     )
     st.plotly_chart(fig_dist, use_container_width=True, key="narrative_flow_chart_weakness_dist")
 
@@ -947,14 +947,14 @@ def _render_weakness_deep_dive(df, group_id):
             marker=dict(color='#EF4444', cornerradius=4),
             text=[f"{v:.2f}" for v in region_scores.values],
             textposition='outside',
-            textfont=dict(size=12, color='#0A1F44', family='Inter')
+            textfont=dict(size=12, color='#0A1F44', family='Exo 2')
         ))
         fig_brk.update_layout(
             title=dict(text=f"Điểm '{worst_q}' theo {group_col.replace('_', ' ').title()} (Vùng kéo dữ liệu xuống)", font=dict(size=14, color='#475569')),
             height=max(250, len(region_scores) * 35), margin=dict(l=10, r=40, t=40, b=10),
             xaxis=dict(range=[1, 5.3], dtick=0.5, gridcolor='rgba(226,232,240,0.6)'),
             yaxis=dict(automargin=True, autorange="reversed"),
-            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(family='Inter')
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(family='Exo 2')
         )
         st.plotly_chart(fig_brk, use_container_width=True, key="narrative_flow_chart_weakness_breakdown")
 
@@ -1167,53 +1167,71 @@ def _run_voice_analysis(df_unit, open_col, group_id, unit_label, cfg):
     mode = st.session_state.get(f'ev_mode_{group_id}', 'desires')
 
     if mode == 'desires':
-        ai_prompt = f"""Bạn là Chuyên gia Tư vấn Quản trị & Phân tích Trải nghiệm Nhân viên. Dưới đây là {len(sample)} phản hồi THỰC TẾ ẩn danh của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}», khi được hỏi: "Bạn mong muốn điều gì cần thay đổi hoặc cải thiện tại công ty?":
+        ai_prompt = f"""Bạn đang viết theo văn phong của báo cáo GHN EES 2026 Deep Analyst.
+
+Dưới đây là {len(sample)} phản hồi THỰC TẾ ẩn danh của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}», khi được hỏi: "Bạn mong muốn điều gì cần thay đổi hoặc cải thiện tại công ty?":
 
 {responses_text}
 
-NHIỆM VỤ TỐI QUAN TRỌNG: 
-Đọc kỹ {len(sample)} câu phản hồi trên. TỔNG HỢP và GOM NHÓM các ý kiến lặp lại nhiều nhất thành TOP 5 mong muốn/khiếu nại cốt lõi. 
-Mọi phân tích, kết luận VÀ DẪN CHỨNG PHẢI ĐƯỢC LẤY CHÍNH XÁC TỪ DỮ LIỆU CUNG CẤP NÀY. TUYỆT ĐỐI KHÔNG BỊA ĐẶT (HALLUCINATE) HOẶC DÙNG DỮ LIỆU CỦA ĐƠN VỊ KHÁC.
+NHIỆM VỤ:
+Đọc kỹ các phản hồi này, gom nhóm các ý lặp lại nhiều nhất và viết phần nhận định giống mục "điểm cần đọc kỹ" trong báo cáo.
+Mọi nhận định và dẫn chứng phải bám đúng tập phản hồi đang có. Không dùng dữ liệu của đơn vị khác và không tự bịa chi tiết.
 
-Hãy trình bày báo cáo định tính (bằng tiếng Việt) theo đúng cấu trúc sau:
+Trình bày bằng tiếng Việt theo cấu trúc sau:
 
-1. Top 5 Vấn Đề / Mong Muốn Cấp Bách Nhất (Sắp xếp theo tần suất xuất hiện):
-- [Tên Vấn Đề 1]: (Chiếm khoảng XX% số phản hồi) Phân tích ngắn gọn bản chất vấn đề từ góc độ dữ liệu.
-  + Trich dan thuc te: Trích chính xác 1-2 câu (hoặc cụm từ) BÊ NGUYÊN TỪ DỮ LIỆU BÊN TRÊN để làm bằng chứng. KHÔNG tự chế ra câu trích dẫn.
-  + Khuyen nghi hanh dong: Đề xuất 1 hành động quản trị cụ thể, khả thi để giải quyết.
-- [Tên Vấn Đề 2]: (Làm tương tự)
-... (Đến Vấn Đề 5)
+1. Bức tranh chung:
+- Viết 2 đến 3 câu mở đầu, nêu nhận định chính về điều nhân viên đang nhắc nhiều nhất tại đơn vị này.
+- Nếu dữ liệu phân tán hoặc chưa đủ chắc, phải nói rõ mức độ thận trọng khi diễn giải.
 
-2. Đánh Giá Mức Độ Nghiêm Trọng (Severity Warning):
-- Nhận diện 1 vấn đề mang tính hệ thống (systemic) nhất hoặc gây ức chế sâu sắc nhất dựa trên cách dùng từ của nhân viên (Giải thích trong 2 dòng).
+2. Các điểm nhân viên đang nhắc nhiều:
+- Chọn 3 đến 5 ý quan trọng nhất theo tần suất và mức độ ảnh hưởng.
+- Mỗi ý viết gọn theo nhịp:
+  [Tên ý] -> điều nhân viên đang nói -> điều này cho thấy gì ở góc độ vận hành/quản trị -> 1 trích dẫn ngắn lấy nguyên văn từ dữ liệu.
+- Không cần cố ước lượng phần trăm nếu không đếm được tương đối chắc từ tập phản hồi.
 
-TUYỆT ĐỐI: 
-- Trình bày dạng bullet points, câu chữ tư vấn chuyên nghiệp.
-- KHÔNG thêm lời chào, kết luận dài dòng hay bịa đặt dữ liệu."""
+3. Điều cần lưu ý:
+- Nêu 1 ý đáng chú ý nhất cần theo dõi thêm, theo giọng thận trọng của báo cáo nội bộ.
+
+4. Hàm ý hành động:
+- Đưa ra 1 đến 2 ưu tiên hành động ngắn, cụ thể.
+
+YÊU CẦU TONE:
+- Viết giống báo cáo phân tích nội bộ, không viết như chatbot.
+- Câu ngắn, chắc, mạch lạc.
+- Không dùng từ kịch tính, không đặt nhãn sáng tác cho vấn đề.
+- Không có lời chào và không có kết luận dài dòng."""
     else:
-        ai_prompt = f"""Bạn là Chuyên gia Tâm lý học Tổ chức (Organizational Psychologist) & Phân tích Trải nghiệm Nhân viên cấp cao. Dưới đây là {len(sample)} phản hồi ẩn danh THỰC TẾ của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}»:
+        ai_prompt = f"""Bạn đang viết theo văn phong của báo cáo GHN EES 2026 Deep Analyst.
+
+Dưới đây là {len(sample)} phản hồi ẩn danh THỰC TẾ của nhân viên thuộc nhóm «{group_name}», đơn vị «{unit_label}»:
 
 {responses_text}
 
-Nhiệm vụ của bạn là ĐỌC KỸ TỪNG PHẢN HỒI THỰC TẾ NÀY, thấu hiểu ngữ cảnh và phân tích chuyên sâu những tầng lớp cảm xúc, nỗi niềm ẩn chứa bên trong. Báo cáo của bạn phải DỰA HOÀN TOÀN TRÊN DỮ LIỆU ĐƯỢC CUNG CẤP. Hãy xuất báo cáo định tính (bằng tiếng Việt) theo cấu trúc sau:
+NHIỆM VỤ:
+Đọc kỹ toàn bộ phản hồi để viết phần nhận định về sắc thái cảm xúc và các lớp lo ngại nổi bật. Báo cáo phải dựa hoàn toàn trên dữ liệu đang có.
 
-1. Bức Tranh Cảm Xúc Tổng Thể:
-- Tỷ lệ ước lượng: XX% Tích cực / XX% Trung lập / XX% Tiêu cực.
-- Tâm lý chủ đạo: [Trạng thái tâm lý đang chi phối tập thể này]. Giải thích sâu sắc nguyên nhân gốc rễ (dựa trên data).
+Trình bày bằng tiếng Việt theo cấu trúc sau:
 
-2. Phân Tích Sâu Trọng Tâm Cảm Xúc (Deep Dive):
-- [Tên Vấn Đề 1]: Đi sâu vào bản chất vấn đề. Tại sao nhân viên lại cảm thấy như vậy? (Bắt buộc trích dẫn lại chính xác từ ngữ họ đã dùng trong dữ liệu để chứng minh).
-- [Tên Vấn Đề 2]: (Làm tương tự nếu có)
+1. Bức tranh cảm xúc chung:
+- Viết 2 đến 3 câu nêu sắc thái chủ đạo của tập phản hồi.
+- Chỉ đưa ra tỷ lệ ước lượng nếu thật sự có thể đếm tương đối trực tiếp từ dữ liệu. Nếu không chắc, dùng mô tả định tính như "nghiêng về tiêu cực", "khá phân tán", "thiên về góp ý thực dụng".
 
-3. Tín Hiệu Cảnh Báo (Red Flags) (Nếu có):
-- Chỉ ra những rủi ro ngầm từ câu chữ của nhân viên có thể dẫn đến việc nghỉ việc hoặc đình trệ năng suất.
+2. Những lớp cảm xúc hoặc lo ngại nổi bật:
+- Chọn 2 đến 4 ý quan trọng nhất.
+- Mỗi ý cần gắn với bằng chứng cụ thể từ phản hồi và giải thích ngắn nó phản ánh điều gì trong trải nghiệm làm việc.
+- Khi diễn giải, giữ giọng thận trọng như báo cáo: "điều này cho thấy", "có thể đến từ", "đáng chú ý là".
 
-4. Đề xuất:
-- Từ những phân tích thực tế trên, đưa ra 1-2 hành động giải quyết ưu tiên cao nhất, đánh đúng vào gốc rễ vấn đề.
+3. Điều cần lưu ý:
+- Nêu 1 tín hiệu đáng quan tâm nhất, nhưng chỉ ở mức dữ liệu cho phép.
+- Nếu chưa đủ chắc để coi là rủi ro hệ thống, phải nói rõ đây mới là tín hiệu cần theo dõi thêm.
 
-TUYỆT ĐỐI: 
-- Mọi phân tích phải có bằng chứng từ dữ liệu (không tự suy diễn chung chung).
-- Dùng bullet points, giọng văn tư vấn sắc sảo, không có lời chào hỏi."""
+4. Hàm ý hành động:
+- Đưa ra 1 đến 2 hành động ưu tiên, ngắn và cụ thể.
+
+YÊU CẦU TONE:
+- Viết giống báo cáo phân tích nội bộ, không viết như chatbot hay bài tư vấn lên gân.
+- Không dùng từ như "red flag", "khủng hoảng", "báo động" nếu dữ liệu không đủ mạnh.
+- Không có lời chào hỏi, không kết luận sáo rỗng."""
 
     # SHOW RAW RESPONSES collapsible
     limit_key = f"ev_limit_{group_id}_{unit_label}"
@@ -1378,19 +1396,19 @@ def _render_ei_distribution_chart(df, key_suffix=""):
         marker=dict(color=['#EF4444', '#F59E0B', '#10B981'], cornerradius=6),
         text=[f"{v:.1f}%<br>({int(v / 100 * total)})" for v in [d_pct, n_pct, e_pct]],
         textposition='outside',
-        textfont=dict(size=11, color='#0A1F44', family='Inter'),
+        textfont=dict(size=11, color='#0A1F44', family='Exo 2'),
         hovertemplate='<b>%{x}</b><br>%{y:.1f}%<extra></extra>',
     ))
     fig.update_layout(
         title=dict(text=f"Phân phối EI  (TB: {avg_ei:.1f}%)",
-                   font=dict(size=13, color='#475569', family='Inter')),
+                   font=dict(size=13, color='#475569', family='Exo 2')),
         height=270,
         margin=dict(l=10, r=10, t=45, b=30),
         yaxis=dict(range=[0, max(d_pct, n_pct, e_pct) * 1.4],
                    ticksuffix='%', gridcolor='rgba(226,232,240,0.5)'),
         xaxis=dict(tickfont=dict(size=11, color='#475569')),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     st.plotly_chart(fig, use_container_width=True,
                     key=f"ei_dist_chart{key_suffix}")
@@ -1429,15 +1447,15 @@ def _render_act1_radar_chart(pdf, group_name):
             radialaxis=dict(range=[1, 5], dtick=1,
                             gridcolor='rgba(226,232,240,0.7)',
                             tickfont=dict(size=9)),
-            angularaxis=dict(tickfont=dict(size=11, color='#475569', family='Inter')),
+            angularaxis=dict(tickfont=dict(size=11, color='#475569', family='Exo 2')),
             bgcolor='rgba(0,0,0,0)',
         ),
         title=dict(text=f"Hình dạng trải nghiệm — {group_name}",
-                   font=dict(size=13, color='#475569', family='Inter')),
+                   font=dict(size=13, color='#475569', family='Exo 2')),
         height=310,
         margin=dict(l=40, r=40, t=55, b=20),
         paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter'),
+        font=dict(family='Exo 2'),
         showlegend=True,
         legend=dict(orientation='h', yanchor='bottom', y=-0.12,
                     xanchor='center', x=0.5, font=dict(size=11)),
@@ -1487,17 +1505,17 @@ def _render_voice_theme_chart(responses, group_id, unit_label=""):
         x=counts, y=labels, orientation='h',
         marker=dict(color=colors, cornerradius=4),
         text=counts, textposition='outside',
-        textfont=dict(size=11, color='#475569', family='Inter'),
+        textfont=dict(size=11, color='#475569', family='Exo 2'),
     ))
     fig.update_layout(
         title=dict(text=f"Chủ đề nổi bật từ {len(responses)} phản hồi — {unit_label}",
-                   font=dict(size=13, color='#475569', family='Inter')),
+                   font=dict(size=13, color='#475569', family='Exo 2')),
         height=max(280, len(sorted_t) * 38 + 60),
         margin=dict(l=10, r=50, t=45, b=10),
         xaxis=dict(title='Số lần đề cập (ước tính)', gridcolor='rgba(226,232,240,0.5)'),
         yaxis=dict(automargin=True, autorange='reversed'),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family='Inter', size=12),
+        font=dict(family='Exo 2', size=12),
     )
     # Use a stable key: group_id + first 20 chars of unit_label (spaces replaced)
     safe_label = unit_label[:20].replace(' ', '_').replace('/', '_')
@@ -1815,13 +1833,13 @@ def _render_unit_p2_radar(pillar_comp, unit_label, group_id):
     fig.update_layout(
         polar=dict(
             radialaxis=dict(visible=True, range=[0, 100], tickfont=dict(size=10)),
-            angularaxis=dict(tickfont=dict(size=11, family="Inter")),
+            angularaxis=dict(tickfont=dict(size=11, family="Exo 2")),
         ),
         legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
         height=380,
         margin=dict(l=40, r=40, t=30, b=60),
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter"),
+        font=dict(family="Exo 2"),
     )
 
     col_r, col_cards = st.columns([1.1, 0.9], gap="large")
@@ -1934,7 +1952,7 @@ def _render_unit_p3_pillars(df_unit, df_bench, group_id, cfg, pillar_comp):
                 yaxis=dict(autorange="reversed"),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(family="Inter", size=11),
+                font=dict(family="Exo 2", size=11),
             )
             st.plotly_chart(fig, use_container_width=True,
                             key=f"unit_p3_bar_{group_id}_{pid}")

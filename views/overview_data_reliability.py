@@ -100,7 +100,7 @@ def _funnel_chart(df: pd.DataFrame):
         height=380,
         margin=dict(l=20, r=20, t=30, b=20),
         paper_bgcolor='white',
-        font=dict(family='Inter, sans-serif'),
+        font=dict(family='Exo 2, sans-serif'),
     )
     return fig
 
@@ -134,7 +134,7 @@ def _tier_bar_chart(df: pd.DataFrame):
         xaxis=dict(title='Số phản hồi', gridcolor=SLATE_200, showgrid=True),
         yaxis=dict(autorange='reversed'),
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-        font=dict(family='Inter, sans-serif'),
+        font=dict(family='Exo 2, sans-serif'),
     )
     return fig
 
@@ -168,7 +168,7 @@ def _corroboration_chart(df: pd.DataFrame):
         xaxis=dict(title='Số phản hồi', gridcolor=SLATE_200, showgrid=True),
         yaxis=dict(autorange='reversed'),
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-        font=dict(family='Inter, sans-serif'),
+        font=dict(family='Exo 2, sans-serif'),
     )
     return fig
 

@@ -112,7 +112,7 @@ st.markdown("""
     
     /* Chỉnh chữ loading */
     [data-testid="stSpinner"] p {
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'Exo 2', sans-serif !important;
         font-size: 1.1rem !important;
         font-weight: 700 !important;
         color: #0A1F44 !important;
@@ -1013,6 +1013,7 @@ st.markdown("""
 
 # ── Custom CSS ──────────────────────────────────────────────────────────────
 st.markdown("""<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 /* ═══════ BASE ═══════ */
 /* Hide Streamlit Toolbar & Deploy Button */
 #MainMenu {visibility: hidden !important;}
@@ -1035,7 +1036,7 @@ footer {visibility: hidden !important;}
 }
 
 html, body, .stApp {
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+    font-family: 'Exo 2', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
     background:
         radial-gradient(circle at top right, rgba(255, 82, 0, 0.06), transparent 22%),
         linear-gradient(180deg, #F8FAFC 0%, #F8FAFC 100%) !important;
@@ -1373,7 +1374,7 @@ div[data-baseweb="select"] > div:hover {
     text-transform: uppercase !important;
     letter-spacing: 0.09em !important;
     margin: 0 !important;
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Exo 2', sans-serif !important;
 }
 .ai-badge {
     background: #F8FAFC !important;
@@ -1389,7 +1390,7 @@ div[data-baseweb="select"] > div:hover {
 }
 .ai-content {
     font-size: 0.875rem !important;
-    line-height: 1.7 !important;
+    line-height: 1.58 !important;
     color: #475569 !important;
     padding-right: 8px !important;
 }
@@ -2040,8 +2041,15 @@ main_loading_slot = st.empty()
 page_loader = None
 
 # Phạm vi data của user hiện tại (theo Google Sheet phân quyền)
-user_scope = resolve_data_scope(st.session_state.get("user_authorization"))
+_current_auth = st.session_state.get("user_authorization", {})
+user_scope = resolve_data_scope(_current_auth)
 scope_restricted = not user_scope.get("unrestricted", True)
+_auth_views = {
+    str(v).strip().upper()
+    for v in (_current_auth.get("survey_view", []) if isinstance(_current_auth, dict) else [])
+    if str(v).strip()
+}
+_has_full_page_access = is_real_admin or bool(_auth_views.intersection({"ALL", "COMPANY"})) or not scope_restricted
 
 with st.sidebar:
 
@@ -2065,7 +2073,7 @@ with st.sidebar:
     # Top-level items (value = label, không cần prefix)
     menu_items.append(sac.MenuItem(OVERVIEW_LABEL, icon='house'))
 
-    if not scope_restricted:
+    if _has_full_page_access:
         menu_items.append(sac.MenuItem("Độ tin cậy dữ liệu", icon='shield-check'))
 
     menu_items.append(sac.MenuItem(COMPANY_LABEL, icon='graph-up', tag=sac.Tag("Core", color="blue", bordered=False)))
@@ -2294,6 +2302,14 @@ with st.sidebar:
             st.query_params["logout"] = "1"
             st.rerun()
 
+        st.markdown("""
+        <div style="padding:10px 0 4px;text-align:center;">
+            <div style="font-size:0.68rem;color:#94A3B8;line-height:1.4;">
+                © EX Team
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
 if is_overview:
     try:
@@ -2304,8 +2320,8 @@ if is_overview:
         st.code(traceback.format_exc())
 
 elif is_data_trust:
-    if scope_restricted:
-        st.info("Trang Độ tin cậy dữ liệu chỉ dành cho tài khoản xem toàn công ty.")
+    if not _has_full_page_access:
+        st.info("Trang Độ tin cậy dữ liệu chỉ dành cho tài khoản có quyền xem toàn công ty.")
         st.stop()
     try:
         loader = TerminalLoader(main_loading_slot, "Đang tải dữ liệu độ tin cậy")

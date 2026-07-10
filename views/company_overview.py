@@ -6,7 +6,7 @@ from textwrap import dedent
 from utils.data_loader import compute_kpis, PILLAR_LABELS
 from shared.plotly_theme import fig_card, apply_theme, COLORS
 from utils.benchmark_2025 import get_company_benchmark_2025, get_external_benchmarks
-from utils.ai_generator import render_ai_insight_card, render_ai_insight_card_dual
+from utils.ai_generator import render_ai_insight_card
 from views.view_i_data_trust import DEEPDIVE_QUALITY_TOTALS
 from shared.codebook import get_codebook, get_question_label
 
@@ -115,7 +115,7 @@ def _render_report_content():
     # Tab 1
     with t1:
         st.markdown("""
-<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<div style="font-family:'Exo 2',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:16px;">
 <strong>Bức tranh chung khá tích cực, nhưng chưa đồng đều.</strong>
 EI đạt <strong>73,3/100</strong> (mức Khoẻ mạnh). eNPS đạt <strong>+31,7</strong>, cao hơn mặt bằng thị trường.
@@ -184,7 +184,7 @@ Chưa có dấu hiệu suy giảm gắn kết trên diện rộng.
     # Tab 2
     with t2:
         st.markdown("""
-<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<div style="font-family:'Exo 2',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
 EI đạt 73,3 điểm, phản ánh mức độ gắn kết tích cực của toàn công ty. Tuy nhiên, chất lượng trải nghiệm không đồng đều theo 5 trụ cột.
 Xu hướng nhất quán: nhân viên đánh giá tích cực hơn với trải nghiệm <em>hàng ngày và gần gũi</em> (quản lý trực tiếp, đồng nghiệp),
@@ -218,7 +218,7 @@ Một số đối thủ như Xanh SM đang cạnh tranh bằng cam kết về th
     # Tab 3
     with t3:
         st.markdown("""
-<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<div style="font-family:'Exo 2',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
 Kết quả giữa 6 nhóm nhân sự cho thấy mức độ gắn kết không phân bổ đồng đều.
 Quản lý tuyến đầu có mức gắn kết cao nhất; khối văn phòng thấp nhất.
@@ -252,7 +252,7 @@ Sau mốc này, cả EI và eNPS nhích lên nhẹ — có thể do những nhâ
     # Tab 4
     with t4:
         st.markdown("""
-<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<div style="font-family:'Exo 2',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
 GHN áp dụng cơ cấu tổ chức mới từ 2026 với 11 Khối và Phòng ban. Quy mô chênh lệch rất lớn — từ hơn 17.000 nhân sự tại Khối Thị Trường đến dưới 10 ở một số phòng ban.
 EI chỉ nên dùng để nhận diện xu hướng, <strong>không dùng để xếp hạng trực tiếp giữa các Khối có quy mô khác nhau.</strong>
@@ -305,7 +305,7 @@ Khối Thị Trường chiếm khoảng 93% tổng mẫu. Khi phân tích theo 1
     # Tab 5
     with t5:
         st.markdown("""
-<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<div style="font-family:'Exo 2',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
 EES 2026 thu thập phản hồi qua 3 câu hỏi mở về điều hài lòng nhất, lý do gắn bó và điều mong muốn cải thiện.
 Phân tích 3 xu hướng chính sau.
@@ -345,7 +345,7 @@ Phân tích 3 xu hướng chính sau.
     # Tab 6
     with t6:
         st.markdown("""
-<div style="font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
+<div style="font-family:'Exo 2',sans-serif;color:#1E293B;line-height:1.7;padding:4px 0 8px;">
 <p style="font-size:.93rem;color:#334155;margin-bottom:14px;">
 EES 2026 không cho thấy dấu hiệu khủng hoảng gắn kết.
 Thách thức của GHN không nằm ở việc gắn kết suy giảm trên diện rộng,
@@ -1022,7 +1022,9 @@ def render(all_data, available_groups, scope_restricted=False):
         # Workforce runtime có thể chứa nhân sự phát sinh sau kỳ khảo sát.
         total_headcount = DEEPDIVE_QUALITY_TOTALS["headcount"]
         total_rr = round((total_participants / total_headcount) * 100, 1)
-        cleaned_rr = round((total_cleaned / total_headcount) * 100, 1)
+        cleaned_rr = round((total_cleaned / total_headcount) * 100, 2)
+        not_joined = max(total_headcount - total_cleaned, 0)
+        not_joined_rr = max(round((1 - total_cleaned / total_headcount) * 100, 2), 0)
     bm = get_company_benchmark_2025()
     ei_delta = total_ei - bm['ei_mean']
     enps_delta = total_enps - bm['enps_score']
@@ -1064,8 +1066,8 @@ def render(all_data, available_groups, scope_restricted=False):
         hero_metrics_html = f"""
             <div class="ghn-metric" style="--accent:#0A1F44"><div class="ghn-metric-label">Tổng nhân sự</div><div class="ghn-metric-value">{total_headcount:,}</div><div class="ghn-metric-sub">Headcount toàn tổ chức GHN</div></div>
             <div class="ghn-metric" style="--accent:#1D4ED8"><div class="ghn-metric-label">Đã tham gia</div><div class="ghn-metric-value">{total_participants:,}</div><div class="ghn-metric-sub">{total_rr:.1f}% tỷ lệ phản hồi</div></div>
-            <div class="ghn-metric" style="--accent:#10B981"><div class="ghn-metric-label">Mẫu phân tích</div><div class="ghn-metric-value">{total_cleaned:,}</div><div class="ghn-metric-sub">{cleaned_rr:.1f}% / headcount sau lọc memo</div></div>
-            <div class="ghn-metric" style="--accent:#64748B"><div class="ghn-metric-label">Chưa tham gia</div><div class="ghn-metric-value">{max(total_headcount - total_participants, 0):,}</div><div class="ghn-metric-sub">{max(round((1 - total_participants / total_headcount) * 100, 1), 0):.1f}% chưa phản hồi</div></div>
+            <div class="ghn-metric" style="--accent:#10B981"><div class="ghn-metric-label">Mẫu phân tích</div><div class="ghn-metric-value">{total_cleaned:,}</div><div class="ghn-metric-sub">{cleaned_rr:.2f}% / headcount</div></div>
+            <div class="ghn-metric" style="--accent:#64748B"><div class="ghn-metric-label">Chưa tham gia</div><div class="ghn-metric-value">{not_joined:,}</div><div class="ghn-metric-sub">{not_joined_rr:.2f}% chưa phản hồi</div></div>
         """
 
     st.markdown('''
@@ -1540,41 +1542,24 @@ def render(all_data, available_groups, scope_restricted=False):
             "Total_Attrition_Risk": round(total_intent, 1)
         }
         
-        _data_short = (
-            f"Bạn là chuyên gia phân tích nhân sự GHN Express. Dựa vào đúng các số liệu sau — KHÔNG thêm số liệu ngoài danh sách:\n"
-            f"- EI {scope_display}: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
+        executive_prompt = (
+            f"B?n l? chuy?n gia ph?n t?ch nh?n s? GHN Express. D?a v?o ??ng c?c s? li?u sau ? KH?NG th?m s? li?u ngo?i danh s?ch:\n"
+            f"- EI {scope_display}: {ai_data['Total_EI']}% (thay ??i {ai_data['EI_Delta_YoY']:+.1f} ?i?m so v?i 2025)\n"
             f"- eNPS: {ai_data['Total_eNPS']:+.0f}\n"
-            f"- Tỷ lệ nhân viên có nguy cơ nghỉ việc: {ai_data['Total_Attrition_Risk']:.1f}%\n"
-            f"- Đơn vị EI cao nhất: {ai_data['Top_Division']} ({ai_data['Top_Division_EI']:.1f}%)\n"
-            f"- Đơn vị EI thấp nhất: {ai_data['Bottom_Division']} ({ai_data['Bottom_Division_EI']:.1f}%)\n"
-            f"- Trụ cột gắn kết mạnh nhất: {ai_data['Top_Pillar']}\n"
-            f"- Trụ cột gắn kết yếu nhất: {ai_data['Bottom_Pillar']}\n\n"
-            f"Viết theo đúng 5 mục sau, mỗi mục 1-2 câu, ngôn ngữ tự nhiên như analyst đang báo cáo nhanh cho Ban Giám Đốc:\n"
-            f"- **Sự suy giảm gắn kết:** [nhận định ngắn về EI, xu hướng và ý nghĩa]\n"
-            f"- **Rủi ro nghỉ việc:** [đánh giá nhanh mức độ nguy cơ attrition]\n"
-            f"- **Khoảng cách giữa các phòng ban:** [so sánh đơn vị cao nhất và thấp nhất, khoảng cách đó lớn hay nhỏ]\n"
-            f"- **Trụ cột mạnh nhất và yếu nhất:** [nhận định ngắn — giải thích trụ cột là khía cạnh trải nghiệm nào để người không làm HR cũng hiểu]\n"
-            f"- **Chiến lược cải thiện cấp bách:** [1-2 ưu tiên rõ ràng nhất cần hành động ngay]\n\n"
-            f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
+            f"- T? l? nh?n vi?n c? nguy c? ngh? vi?c: {ai_data['Total_Attrition_Risk']:.1f}%\n"
+            f"- ??n v? EI cao nh?t: {ai_data['Top_Division']} ({ai_data['Top_Division_EI']:.1f}%)\n"
+            f"- ??n v? EI th?p nh?t: {ai_data['Bottom_Division']} ({ai_data['Bottom_Division_EI']:.1f}%)\n"
+            f"- Tr? c?t g?n k?t m?nh nh?t: {ai_data['Top_Pillar']}\n"
+            f"- Tr? c?t g?n k?t y?u nh?t: {ai_data['Bottom_Pillar']}\n\n"
+            f"Vi?t th?nh m?t insight duy nh?t, kh?ng chia th?nh hai t?ng t?m t?t v? chi ti?t. Gi?ng v?n gi?ng analyst n?i b? ?ang b?o c?o cho Ban Gi?m ??c.\n"
+            f"C?u tr?c n?n g?m 4 ?o?n ng?n theo th? t? sau:\n"
+            f"- ?o?n 1: k?t lu?n ch?nh v? b?c tranh g?n k?t to?n c?ng ty, ??c ??ng th?i EI v? eNPS.\n"
+            f"- ?o?n 2: r?i ro ngh? vi?c v? m?c ?? c?n theo d?i, tr?nh ph?ng ??i khi t? l? ch?a qu? l?n.\n"
+            f"- ?o?n 3: ch?nh l?ch gi?a ??n v? cao nh?t v? th?p nh?t, k?m h?m ? v?n h?nh.\n"
+            f"- ?o?n 4: tr? c?t m?nh nh?t, tr? c?t y?u nh?t v? 1-2 ?u ti?n h?nh ??ng g?n nh?t.\n\n"
+            f"M?i ?o?n 2-3 c?u. Kh?ng l?p l?i c?ng m?t ? b?ng c?ch di?n ??t kh?c. Kh?ng vi?t ki?u chatbot, kh?ng l?n g?n, kh?ng nh?c framework hay h?c thu?t. Ch? d?ng ??ng c?c con s? ?? cung c?p."
         )
-        _data_long = (
-            f"Bạn là chuyên gia phân tích nhân sự GHN Express. Dựa vào đúng các số liệu sau — KHÔNG thêm số liệu ngoài danh sách:\n"
-            f"- EI {scope_display}: {ai_data['Total_EI']}% (thay đổi {ai_data['EI_Delta_YoY']:+.1f} điểm so với 2025)\n"
-            f"- eNPS: {ai_data['Total_eNPS']:+.0f}\n"
-            f"- Tỷ lệ nhân viên có nguy cơ nghỉ việc: {ai_data['Total_Attrition_Risk']:.1f}%\n"
-            f"- Đơn vị EI cao nhất: {ai_data['Top_Division']} ({ai_data['Top_Division_EI']:.1f}%)\n"
-            f"- Đơn vị EI thấp nhất: {ai_data['Bottom_Division']} ({ai_data['Bottom_Division_EI']:.1f}%)\n"
-            f"- Trụ cột gắn kết mạnh nhất: {ai_data['Top_Pillar']}\n"
-            f"- Trụ cột gắn kết yếu nhất: {ai_data['Bottom_Pillar']}\n\n"
-            f"Viết theo đúng 5 mục sau, mỗi mục 3-4 câu phân tích sâu, tự nhiên như analyst đang giải thích bối cảnh cho Ban Giám Đốc:\n"
-            f"- **Sự suy giảm gắn kết:** [phân tích EI và eNPS — con số đang nói lên điều gì, và tại sao xu hướng này đáng lo hoặc đáng chú ý]\n"
-            f"- **Rủi ro nghỉ việc:** [phân tích mức độ rủi ro, ý nghĩa với tổ chức, và nhóm nào cần theo dõi trước]\n"
-            f"- **Khoảng cách giữa các phòng ban:** [phân tích khoảng cách EI, điều đó phản ánh gì, và hệ quả nếu không can thiệp]\n"
-            f"- **Trụ cột mạnh nhất và yếu nhất:** [giải thích ý nghĩa của trụ cột này trong trải nghiệm hàng ngày của nhân viên, và hàm ý cho tổ chức]\n"
-            f"- **Chiến lược cải thiện cấp bách:** [phân tích lý do ưu tiên, đề xuất hành động cụ thể có thể triển khai trong ngắn hạn]\n\n"
-            f"Chỉ dùng đúng các con số đã cung cấp. Không nhắc tên framework hay học thuật."
-        )
-        render_ai_insight_card_dual("AI Executive Summary & Insight", ai_data, _data_short, _data_long)
+        render_ai_insight_card("AI Executive Summary & Insight", ai_data, executive_prompt)
 
     # ══════════════════════════════════════════════════════════════
     # SECTION 2: ORG DRILLDOWN (KHỐI / DIVISION)

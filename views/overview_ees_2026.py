@@ -2,6 +2,8 @@ import streamlit as st
 from views.map_helper import create_vietnam_map
 import base64
 import os
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from shared.plotly_theme import apply_theme
 
 
@@ -37,21 +39,21 @@ def render():
     # ── Global page CSS (no video rules here) ────────────────────────────────
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap');
     
     /* Override for the whole page */
     html, body, [class*="st-"], .ed-container * {
-        font-family: 'Montserrat', sans-serif !important;
+        font-family: 'Exo 2', sans-serif !important;
     }
     </style>
 
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 
-    .ed-container { font-family:'Montserrat', sans-serif; color:#0A1F44; max-width:1200px; }
+    .ed-container { font-family:'Exo 2', sans-serif; color:#0A1F44; max-width:1200px; }
 
     /* Hero */
-    .ed-hero { margin-bottom: 52px; }
+    .ed-hero { margin-bottom: 36px; }
     .ed-kicker {
         font-size:.72rem; font-weight:800; letter-spacing:.18em;
         text-transform:uppercase; color:#FF5200; margin-bottom:14px; display:block;
@@ -90,7 +92,7 @@ def render():
     /* Section header */
     .ed-section-header {
         display:flex; align-items:baseline; justify-content:space-between;
-        margin-bottom:24px; margin-top:52px;
+        margin-bottom:18px; margin-top:36px;
     }
     .ed-section-title {
         font-size:2rem; font-weight:900; letter-spacing:-.03em; color:#0A1F44; margin:0;
@@ -104,7 +106,7 @@ def render():
     /* Masonry */
     .ed-masonry {
         display:grid; grid-template-columns:repeat(4,1fr);
-        grid-auto-rows:210px; gap:16px; margin-bottom:72px;
+        grid-auto-rows:210px; gap:16px; margin-bottom:44px;
     }
     .ed-masonry-item { border-radius:16px; overflow:hidden; position:relative; background:#F1F5F9; }
     .ed-masonry-item img { width:100%; height:100%; object-fit:cover; transition:transform .7s cubic-bezier(.4,0,.2,1); }
@@ -150,8 +152,8 @@ def render():
 
     /* Team */
     .ed-team-section {
-        padding:34px;
-        margin-bottom:90px;
+        padding:28px;
+        margin-bottom:48px;
         border-radius:28px;
         background:
             radial-gradient(circle at 10% 0%, rgba(255,82,0,.12), transparent 32%),
@@ -159,7 +161,7 @@ def render():
         border:1px solid rgba(226,232,240,.95);
         box-shadow:0 24px 64px rgba(10,31,68,.11), inset 0 1px 0 rgba(255,255,255,.96);
     }
-    .ed-team-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:28px; perspective:1100px; }
+    .ed-team-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:20px; perspective:1100px; }
     .ed-team-card {
         background:rgba(255,255,255,.84); backdrop-filter:blur(14px);
         border:1.5px solid #E2E8F0; border-radius:22px;
@@ -193,7 +195,7 @@ def render():
         perspective:1200px;
     }
     .ed-hero {
-        margin-bottom:52px;
+        margin-bottom:36px;
         position:relative;
     }
     .ed-hero-shell {
@@ -562,7 +564,7 @@ def render():
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Exo 2', sans-serif;
     background: transparent;
     padding: 4px 8px 28px;
   }}
@@ -1064,10 +1066,10 @@ def render():
 
     gallery_html = (
         '<!DOCTYPE html><html><head><meta charset="utf-8">'
-        '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">'
+        '<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet">'
         '<style>'
         '* { box-sizing:border-box; margin:0; padding:0; }'
-        "body { font-family:'Montserrat',sans-serif; background:transparent; overflow:hidden; }"
+        "body { font-family:'Exo 2',sans-serif; background:transparent; overflow:hidden; }"
         '.gc-shell { padding:0 4px 8px; }'
         '.gc-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:20px; padding:0 2px; }'
         '.gc-title { font-size:2rem; font-weight:900; letter-spacing:-0.03em; color:#0A1F44; }'
@@ -1222,10 +1224,10 @@ def render():
 <html>
 <head>
 <meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Montserrat', sans-serif; background: transparent; }
+body { font-family: 'Exo 2', sans-serif; background: transparent; }
 
 .jt-shell {
     border-radius: 28px;
@@ -1241,8 +1243,8 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 .jt-section {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-    gap: 44px;
-    padding: 4px 4px 16px 4px;
+    gap: 32px;
+    padding: 4px 4px 8px 4px;
     align-items: start;
 }
 
@@ -1260,7 +1262,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 }
 .jt-sub {
     color: #64748B; font-size: 0.95rem; line-height: 1.75;
-    font-weight: 500; margin-bottom: 36px;
+    font-weight: 500; margin-bottom: 24px;
 }
 
 /* 2×2 stat grid */
@@ -1329,7 +1331,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     display: flex;
     gap: 18px;
     align-items: flex-start;
-    padding: 0 0 32px 0;
+    padding: 0 0 22px 0;
     position: relative;
 }
 .jt-node:last-child { padding-bottom: 0; }
@@ -1549,6 +1551,34 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 
 
     # ── 4.5. NEXT STEPS TIMELINE ─────────────────────────────────────────────
+    today = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
+    timeline_windows = [
+        (date(2026, 5, 20), date(2026, 5, 31)),
+        (date(2026, 6, 1), date(2026, 6, 30)),
+        (date(2026, 7, 1), date(2026, 7, 31)),
+        (date(2026, 8, 1), date(2026, 9, 30)),
+    ]
+    highlight_index = next(
+        (
+            idx
+            for idx, (start_date, end_date) in enumerate(timeline_windows, start=1)
+            if start_date <= today <= end_date
+        ),
+        None,
+    )
+    timeline_complete = today > timeline_windows[-1][1]
+
+    step1_class = " vt-highlight" if highlight_index == 1 else ""
+    step2_class = " vt-highlight" if highlight_index == 2 else ""
+    step3_class = " vt-highlight" if highlight_index == 3 else ""
+    step4_class = " vt-highlight" if highlight_index == 4 else ""
+    timeline_endcap_html = """
+        <div class="vt-endcap">
+            <span class="vt-endcap-dot"></span>
+            <span class="vt-endcap-label">L? tr?nh ?? ho?n t?t</span>
+        </div>
+    """ if timeline_complete else ""
+
     timeline_html = """
 <!DOCTYPE html>
 <html>
@@ -1556,18 +1586,18 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 <meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,800;0,900;1,400;1,600;1,800;1,900&display=swap" rel="stylesheet">
 <style>
   body {
     margin: 0; padding: 0;
-    font-family: "Montserrat", sans-serif;
+    font-family: "Exo 2", sans-serif;
 
     background: transparent;
   }
 /* ── VERTICAL TIMELINE ── */
 .vt-container {
     max-width: 1080px;
-    margin: 28px auto 42px auto;
+    margin: 20px auto 24px auto;
     padding: 34px;
     border-radius: 28px;
     background:
@@ -1578,7 +1608,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 }
 .vt-header {
     text-align: center;
-    margin-bottom: 54px;
+    margin-bottom: 34px;
 }
 .vt-title {
     color: #0A1F44;
@@ -1766,6 +1796,29 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
 .vt-item.vt-highlight .vt-list li::before {
     color: #FFD5BF;
 }
+.vt-endcap {
+    position: relative;
+    width: fit-content;
+    margin: 18px auto 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(10,31,68,.05);
+    border: 1px solid rgba(10,31,68,.1);
+    color: #0A1F44;
+    font-size: 0.82rem;
+    font-weight: 700;
+    z-index: 2;
+}
+.vt-endcap-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #0A1F44;
+    box-shadow: 0 0 0 4px rgba(10,31,68,.08);
+}
 
 /* Responsive styles */
 @media screen and (max-width: 768px) {
@@ -1805,7 +1858,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     
     <div class="vt-timeline">
         <!-- Step 1 (Left) -->
-        <div class="vt-item vt-left">
+        <div class="vt-item vt-left__STEP1_CLASS__">
             <div class="vt-content">
                 <div class="vt-date">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -1821,7 +1874,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
         </div>
 
         <!-- Step 2 (Right, Highlighted) -->
-        <div class="vt-item vt-right vt-highlight">
+        <div class="vt-item vt-right__STEP2_CLASS__">
             <div class="vt-content">
                 <div class="vt-date">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -1838,7 +1891,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
         </div>
 
         <!-- Step 3 (Left) -->
-        <div class="vt-item vt-left">
+        <div class="vt-item vt-left__STEP3_CLASS__">
             <div class="vt-content">
                 <div class="vt-date">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -1855,7 +1908,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
         </div>
 
         <!-- Step 4 (Right) -->
-        <div class="vt-item vt-right">
+        <div class="vt-item vt-right__STEP4_CLASS__">
             <div class="vt-content">
                 <div class="vt-date">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -1870,13 +1923,22 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
             </div>
         </div>
     </div>
+        __TIMELINE_ENDCAP__
 </div>
 </body>
 </html>
 """
+    timeline_html = (
+        timeline_html
+        .replace("__STEP1_CLASS__", step1_class)
+        .replace("__STEP2_CLASS__", step2_class)
+        .replace("__STEP3_CLASS__", step3_class)
+        .replace("__STEP4_CLASS__", step4_class)
+        .replace("__TIMELINE_ENDCAP__", timeline_endcap_html)
+    )
     components.html(timeline_html, height=1750, scrolling=False)
     # ── 5. TEAM ───────────────────────────────────────────────────────────────
-    st.html("""
+    st.markdown("""
     <div class="ed-container">
         <div class="ed-team-section">
             <div class="ed-section-header">
@@ -1915,7 +1977,7 @@ body { font-family: 'Montserrat', sans-serif; background: transparent; }
     <style>
     /* Footer */
     .ed-footer-wrapper {
-        margin-top: 32px;
+        margin-top: 20px;
         background: #FAFAFA;
         border-top: 4px solid #FF5200;
         padding: 48px 0;

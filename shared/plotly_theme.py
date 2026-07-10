@@ -41,11 +41,11 @@ PAL_PILLAR = ['#4318FF', '#05CD99', '#FFB547', '#EE5D50', '#2B3674']
 # PLOTLY TEMPLATE
 # ══════════════════════════════════════════════════════════════
 LAYOUT_DEFAULTS = dict(
-    font=dict(family='Inter, "Segoe UI", system-ui, sans-serif', size=13, color=COLORS['text']),
+    font=dict(family='Exo 2, "Segoe UI", system-ui, sans-serif', size=13, color=COLORS['text']),
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
     margin=dict(l=40, r=40, t=70, b=40),
-    hoverlabel=dict(bgcolor='white', font_size=13, font_family='Inter', bordercolor=COLORS['line']),
+    hoverlabel=dict(bgcolor='white', font_size=13, font_family='Exo 2', bordercolor=COLORS['line']),
     colorway=PAL_CATEGORY,
     # Giới hạn decimal toàn cục 1 chữ số
     xaxis=dict(hoverformat='.1f', separatethousands=True, showgrid=False, showline=True, linecolor=COLORS['line']),
