@@ -466,46 +466,6 @@ def build_memo_report(df_all: pd.DataFrame, df_clean: pd.DataFrame, n_before: in
 
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def _load_workforce_section_map() -> "pd.DataFrame":
-    """Load workforce sheet, map section_name (EN) sang tên Việt qua _VUNG_EXTENDED_MAP,
-    trả về DataFrame indexed by _nv_hash với cột dept_vn (tên phòng ban cụ thể tiếng Việt).
-    """
-    import hashlib as _hashlib
-    from shared.workforce_mapper import _VUNG_EXTENDED_MAP
-
-    def _hash_emp(v):
-        try:
-            return _hashlib.sha256(
-                str(int(float(str(v).replace(",", "").strip()))).encode()
-            ).hexdigest()
-        except Exception:
-            return _hashlib.sha256(str(v).encode()).hexdigest()
-
-    def _to_vn(name_en):
-        key = str(name_en or "").lower().strip()
-        entry = _VUNG_EXTENDED_MAP.get(key)
-        return entry[0] if entry else str(name_en or "").strip()
-
-    try:
-        _sheet_id = "14rVdX0b5N9XZFM61juba5XU38x07pFC9wZR_1XQsrho"
-        _url = (
-            f"https://docs.google.com/spreadsheets/d/{_sheet_id}"
-            "/gviz/tq?tqx=out:csv&sheet=workforce"
-        )
-        _wf = pd.read_csv(_url)
-        _wf["_nv_hash"] = _wf["employee_id"].apply(_hash_emp)
-        _wf["dept_vn"] = _wf["section_name"].apply(_to_vn)
-        return (
-            _wf[["_nv_hash", "dept_vn"]]
-            .drop_duplicates(subset=["_nv_hash"])
-            .set_index("_nv_hash")
-        )
-    except Exception as _e:
-        print(f"[workforce] Không tải được workforce sheet: {_e}")
-        return pd.DataFrame(columns=["dept_vn"])
-
-
 def load_group(group_id: str):
     return _load_group_cached(group_id, _loader_cache_token(group_id))
 
@@ -600,25 +560,6 @@ def _load_group_cached(group_id: str, cache_token: str):
 
     if df_clean is None:
         raise RuntimeError(f"Could not load data for {group_id} from any source.")
-
-    # ── Fix department cho group 1B: join với workforce sheet theo _nv_hash ───
-    # Populate department = tên cụ thể tiếng Việt (vd "Cụm Kho Trung Chuyển Xuyên Á")
-    # để khớp với giá trị trong Google Sheet Authorization (department, survey_view=DEPARTMENT)
-    if group_id == "1B" and not df_clean.empty and "_nv_hash" in df_clean.columns:
-        try:
-            wf_map = _load_workforce_section_map()
-            if not wf_map.empty:
-                df_clean = df_clean.copy()
-                _matched = df_clean["_nv_hash"].map(wf_map["dept_vn"])
-                _has_match = _matched.notna()
-                df_clean.loc[_has_match, "department"] = _matched[_has_match]
-                _dep_counts = df_clean["department"].value_counts().to_dict()
-                print(f"[1B] Workforce join: {_has_match.sum()}/{len(df_clean)} matched, departments: {_dep_counts}")
-            else:
-                print("[1B] Workforce join: empty map, department unchanged")
-        except Exception as _e_wf:
-            print(f"[1B] Workforce join skipped: {_e_wf}")
-
 
     import pandas as pd
     # Đọc metadata từ các cột _meta_ (được pipeline lưu vào DB/parquet)
@@ -980,3 +921,4 @@ def merge_survey_hris(df_clean, df_hris):
             else (' Phân vân (3)' if pd.notna(x) and x == 3
                   else ('Gắn bó (4-5)' if pd.notna(x) else None)))
     return df_m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
